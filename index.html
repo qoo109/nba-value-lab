@@ -3,9 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light" />
-    <title>NBA Value Lab V2.6</title>
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" id="themeColor" content="#e9edf2" />
+    <title>NBA Value Lab V2.6.1</title>
     <meta name="description" content="NBA 賽前獨贏低賠熱門方實際勝率、價格價值與模型驗證研究工具。" />
+    <script>
+      (() => {
+        try {
+          const savedTheme = localStorage.getItem("nba-value-lab-theme");
+          const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          document.documentElement.dataset.theme = savedTheme || (systemDark ? "dark" : "light");
+        } catch (_) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -20,7 +32,13 @@
         <button class="tab-button" data-tab="validation">模型驗證</button>
         <button class="tab-button" data-tab="sources">資料來源</button>
       </nav>
-      <div class="header-status"><span class="status-dot"></span>V2.6・稀疏快照研究模式</div>
+      <div class="header-actions">
+        <div class="header-status"><span class="status-dot"></span>V2.6・稀疏快照研究模式</div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="切換至深色模式" aria-pressed="false">
+          <span class="theme-toggle-icon" aria-hidden="true">◐</span>
+          <span class="theme-label" id="themeLabel">深色</span>
+        </button>
+      </div>
     </header>
 
     <main class="page-shell" id="top">
@@ -210,7 +228,7 @@
       </section>
     </main>
 
-    <footer><span>NBA VALUE LAB V2.6</span><p>分析僅供研究參考，不構成投資、投注或獲利保證。</p><span>台灣時間・NBA 賽前獨贏盤</span></footer>
+    <footer><span>NBA VALUE LAB V2.6.1</span><p>分析僅供研究參考，不構成投資、投注或獲利保證。</p><span>台灣時間・NBA 賽前獨贏盤</span></footer>
 
     <dialog class="detail-modal" id="detailModal">
       <button class="icon-button" id="closeModal" aria-label="關閉分析">×</button>

@@ -1,7 +1,9 @@
 "use strict";
 
 const MODEL_VERSION = "2.6";
+const APP_VERSION = "2.6.1";
 const REQUIRED_MARGIN = 5;
+const THEME_KEY = "nba-value-lab-theme";
 
 const gradeInfo = {
   "ㄅ": { label: "ㄅ級・研究候選", tone: "qualified", rule: "保守優勢通過研究門檻" },
@@ -97,6 +99,24 @@ function gradeBadge(grade) {
 }
 function metric(label, value, emphasis = false) {
   return `<div class="metric ${emphasis ? "metric-emphasis" : ""}"><span>${label}</span><strong>${value}</strong></div>`;
+}
+
+function applyTheme(theme, persist = false) {
+  const nextTheme = theme === "dark" ? "dark" : "light";
+  document.documentElement.dataset.theme = nextTheme;
+  const isDark = nextTheme === "dark";
+  $("#themeToggle").setAttribute("aria-pressed", String(isDark));
+  $("#themeToggle").setAttribute("aria-label", isDark ? "切換至淺色模式" : "切換至深色模式");
+  $("#themeLabel").textContent = isDark ? "淺色" : "深色";
+  $(".theme-toggle-icon").textContent = isDark ? "☀" : "☾";
+  $("#themeColor").setAttribute("content", isDark ? "#0a101a" : "#e9edf2");
+  if (persist) {
+    try { localStorage.setItem(THEME_KEY, nextTheme); } catch (_) { /* Storage may be unavailable. */ }
+  }
+}
+
+function toggleTheme() {
+  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
 }
 
 function gradeAtPrice(game, odds) {
@@ -243,11 +263,13 @@ function bindEvents() {
   $("#calculatorGame").addEventListener("change", () => updateCalculator(true));
   $("#oddsInput").addEventListener("input", () => updateCalculator(false));
   $("#bookmakerInput").addEventListener("input", () => updateCalculator(false));
+  $("#themeToggle").addEventListener("click", toggleTheme);
   $("#closeModal").addEventListener("click", () => $("#detailModal").close());
   $("#detailModal").addEventListener("click", (event) => { if (event.target === $("#detailModal")) $("#detailModal").close(); });
 }
 
 function init() {
+  applyTheme(document.documentElement.dataset.theme || "light");
   renderTopPick();
   renderTable();
   renderCards();
@@ -255,6 +277,7 @@ function init() {
   bindEvents();
   updateCalculator(true);
   document.documentElement.dataset.modelVersion = MODEL_VERSION;
+  document.documentElement.dataset.appVersion = APP_VERSION;
 }
 
 init();

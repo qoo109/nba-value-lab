@@ -1,7 +1,7 @@
 "use strict";
 
 const MODEL_VERSION = "2.6";
-const APP_VERSION = "2.6.1";
+const APP_VERSION = "2.6.2";
 const REQUIRED_MARGIN = 5;
 const THEME_KEY = "nba-value-lab-theme";
 
@@ -63,6 +63,21 @@ const games = [
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 let activeFilter = "全部";
+
+function loadReadabilityStyles() {
+  if (document.querySelector("link[data-readability-css]")) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = `./readability.css?v=${APP_VERSION}`;
+  link.dataset.readabilityCss = "true";
+  document.head.appendChild(link);
+}
+
+function updateVersionText() {
+  document.title = `NBA Value Lab V${APP_VERSION}`;
+  const footerVersion = document.querySelector("footer > span:first-child");
+  if (footerVersion) footerVersion.textContent = `NBA VALUE LAB V${APP_VERSION}`;
+}
 
 function breakEven(odds) { return odds && odds > 1 ? 100 / odds : null; }
 function rawImplied(odds) { return breakEven(odds); }
@@ -269,6 +284,8 @@ function bindEvents() {
 }
 
 function init() {
+  loadReadabilityStyles();
+  updateVersionText();
   applyTheme(document.documentElement.dataset.theme || "light");
   renderTopPick();
   renderTable();

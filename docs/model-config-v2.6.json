@@ -1,0 +1,70 @@
+{
+  "model_name": "NBA Value Lab",
+  "version": "2.6.0",
+  "status": "research_only",
+  "market": "NBA pregame moneyline including overtime",
+  "target_decimal_odds": { "min": 1.4, "max": 1.6 },
+  "production_staking_enabled": false,
+  "formal_stake_percent": 0,
+  "data_acquisition": {
+    "api_keys_enabled": false,
+    "allowed_methods": ["approved_crawler", "approved_file_import"],
+    "source_review_required": ["robots", "terms", "rate_limit", "storage_rights"]
+  },
+  "odds_collection": {
+    "mode": "sparse_key_snapshots",
+    "full_five_minute_history_enabled": false,
+    "ten_bookmaker_requirement_enabled": false,
+    "target_bookmakers": 1,
+    "comparison_bookmakers_min": 3,
+    "comparison_bookmakers_max": 5,
+    "snapshots": [
+      { "label": "opening", "required": true, "purpose": "price_origin" },
+      { "label": "T-24h", "required": true, "purpose": "early_preview" },
+      { "label": "T-6h", "required": false, "purpose": "optional_drift_check" },
+      { "label": "T-60m", "required": true, "purpose": "primary_decision_lock" },
+      { "label": "T-5m", "required": true, "purpose": "final_availability_and_price_check" },
+      { "label": "closing", "required": true, "purpose": "CLV_only" }
+    ]
+  },
+  "probability_models": {
+    "P_B": "independent fundamental baseline",
+    "P_F": "calibrated fundamental probability without current market price",
+    "P_M": "market-anchored residual challenger; target book excluded from consensus"
+  },
+  "evidence_coverage_weights_percent": {
+    "long_term_adjusted_strength": 25,
+    "recent_form": 12,
+    "opponent_quality": 10,
+    "offense_defense_matchup": 18,
+    "injury_and_rotation": 15,
+    "rest_travel_schedule": 10,
+    "tactical_matchup": 5,
+    "home_and_environment": 5
+  },
+  "research_margin_pp": 5,
+  "grades": {
+    "ㄅ": "threshold gap >= 0, confidence medium or high, no unresolved major availability risk",
+    "ㄆ": "threshold gap between -3pp and 0pp, or a qualifying price with unresolved conditions",
+    "ㄇ": "conservative edge is non-negative but threshold gap is below -3pp",
+    "模型不支持": "conservative probability below break-even probability",
+    "資料不足": "probability interval cannot be established reliably"
+  },
+  "validation": {
+    "split": "nested_walk_forward",
+    "historical_seasons": ["2022-23", "2023-24", "2024-25", "2025-26"],
+    "prospective_paper_test": "2026-27",
+    "final_holdout_use": "once_only",
+    "metrics": ["Brier", "LogLoss", "calibration_curve", "CLV", "ROI", "max_drawdown"]
+  },
+  "staking": {
+    "probability": "P_C conservative probability",
+    "formula_after_validation": "quarter Kelly",
+    "per_game_cap_percent": 0.5,
+    "enabled_before_validation": false
+  },
+  "github_storage_policy": {
+    "allowed": ["source_code", "documentation", "schemas", "small_synthetic_fixtures"],
+    "prohibited": ["live_database", "bulk_raw_html", "bulk_raw_pdf", "full_odds_history", "mutating_sqlite"]
+  }
+}

@@ -1,0 +1,307 @@
+body {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.site-header {
+  min-height: 76px;
+}
+
+.brand {
+  gap: 12px;
+  font-size: 18px;
+}
+
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  font-size: 12px;
+}
+
+.site-header nav button {
+  min-width: 94px;
+  padding: 0 12px;
+  font-size: 15px;
+}
+
+.header-status,
+.rail-code,
+.eyebrow,
+.method-head,
+.game-time,
+.source-grid span,
+.protocol-grid span,
+.registry-card > div:first-child,
+.storage-flow span,
+footer > span:first-child {
+  font-size: 12px;
+}
+
+.theme-toggle {
+  min-height: 40px;
+  padding: 0 13px;
+  font-size: 13px;
+}
+
+.date-rail > div {
+  min-height: 78px;
+  font-size: 16px;
+}
+
+.hero-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
+}
+
+.top-pick {
+  grid-template-columns: minmax(280px, .74fr) minmax(0, 1.26fr);
+  grid-template-rows: minmax(210px, 1fr) auto;
+  min-height: 350px;
+}
+
+.top-pick-main {
+  padding: 34px;
+}
+
+.pick-heading {
+  font-size: 12px;
+}
+
+.top-pick h1 {
+  margin: 26px 0 16px;
+  font-size: clamp(46px, 4.1vw, 64px);
+  line-height: .96;
+  letter-spacing: -.045em;
+}
+
+.top-pick-main > p,
+.primary-button,
+.view-hero p,
+.sources-hero p,
+.source-grid strong,
+.protocol-grid strong,
+.subsection-title strong {
+  font-size: 16px;
+}
+
+.primary-button {
+  min-height: 50px;
+  margin-top: 26px;
+  padding: 0 22px;
+}
+
+.top-pick-numbers .metric {
+  padding: 24px 12px;
+}
+
+.top-pick-numbers .metric strong {
+  font-size: clamp(34px, 2.8vw, 48px);
+}
+
+.verification > div,
+.verification small {
+  min-height: 72px;
+  font-size: 15px;
+}
+
+.verification small,
+.metric span,
+.market-table th,
+.market-table td:first-child small,
+.source-grid small,
+.weight-grid span,
+.pipeline-steps span,
+.scenario-band span,
+.scenario-band small,
+footer {
+  font-size: 12px;
+}
+
+.method-card {
+  padding: 30px;
+}
+
+.method-card h2 {
+  margin: 28px 0 22px;
+  font-size: 31px;
+  letter-spacing: -.035em;
+}
+
+.method-card > p,
+.game-card-footer,
+.state-card span,
+.state-card small,
+.validation-grid article > p,
+.formula,
+.empty-state span,
+.registry-card dl > div,
+.license-warning span,
+.detail-footer {
+  font-size: 13px;
+}
+
+.grade-legend > div > span:last-child {
+  max-width: 170px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.grade-badge {
+  min-height: 29px;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.metric strong {
+  font-size: 24px;
+  letter-spacing: -.025em;
+}
+
+.section-heading h2,
+.source-card h2,
+.calculator h2,
+.weights-card h2,
+.pipeline-card h2,
+.storage-card h2 {
+  font-size: 30px;
+  letter-spacing: -.035em;
+}
+
+.table-hint {
+  font-size: 12px;
+}
+
+.market-table th,
+.market-table td {
+  padding: 14px 13px;
+}
+
+.market-table td {
+  font-size: 14px;
+}
+
+.market-table td:first-child strong,
+.calculator-status,
+.detail-header p {
+  font-size: 15px;
+}
+
+.filters button {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.game-card {
+  min-height: 240px;
+  padding: 18px;
+}
+
+.matchup-row h3 {
+  font-size: 25px;
+  letter-spacing: -.035em;
+}
+
+.matchup-row > span {
+  font-size: 16px;
+}
+
+.favorite-line {
+  min-height: 38px;
+  margin: 8px 0 14px;
+  font-size: 13px;
+}
+
+.mini-metrics .metric span {
+  font-size: 11px;
+}
+
+.mini-metrics .metric strong {
+  font-size: 18px;
+}
+
+.calculator-copy p,
+.source-copy p,
+.weights-card p,
+.pipeline-card p,
+.storage-card p {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.calculator label {
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.calculator input,
+.calculator select {
+  height: 52px;
+  padding: 0 13px;
+  font-size: 15px;
+}
+
+#oddsInput {
+  font-size: 22px;
+}
+
+.calculator-status {
+  min-height: 54px;
+  padding: 12px;
+  font-weight: 650;
+}
+
+.calculator-note {
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.weight-grid strong {
+  font-size: 20px;
+}
+
+.pipeline-steps span {
+  padding: 16px 8px;
+}
+
+.selection-note span,
+.downloads a,
+.detail-grid ul {
+  font-size: 14px;
+}
+
+.bucket-list > div {
+  padding: 14px;
+  font-size: 13px;
+}
+
+.downloads a {
+  min-height: 48px;
+}
+
+.registry-card dl > div {
+  grid-template-columns: 74px 1fr;
+  padding: 12px 0;
+}
+
+@media (max-width: 1100px) {
+  .site-header nav button {
+    min-width: 82px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 580px) {
+  .brand > span:last-child {
+    font-size: 14px;
+  }
+
+  .top-pick h1 {
+    font-size: 45px;
+  }
+
+  .top-pick-numbers .metric strong {
+    font-size: clamp(22px, 8vw, 28px);
+  }
+}

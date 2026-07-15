@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NBA Value Lab</title>
+    <meta
+      name="description"
+      content="NBA低賠熱門方勝率、賠率價值與保守安全邊際分析器。"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="NBA Value Lab首頁">
+        <span class="brand-mark">NV</span>
+        <span>NBA VALUE LAB</span>
+      </a>
+      <nav aria-label="主要導覽">
+        <button class="tab-button active" data-tab="analysis">明日分析</button>
+        <button class="tab-button" data-tab="qualified">正式入選</button>
+        <button class="tab-button" data-tab="history">歷史驗證</button>
+      </nav>
+      <div class="header-status"><span class="status-dot"></span>市場共識模式</div>
+    </header>
+
+    <main class="page-shell" id="top">
+      <section class="panel analysis-panel">
+        <section class="date-rail">
+          <div>
+            <span class="icon">📅</span>
+            <span><strong>示範比賽日</strong>・2026/10/23</span>
+          </div>
+          <div>
+            <span class="icon">📈</span>
+            <span>5 場比賽・ㄅ級 1・ㄆ級 1</span>
+          </div>
+          <div class="refresh-label">
+            <span class="icon">↻</span>
+            <span>靜態網站版・可上傳 GitHub Pages</span>
+          </div>
+        </section>
+
+        <section class="hero-grid">
+          <article class="top-pick" id="topPick"></article>
+          <aside class="method-card">
+            <div class="method-head">
+              <span class="eyebrow">MODEL RULES</span>
+              <span>STATIC V1</span>
+            </div>
+            <h2>只把價格合格的比賽放到最前面</h2>
+            <div class="grade-legend">
+              <div><span class="grade-badge qualified">ㄅ級・正式入選</span><span>保守優勢 ≥ 5.0pp</span></div>
+              <div><span class="grade-badge watch">ㄆ級・條件觀察</span><span>保守優勢 2.0–4.9pp</span></div>
+              <div><span class="grade-badge fair">ㄇ級・價格合理</span><span>保守優勢 0–1.9pp</span></div>
+              <div><span class="grade-badge reject">模型不支持</span><span>保守優勢低於0</span></div>
+              <div><span class="grade-badge insufficient">資料不足</span><span>無法可靠建立勝率</span></div>
+            </div>
+            <p>勝率高不代表價格值得。ㄅ級必須同時通過傷病、資料信心與最低可接受賠率檢查。</p>
+          </aside>
+        </section>
+
+        <section class="market-table-section">
+          <div class="section-heading table-heading">
+            <div>
+              <span class="eyebrow">MARKET OVERVIEW</span>
+              <h2>完整市場總表</h2>
+            </div>
+            <span class="table-hint">橫向滑動查看更多欄位</span>
+          </div>
+          <div class="table-scroll">
+            <table class="market-table">
+              <thead>
+                <tr>
+                  <th>比賽</th>
+                  <th>熱門方</th>
+                  <th>市場來源</th>
+                  <th>賠率</th>
+                  <th>最佳價</th>
+                  <th>損益平衡</th>
+                  <th>去水機率</th>
+                  <th>保守</th>
+                  <th>中性</th>
+                  <th>樂觀</th>
+                  <th>保守EV</th>
+                  <th>最低接受</th>
+                  <th>信心</th>
+                  <th>結論</th>
+                </tr>
+              </thead>
+              <tbody id="marketRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="games-section">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">NEXT SLATE</span>
+              <h2>其他場次</h2>
+            </div>
+            <div class="filters" aria-label="分級篩選">
+              <button class="filter-button active" data-filter="全部">全部</button>
+              <button class="filter-button" data-filter="ㄅ">ㄅ級</button>
+              <button class="filter-button" data-filter="ㄆ">ㄆ級</button>
+              <button class="filter-button" data-filter="ㄇ">ㄇ級</button>
+              <button class="filter-button" data-filter="不支持">不支持</button>
+              <button class="filter-button" data-filter="資料不足">資料不足</button>
+            </div>
+          </div>
+          <div class="games-grid" id="gamesGrid"></div>
+          <div class="no-results" id="noResults" hidden>目前沒有符合這個分級的場次。</div>
+        </section>
+
+        <section class="source-card">
+          <div class="source-copy">
+            <span class="eyebrow">DATA SOURCE MODE</span>
+            <h2>預設抓網路市場共識，你的莊家用即時覆蓋</h2>
+            <p>
+              正式串接後，賽程優先用NBA官方賽程，傷病用官方傷情報告，盤口用支援NBA獨贏盤的賠率API彙整多家莊家。若你準備下注的莊家價格不同，就在試算器輸入實際賠率，分級會以你的價格重新判斷。
+            </p>
+          </div>
+          <div class="source-grid">
+            <div><span>01</span><strong>隔日賽程</strong><small>NBA官方賽程</small></div>
+            <div><span>02</span><strong>盤口賠率</strong><small>多莊家 moneyline 共識</small></div>
+            <div><span>03</span><strong>傷病輪替</strong><small>官方傷情報告＋人工確認</small></div>
+            <div><span>04</span><strong>下注價格</strong><small>你的莊家即時覆蓋</small></div>
+          </div>
+        </section>
+
+        <section class="calculator">
+          <div>
+            <span class="eyebrow">PRICE CHECK</span>
+            <h2>賠率即時試算</h2>
+            <p>先看市場共識，再輸入你實際能下注到的獨贏賠率，立即重新計算價格門檻。</p>
+          </div>
+          <label>
+            <span>選擇比賽</span>
+            <select id="calculatorGame"></select>
+          </label>
+          <label>
+            <span>莊家名稱</span>
+            <input id="bookmakerInput" value="我的莊家" />
+          </label>
+          <label>
+            <span id="oddsLabel">獨贏賠率</span>
+            <input id="oddsInput" inputmode="decimal" value="1.58" />
+          </label>
+          <div class="calculator-results">
+            <div class="metric"><span>損益平衡</span><strong id="calcBreakeven">—</strong></div>
+            <div class="metric"><span>保守優勢</span><strong id="calcEdge">—</strong></div>
+            <div class="metric"><span>保守EV</span><strong id="calcEv">—</strong></div>
+          </div>
+          <div class="calculator-status" id="calcStatus">等待輸入</div>
+          <div class="calculator-note" id="calcNote">—</div>
+        </section>
+
+        <section class="weights-card">
+          <div>
+            <span class="eyebrow">MODEL WEIGHTS</span>
+            <h2>NBA模型固定權重</h2>
+            <p>資料缺失時不重新分配權重，只降低資料信心並擴大勝率區間。</p>
+          </div>
+          <div class="weight-grid">
+            <div><span>長期調整後實力</span><strong>25%</strong></div>
+            <div><span>近期狀態</span><strong>12%</strong></div>
+            <div><span>對手品質修正</span><strong>10%</strong></div>
+            <div><span>攻防與對位</span><strong>18%</strong></div>
+            <div><span>傷病與輪替</span><strong>15%</strong></div>
+            <div><span>賽程與休息</span><strong>10%</strong></div>
+            <div><span>教練與風格</span><strong>5%</strong></div>
+            <div><span>主場與移動</span><strong>5%</strong></div>
+          </div>
+        </section>
+
+        <section class="pipeline-card">
+          <div>
+            <span class="eyebrow">DATA PIPELINE</span>
+            <h2>下一步接上每日自動資料</h2>
+            <p>目前這包是 GitHub Pages 可用的靜態版。正式資料上線後，所有賽前快照都應保存來源、莊家數、更新時間與下注前覆蓋價格。</p>
+          </div>
+          <div class="pipeline-steps">
+            <span>01・隔日賽程</span>
+            <span>02・獨贏賠率</span>
+            <span>03・官方傷病</span>
+            <span>04・模型分級</span>
+          </div>
+        </section>
+      </section>
+
+      <section class="panel qualified-panel" hidden>
+        <section class="selection-note">
+          <span class="icon">🛡️</span>
+          <div>
+            <strong>目前只有1場通過全部門檻</strong>
+            <span>若賠率或傷病狀態改變，系統會取消正式入選。</span>
+          </div>
+        </section>
+        <div class="games-grid qualified-grid" id="qualifiedGrid"></div>
+      </section>
+
+      <section class="panel history-panel history-view" hidden>
+        <div class="history-head">
+          <span class="eyebrow">NO HINDSIGHT</span>
+          <h1>歷史驗證</h1>
+          <p>系統會保存每次賽前快照，賽後只新增結果，不回頭改寫原始預測。</p>
+        </div>
+        <div class="history-metrics">
+          <div class="metric"><span>正式紀錄</span><strong>0 場</strong></div>
+          <div class="metric"><span>Brier Score</span><strong>—</strong></div>
+          <div class="metric"><span>累積ROI</span><strong>—</strong></div>
+        </div>
+        <div class="empty-state">
+          <span class="icon large">📊</span>
+          <h2>尚未累積正式回測資料</h2>
+          <p>接上每日資料管線後，這裡將呈現各分級命中率、模型校準與相對收盤價值。</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>NBA VALUE LAB</span>
+      <p>分析僅供研究參考，不構成投資、投注或獲利保證。</p>
+      <span>台灣時間・賽前獨贏盤</span>
+    </footer>
+
+    <dialog class="detail-modal" id="detailModal">
+      <button class="icon-button" id="closeModal" aria-label="關閉分析">×</button>
+      <div id="modalContent"></div>
+    </dialog>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

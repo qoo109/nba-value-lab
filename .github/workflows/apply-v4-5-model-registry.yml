@@ -1,0 +1,44 @@
+name: Apply V4.5 model registry
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "scripts/apply_v4_5_model_registry.py"
+      - ".github/workflows/apply-v4-5-model-registry.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Apply V4.5 registry wiring
+        run: python scripts/apply_v4_5_model_registry.py
+      - name: Validate model registry
+        run: python scripts/validate_model_registry.py
+      - name: Check JavaScript syntax
+        run: |
+          node --check js/v4-data.js
+          node --check js/v4-core.js
+          node --check js/v4-render.js
+          node --check js/v4-init.js
+          node --check js/v4-live-data.js
+      - name: Commit migrated frontend
+        run: |
+          if git diff --quiet -- js; then
+            echo "No frontend migration changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/v4-data.js js/v4-core.js js/v4-init.js js/v4-live-data.js
+          git commit -m "frontend: enable V4.5 model registry"
+          git push

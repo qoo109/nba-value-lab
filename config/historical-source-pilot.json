@@ -1,15 +1,41 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "2.0.0",
   "pilot_name": "NBA Value Lab historical data pilot",
   "follows_current_site_version": true,
-  "updated_at": "2026-07-16T23:50:00+08:00",
-  "phase2_source_keys": ["pbpstats_2023", "nbastats_2023"],
+  "updated_at": "2026-07-16T23:59:00+08:00",
+  "phase2_source_keys": [
+    "pbpstats_2023",
+    "nbastats_2023"
+  ],
   "storage_policy": {
     "commit_raw_archives": false,
     "commit_extracted_raw_data": false,
+    "commit_full_silver_database": false,
     "workflow_temp_only": true,
     "artifact_reports_only": true,
     "maximum_download_mb_per_source_default": 600
+  },
+  "silver_adapter": {
+    "database_format": "sqlite_gzip",
+    "artifact_retention_days": 14,
+    "tables": [
+      "games",
+      "pbp_events",
+      "possessions",
+      "team_game_features"
+    ],
+    "score_validation_minimum": 0.98,
+    "feature_coverage_minimum": 0.98,
+    "possession_grouping_rule": "possession_with_score_and_start_type",
+    "metric_notes": {
+      "pace": "actual possession count normalized to 48 minutes",
+      "off_rtg": "100 * points / possessions",
+      "def_rtg": "100 * opponent points / opponent possessions",
+      "efg_pct": "(FGM + 0.5 * 3PM) / FGA",
+      "tov_pct_estimated": "TOV / (FGA + 0.44 * FTA + TOV)",
+      "orb_pct_fg_miss_estimate": "ORB / missed field goals",
+      "free_throw_rate": "FTA / FGA"
+    }
   },
   "sources": {
     "pbpstats_2023": {
@@ -19,33 +45,156 @@
       "season_label": "2023-24",
       "url": "https://github.com/shufinskiy/nba_data/raw/main/datasets/pbpstats_2023.tar.xz",
       "preferred_filename_contains": "pbpstats",
-      "game_id_fields": ["GAMEID"],
-      "expected_fields_any": ["GAMEID", "GAMEDATE", "PERIOD", "STARTTIME", "ENDTIME", "STARTTYPE", "STARTSCOREDIFFERENTIAL", "OPPONENT", "EVENTS", "DESCRIPTION"],
+      "game_id_fields": [
+        "GAMEID"
+      ],
+      "expected_fields_any": [
+        "GAMEID",
+        "GAMEDATE",
+        "PERIOD",
+        "STARTTIME",
+        "ENDTIME",
+        "STARTTYPE",
+        "STARTSCOREDIFFERENTIAL",
+        "OPPONENT",
+        "EVENTS",
+        "DESCRIPTION"
+      ],
       "candidate_primary_keys": [
-        ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME"],
-        ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT"],
-        ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT", "DESCRIPTION"],
-        ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT", "DESCRIPTION", "EVENTS"],
-        ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT", "DESCRIPTION", "EVENTS", "URL"]
+        [
+          "GAMEID",
+          "PERIOD",
+          "STARTTIME",
+          "ENDTIME"
+        ],
+        [
+          "GAMEID",
+          "PERIOD",
+          "STARTTIME",
+          "ENDTIME",
+          "OPPONENT"
+        ],
+        [
+          "GAMEID",
+          "PERIOD",
+          "STARTTIME",
+          "ENDTIME",
+          "OPPONENT",
+          "DESCRIPTION"
+        ],
+        [
+          "GAMEID",
+          "PERIOD",
+          "STARTTIME",
+          "ENDTIME",
+          "OPPONENT",
+          "DESCRIPTION",
+          "EVENTS"
+        ],
+        [
+          "GAMEID",
+          "PERIOD",
+          "STARTTIME",
+          "ENDTIME",
+          "OPPONENT",
+          "DESCRIPTION",
+          "EVENTS",
+          "URL"
+        ]
       ],
       "grouping_rules": [
         {
           "name": "possession_base",
-          "fields": ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT"],
-          "consistency_fields": ["GAMEDATE", "STARTTYPE", "STARTSCOREDIFFERENTIAL", "FG2A", "FG2M", "FG3A", "FG3M", "NONSHOOTINGFOULSTHATRESULTEDINFTS", "OFFENSIVEREBOUNDS", "SHOOTINGFOULSDRAWN", "TURNOVERS", "EVENTS"]
+          "fields": [
+            "GAMEID",
+            "PERIOD",
+            "STARTTIME",
+            "ENDTIME",
+            "OPPONENT"
+          ],
+          "consistency_fields": [
+            "GAMEDATE",
+            "STARTTYPE",
+            "STARTSCOREDIFFERENTIAL",
+            "FG2A",
+            "FG2M",
+            "FG3A",
+            "FG3M",
+            "NONSHOOTINGFOULSTHATRESULTEDINFTS",
+            "OFFENSIVEREBOUNDS",
+            "SHOOTINGFOULSDRAWN",
+            "TURNOVERS",
+            "EVENTS"
+          ]
         },
         {
           "name": "possession_with_score_context",
-          "fields": ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT", "STARTSCOREDIFFERENTIAL"],
-          "consistency_fields": ["GAMEDATE", "STARTTYPE", "FG2A", "FG2M", "FG3A", "FG3M", "NONSHOOTINGFOULSTHATRESULTEDINFTS", "OFFENSIVEREBOUNDS", "SHOOTINGFOULSDRAWN", "TURNOVERS", "EVENTS"]
+          "fields": [
+            "GAMEID",
+            "PERIOD",
+            "STARTTIME",
+            "ENDTIME",
+            "OPPONENT",
+            "STARTSCOREDIFFERENTIAL"
+          ],
+          "consistency_fields": [
+            "GAMEDATE",
+            "STARTTYPE",
+            "FG2A",
+            "FG2M",
+            "FG3A",
+            "FG3M",
+            "NONSHOOTINGFOULSTHATRESULTEDINFTS",
+            "OFFENSIVEREBOUNDS",
+            "SHOOTINGFOULSDRAWN",
+            "TURNOVERS",
+            "EVENTS"
+          ]
         },
         {
           "name": "possession_with_score_and_start_type",
-          "fields": ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT", "STARTSCOREDIFFERENTIAL", "STARTTYPE"],
-          "consistency_fields": ["GAMEDATE", "FG2A", "FG2M", "FG3A", "FG3M", "NONSHOOTINGFOULSTHATRESULTEDINFTS", "OFFENSIVEREBOUNDS", "SHOOTINGFOULSDRAWN", "TURNOVERS", "EVENTS"]
+          "fields": [
+            "GAMEID",
+            "PERIOD",
+            "STARTTIME",
+            "ENDTIME",
+            "OPPONENT",
+            "STARTSCOREDIFFERENTIAL",
+            "STARTTYPE"
+          ],
+          "consistency_fields": [
+            "GAMEDATE",
+            "FG2A",
+            "FG2M",
+            "FG3A",
+            "FG3M",
+            "NONSHOOTINGFOULSTHATRESULTEDINFTS",
+            "OFFENSIVEREBOUNDS",
+            "SHOOTINGFOULSDRAWN",
+            "TURNOVERS",
+            "EVENTS"
+          ]
         }
       ],
-      "silver_sample_fields": ["GAMEID", "GAMEDATE", "PERIOD", "STARTTIME", "ENDTIME", "STARTTYPE", "STARTSCOREDIFFERENTIAL", "OPPONENT", "FG2A", "FG2M", "FG3A", "FG3M", "OFFENSIVEREBOUNDS", "TURNOVERS", "EVENTS", "DESCRIPTION", "URL"],
+      "silver_sample_fields": [
+        "GAMEID",
+        "GAMEDATE",
+        "PERIOD",
+        "STARTTIME",
+        "ENDTIME",
+        "STARTTYPE",
+        "STARTSCOREDIFFERENTIAL",
+        "OPPONENT",
+        "FG2A",
+        "FG2M",
+        "FG3A",
+        "FG3M",
+        "OFFENSIVEREBOUNDS",
+        "TURNOVERS",
+        "EVENTS",
+        "DESCRIPTION",
+        "URL"
+      ],
       "license_status": "upstream_code_license_verified_data_redistribution_not_assumed"
     },
     "nbastats_2023": {
@@ -55,14 +204,49 @@
       "season_label": "2023-24",
       "url": "https://github.com/shufinskiy/nba_data/raw/main/datasets/nbastats_2023.tar.xz",
       "preferred_filename_contains": "nbastats",
-      "game_id_fields": ["GAME_ID"],
-      "expected_fields_any": ["GAME_ID", "EVENTNUM", "EVENTMSGTYPE", "PERIOD", "PCTIMESTRING", "SCORE", "SCOREMARGIN"],
+      "game_id_fields": [
+        "GAME_ID"
+      ],
+      "expected_fields_any": [
+        "GAME_ID",
+        "EVENTNUM",
+        "EVENTMSGTYPE",
+        "PERIOD",
+        "PCTIMESTRING",
+        "SCORE",
+        "SCOREMARGIN"
+      ],
       "candidate_primary_keys": [
-        ["GAME_ID", "EVENTNUM"],
-        ["GAME_ID", "EVENTNUM", "EVENTMSGTYPE", "EVENTMSGACTIONTYPE", "PERIOD", "PCTIMESTRING", "PLAYER1_ID"]
+        [
+          "GAME_ID",
+          "EVENTNUM"
+        ],
+        [
+          "GAME_ID",
+          "EVENTNUM",
+          "EVENTMSGTYPE",
+          "EVENTMSGACTIONTYPE",
+          "PERIOD",
+          "PCTIMESTRING",
+          "PLAYER1_ID"
+        ]
       ],
       "grouping_rules": [],
-      "silver_sample_fields": ["GAME_ID", "EVENTNUM", "EVENTMSGTYPE", "EVENTMSGACTIONTYPE", "PERIOD", "PCTIMESTRING", "SCORE", "SCOREMARGIN", "PLAYER1_ID", "PLAYER1_TEAM_ID", "HOMEDESCRIPTION", "NEUTRALDESCRIPTION", "VISITORDESCRIPTION"],
+      "silver_sample_fields": [
+        "GAME_ID",
+        "EVENTNUM",
+        "EVENTMSGTYPE",
+        "EVENTMSGACTIONTYPE",
+        "PERIOD",
+        "PCTIMESTRING",
+        "SCORE",
+        "SCOREMARGIN",
+        "PLAYER1_ID",
+        "PLAYER1_TEAM_ID",
+        "HOMEDESCRIPTION",
+        "NEUTRALDESCRIPTION",
+        "VISITORDESCRIPTION"
+      ],
       "license_status": "upstream_code_license_verified_data_redistribution_not_assumed"
     }
   }

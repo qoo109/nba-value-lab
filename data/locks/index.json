@@ -1,8 +1,9 @@
 {
-  "schema_version": "1.0.0",
-  "generated_at": "2026-07-16T00:00:00Z",
+  "schema_version": "1.1.0",
+  "generated_at": "2026-07-16T15:30:00+08:00",
   "lock_count": 0,
   "latest_lock_at": null,
   "latest_selected_prediction_id": null,
+  "latest_selected_prediction_ids": [],
   "locks": []
 }

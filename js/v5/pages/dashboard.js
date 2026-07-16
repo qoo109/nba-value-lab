@@ -32,11 +32,35 @@
     return section.closest(".v5-disclosure") || section.closest(".v5-model-disclosure") || section;
   }
 
+  function ensureDecisionStrip(analysis) {
+    const board = selectionBoard();
+    const formal = board.mains.length > 0;
+    const title = formal ? `今日主要場次 ${board.mains.length} 場` : "今日沒有正式主要場次";
+    const note = formal
+      ? "一般目標 2 場・最多 3 場・第 3 場採額外嚴格門檻"
+      : "目前沒有候選通過全部硬 Gate，不為了湊數降低標準";
+    let strip = analysis.querySelector("#v531DecisionStrip");
+    if (!strip) {
+      strip = document.createElement("section");
+      strip.id = "v531DecisionStrip";
+      strip.className = "v5-hero-heading v52-compact-decision";
+    }
+    strip.innerHTML = `<div class="v52-decision-copy">
+      <span class="eyebrow">今日決策</span>
+      <strong>${title}</strong>
+      <span class="v52-decision-note">${note}</span>
+    </div>
+    <div class="v5-model-pill"><span>MODEL</span><strong>${activeModelLabel()}</strong></div>`;
+    return strip;
+  }
+
   function reorderAnalysis(analysis) {
+    const decisionStrip = ensureDecisionStrip(analysis);
     const market = sectionShell(analysis.querySelector(".market-table-section"));
     if (market?.matches("details")) market.open = true;
 
     const priorityOrder = [
+      decisionStrip,
       analysis.querySelector(".date-rail"),
       analysis.querySelector(".timing-strip"),
       analysis.querySelector(".games-section"),
@@ -50,7 +74,7 @@
     ].filter(Boolean);
 
     priorityOrder.forEach((section) => analysis.appendChild(section));
-    analysis.dataset.sectionOrder = "candidates-market-results-tools-model-sources";
+    analysis.dataset.sectionOrder = "decision-candidates-market-results-tools-model-sources";
   }
 
   function simplifyAnalysis() {
@@ -122,13 +146,13 @@
 
   function updateShell() {
     document.documentElement.classList.add("v5-ui");
-    document.documentElement.dataset.uiVersion = "5.3";
+    document.documentElement.dataset.uiVersion = "5.3.1";
     document.documentElement.dataset.visualDensity = "balanced";
-    document.title = `NBA Value Lab V5.3｜${activeModelLabel()}`;
+    document.title = `NBA Value Lab V5.3.1｜${activeModelLabel()}`;
     const header = document.querySelector(".header-status");
-    if (header) header.innerHTML = `<span class="status-dot"></span>V5.3・${activeModelLabel()}・主要 2／最多 3`;
+    if (header) header.innerHTML = `<span class="status-dot"></span>V5.3.1・${activeModelLabel()}・主要 2／最多 3`;
     const footer = document.querySelector("footer > span:first-child");
-    if (footer) footer.textContent = "NBA VALUE LAB V5.3";
+    if (footer) footer.textContent = "NBA VALUE LAB V5.3.1";
   }
 
   function afterRender() {
@@ -140,5 +164,5 @@
     document.querySelector("#multiMainSummary")?.setAttribute("hidden", "");
   }
 
-  v5.modules.dashboard = { afterRender, wrapSection, reorderAnalysis };
+  v5.modules.dashboard = { afterRender, wrapSection, reorderAnalysis, ensureDecisionStrip };
 }());

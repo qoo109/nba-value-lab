@@ -21,6 +21,7 @@ on:
       - "scripts/audit_historical_source.py"
       - ".github/workflows/audit-historical-source.yml"
       - "docs/historical-data-pilot-v4.5.md"
+      - "data/source-registry.json"
   push:
     branches:
       - "agent/v4-5-historical-source-pilot"
@@ -60,7 +61,6 @@ jobs:
           PY
 
   live-pilot:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: self-test
     runs-on: ubuntu-latest
     timeout-minutes: 20

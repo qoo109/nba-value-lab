@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-07-16T09:30:00+08:00",
+  "storage_policy": "compact_append_only",
+  "active_models": {
+    "V": "3.1",
+    "G": "1.0",
+    "G_revision": "G1-FINAL-20260716",
+    "coordination": "V3.1_X_G1-FINAL-20260716"
+  },
+  "record_count": 0,
+  "price_evaluation_count": 0,
+  "outcome_count": 0,
+  "approximate_bytes": 0,
+  "latest_record_at": null,
+  "records": []
+}

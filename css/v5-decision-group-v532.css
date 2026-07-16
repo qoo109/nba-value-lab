@@ -1,0 +1,40 @@
+.v5-ui .v532-decision-group {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.v5-ui .v532-decision-group .v52-compact-decision,
+.v5-ui .v532-decision-group .hero-grid,
+.v5-ui .v532-decision-group .v5-top-pick,
+.v5-ui .v532-decision-group .v5-main-grid {
+  margin: 0;
+}
+
+.v5-ui .v532-decision-group .hero-grid {
+  display: block;
+}
+
+.v5-ui .v532-decision-group .v5-top-pick {
+  gap: 0;
+}
+
+.v5-ui .v532-decision-group + .games-section {
+  margin-top: 2px;
+}
+
+@media (min-width: 760px) {
+  .v5-ui .v532-decision-group .v5-main-grid {
+    justify-content: start;
+  }
+}
+
+@media (max-width: 719px) {
+  .v5-ui .v532-decision-group {
+    gap: 7px;
+  }
+
+  .v5-ui .v532-decision-group + .games-section {
+    margin-top: 0;
+  }
+}

@@ -51,7 +51,7 @@ function loadScriptOnce(src, marker, ready) {
 
 function loadV46Coordination() {
   return loadScriptOnce(
-    "./js/v4-6-model-coordination.js?v=4.8",
+    "./js/v4-6-model-coordination.js?v=4.9",
     "data-v46-coordination",
     () => typeof vDecision === "function" && typeof gDecision === "function",
   );
@@ -59,28 +59,28 @@ function loadV46Coordination() {
 
 function loadV47ResearchLog() {
   return loadScriptOnce(
-    "./js/v4-7-research-log.js?v=4.8",
+    "./js/v4-7-research-log.js?v=4.9",
     "data-v47-research-log",
     () => typeof initResearchLog === "function",
   );
 }
 
-function loadV48LockStatus() {
+function loadV49LockStatus() {
   return loadScriptOnce(
-    "./js/v4-8-lock-status.js?v=4.8",
-    "data-v48-lock-status",
+    "./js/v4-8-lock-status.js?v=4.9",
+    "data-v49-lock-status",
     () => typeof initT60LockStatus === "function",
   );
 }
 
-function updateV48Shell() {
-  document.title = `NBA Value Lab V4.8｜${activeModelLabel()}`;
+function updateV49Shell() {
+  document.title = `NBA Value Lab V4.9｜${activeModelLabel()}`;
   const header = document.querySelector(".header-status");
-  if (header) header.innerHTML = `<span class="status-dot"></span>V4.8・${activeModelLabel()}`;
+  if (header) header.innerHTML = `<span class="status-dot"></span>V4.9・${activeModelLabel()}`;
   const footerVersion = document.querySelector("footer > span:first-child");
-  if (footerVersion) footerVersion.textContent = "NBA VALUE LAB V4.8";
+  if (footerVersion) footerVersion.textContent = "NBA VALUE LAB V4.9";
   const methodTitle = document.querySelector(".method-card h2");
-  if (methodTitle) methodTitle.textContent = "V3.1 與 G1 分開判定，由 T−60m 鎖定流程保存";
+  if (methodTitle) methodTitle.textContent = "V3.1 與 G1 分開判定・T−60m 鎖定・T−5m 最終複核";
 }
 
 async function init() {
@@ -88,8 +88,8 @@ async function init() {
   await loadV46Coordination();
   await loadModelRegistry();
   await loadV47ResearchLog();
-  await loadV48LockStatus();
-  updateV48Shell();
+  await loadV49LockStatus();
+  updateV49Shell();
   applyTheme(document.documentElement.dataset.theme || "light");
   renderTopPick();
   renderTable();
@@ -101,11 +101,11 @@ async function init() {
   bindEvents();
   updateCalculator(true);
   document.documentElement.dataset.modelVersion = activeModelLabel();
-  document.documentElement.dataset.appVersion = "V4.8";
+  document.documentElement.dataset.appVersion = "V4.9";
 }
 
 init().catch((error) => {
   console.error("NBA Value Lab initialization failed:", error);
   const header = document.querySelector(".header-status");
-  if (header) header.innerHTML = '<span class="status-dot"></span>V4.8・初始化失敗';
+  if (header) header.innerHTML = '<span class="status-dot"></span>V4.9・初始化失敗';
 });

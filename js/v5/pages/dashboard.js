@@ -27,6 +27,32 @@
     });
   }
 
+  function sectionShell(section) {
+    if (!section) return null;
+    return section.closest(".v5-disclosure") || section.closest(".v5-model-disclosure") || section;
+  }
+
+  function reorderAnalysis(analysis) {
+    const market = sectionShell(analysis.querySelector(".market-table-section"));
+    if (market?.matches("details")) market.open = true;
+
+    const priorityOrder = [
+      analysis.querySelector(".date-rail"),
+      analysis.querySelector(".timing-strip"),
+      analysis.querySelector(".games-section"),
+      market,
+      analysis.querySelector(".hero-grid"),
+      sectionShell(analysis.querySelector(".calculator")),
+      analysis.querySelector(".v5-model-disclosure"),
+      sectionShell(analysis.querySelector(".source-card")),
+      sectionShell(analysis.querySelector(".weights-card")),
+      sectionShell(analysis.querySelector(".pipeline-card")),
+    ].filter(Boolean);
+
+    priorityOrder.forEach((section) => analysis.appendChild(section));
+    analysis.dataset.sectionOrder = "candidates-market-results-tools-model-sources";
+  }
+
   function simplifyAnalysis() {
     const analysis = document.querySelector('[data-panel="analysis"]');
     if (!analysis) return;
@@ -49,13 +75,14 @@
 
     wrapSection(analysis.querySelector(".market-table-section"), "完整市場總表", {
       hint: "Gap、EV、Coverage 與全部雙向候選",
-      open: window.matchMedia("(min-width: 1100px)").matches,
+      open: true,
       className: "v5-market-disclosure",
     });
     wrapSection(analysis.querySelector(".calculator"), "賠率即時試算", { hint: "只重算價格，不改模型勝率" });
     wrapSection(analysis.querySelector(".source-card"), "資料來源策略", { hint: "目標莊家、比較來源與快照" });
     wrapSection(analysis.querySelector(".weights-card"), "證據覆蓋權重", { hint: "資料完整度，不是直接勝率係數" });
     wrapSection(analysis.querySelector(".pipeline-card"), "研究快照流程", { hint: "T−60m、T−5m 與 Closing" });
+    reorderAnalysis(analysis);
   }
 
   function updateCandidatePanel() {
@@ -112,5 +139,5 @@
     document.querySelector("#multiMainSummary")?.setAttribute("hidden", "");
   }
 
-  v5.modules.dashboard = { afterRender, wrapSection };
+  v5.modules.dashboard = { afterRender, wrapSection, reorderAnalysis };
 }());

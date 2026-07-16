@@ -14,17 +14,21 @@ on:
         default: true
   pull_request:
     paths:
+      - "models/**"
       - "scripts/lock_t60_snapshot.py"
       - "scripts/lock_t60_snapshot_v49.py"
-      - "scripts/append_research_record.py"
+      - "scripts/lock_t60_snapshot_v410.py"
+      - "scripts/multi_main_policy.py"
+      - "scripts/append_research_record_v410.py"
       - "data/fixtures/t60-lock-example.json"
       - ".github/workflows/lock-t60-research.yml"
   push:
     branches: ["main"]
     paths:
-      - "scripts/lock_t60_snapshot.py"
-      - "scripts/lock_t60_snapshot_v49.py"
-      - "scripts/append_research_record.py"
+      - "models/**"
+      - "scripts/lock_t60_snapshot_v410.py"
+      - "scripts/multi_main_policy.py"
+      - "scripts/append_research_record_v410.py"
       - "data/fixtures/t60-lock-example.json"
       - ".github/workflows/lock-t60-research.yml"
 
@@ -41,14 +45,13 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Dry-run bundled T-60m fixture
         run: |
-          python scripts/lock_t60_snapshot_v49.py \
+          python scripts/lock_t60_snapshot_v410.py \
             data/fixtures/t60-lock-example.json \
             --dry-run \
             --output /tmp/t60-lock-output.json
@@ -56,9 +59,14 @@ jobs:
           python - <<'PY'
           import json
           payload = json.load(open('/tmp/t60-lock-output.json', encoding='utf-8'))
+          selection = payload['selection']
+          assert selection['target_main_count'] == 2
+          assert selection['maximum_main_count'] == 3
+          assert 0 <= selection['selected_count'] <= 3
+          assert selection['selected_prediction_id'] == (selection['selected_prediction_ids'][0] if selection['selected_prediction_ids'] else None)
           assert all(record.get('prediction_state_hash') for record in payload['records'])
           assert all(record.get('change_type') == 'initial_lock' for record in payload['records'])
-          print('V4.9 enriched T-60m fixture validated')
+          print('V4.10 multi-main T-60m fixture validated')
           PY
 
       - name: Validate selected input
@@ -69,9 +77,9 @@ jobs:
         run: |
           test -f "$INPUT_PATH"
           if [ "$DRY_RUN" = "true" ]; then
-            python scripts/lock_t60_snapshot_v49.py "$INPUT_PATH" --dry-run --output /tmp/selected-t60-output.json
+            python scripts/lock_t60_snapshot_v410.py "$INPUT_PATH" --dry-run --output /tmp/selected-t60-output.json
           else
-            python scripts/lock_t60_snapshot_v49.py "$INPUT_PATH" --output /tmp/selected-t60-output.json
+            python scripts/lock_t60_snapshot_v410.py "$INPUT_PATH" --output /tmp/selected-t60-output.json
           fi
           python -m json.tool /tmp/selected-t60-output.json >/dev/null
 
@@ -85,5 +93,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/history data/locks
-          git commit -m "research: lock T-60m predictions and price evaluations"
+          git commit -m "research: lock G1.1 T-60m multi-main records"
           git push

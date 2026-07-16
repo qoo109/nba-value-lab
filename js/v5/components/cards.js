@@ -73,11 +73,15 @@
       : [board.priority[0] || board.qualified[0] || mainCandidate()].filter(Boolean);
     const title = formal ? `今日主要場次 ${display.length} 場` : "今日沒有正式主要場次";
     const note = formal
-      ? "一般目標 2 場、最多 3 場；第三場必須通過額外嚴格門檻。"
-      : "目前沒有候選通過全部硬 Gate，以下只顯示最高順位觀察，不為了湊數降低標準。";
+      ? "一般目標 2 場・最多 3 場・第 3 場採額外嚴格門檻"
+      : "目前沒有候選通過全部硬 Gate，不為了湊數降低標準";
 
-    $("#topPick").innerHTML = `<div class="v5-hero-heading">
-      <div><span class="eyebrow">TODAY'S DECISION</span><h1>${title}</h1><p>${note}</p></div>
+    $("#topPick").innerHTML = `<div class="v5-hero-heading v52-compact-decision">
+      <div class="v52-decision-copy">
+        <span class="eyebrow">今日決策</span>
+        <strong>${title}</strong>
+        <span class="v52-decision-note">${note}</span>
+      </div>
       <div class="v5-model-pill"><span>MODEL</span><strong>${activeModelLabel()}</strong></div>
     </div>
     <div class="v5-main-grid">${display.map((candidate, index) => mainCard(candidate, index, display.length, formal)).join("")}</div>`;

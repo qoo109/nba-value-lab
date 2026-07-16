@@ -1,49 +1,71 @@
-# NBA Value Lab V2.6.2
+# NBA Value Lab V4.5
 
-NBA 賽前獨贏低賠熱門方的勝率、價格價值與模型驗證研究工具。
+NBA 賽前獨贏的勝率、價格價值、資料 Gate 與模型驗證研究平台。
 
 線上網站：<https://qoo109.github.io/nba-value-lab/>
 
-## V2.6.2 介面更新
+## V4.5 Model Registry
 
-- 全站基礎字級放大，改善深色模式與 Safari 下的小字辨識度
-- 收斂首頁 ㄅ級主卡片高度、隊名字級與內距，讓首屏資訊更集中
-- 放大 ㄅ／ㄆ／ㄇ 標籤、試算器、表格、來源卡與彈窗文字
+- V、G 模型規格與網站程式分離
+- `spec.md` 提供人類可讀規格
+- `config.json` 提供網站可執行門檻
+- `models/manifest.json` 指定目前啟用的 V、G 版本
+- 更新設定後由 GitHub Actions 自動驗證
+- 舊模型版本保留，不直接覆寫
+- 歷史預測綁定當時的 V、G 版本
 
-## V2.6.1 介面更新
+目前登錄：
 
-- 修正 Retina Safari 約 1024px CSS 視窗下的主卡片數字重疊
-- 四個頁面、詳細分析彈窗與賠率試算器全面改為流動式響應版面
-- 提高文字、邊框、背景與狀態色對比
-- 新增深色／淺色模式，並在瀏覽器保存使用者偏好
+- V3.0：價格價值、EV 與最低接受賠率
+- G1.0：雙向價格層、資料 Gate 與優先序
 
-模型規則仍維持 V2.6，這次只更新顯示與操作介面。
+## 免費資料層
 
-## V2.6 模型重點
+- GitHub Actions 每日以台灣時間 08:05、12:05、17:05、21:05 更新
+- 保存來源、抓取時間、觀察時間、hash、Adapter 版本與 stale 狀態
+- 不使用付費 API
+- 不抓每五分鐘全量盤口
 
-- 純 HTML、CSS、JavaScript，GitHub Pages 可直接執行
-- 不需要 API 金鑰
-- 不抓 10 家莊家每 5 分鐘全量盤口
-- 目標莊家 1 家，市場比較來源 3～5 家
-- 保存 Opening、T−24h、可選 T−6h、T−60m、T−5m、Closing
-- T−60m 鎖定模型判斷；Closing 只用於 CLV
-- ㄅ／ㄆ／ㄇ／模型不支持／資料不足分級
-- 尚未完成歷史校準前，正式投注額固定為 0
+## 精簡歷史紀錄
 
-## 檔案
+專案不保存完整 Box Score 或 Play-by-play。歷史資料只保留模型驗證所需欄位：
+
+- game_id、目標邊與預測時間
+- 21:00／T−60m／T−5m 階段
+- V、G 模型版本
+- 保守／中性／樂觀勝率
+- 當時賠率、Closing、分級與候選層級
+- 最終勝負與可選的簡單比分
+
+資料格式見 `schemas/prediction-record.schema.json`。
+
+## 更新模型
+
+1. 建立新版本資料夾，例如 `models/v3/3.1/`。
+2. 放入 `spec.md` 與 `config.json`。
+3. 更新 `models/manifest.json`。
+4. 推送到 `main`。
+5. 驗證成功後由 GitHub Pages 自動發布。
+
+若只是修改門檻、價格層或 Gate，不需要重做網站；若新增全新公式、輸入欄位或引擎結構，才需要同步更新 JavaScript。
+
+## 主要檔案
 
 - `index.html`：網站結構
-- `styles.css`：高對比響應式版面與深色模式
-- `readability.css`：V2.6.2 字級與密度覆寫
-- `script.js`：篩選、詳細分析、賠率試算、分頁與主題切換
-- `docs/NBA_Value_Analyzer_V2.6.md`：完整模型規格
-- `docs/model-config-v2.6.json`：機器可讀規則
-- `docs/NBA_Crawler_and_Storage_V2.6.md`：爬蟲與儲存規格
+- `styles.css`／`readability.css`：響應式介面與深淺色模式
+- `js/v4-data.js`：示範 slate 與 Model Registry 載入器
+- `js/v4-core.js`：V、G 共用價格與 Gate 邏輯
+- `js/v4-render.js`：總表、候選、詳情與試算器
+- `models/manifest.json`：啟用模型版本
+- `models/v3/`、`models/g1/`：版本化模型規格與設定
+- `scripts/validate_model_registry.py`：Registry 驗證器
+- `data/current/`：當前賽程與來源健康度
+- `data/history/`：精簡歷史紀錄政策
 
 ## GitHub Pages
 
-此儲存庫採 `main` 分支根目錄發布。更新完成後，可在 Settings → Pages 查看部署狀態。
+專案已包含 GitHub Actions Pages 部署 workflow。Repository 的 Settings → Pages → Source 需設為 GitHub Actions。
 
 ## 研究聲明
 
-目前網站內比賽、賠率與勝率均為示範資料。模型尚未完成 walk-forward、機率校準、CLV 與一次性 holdout 驗證，不構成投注或獲利保證。
+目前網站內勝率與候選仍包含示範資料。模型尚未完成完整 walk-forward、機率校準、CLV 與一次性 holdout 驗證，不構成投注或獲利保證。

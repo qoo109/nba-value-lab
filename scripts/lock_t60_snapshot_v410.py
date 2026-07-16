@@ -12,12 +12,13 @@ from typing import Any
 
 import lock_t60_snapshot_v49 as prior
 from append_research_record_v410 import append_many
-from multi_main_policy import apply_multi_main, rebuild_multi_lock_index
+from multi_main_policy import apply_multi_main, load_active_configs, rebuild_multi_lock_index
 
 base = prior.base
 ROOT = base.ROOT
 LOCKS_DIR = base.LOCKS_DIR
 LOCKS_INDEX = base.LOCKS_INDEX
+base.load_active_configs = lambda: load_active_configs(ROOT, base.MODELS_MANIFEST)
 
 
 def run(input_path: Path, *, dry_run: bool, output_path: Path | None = None) -> dict[str, Any]:

@@ -19,13 +19,14 @@
   function calculate(records) {
     const resolved = latestResolvedMainRecords(records);
     if (!resolved.length) {
-      return { sample: 0, wins: 0, losses: 0, hitRate: null, roi: null, avgClv: null, brier: null, maxDrawdown: null };
+      return { sample: 0, roiSample: 0, wins: 0, losses: 0, hitRate: null, roi: null, avgClv: null, brier: null, maxDrawdown: null };
     }
 
     let profit = 0;
     let equity = 0;
     let peak = 0;
     let maxDrawdown = 0;
+    let roiSample = 0;
     const clvValues = [];
     const brierValues = [];
     let wins = 0;
@@ -33,12 +34,17 @@
     resolved.forEach((record) => {
       const won = Boolean(record.won);
       const odds = Number(record.target_odds);
-      const result = won && Number.isFinite(odds) && odds > 1 ? odds - 1 : -1;
+      const validOdds = Number.isFinite(odds) && odds > 1;
       if (won) wins += 1;
-      profit += result;
-      equity += result;
-      peak = Math.max(peak, equity);
-      maxDrawdown = Math.max(maxDrawdown, peak - equity);
+
+      if (validOdds) {
+        const result = won ? odds - 1 : -1;
+        roiSample += 1;
+        profit += result;
+        equity += result;
+        peak = Math.max(peak, equity);
+        maxDrawdown = Math.max(maxDrawdown, peak - equity);
+      }
 
       if (record.clv_odds != null && Number.isFinite(Number(record.clv_odds))) clvValues.push(Number(record.clv_odds));
       if (record.p_neutral != null && Number.isFinite(Number(record.p_neutral))) {
@@ -49,13 +55,14 @@
 
     return {
       sample: resolved.length,
+      roiSample,
       wins,
       losses: resolved.length - wins,
       hitRate: wins / resolved.length,
-      roi: profit / resolved.length,
+      roi: roiSample ? profit / roiSample : null,
       avgClv: clvValues.length ? clvValues.reduce((sum, value) => sum + value, 0) / clvValues.length : null,
       brier: brierValues.length ? brierValues.reduce((sum, value) => sum + value, 0) / brierValues.length : null,
-      maxDrawdown,
+      maxDrawdown: roiSample ? maxDrawdown : null,
     };
   }
 
@@ -99,10 +106,10 @@
 
     grid.innerHTML = [
       card("命中率", percent(stats.hitRate), `${stats.wins} 勝 ${stats.losses} 負`, stats.hitRate >= 0.5 ? "positive" : "negative"),
-      card("紙上 ROI", percent(stats.roi), "每場固定 1 單位，不代表正式投注績效", stats.roi >= 0 ? "positive" : "negative"),
+      card("紙上 ROI", percent(stats.roi), `有效賠率樣本 ${stats.roiSample}；固定 1 單位`, stats.roi == null ? "neutral" : stats.roi >= 0 ? "positive" : "negative"),
       card("平均 CLV", percent(stats.avgClv), "只使用已有 Closing 的紀錄", stats.avgClv == null ? "neutral" : stats.avgClv >= 0 ? "positive" : "negative"),
       card("Brier Score", number(stats.brier), "越低越好；以中性勝率計算"),
-      card("最大回撤", stats.maxDrawdown == null ? "—" : `${stats.maxDrawdown.toFixed(2)}u`, "固定 1 單位紙上序列", stats.maxDrawdown > 3 ? "warning" : "neutral"),
+      card("最大回撤", stats.maxDrawdown == null ? "—" : `${stats.maxDrawdown.toFixed(2)}u`, "只使用具有有效賠率的紙上序列", stats.maxDrawdown > 3 ? "warning" : "neutral"),
       card("有效樣本", String(stats.sample), "正式主要場次且已有賽果"),
     ].join("");
   }

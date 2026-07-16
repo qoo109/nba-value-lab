@@ -10,6 +10,8 @@ on:
       - "scripts/validate_model_registry.py"
       - "js/v4-data.js"
       - "js/v4-core.js"
+      - "js/v4-render.js"
+      - "js/v4-6-model-coordination.js"
       - "js/v4-init.js"
       - ".github/workflows/validate-model-registry.yml"
   pull_request:
@@ -19,6 +21,8 @@ on:
       - "scripts/validate_model_registry.py"
       - "js/v4-data.js"
       - "js/v4-core.js"
+      - "js/v4-render.js"
+      - "js/v4-6-model-coordination.js"
       - "js/v4-init.js"
 
 permissions:
@@ -40,5 +44,6 @@ jobs:
           node --check js/v4-data.js
           node --check js/v4-core.js
           node --check js/v4-render.js
+          node --check js/v4-6-model-coordination.js
           node --check js/v4-init.js
           node --check js/v4-live-data.js

@@ -3,25 +3,9 @@
 (function () {
   const v5 = window.NBAVL.v5;
 
-  function eventTime(record) {
-    return record.price_evaluated_at || record.evaluation_cutoff || record.predicted_at || record.observed_at || "";
-  }
-
-  function latestResolvedMainRecords(records) {
-    const latest = new Map();
-    records
-      .filter((record) => record.main_candidate && typeof record.won === "boolean")
-      .sort((a, b) => eventTime(a).localeCompare(eventTime(b)))
-      .forEach((record) => {
-        const key = [record.game_id, record.selection_team_id || record.target].filter(Boolean).join("::")
-          || record.prediction_id || record.price_evaluation_id;
-        latest.set(key, record);
-      });
-    return [...latest.values()].sort((a, b) => eventTime(a).localeCompare(eventTime(b)));
-  }
-
   function calculate(records) {
-    const resolved = latestResolvedMainRecords(records);
+    const history = v5.modules.history;
+    const resolved = history.latestResolvedMainRecords(records);
     if (!resolved.length) {
       return { sample: 0, roiSample: 0, wins: 0, losses: 0, hitRate: null, roi: null, avgClv: null, brier: null, maxDrawdown: null };
     }
@@ -37,8 +21,8 @@
 
     resolved.forEach((record) => {
       const won = Boolean(record.won);
-      const odds = Number(record.target_odds);
-      const validOdds = Number.isFinite(odds) && odds > 1;
+      const odds = history.numeric(record.target_odds);
+      const validOdds = odds !== null && odds > 1;
       if (won) wins += 1;
 
       if (validOdds) {
@@ -50,11 +34,10 @@
         maxDrawdown = Math.max(maxDrawdown, peak - equity);
       }
 
-      if (record.clv_odds != null && Number.isFinite(Number(record.clv_odds))) clvValues.push(Number(record.clv_odds));
-      if (record.p_neutral != null && Number.isFinite(Number(record.p_neutral))) {
-        const outcome = won ? 1 : 0;
-        brierValues.push((Number(record.p_neutral) - outcome) ** 2);
-      }
+      const clv = history.numeric(record.clv_odds);
+      if (clv !== null) clvValues.push(clv);
+      const probability = history.numeric(record.p_neutral);
+      if (probability !== null) brierValues.push((probability - (won ? 1 : 0)) ** 2);
     });
 
     return {

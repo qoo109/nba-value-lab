@@ -2,6 +2,11 @@ name: Update NBA free data
 
 on:
   workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "scripts/update_nba_data.py"
+      - ".github/workflows/update-nba-data.yml"
   schedule:
     # Asia/Taipei: 08:05, 12:05, 17:05, 21:05
     - cron: "5 0,4,9,13 * * *"
@@ -43,7 +48,8 @@ jobs:
           for path in required:
               with path.open(encoding="utf-8") as handle:
                   payload = json.load(handle)
-              if not isinstance(payload, dict) or "meta" not in payload and path.name != "update-meta.json":
+              has_meta = path.name == "update-meta.json" or "meta" in payload
+              if not isinstance(payload, dict) or not has_meta:
                   raise SystemExit(f"Invalid generated file: {path}")
               print(f"validated {path}")
           PY

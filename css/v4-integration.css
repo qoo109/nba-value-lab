@@ -1,0 +1,80 @@
+.timing-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 18px 0 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+}
+.timing-strip > div {
+  display: grid;
+  gap: 4px;
+  min-height: 116px;
+  padding: 18px 20px;
+  border-right: 1px solid var(--line);
+}
+.timing-strip > div:last-child { border-right: 0; }
+.timing-strip span {
+  color: var(--blue);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+.timing-strip strong { font-size: 18px; }
+.timing-strip small { color: var(--muted); line-height: 1.55; }
+.engine-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 10px 0 4px;
+}
+.engine-tags span,
+.engine-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--blue) 35%, var(--line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--blue-soft) 55%, transparent);
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.candidate-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 12px;
+  min-width: min(100%, 520px);
+}
+.state-card.blue {
+  border-color: color-mix(in srgb, var(--blue) 45%, var(--line));
+}
+.state-card.blue strong { color: var(--blue); }
+.candidate-tier { margin-top: 24px; }
+.candidate-tier + .candidate-tier {
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.game-card.tier-core {
+  box-shadow: inset 4px 0 0 var(--green);
+  border-color: color-mix(in srgb, var(--green) 48%, var(--line));
+}
+.game-card.tier-priority {
+  box-shadow: inset 4px 0 0 var(--blue);
+  border-color: color-mix(in srgb, var(--blue) 38%, var(--line));
+}
+@media (max-width: 920px) {
+  .timing-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .timing-strip > div:nth-child(2) { border-right: 0; }
+  .timing-strip > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .candidate-summary { grid-template-columns: 1fr; min-width: 0; width: 100%; }
+}
+@media (max-width: 620px) {
+  .timing-strip { grid-template-columns: 1fr; }
+  .timing-strip > div { border-right: 0; border-bottom: 1px solid var(--line); }
+  .timing-strip > div:last-child { border-bottom: 0; }
+}

@@ -12,18 +12,18 @@ from typing import Any
 
 import lock_t60_snapshot_v49 as prior
 from append_research_record_v410 import append_many
-from multi_main_policy import apply_multi_main
+from multi_main_policy import apply_multi_main, rebuild_multi_lock_index
 
 base = prior.base
 ROOT = base.ROOT
 LOCKS_DIR = base.LOCKS_DIR
+LOCKS_INDEX = base.LOCKS_INDEX
 
 
 def run(input_path: Path, *, dry_run: bool, output_path: Path | None = None) -> dict[str, Any]:
     top = base.load_json(input_path)
     if top.get("data_mode") == "fixture" and not dry_run:
         raise ValueError("fixture data can only run with --dry-run")
-
     with tempfile.TemporaryDirectory() as directory:
         raw_output = Path(directory) / "single-main-output.json"
         base.run(input_path, dry_run=True, output_path=raw_output)
@@ -44,7 +44,6 @@ def run(input_path: Path, *, dry_run: bool, output_path: Path | None = None) -> 
     if output_path:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
     if dry_run:
         append_many(records, validate_only=True)
         print(json.dumps(selection, ensure_ascii=False, indent=2))
@@ -60,7 +59,7 @@ def run(input_path: Path, *, dry_run: bool, output_path: Path | None = None) -> 
     try:
         append_many(records)
         os.replace(temp, lock_path)
-        base.rebuild_locks_index()
+        rebuild_multi_lock_index(LOCKS_DIR, LOCKS_INDEX, ROOT)
     finally:
         if temp.exists():
             temp.unlink()

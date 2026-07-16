@@ -86,6 +86,7 @@ def main() -> int:
 
     require("V5 UI failed to load; continuing with V4.10 UI" in init_text, "V4.10 fallback is missing")
     require('dataset.appVersion = v5Ready ? "V5.2"' in init_text, "V5.2 app version is not active")
+    require("dashboard.js?v=5.2.2" in init_text, "Reordered dashboard cache version is missing")
     require("window.showDetail = open" in (ROOT / "js/v5/components/drawer.js").read_text(encoding="utf-8"), "Drawer does not replace showDetail")
 
     cards = (ROOT / "js/v5/components/cards.js").read_text(encoding="utf-8")
@@ -97,6 +98,22 @@ def main() -> int:
     require("grid-template-columns: minmax(0, 1fr) !important" in compact, "Top-pick layout is not forced to one column")
     require("white-space: nowrap" in compact, "Decision strip is not kept to one line")
     require("v52-decision-note" in compact, "Compact decision note styling is missing")
+
+    dashboard = (ROOT / "js/v5/pages/dashboard.js").read_text(encoding="utf-8")
+    dashboard_order = [
+        'analysis.querySelector(".games-section")',
+        "market,",
+        'analysis.querySelector(".hero-grid")',
+        'sectionShell(analysis.querySelector(".calculator"))',
+        'analysis.querySelector(".v5-model-disclosure")',
+        'sectionShell(analysis.querySelector(".source-card"))',
+        'sectionShell(analysis.querySelector(".weights-card"))',
+        'sectionShell(analysis.querySelector(".pipeline-card"))',
+    ]
+    order_positions = [dashboard.index(token) for token in dashboard_order]
+    require(order_positions == sorted(order_positions), "Dashboard sections are not in candidate-market-result-model order")
+    require("if (market?.matches(\"details\")) market.open = true" in dashboard, "Market table must open by default")
+    require('analysis.dataset.sectionOrder = "candidates-market-results-tools-model-sources"' in dashboard, "Dashboard order marker is missing")
 
     bootstrap = (ROOT / "js/v5/bootstrap.js").read_text(encoding="utf-8")
     for module in ("performanceDashboard", "performanceTrends", "researchTimeline", "marketTrends", "router"):
@@ -124,7 +141,7 @@ def main() -> int:
     require("env(safe-area-inset-bottom)" in mobile, "Mobile safe-area support is missing")
     require("position: fixed" in mobile, "Mobile bottom navigation is missing")
 
-    print("V5.2.1 compact decision strip valid")
+    print("V5.2 dashboard priority order valid")
     return 0
 
 

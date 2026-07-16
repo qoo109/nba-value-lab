@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "registry_version": "1.0.0",
+  "updated_at": "2026-07-16T00:00:00Z",
+  "active": {
+    "V": {
+      "engine_id": "V",
+      "version": "3.0",
+      "config": "models/v3/3.0/config.json",
+      "spec": "models/v3/3.0/spec.md"
+    },
+    "G": {
+      "engine_id": "G",
+      "version": "1.0",
+      "config": "models/g1/1.0/config.json",
+      "spec": "models/g1/1.0/spec.md"
+    }
+  },
+  "compatibility": {
+    "frontend_min": "4.5.0",
+    "prediction_record_schema": "1.0.0"
+  },
+  "deployment": {
+    "auto_publish_on_main": true,
+    "require_validation": true
+  }
+}

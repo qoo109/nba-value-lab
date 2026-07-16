@@ -1,0 +1,44 @@
+name: Validate model registry
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "models/**"
+      - "schemas/**"
+      - "scripts/validate_model_registry.py"
+      - "js/v4-data.js"
+      - "js/v4-core.js"
+      - "js/v4-init.js"
+      - ".github/workflows/validate-model-registry.yml"
+  pull_request:
+    paths:
+      - "models/**"
+      - "schemas/**"
+      - "scripts/validate_model_registry.py"
+      - "js/v4-data.js"
+      - "js/v4-core.js"
+      - "js/v4-init.js"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate registry and configs
+        run: python scripts/validate_model_registry.py
+      - name: Check JavaScript syntax
+        run: |
+          node --check js/v4-data.js
+          node --check js/v4-core.js
+          node --check js/v4-render.js
+          node --check js/v4-init.js
+          node --check js/v4-live-data.js

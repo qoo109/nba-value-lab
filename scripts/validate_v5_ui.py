@@ -29,6 +29,7 @@ FILES = {
     "css/v5-mobile-p1.css": 300,
     "css/v5-routing-p2.css": 180,
     "css/v5-trends-p2.css": 360,
+    "css/v5-compact-decision.css": 180,
 }
 
 LOAD_ORDER = [
@@ -56,6 +57,7 @@ STYLES = [
     "css/v5-mobile-p1.css",
     "css/v5-routing-p2.css",
     "css/v5-trends-p2.css",
+    "css/v5-compact-decision.css",
 ]
 
 
@@ -85,8 +87,16 @@ def main() -> int:
     require("V5 UI failed to load; continuing with V4.10 UI" in init_text, "V4.10 fallback is missing")
     require('dataset.appVersion = v5Ready ? "V5.2"' in init_text, "V5.2 app version is not active")
     require("window.showDetail = open" in (ROOT / "js/v5/components/drawer.js").read_text(encoding="utf-8"), "Drawer does not replace showDetail")
-    require("window.renderTopPick" in (ROOT / "js/v5/components/cards.js").read_text(encoding="utf-8"), "V5 cards do not replace top-pick renderer")
-    require("window.renderCards" in (ROOT / "js/v5/components/cards.js").read_text(encoding="utf-8"), "V5 cards do not replace candidate renderer")
+
+    cards = (ROOT / "js/v5/components/cards.js").read_text(encoding="utf-8")
+    require("window.renderTopPick" in cards, "V5 cards do not replace top-pick renderer")
+    require("window.renderCards" in cards, "V5 cards do not replace candidate renderer")
+    require("v52-compact-decision" in cards and "v52-decision-note" in cards, "Compact decision-strip markup is missing")
+
+    compact = (ROOT / "css/v5-compact-decision.css").read_text(encoding="utf-8")
+    require("grid-template-columns: minmax(0, 1fr) !important" in compact, "Top-pick layout is not forced to one column")
+    require("white-space: nowrap" in compact, "Decision strip is not kept to one line")
+    require("v52-decision-note" in compact, "Compact decision note styling is missing")
 
     bootstrap = (ROOT / "js/v5/bootstrap.js").read_text(encoding="utf-8")
     for module in ("performanceDashboard", "performanceTrends", "researchTimeline", "marketTrends", "router"):
@@ -114,7 +124,7 @@ def main() -> int:
     require("env(safe-area-inset-bottom)" in mobile, "Mobile safe-area support is missing")
     require("position: fixed" in mobile, "Mobile bottom navigation is missing")
 
-    print("V5.2 UI P2 architecture valid")
+    print("V5.2.1 compact decision strip valid")
     return 0
 
 

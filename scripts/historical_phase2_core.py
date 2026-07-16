@@ -9,7 +9,7 @@ import tarfile
 import urllib.request
 from collections import Counter
 
-UA = "NBA-Value-Lab-historical-pilot/2.0"
+UA = "NBA-Value-Lab-historical-pilot/2.1"
 
 
 def missing(value):
@@ -90,6 +90,11 @@ def select_csv(root, source):
     return max(candidates, key=lambda path: path.stat().st_size)
 
 
+def row_fingerprint(row, columns):
+    payload = "\x1f".join(str(row.get(column, "")).strip() for column in columns)
+    return hashlib.sha1(payload.encode("utf-8", errors="replace")).hexdigest()
+
+
 def scan_csv(path, source, sample_limit):
     expected = source["expected_fields_any"]
     game_candidates = source["game_id_fields"]
@@ -97,6 +102,7 @@ def scan_csv(path, source, sample_limit):
     sample_fields = source["silver_sample_fields"]
     games, nulls = Counter(), Counter()
     key_states, samples, sample_games = [], [], []
+    exact_rows, exact_duplicate_rows = set(), 0
 
     with path.open("r", encoding="utf-8-sig", errors="replace", newline="") as handle:
         reader = csv.DictReader(handle)
@@ -114,12 +120,20 @@ def scan_csv(path, source, sample_limit):
                 "fields": fields,
                 "available": all(resolved),
                 "resolved": resolved,
-                "seen": set(),
+                "first_fingerprint": {},
                 "duplicates": 0,
+                "exact_duplicates": 0,
+                "conflicting_duplicates": 0,
                 "incomplete": 0,
             })
 
         for row_number, row in enumerate(reader, 1):
+            fingerprint = row_fingerprint(row, columns)
+            if fingerprint in exact_rows:
+                exact_duplicate_rows += 1
+            else:
+                exact_rows.add(fingerprint)
+
             game_id = str(row.get(game_field, "")).strip()
             if game_id:
                 games[game_id] += 1
@@ -133,10 +147,16 @@ def scan_csv(path, source, sample_limit):
                 values = tuple(str(row.get(field, "")).strip() for field in state["resolved"])
                 if any(missing(value) for value in values):
                     state["incomplete"] += 1
-                elif values in state["seen"]:
-                    state["duplicates"] += 1
+                    continue
+                previous = state["first_fingerprint"].get(values)
+                if previous is None:
+                    state["first_fingerprint"][values] = fingerprint
                 else:
-                    state["seen"].add(values)
+                    state["duplicates"] += 1
+                    if previous == fingerprint:
+                        state["exact_duplicates"] += 1
+                    else:
+                        state["conflicting_duplicates"] += 1
             if game_id and len(samples) < sample_limit:
                 if game_id not in sample_games and len(sample_games) < 3:
                     sample_games.append(game_id)
@@ -154,10 +174,15 @@ def scan_csv(path, source, sample_limit):
         result = {"fields": state["fields"], "available": state["available"]}
         if state["available"]:
             result.update({
-                "unique_key_count": len(state["seen"]),
+                "unique_key_count": len(state["first_fingerprint"]),
                 "duplicate_rows": state["duplicates"],
+                "exact_duplicate_rows": state["exact_duplicates"],
+                "conflicting_duplicate_rows": state["conflicting_duplicates"],
                 "incomplete_rows": state["incomplete"],
-                "unique": state["duplicates"] == 0 and state["incomplete"] == 0,
+                "strictly_unique": state["duplicates"] == 0 and state["incomplete"] == 0,
+                "unique_after_exact_dedupe": (
+                    state["conflicting_duplicates"] == 0 and state["incomplete"] == 0
+                ),
             })
         checks.append(result)
     return {
@@ -174,6 +199,11 @@ def scan_csv(path, source, sample_limit):
             field: round(count / total, 6) for field, count in nulls.items() if total
         },
         "rows": row_summary(games),
+        "exact_row_deduplication": {
+            "unique_row_fingerprints": len(exact_rows),
+            "exact_duplicate_rows": exact_duplicate_rows,
+            "rows_after_exact_dedupe": total - exact_duplicate_rows,
+        },
         "game_ids": sorted(games),
         "candidate_key_checks": checks,
         "silver_sample_rows": samples,

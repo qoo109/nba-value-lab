@@ -9,7 +9,7 @@ import tarfile
 import urllib.request
 from collections import Counter
 
-UA = "NBA-Value-Lab-historical-pilot/2.1"
+UA = "NBA-Value-Lab-historical-pilot/2.2"
 
 
 def missing(value):
@@ -66,17 +66,30 @@ def quantile(values, q):
     return values[low] + (values[high] - values[low]) * (position - low)
 
 
-def row_summary(counts):
-    values = sorted(counts.values())
+def distribution(values):
+    values = sorted(values)
     return {
-        "game_count": len(counts),
-        "row_count": sum(values),
-        "min_rows_per_game": values[0] if values else None,
-        "p25_rows_per_game": round(quantile(values, 0.25), 2) if values else None,
-        "median_rows_per_game": round(statistics.median(values), 2) if values else None,
-        "p75_rows_per_game": round(quantile(values, 0.75), 2) if values else None,
-        "p95_rows_per_game": round(quantile(values, 0.95), 2) if values else None,
-        "max_rows_per_game": values[-1] if values else None,
+        "count": len(values),
+        "min": values[0] if values else None,
+        "p25": round(quantile(values, 0.25), 2) if values else None,
+        "median": round(statistics.median(values), 2) if values else None,
+        "p75": round(quantile(values, 0.75), 2) if values else None,
+        "p95": round(quantile(values, 0.95), 2) if values else None,
+        "max": values[-1] if values else None,
+    }
+
+
+def row_summary(counts):
+    result = distribution(list(counts.values()))
+    return {
+        "game_count": result.pop("count"),
+        "row_count": sum(counts.values()),
+        "min_rows_per_game": result["min"],
+        "p25_rows_per_game": result["p25"],
+        "median_rows_per_game": result["median"],
+        "p75_rows_per_game": result["p75"],
+        "p95_rows_per_game": result["p95"],
+        "max_rows_per_game": result["max"],
     }
 
 
@@ -95,13 +108,15 @@ def row_fingerprint(row, columns):
     return hashlib.sha1(payload.encode("utf-8", errors="replace")).hexdigest()
 
 
+def resolve_fields(names, fields):
+    return [names.get(field.upper()) for field in fields]
+
+
 def scan_csv(path, source, sample_limit):
     expected = source["expected_fields_any"]
-    game_candidates = source["game_id_fields"]
-    key_candidates = source["candidate_primary_keys"]
     sample_fields = source["silver_sample_fields"]
     games, nulls = Counter(), Counter()
-    key_states, samples, sample_games = [], [], []
+    key_states, group_states, samples, sample_games = [], [], [], []
     exact_rows, exact_duplicate_rows = set(), 0
 
     with path.open("r", encoding="utf-8-sig", errors="replace", newline="") as handle:
@@ -109,13 +124,18 @@ def scan_csv(path, source, sample_limit):
         columns = list(reader.fieldnames or [])
         names = lookup(columns)
         game_field = next(
-            (names.get(name.upper()) for name in game_candidates if names.get(name.upper())),
+            (
+                names.get(name.upper())
+                for name in source["game_id_fields"]
+                if names.get(name.upper())
+            ),
             None,
         )
         if not game_field:
             raise ValueError("game id field missing")
-        for fields in key_candidates:
-            resolved = [names.get(field.upper()) for field in fields]
+
+        for fields in source.get("candidate_primary_keys", []):
+            resolved = resolve_fields(names, fields)
             key_states.append({
                 "fields": fields,
                 "available": all(resolved),
@@ -127,9 +147,28 @@ def scan_csv(path, source, sample_limit):
                 "incomplete": 0,
             })
 
+        for rule in source.get("grouping_rules", []):
+            key_fields = rule["fields"]
+            consistency_fields = rule.get("consistency_fields", [])
+            resolved_key = resolve_fields(names, key_fields)
+            resolved_consistency = resolve_fields(names, consistency_fields)
+            group_states.append({
+                "name": rule["name"],
+                "fields": key_fields,
+                "consistency_fields": consistency_fields,
+                "available": all(resolved_key) and all(resolved_consistency),
+                "resolved_key": resolved_key,
+                "resolved_consistency": resolved_consistency,
+                "first_consistency": {},
+                "row_counts": Counter(),
+                "incomplete": 0,
+                "inconsistent_groups": set(),
+            })
+
         for row_number, row in enumerate(reader, 1):
             fingerprint = row_fingerprint(row, columns)
-            if fingerprint in exact_rows:
+            is_exact_duplicate = fingerprint in exact_rows
+            if is_exact_duplicate:
                 exact_duplicate_rows += 1
             else:
                 exact_rows.add(fingerprint)
@@ -141,6 +180,7 @@ def scan_csv(path, source, sample_limit):
                 actual = names.get(field.upper())
                 if actual and missing(row.get(actual)):
                     nulls[field] += 1
+
             for state in key_states:
                 if not state["available"]:
                     continue
@@ -157,6 +197,28 @@ def scan_csv(path, source, sample_limit):
                         state["exact_duplicates"] += 1
                     else:
                         state["conflicting_duplicates"] += 1
+
+            if not is_exact_duplicate:
+                for state in group_states:
+                    if not state["available"]:
+                        continue
+                    group_key = tuple(
+                        str(row.get(field, "")).strip() for field in state["resolved_key"]
+                    )
+                    if any(missing(value) for value in group_key):
+                        state["incomplete"] += 1
+                        continue
+                    consistency = tuple(
+                        str(row.get(field, "")).strip()
+                        for field in state["resolved_consistency"]
+                    )
+                    previous = state["first_consistency"].get(group_key)
+                    if previous is None:
+                        state["first_consistency"][group_key] = consistency
+                    elif previous != consistency:
+                        state["inconsistent_groups"].add(group_key)
+                    state["row_counts"][group_key] += 1
+
             if game_id and len(samples) < sample_limit:
                 if game_id not in sample_games and len(sample_games) < 3:
                     sample_games.append(game_id)
@@ -185,15 +247,42 @@ def scan_csv(path, source, sample_limit):
                 ),
             })
         checks.append(result)
+
+    groups = []
+    for state in group_states:
+        result = {
+            "name": state["name"],
+            "fields": state["fields"],
+            "consistency_fields": state["consistency_fields"],
+            "available": state["available"],
+        }
+        if state["available"]:
+            result.update({
+                "group_count": len(state["first_consistency"]),
+                "incomplete_rows": state["incomplete"],
+                "inconsistent_group_count": len(state["inconsistent_groups"]),
+                "rows_per_group_after_exact_dedupe": distribution(
+                    list(state["row_counts"].values())
+                ),
+                "usable_for_normalization": (
+                    state["incomplete"] == 0
+                    and len(state["inconsistent_groups"]) == 0
+                ),
+            })
+        groups.append(result)
+
     return {
         "file": {
             "name": path.name,
             "bytes": path.stat().st_size,
             "megabytes": round(path.stat().st_size / 1048576, 2),
         },
+        "normalization_mode": source.get("normalization_mode", "event_rows"),
         "columns": columns,
         "column_count": len(columns),
-        "expected_fields_missing": [field for field in expected if field.upper() not in names],
+        "expected_fields_missing": [
+            field for field in expected if field.upper() not in names
+        ],
         "expected_field_null_counts": dict(nulls),
         "expected_field_null_rates": {
             field: round(count / total, 6) for field, count in nulls.items() if total
@@ -206,6 +295,7 @@ def scan_csv(path, source, sample_limit):
         },
         "game_ids": sorted(games),
         "candidate_key_checks": checks,
+        "grouping_checks": groups,
         "silver_sample_rows": samples,
         "silver_sample_game_ids": sample_games,
     }

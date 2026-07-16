@@ -10,6 +10,8 @@
 
   function afterRender() {
     v5.modules.dashboard.afterRender();
+    v5.modules.performanceDashboard?.afterRender();
+    v5.modules.researchTimeline?.afterRender();
     document.documentElement.dataset.uiPreparing = "false";
     document.documentElement.dataset.uiReady = "true";
   }

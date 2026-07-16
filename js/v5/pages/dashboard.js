@@ -52,18 +52,10 @@
       open: window.matchMedia("(min-width: 1100px)").matches,
       className: "v5-market-disclosure",
     });
-    wrapSection(analysis.querySelector(".calculator"), "賠率即時試算", {
-      hint: "只重算價格，不改模型勝率",
-    });
-    wrapSection(analysis.querySelector(".source-card"), "資料來源策略", {
-      hint: "目標莊家、比較來源與快照",
-    });
-    wrapSection(analysis.querySelector(".weights-card"), "證據覆蓋權重", {
-      hint: "資料完整度，不是直接勝率係數",
-    });
-    wrapSection(analysis.querySelector(".pipeline-card"), "研究快照流程", {
-      hint: "T−60m、T−5m 與 Closing",
-    });
+    wrapSection(analysis.querySelector(".calculator"), "賠率即時試算", { hint: "只重算價格，不改模型勝率" });
+    wrapSection(analysis.querySelector(".source-card"), "資料來源策略", { hint: "目標莊家、比較來源與快照" });
+    wrapSection(analysis.querySelector(".weights-card"), "證據覆蓋權重", { hint: "資料完整度，不是直接勝率係數" });
+    wrapSection(analysis.querySelector(".pipeline-card"), "研究快照流程", { hint: "T−60m、T−5m 與 Closing" });
   }
 
   function updateCandidatePanel() {
@@ -90,14 +82,25 @@
     if (coreHint) coreHint.textContent = "前兩場通過全部 Gate；第 3 場需通過額外嚴格門檻";
   }
 
+  function updateResearchPanel() {
+    const panel = document.querySelector('[data-panel="research"]');
+    if (!panel) return;
+    const title = panel.querySelector(".view-hero h1");
+    const copy = panel.querySelector(".view-hero p");
+    const recordsHeading = panel.querySelector("#historyGeneratedAt")?.closest("section")?.querySelector("h2");
+    if (title) title.textContent = "研究 Timeline 與歷史績效";
+    if (copy) copy.textContent = "依時間查看鎖定、價格、基本面、Closing 與賽果事件；績效只使用已有正式結果的主要場次。";
+    if (recordsHeading) recordsHeading.textContent = "研究事件 Timeline";
+  }
+
   function updateShell() {
     document.documentElement.classList.add("v5-ui");
-    document.documentElement.dataset.uiVersion = v5.version;
-    document.title = `NBA Value Lab V5.0｜${activeModelLabel()}`;
+    document.documentElement.dataset.uiVersion = "5.1";
+    document.title = `NBA Value Lab V5.1｜${activeModelLabel()}`;
     const header = document.querySelector(".header-status");
-    if (header) header.innerHTML = `<span class="status-dot"></span>V5.0・${activeModelLabel()}・主要 2／最多 3`;
+    if (header) header.innerHTML = `<span class="status-dot"></span>V5.1・${activeModelLabel()}・主要 2／最多 3`;
     const footer = document.querySelector("footer > span:first-child");
-    if (footer) footer.textContent = "NBA VALUE LAB V5.0";
+    if (footer) footer.textContent = "NBA VALUE LAB V5.1";
   }
 
   function afterRender() {
@@ -105,6 +108,7 @@
     updateNavigation();
     simplifyAnalysis();
     updateCandidatePanel();
+    updateResearchPanel();
     document.querySelector("#multiMainSummary")?.setAttribute("hidden", "");
   }
 

@@ -1,0 +1,141 @@
+{
+  "engine_id": "V",
+  "version": "3.1",
+  "revision_id": "V3.1-20260716",
+  "status": "research",
+  "stage": 1,
+  "role": "probability_calibration_price_decision_and_validation_governance",
+  "market": {
+    "league": "NBA",
+    "type": "pregame_two_way_moneyline",
+    "includes_overtime": true
+  },
+  "odds_scope": {
+    "min": 1.4,
+    "max": 1.6
+  },
+  "required_margin_pp": 5.0,
+  "preview_policy": {
+    "snapshot": "T-24h",
+    "maximum_grade": "ㄆ",
+    "extra_margin_pp": null
+  },
+  "price_policy": {
+    "classification_uses_unrounded_odds": true,
+    "price_only_change_creates_new_price_evaluation": true,
+    "price_only_change_must_not_change_prediction": true,
+    "price_segments": [
+      {
+        "id": "extreme_low_excluded",
+        "min": 1.2,
+        "max": 1.3,
+        "min_inclusive": true,
+        "max_inclusive": false,
+        "label": "極低價格區",
+        "required_margin_pp": 5.0,
+        "eligible_b": false,
+        "maximum_conclusion": "排除・極低價格"
+      },
+      {
+        "id": "low_extension",
+        "min": 1.3,
+        "max": 1.4,
+        "min_inclusive": true,
+        "max_inclusive": false,
+        "label": "低價延伸研究區",
+        "required_margin_pp": 5.0,
+        "eligible_b": false,
+        "maximum_conclusion": "ㄆ級・延伸研究"
+      },
+      {
+        "id": "core",
+        "min": 1.4,
+        "max": 1.6,
+        "min_inclusive": true,
+        "max_inclusive": true,
+        "label": "核心決策區",
+        "required_margin_pp": 5.0,
+        "eligible_b": true,
+        "maximum_conclusion": "ㄅ級・研究候選"
+      },
+      {
+        "id": "high_extension",
+        "min": 1.6,
+        "max": 1.75,
+        "min_inclusive": false,
+        "max_inclusive": true,
+        "label": "高價延伸研究區",
+        "required_margin_pp": 5.0,
+        "eligible_b": false,
+        "maximum_conclusion": "ㄆ級・延伸研究"
+      },
+      {
+        "id": "separate_calibration",
+        "min": 1.75,
+        "max": 2.0,
+        "min_inclusive": false,
+        "max_inclusive": false,
+        "label": "另行校準區",
+        "required_margin_pp": 5.0,
+        "eligible_b": false,
+        "maximum_conclusion": "另行校準"
+      }
+    ],
+    "outside_conclusion": "範圍外"
+  },
+  "grading": {
+    "watch_gap_min_pp": -3.0,
+    "stage_0_2_b_label": "ㄅ級・研究候選",
+    "extension_cap": "ㄆ級・延伸研究",
+    "risk_2_maximum_grade": "ㄆ",
+    "risk_3_price_grade": "價格判斷停止",
+    "low_confidence_maximum_grade": "ㄆ"
+  },
+  "coverage": {
+    "method": "passed_applicable_field_checks_divided_by_all_applicable_field_checks",
+    "weighted_compensation": false,
+    "critical_fields_non_compensable": true,
+    "high_min_pct": 85,
+    "medium_min_pct": 65,
+    "low_min_pct": 50,
+    "insufficient_below_pct": 50
+  },
+  "risk_levels": {
+    "0": "無已知未解決問題",
+    "1": "非核心或合理中心影響低於1pp",
+    "2": "可能影響約1至3pp，最高ㄆ級",
+    "3": "核心或可能影響超過3pp，停止正式價格分級"
+  },
+  "object_model": {
+    "prediction_is_immutable": true,
+    "price_evaluation_is_append_only": true,
+    "validation_run_is_versioned": true,
+    "price_evaluation_id_required": true,
+    "prediction_id_unchanged_on_price_only_change": true
+  },
+  "probability_model": {
+    "target_book_price_excluded_from_probability_features": true,
+    "components": ["P_F", "P_M", "R_outcome", "calibration"],
+    "outputs": ["P_C", "P_N", "P_O"],
+    "ordering_required": "0 <= P_C <= P_N <= P_O <= 1"
+  },
+  "blind_review": {
+    "required": true,
+    "hide_before_lock": ["target_odds", "EV", "minimum_acceptable_odds", "grade"],
+    "manual_probability_shift_forbidden": true
+  },
+  "validation": {
+    "random_split_forbidden": true,
+    "nested_walk_forward_required": true,
+    "final_holdout_once": true,
+    "stage_3_requires_registered_validation_run": true
+  },
+  "publication": {
+    "allow_formal_stake": false,
+    "formal_stake_fraction": 0,
+    "requires_calibration": true,
+    "requires_point_in_time_validation": true,
+    "external_status": "歷史驗證中，禁止正式投入"
+  },
+  "source_sha256": "7936bf1ab7629c5aee98149f7cced006cfd838fb598d9dc4a98ab3366f71bffa"
+}

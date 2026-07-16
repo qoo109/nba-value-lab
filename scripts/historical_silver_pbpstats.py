@@ -7,7 +7,6 @@ import csv
 import sqlite3
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any
 
 from historical_silver_schema import as_int, clean, parse_free_throws, row_fingerprint, safe_div, stable_id
 
@@ -135,7 +134,7 @@ def aggregate_team_features(possessions, game_rows):
         teams_by_game[game_id].add(team)
         bucket = totals[(game_id, team)]
         bucket["possessions"] += 1
-        bucket["points"] += item["points_scored"]
+        bucket["reconstructed_points"] += item["points_scored"]
         bucket["fg2a"] += item["fg2a"]
         bucket["fg2m"] += item["fg2m"]
         bucket["fg3a"] += item["fg3a"]
@@ -146,7 +145,8 @@ def aggregate_team_features(possessions, game_rows):
         bucket["tov"] += item["turnovers"]
 
     output = []
-    score_mismatch_rows = 0
+    reconstruction_mismatch_rows = 0
+    official_score_rows = 0
     incomplete_team_games = 0
     for game_id, game in game_rows.items():
         teams = sorted(teams_by_game.get(game_id, set()))
@@ -161,26 +161,34 @@ def aggregate_team_features(possessions, game_rows):
             fgm = own["fg2m"] + own["fg3m"]
             missed_fg = max(fga - fgm, 0)
             game_minutes = game["game_minutes"]
+            home_abbr = game.get("home_team_abbr")
+            is_home = int(team == home_abbr) if home_abbr else None
+            official_points = game.get("home_score") if is_home == 1 else game.get("away_score") if is_home == 0 else None
+            official_opp_points = game.get("away_score") if is_home == 1 else game.get("home_score") if is_home == 0 else None
+            if official_points is not None and official_opp_points is not None:
+                official_score_rows += 1
+            points = official_points if official_points is not None else own["reconstructed_points"]
+            opponent_points = official_opp_points if official_opp_points is not None else opp["reconstructed_points"]
             pace = safe_div(48 * (own["possessions"] + opp["possessions"]), 2 * game_minutes)
-            off_rtg = safe_div(100 * own["points"], own["possessions"])
-            def_rtg = safe_div(100 * opp["points"], opp["possessions"])
+            off_rtg = safe_div(100 * points, own["possessions"])
+            def_rtg = safe_div(100 * opponent_points, opp["possessions"])
             net_rtg = round(off_rtg - def_rtg, 6) if off_rtg is not None and def_rtg is not None else None
             efg = safe_div(own["fg2m"] + own["fg3m"] + 0.5 * own["fg3m"], fga)
             tov_pct = safe_div(own["tov"], fga + 0.44 * own["fta"] + own["tov"])
             orb_pct = safe_div(own["orb"], missed_fg)
             ftr = safe_div(own["fta"], fga)
-            home_abbr = game.get("home_team_abbr")
-            is_home = int(team == home_abbr) if home_abbr else None
-            official_points = game.get("home_score") if is_home == 1 else game.get("away_score") if is_home == 0 else None
-            points_match = int(official_points == own["points"]) if official_points is not None else None
+            points_match = int(official_points == own["reconstructed_points"]) if official_points is not None else None
             flags = []
             if points_match == 0:
-                score_mismatch_rows += 1
+                reconstruction_mismatch_rows += 1
                 flags.append("possession_points_do_not_match_final_score")
+            if official_points is None:
+                flags.append("official_score_unavailable_using_reconstructed_points")
             if orb_pct is None:
                 flags.append("orb_pct_unavailable")
             output.append((
-                game_id, team, opponent, is_home, own["points"], opp["points"],
+                game_id, team, opponent, is_home, points, opponent_points,
+                own["reconstructed_points"], opp["reconstructed_points"],
                 own["possessions"], opp["possessions"], pace, off_rtg, def_rtg, net_rtg,
                 fga, fgm, own["fg3a"], own["fg3m"], own["fta"], own["ftm"],
                 own["orb"], own["tov"], efg, tov_pct, orb_pct, ftr, points_match,
@@ -188,6 +196,8 @@ def aggregate_team_features(possessions, game_rows):
             ))
     return output, {
         "team_game_row_count": len(output),
-        "score_mismatch_rows": score_mismatch_rows,
+        "official_score_rows": official_score_rows,
+        "reconstruction_mismatch_rows": reconstruction_mismatch_rows,
         "incomplete_team_games": incomplete_team_games,
+        "official_score_coverage_rate": round(official_score_rows / len(output), 6) if output else 0,
     }

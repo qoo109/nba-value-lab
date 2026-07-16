@@ -46,26 +46,30 @@ def run(config_path, output, silver_output, max_mb, sample_limit):
     coverage = compare(audits[0], audits[1])
     schema_pass = all(not item["scan"]["expected_fields_missing"] for item in audits)
     key_pass = all(
-        any(check.get("unique") for check in item["scan"]["candidate_key_checks"])
+        any(
+            check.get("unique_after_exact_dedupe")
+            for check in item["scan"]["candidate_key_checks"]
+        )
         for item in audits
     )
     coverage_pass = coverage["overlap_ratio_of_smaller_source"] >= 0.98
     report = {
-        "schema_version": "2.0.0",
+        "schema_version": "2.1.0",
         "pilot_name": config["pilot_name"],
         "follows_current_site_version": config["follows_current_site_version"],
         "sources": audits,
         "comparison": coverage,
         "decision": {
             "schema_pass": schema_pass,
-            "candidate_key_pass": key_pass,
+            "candidate_key_pass_after_exact_dedupe": key_pass,
             "coverage_pass_98pct": coverage_pass,
             "ready_for_silver_pilot": schema_pass and key_pass and coverage_pass,
             "raw_commit_allowed": False,
+            "dedupe_policy": "drop byte-equivalent normalized rows only; preserve conflicting rows",
             "next_step": (
                 "build normalized adapters and recompute team game features"
                 if schema_pass and key_pass and coverage_pass
-                else "resolve key or coverage differences before Silver conversion"
+                else "resolve conflicting duplicate keys before Silver conversion"
             ),
         },
     }
@@ -80,9 +84,10 @@ def run(config_path, output, silver_output, max_mb, sample_limit):
                 **row,
             })
     silver = {
-        "schema_version": "0.1.0-pilot",
+        "schema_version": "0.2.0-pilot",
         "follows_current_site_version": True,
         "raw_data_included": False,
+        "dedupe_policy": "sample is pre-dedupe and traceable by source_row_number",
         "record_count": len(silver_records),
         "records": silver_records,
     }
@@ -103,8 +108,16 @@ def self_test(output, silver_output):
             "sources": {},
         }
         fixtures = {
-            "a": "GAMEID,PERIOD,STARTTIME,ENDTIME,OPPONENT,EVENTS\n1,1,12:00,11:40,B,Shot\n",
-            "b": "GAME_ID,EVENTNUM,PERIOD,PCTIMESTRING\n1,1,1,12:00\n",
+            "a": (
+                "GAMEID,PERIOD,STARTTIME,ENDTIME,OPPONENT,EVENTS\n"
+                "1,1,12:00,11:40,B,Shot\n"
+                "1,1,12:00,11:40,B,Shot\n"
+            ),
+            "b": (
+                "GAME_ID,EVENTNUM,PERIOD,PCTIMESTRING\n"
+                "1,1,1,12:00\n"
+                "1,1,1,12:00\n"
+            ),
         }
         for key, text in fixtures.items():
             source = root / f"{key}.csv"
@@ -135,6 +148,8 @@ def self_test(output, silver_output):
         config_path.write_text(json.dumps(config), encoding="utf-8")
         report = run(config_path, output, silver_output, 10, 10)
         assert report["decision"]["ready_for_silver_pilot"]
+        for source in report["sources"]:
+            assert source["scan"]["exact_row_deduplication"]["exact_duplicate_rows"] == 1
 
 
 def main():
@@ -149,7 +164,7 @@ def main():
 
     if args.self_test:
         self_test(args.output, args.silver_output)
-        print("historical phase 2 self-test passed")
+        print("historical phase 2 duplicate-classification self-test passed")
         return
 
     report = run(
@@ -166,6 +181,7 @@ def main():
             "csv_mb": item["scan"]["file"]["megabytes"],
             "row_count": item["scan"]["rows"]["row_count"],
             "game_count": item["scan"]["rows"]["game_count"],
+            "exact_dedupe": item["scan"]["exact_row_deduplication"],
             "key_checks": item["scan"]["candidate_key_checks"],
         } for item in report["sources"]],
         "comparison": report["comparison"],

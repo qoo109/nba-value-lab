@@ -1,12 +1,13 @@
 {
   "meta": {
-    "generated_at": "2026-07-16T04:05:25.255912Z",
+    "generated_at": "2026-07-16T04:07:48.733342Z",
     "timezone": "Asia/Taipei",
     "window_start": "2026-07-16",
     "window_end": "2026-07-19",
     "active_source": null,
     "game_count": 0,
-    "data_mode": "free_public_sources"
+    "data_mode": "free_public_sources",
+    "formal_model_publishable": false
   },
   "games": []
 }

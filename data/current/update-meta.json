@@ -1,6 +1,7 @@
 {
-  "generated_at": "2026-07-16T04:05:25.255912Z",
-  "collector_version": "4.4.0",
+  "generated_at": "2026-07-16T04:07:48.733342Z",
+  "collector_version": "4.4.1",
+  "adapter_version": "nba-free-data-v2",
   "python": "3.12.13",
   "game_count": 0,
   "active_source": null

@@ -10,6 +10,23 @@ from pathlib import Path
 from typing import Any
 
 
+def load_active_configs(root: Path, manifest_path: Path) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    v_entry = manifest["active"]["V"]
+    g_entry = manifest["active"]["G"]
+    coordination_entry = manifest["coordination"]
+    v_config = json.loads((root / v_entry["config"]).read_text(encoding="utf-8"))
+    g_config = json.loads((root / g_entry["config"]).read_text(encoding="utf-8"))
+    coordination = json.loads((root / coordination_entry["config"]).read_text(encoding="utf-8"))
+    if str(v_config.get("version")) != str(v_entry.get("version")):
+        raise ValueError("active V config version mismatch")
+    if str(g_config.get("version")) != str(g_entry.get("version")):
+        raise ValueError("active G config version mismatch")
+    if coordination.get("coordination_id") != coordination_entry.get("coordination_id"):
+        raise ValueError("active coordination config mismatch")
+    return manifest, v_config, g_config, coordination
+
+
 def record_rank(record: dict[str, Any]) -> tuple[Any, ...]:
     return (
         float(record.get("data_age_minutes") or 9999),

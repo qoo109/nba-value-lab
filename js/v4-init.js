@@ -100,7 +100,7 @@ async function loadV5Ui() {
   await loadScriptOnce("./js/v5/utils/sparkline.js?v=5.2", "data-v52-sparkline", () => Boolean(window.NBAVL?.v5?.modules?.sparkline));
   await loadScriptOnce("./js/v5/components/cards.js?v=5.2.1", "data-v5-cards", () => Boolean(window.NBAVL?.v5?.modules?.cards));
   await loadScriptOnce("./js/v5/components/drawer.js?v=5.2", "data-v5-drawer", () => Boolean(window.NBAVL?.v5?.modules?.drawer));
-  await loadScriptOnce("./js/v5/pages/dashboard.js?v=5.2", "data-v5-dashboard", () => Boolean(window.NBAVL?.v5?.modules?.dashboard));
+  await loadScriptOnce("./js/v5/pages/dashboard.js?v=5.2.2", "data-v5-dashboard", () => Boolean(window.NBAVL?.v5?.modules?.dashboard));
   await loadScriptOnce("./js/v5/pages/performance-dashboard.js?v=5.2", "data-v51-performance", () => Boolean(window.NBAVL?.v5?.modules?.performanceDashboard));
   await loadScriptOnce("./js/v5/pages/performance-trends.js?v=5.2", "data-v52-performance-trends", () => Boolean(window.NBAVL?.v5?.modules?.performanceTrends));
   await loadScriptOnce("./js/v5/pages/research-timeline.js?v=5.2", "data-v51-timeline", () => Boolean(window.NBAVL?.v5?.modules?.researchTimeline));

@@ -44,7 +44,7 @@ def validate_segments(segments: list[dict[str, Any]], prefix: str, allow_open_ma
     for index, segment in enumerate(segments):
         require(numeric(segment.get("min")), f"{prefix} segment {index} min must be numeric")
         maximum = segment.get("max")
-        require(allow_open_max and maximum is None or numeric(maximum), f"{prefix} segment {index} max must be numeric or null")
+        require((allow_open_max and maximum is None) or numeric(maximum), f"{prefix} segment {index} max must be numeric or null")
         if maximum is not None:
             require(segment["min"] < maximum, f"{prefix} segment {index} min must be below max")
         margin = segment.get("required_margin_pp")
@@ -90,16 +90,34 @@ def validate_g(config: dict[str, Any], entry: dict[str, Any]) -> None:
     require(isinstance(bands, list), "G price_bands must be a list")
     validate_segments(bands, "G", allow_open_max=True)
     require(any(band.get("eligible") for band in bands), "G must have at least one eligible core band")
+
     gate = config.get("core_gate", {})
     require(0 <= gate.get("coverage_min_pct", -1) <= 100, "G coverage_min_pct must be 0..100")
     require(numeric(gate.get("interval_width_max_pp")) and gate["interval_width_max_pp"] > 0, "G interval width must be positive")
     require(numeric(gate.get("threshold_buffer_min_pp")) and gate["threshold_buffer_min_pp"] >= 0, "G threshold buffer must be non-negative")
     require(isinstance(gate.get("comparison_sources_min"), int) and gate["comparison_sources_min"] >= 3, "G main selection requires at least 3 comparison sources")
-    require(gate.get("core_max") in (0, 1), "G core_max must be 0 or 1")
+    require(isinstance(gate.get("core_max"), int) and 0 <= gate["core_max"] <= 3, "G core_max must be 0..3")
+
     selection = config.get("selection", {})
-    require(selection.get("official_main_max") in (0, 1), "G official_main_max must be 0 or 1")
+    target = selection.get("official_main_target")
+    maximum = selection.get("official_main_max")
+    require(isinstance(target, int) and 0 <= target <= 3, "G official_main_target must be 0..3")
+    require(isinstance(maximum, int) and 0 <= maximum <= 3, "G official_main_max must be 0..3")
+    require(target <= maximum, "G official_main_target must not exceed official_main_max")
+    require(gate.get("core_max") == maximum, "G core_max must equal official_main_max")
     require(selection.get("allow_zero_main") is True, "G must permit zero main selections")
     require(selection.get("ui_priority_is_official_g1_grade") is False, "UI priority candidates must not be presented as official G1 grade")
+
+    third = selection.get("third_slot_policy", {})
+    if maximum >= 3:
+        require(third.get("enabled") is True, "G third-slot policy must be enabled when max is 3")
+        require(third.get("requires_all_base_gates") is True, "Third slot must require every base gate")
+        require(third.get("coverage_min_pct", 0) >= gate["coverage_min_pct"], "Third-slot coverage cannot be weaker than base gate")
+        require(third.get("interval_width_max_pp", 999) <= gate["interval_width_max_pp"], "Third-slot interval cannot be wider than base gate")
+        require(third.get("comparison_sources_min", 0) >= gate["comparison_sources_min"], "Third-slot source count cannot be weaker than base gate")
+        require(third.get("threshold_buffer_min_pp", -1) >= gate["threshold_buffer_min_pp"], "Third-slot buffer cannot be weaker than base gate")
+        require(third.get("news_risk_max", 9) <= gate["news_risk_max"], "Third-slot risk cannot be weaker than base gate")
+
     consistency = config.get("dual_side_consistency", {})
     require(consistency.get("both_sides_b_math_triggers_conflict") is True, "G dual-side B conflict rule is required")
     require(consistency.get("conflict_blocks_main_selection") is True, "G dual-side conflict must block main selection")
@@ -114,6 +132,9 @@ def validate_coordination(config: dict[str, Any], manifest: dict[str, Any]) -> N
     policy = config.get("combined_policy", {})
     require(policy.get("dual_side_conflict_blocks_combined_b") is True, "combined policy must block dual-side conflict")
     require(policy.get("formal_stake_fraction") == 0, "formal stake must remain zero")
+    ui = config.get("ui_policy", {})
+    require(ui.get("official_main_target") <= ui.get("official_main_max"), "coordination main target exceeds max")
+    require(ui.get("official_main_max") <= 3, "coordination main max cannot exceed 3")
 
 
 def main() -> int:

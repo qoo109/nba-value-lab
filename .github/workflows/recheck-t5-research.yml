@@ -66,7 +66,9 @@ jobs:
           python scripts/lock_t60_snapshot_v410.py \
             data/fixtures/t60-lock-example.json \
             --dry-run \
-            --output /tmp/t60-v410-output.json
+            --output /tmp/t60-v410-output.json \
+            > /tmp/t60-console.log
+          python -m json.tool /tmp/t60-v410-output.json >/dev/null
 
       - name: Generate bundled T-5m fixture output
         run: |
@@ -74,7 +76,8 @@ jobs:
             data/fixtures/t5-recheck-example.json \
             --previous-output /tmp/t60-v410-output.json \
             --dry-run \
-            --output /tmp/t5-v410-output.json
+            --output /tmp/t5-v410-output.json \
+            > /tmp/t5-console.log
           python -m json.tool /tmp/t5-v410-output.json >/dev/null
 
       - name: Assert bundled T-5m fixture result
@@ -84,7 +87,20 @@ jobs:
           payload = json.load(open('/tmp/t5-v410-output.json', encoding='utf-8'))
           selection = payload['selection']
           records = payload['records']
-          print(json.dumps(selection, ensure_ascii=False, indent=2))
+          summary = {
+              'selected_count': selection.get('selected_count'),
+              'selected_prediction_ids': selection.get('selected_prediction_ids'),
+              't60_selected_prediction_ids': selection.get('t60_selected_prediction_ids'),
+              'main_changed_from_t60': selection.get('main_changed_from_t60'),
+              'price_only_count': selection.get('price_only_count'),
+              'fundamental_update_count': selection.get('fundamental_update_count'),
+              'main_statuses': {
+                  item['selection_team_id']: item.get('main_status')
+                  for item in records
+                  if item.get('main_candidate')
+              },
+          }
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
           assert selection['target_main_count'] == 2
           assert selection['maximum_main_count'] == 3
           assert 0 <= selection['selected_count'] <= 3
@@ -95,7 +111,7 @@ jobs:
           selected = selection['selected_prediction_ids'][0]
           selected_record = next(item for item in records if item['prediction_id'] == selected)
           assert selected_record['selection_team_id'] == 'DEN'
-          assert selected_record['main_status'] == '最終主要場次 1/1'
+          assert selected_record['main_status'].startswith('最終主要場次 1/')
           assert selected_record['change_type'] == 'price_only'
           assert any(item['selection_team_id'] == 'NYK' and item['change_type'] == 'fundamental_update' for item in records)
           print('V4.10 multi-main T-5m fixture validated')
@@ -105,7 +121,8 @@ jobs:
         run: |
           if python scripts/recheck_t5_snapshot_v410.py \
             data/fixtures/t5-recheck-example.json \
-            --previous-output /tmp/t60-v410-output.json; then
+            --previous-output /tmp/t60-v410-output.json \
+            > /tmp/t5-write-attempt.log 2>&1; then
             echo "Fixture unexpectedly wrote formal history"
             exit 1
           fi

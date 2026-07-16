@@ -28,30 +28,49 @@ function bindEvents() {
   $("#detailModal").addEventListener("click", (event) => { if (event.target === $("#detailModal")) $("#detailModal").close(); });
 }
 
-function loadV46Coordination() {
-  if (typeof vDecision === "function" && typeof gDecision === "function") return Promise.resolve();
+function loadScriptOnce(src, marker, ready) {
+  if (ready()) return Promise.resolve();
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-v46-coordination]');
+    const existing = document.querySelector(`script[${marker}]`);
     if (existing) {
-      existing.addEventListener("load", resolve, { once: true });
-      existing.addEventListener("error", reject, { once: true });
+      if (ready()) resolve();
+      else {
+        existing.addEventListener("load", resolve, { once: true });
+        existing.addEventListener("error", reject, { once: true });
+      }
       return;
     }
     const script = document.createElement("script");
-    script.src = "./js/v4-6-model-coordination.js?v=4.6";
-    script.dataset.v46Coordination = "true";
+    script.src = src;
+    script.setAttribute(marker, "true");
     script.onload = resolve;
-    script.onerror = () => reject(new Error("Unable to load V4.6 model coordination"));
+    script.onerror = () => reject(new Error(`Unable to load ${src}`));
     document.head.appendChild(script);
   });
 }
 
-function updateV46Shell() {
-  document.title = `NBA Value Lab V4.6｜${activeModelLabel()}`;
+function loadV46Coordination() {
+  return loadScriptOnce(
+    "./js/v4-6-model-coordination.js?v=4.7",
+    "data-v46-coordination",
+    () => typeof vDecision === "function" && typeof gDecision === "function",
+  );
+}
+
+function loadV47ResearchLog() {
+  return loadScriptOnce(
+    "./js/v4-7-research-log.js?v=4.7",
+    "data-v47-research-log",
+    () => typeof initResearchLog === "function",
+  );
+}
+
+function updateV47Shell() {
+  document.title = `NBA Value Lab V4.7｜${activeModelLabel()}`;
   const header = document.querySelector(".header-status");
-  if (header) header.innerHTML = `<span class="status-dot"></span>V4.6・${activeModelLabel()}`;
+  if (header) header.innerHTML = `<span class="status-dot"></span>V4.7・${activeModelLabel()}`;
   const footerVersion = document.querySelector("footer > span:first-child");
-  if (footerVersion) footerVersion.textContent = "NBA VALUE LAB V4.6";
+  if (footerVersion) footerVersion.textContent = "NBA VALUE LAB V4.7";
   const methodTitle = document.querySelector(".method-card h2");
   if (methodTitle) methodTitle.textContent = "V3.1 與 G1 分開判定，由協調層統整";
 }
@@ -60,21 +79,23 @@ async function init() {
   loadReadabilityStyles();
   await loadV46Coordination();
   await loadModelRegistry();
-  updateV46Shell();
+  await loadV47ResearchLog();
+  updateV47Shell();
   applyTheme(document.documentElement.dataset.theme || "light");
   renderTopPick();
   renderTable();
   renderCards();
   renderCalculatorOptions();
   renderModelRegistryStatus();
+  await initResearchLog();
   bindEvents();
   updateCalculator(true);
   document.documentElement.dataset.modelVersion = activeModelLabel();
-  document.documentElement.dataset.appVersion = "V4.6";
+  document.documentElement.dataset.appVersion = "V4.7";
 }
 
 init().catch((error) => {
   console.error("NBA Value Lab initialization failed:", error);
   const header = document.querySelector(".header-status");
-  if (header) header.innerHTML = '<span class="status-dot"></span>V4.6・初始化失敗';
+  if (header) header.innerHTML = '<span class="status-dot"></span>V4.7・初始化失敗';
 });

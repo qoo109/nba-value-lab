@@ -8,13 +8,8 @@
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "—";
     return new Intl.DateTimeFormat("zh-TW", {
-      timeZone: "Asia/Taipei",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
+      timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
     }).format(date);
   }
 
@@ -38,14 +33,16 @@
     if (!target) return;
     const count = Number(payload?.lock_count || 0);
     if (!count) {
-      target.textContent = "尚未建立正式 T−60m／T−5m 鎖定。Fixture 只用於測試，不會寫入研究紀錄。";
+      target.textContent = "尚未建立正式 T−60m／T−5m 鎖定。主要場次一般目標 2 場、最多 3 場。";
       return;
     }
     const latest = Array.isArray(payload.locks) ? payload.locks[0] : null;
     const stage = latest?.evaluation_stage || "未知階段";
-    const main = payload.latest_selected_prediction_id
-      ? `${stage === "T-5m" ? "最終主要場次" : "待複核主要場次"} ${payload.latest_selected_prediction_id}`
-      : `最近 ${stage} 沒有主要場次`;
+    const ids = Array.isArray(payload.latest_selected_prediction_ids)
+      ? payload.latest_selected_prediction_ids
+      : (payload.latest_selected_prediction_id ? [payload.latest_selected_prediction_id] : []);
+    const label = stage === "T-5m" ? "最終主要場次" : "待複核主要場次";
+    const main = ids.length ? `${label} ${ids.length} 場：${ids.join("、")}` : `最近 ${stage} 沒有主要場次`;
     target.textContent = `已保存 ${count} 個鎖定批次・最近階段 ${stage}・更新 ${formatDate(payload.latest_lock_at)}・${main}。`;
   }
 

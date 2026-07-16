@@ -1,0 +1,318 @@
+#!/usr/bin/env python3
+"""Core full-file scanner for NBA historical archive pilots."""
+
+import csv
+import hashlib
+import math
+import statistics
+import tarfile
+import urllib.request
+from collections import Counter
+
+UA = "NBA-Value-Lab-historical-pilot/2.2"
+
+
+def missing(value):
+    return value is None or str(value).strip().lower() in {"", "nan", "none", "null"}
+
+
+def lookup(columns):
+    return {column.upper(): column for column in columns}
+
+
+def download(url, path, limit):
+    request = urllib.request.Request(url, headers={"User-Agent": UA})
+    digest, size = hashlib.sha256(), 0
+    with urllib.request.urlopen(request, timeout=120) as response, path.open("wb") as target:
+        content_type = response.headers.get("Content-Type")
+        while True:
+            chunk = response.read(1024 * 1024)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > limit:
+                raise ValueError(f"download exceeded {limit} bytes")
+            digest.update(chunk)
+            target.write(chunk)
+    return {
+        "bytes": size,
+        "megabytes": round(size / 1048576, 2),
+        "sha256": digest.hexdigest(),
+        "content_type": content_type,
+    }
+
+
+def extract(archive, destination):
+    root = destination.resolve()
+    with tarfile.open(archive, "r:xz") as handle:
+        members = handle.getmembers()
+        for member in members:
+            resolved = (root / member.name).resolve()
+            if root not in resolved.parents and resolved != root:
+                raise ValueError(f"unsafe archive path: {member.name}")
+            if member.issym() or member.islnk():
+                raise ValueError(f"archive link rejected: {member.name}")
+        handle.extractall(root, members=members, filter="data")
+    return len(members)
+
+
+def quantile(values, q):
+    if not values:
+        return None
+    position = (len(values) - 1) * q
+    low, high = math.floor(position), math.ceil(position)
+    if low == high:
+        return float(values[low])
+    return values[low] + (values[high] - values[low]) * (position - low)
+
+
+def distribution(values):
+    values = sorted(values)
+    return {
+        "count": len(values),
+        "min": values[0] if values else None,
+        "p25": round(quantile(values, 0.25), 2) if values else None,
+        "median": round(statistics.median(values), 2) if values else None,
+        "p75": round(quantile(values, 0.75), 2) if values else None,
+        "p95": round(quantile(values, 0.95), 2) if values else None,
+        "max": values[-1] if values else None,
+    }
+
+
+def row_summary(counts):
+    result = distribution(list(counts.values()))
+    return {
+        "game_count": result.pop("count"),
+        "row_count": sum(counts.values()),
+        "min_rows_per_game": result["min"],
+        "p25_rows_per_game": result["p25"],
+        "median_rows_per_game": result["median"],
+        "p75_rows_per_game": result["p75"],
+        "p95_rows_per_game": result["p95"],
+        "max_rows_per_game": result["max"],
+    }
+
+
+def select_csv(root, source):
+    files = list(root.rglob("*.csv"))
+    preferred = source.get("preferred_filename_contains", "").lower()
+    matches = [path for path in files if preferred and preferred in path.name.lower()]
+    candidates = matches or files
+    if not candidates:
+        raise ValueError("no CSV found in archive")
+    return max(candidates, key=lambda path: path.stat().st_size)
+
+
+def row_fingerprint(row, columns):
+    payload = "\x1f".join(str(row.get(column, "")).strip() for column in columns)
+    return hashlib.sha1(payload.encode("utf-8", errors="replace")).hexdigest()
+
+
+def resolve_fields(names, fields):
+    return [names.get(field.upper()) for field in fields]
+
+
+def scan_csv(path, source, sample_limit):
+    expected = source["expected_fields_any"]
+    sample_fields = source["silver_sample_fields"]
+    games, nulls = Counter(), Counter()
+    key_states, group_states, samples, sample_games = [], [], [], []
+    exact_rows, exact_duplicate_rows = set(), 0
+
+    with path.open("r", encoding="utf-8-sig", errors="replace", newline="") as handle:
+        reader = csv.DictReader(handle)
+        columns = list(reader.fieldnames or [])
+        names = lookup(columns)
+        game_field = next(
+            (
+                names.get(name.upper())
+                for name in source["game_id_fields"]
+                if names.get(name.upper())
+            ),
+            None,
+        )
+        if not game_field:
+            raise ValueError("game id field missing")
+
+        for fields in source.get("candidate_primary_keys", []):
+            resolved = resolve_fields(names, fields)
+            key_states.append({
+                "fields": fields,
+                "available": all(resolved),
+                "resolved": resolved,
+                "first_fingerprint": {},
+                "duplicates": 0,
+                "exact_duplicates": 0,
+                "conflicting_duplicates": 0,
+                "incomplete": 0,
+            })
+
+        for rule in source.get("grouping_rules", []):
+            key_fields = rule["fields"]
+            consistency_fields = rule.get("consistency_fields", [])
+            resolved_key = resolve_fields(names, key_fields)
+            resolved_consistency = resolve_fields(names, consistency_fields)
+            group_states.append({
+                "name": rule["name"],
+                "fields": key_fields,
+                "consistency_fields": consistency_fields,
+                "available": all(resolved_key) and all(resolved_consistency),
+                "resolved_key": resolved_key,
+                "resolved_consistency": resolved_consistency,
+                "first_consistency": {},
+                "row_counts": Counter(),
+                "incomplete": 0,
+                "inconsistent_groups": set(),
+            })
+
+        for row_number, row in enumerate(reader, 1):
+            fingerprint = row_fingerprint(row, columns)
+            is_exact_duplicate = fingerprint in exact_rows
+            if is_exact_duplicate:
+                exact_duplicate_rows += 1
+            else:
+                exact_rows.add(fingerprint)
+
+            game_id = str(row.get(game_field, "")).strip()
+            if game_id:
+                games[game_id] += 1
+            for field in expected:
+                actual = names.get(field.upper())
+                if actual and missing(row.get(actual)):
+                    nulls[field] += 1
+
+            for state in key_states:
+                if not state["available"]:
+                    continue
+                values = tuple(str(row.get(field, "")).strip() for field in state["resolved"])
+                if any(missing(value) for value in values):
+                    state["incomplete"] += 1
+                    continue
+                previous = state["first_fingerprint"].get(values)
+                if previous is None:
+                    state["first_fingerprint"][values] = fingerprint
+                else:
+                    state["duplicates"] += 1
+                    if previous == fingerprint:
+                        state["exact_duplicates"] += 1
+                    else:
+                        state["conflicting_duplicates"] += 1
+
+            if not is_exact_duplicate:
+                for state in group_states:
+                    if not state["available"]:
+                        continue
+                    group_key = tuple(
+                        str(row.get(field, "")).strip() for field in state["resolved_key"]
+                    )
+                    if any(missing(value) for value in group_key):
+                        state["incomplete"] += 1
+                        continue
+                    consistency = tuple(
+                        str(row.get(field, "")).strip()
+                        for field in state["resolved_consistency"]
+                    )
+                    previous = state["first_consistency"].get(group_key)
+                    if previous is None:
+                        state["first_consistency"][group_key] = consistency
+                    elif previous != consistency:
+                        state["inconsistent_groups"].add(group_key)
+                    state["row_counts"][group_key] += 1
+
+            if game_id and len(samples) < sample_limit:
+                if game_id not in sample_games and len(sample_games) < 3:
+                    sample_games.append(game_id)
+                if game_id in sample_games:
+                    item = {"source_game_id": game_id, "source_row_number": row_number}
+                    for field in sample_fields:
+                        actual = names.get(field.upper())
+                        value = row.get(actual, "") if actual else ""
+                        item[field.lower()] = None if missing(value) else str(value).strip()
+                    samples.append(item)
+
+    total = sum(games.values())
+    checks = []
+    for state in key_states:
+        result = {"fields": state["fields"], "available": state["available"]}
+        if state["available"]:
+            result.update({
+                "unique_key_count": len(state["first_fingerprint"]),
+                "duplicate_rows": state["duplicates"],
+                "exact_duplicate_rows": state["exact_duplicates"],
+                "conflicting_duplicate_rows": state["conflicting_duplicates"],
+                "incomplete_rows": state["incomplete"],
+                "strictly_unique": state["duplicates"] == 0 and state["incomplete"] == 0,
+                "unique_after_exact_dedupe": (
+                    state["conflicting_duplicates"] == 0 and state["incomplete"] == 0
+                ),
+            })
+        checks.append(result)
+
+    groups = []
+    for state in group_states:
+        result = {
+            "name": state["name"],
+            "fields": state["fields"],
+            "consistency_fields": state["consistency_fields"],
+            "available": state["available"],
+        }
+        if state["available"]:
+            result.update({
+                "group_count": len(state["first_consistency"]),
+                "incomplete_rows": state["incomplete"],
+                "inconsistent_group_count": len(state["inconsistent_groups"]),
+                "rows_per_group_after_exact_dedupe": distribution(
+                    list(state["row_counts"].values())
+                ),
+                "usable_for_normalization": (
+                    state["incomplete"] == 0
+                    and len(state["inconsistent_groups"]) == 0
+                ),
+            })
+        groups.append(result)
+
+    return {
+        "file": {
+            "name": path.name,
+            "bytes": path.stat().st_size,
+            "megabytes": round(path.stat().st_size / 1048576, 2),
+        },
+        "normalization_mode": source.get("normalization_mode", "event_rows"),
+        "columns": columns,
+        "column_count": len(columns),
+        "expected_fields_missing": [
+            field for field in expected if field.upper() not in names
+        ],
+        "expected_field_null_counts": dict(nulls),
+        "expected_field_null_rates": {
+            field: round(count / total, 6) for field, count in nulls.items() if total
+        },
+        "rows": row_summary(games),
+        "exact_row_deduplication": {
+            "unique_row_fingerprints": len(exact_rows),
+            "exact_duplicate_rows": exact_duplicate_rows,
+            "rows_after_exact_dedupe": total - exact_duplicate_rows,
+        },
+        "game_ids": sorted(games),
+        "candidate_key_checks": checks,
+        "grouping_checks": groups,
+        "silver_sample_rows": samples,
+        "silver_sample_game_ids": sample_games,
+    }
+
+
+def audit_source(key, source, root, max_mb, sample_limit):
+    archive = root / f"{key}.tar.xz"
+    target = root / f"{key}-raw"
+    target.mkdir()
+    archive_info = download(source["url"], archive, max_mb * 1048576)
+    archive_info["member_count"] = extract(archive, target)
+    return {
+        "source_key": key,
+        "provider": source["provider"],
+        "source_role": source["source_role"],
+        "season_label": source["season_label"],
+        "license_status": source["license_status"],
+        "archive": archive_info,
+        "scan": scan_csv(select_csv(target, source), source, sample_limit),
+    }

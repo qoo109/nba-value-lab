@@ -1,0 +1,89 @@
+name: Audit historical NBA sources phase 2
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_download_mb:
+        description: "Hard download limit per source in MB"
+        required: true
+        default: "600"
+  pull_request:
+    paths:
+      - "config/historical-source-pilot.json"
+      - "scripts/historical_phase2_core.py"
+      - "scripts/audit_historical_phase2.py"
+      - ".github/workflows/audit-historical-phase2.yml"
+      - "docs/historical-data-pilot.md"
+      - "data/source-registry.json"
+  push:
+    branches:
+      - "agent/current-version-following-names"
+    paths:
+      - "config/historical-source-pilot.json"
+      - "scripts/historical_phase2_core.py"
+      - "scripts/audit_historical_phase2.py"
+      - ".github/workflows/audit-historical-phase2.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile phase 2 tools
+        run: python -m py_compile scripts/historical_phase2_core.py scripts/audit_historical_phase2.py
+      - name: Run synthetic dual-source self-test
+        run: |
+          mkdir -p /tmp/nbavl-history-phase2-selftest
+          python scripts/audit_historical_phase2.py \
+            --self-test \
+            --output /tmp/nbavl-history-phase2-selftest/report.json \
+            --silver-output /tmp/nbavl-history-phase2-selftest/silver-sample.json
+          python -m json.tool /tmp/nbavl-history-phase2-selftest/report.json >/dev/null
+          python -m json.tool /tmp/nbavl-history-phase2-selftest/silver-sample.json >/dev/null
+
+  live-phase2:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MAX_DOWNLOAD_MB: ${{ github.event_name == 'workflow_dispatch' && inputs.max_download_mb || '600' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download and scan both real archives in temporary storage
+        run: |
+          mkdir -p /tmp/nbavl-history-phase2
+          python scripts/audit_historical_phase2.py \
+            --max-download-mb "$MAX_DOWNLOAD_MB" \
+            --silver-limit-per-source 75 \
+            --output /tmp/nbavl-history-phase2/phase2-report.json \
+            --silver-output /tmp/nbavl-history-phase2/silver-sample.json
+      - name: Validate compact outputs
+        run: |
+          python -m json.tool /tmp/nbavl-history-phase2/phase2-report.json >/dev/null
+          python -m json.tool /tmp/nbavl-history-phase2/silver-sample.json >/dev/null
+          python - <<'PY'
+          import json
+          report = json.load(open('/tmp/nbavl-history-phase2/phase2-report.json', encoding='utf-8'))
+          assert report['follows_current_site_version'] is True
+          assert len(report['sources']) == 2
+          assert all(item['scan']['rows']['row_count'] > 0 for item in report['sources'])
+          assert all(not item['scan']['expected_fields_missing'] for item in report['sources'])
+          print(json.dumps(report['decision'], ensure_ascii=False, indent=2))
+          PY
+      - name: Upload compact QA and Silver pilot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-phase2-report-and-silver-sample
+          path: /tmp/nbavl-history-phase2/*.json
+          retention-days: 14
+          if-no-files-found: error

@@ -158,6 +158,8 @@ def create_schema(connection: sqlite3.Connection) -> None:
           is_home INTEGER,
           points INTEGER NOT NULL,
           opponent_points INTEGER NOT NULL,
+          possession_points_reconstructed INTEGER NOT NULL,
+          opponent_possession_points_reconstructed INTEGER NOT NULL,
           possessions INTEGER NOT NULL,
           opponent_possessions INTEGER NOT NULL,
           pace REAL,

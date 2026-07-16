@@ -1,0 +1,99 @@
+name: Build historical Silver database
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_download_mb:
+        description: "Maximum download MB per source"
+        required: true
+        default: "600"
+  pull_request:
+    paths:
+      - "config/historical-source-pilot.json"
+      - "scripts/historical_silver_*.py"
+      - "scripts/build_historical_silver.py"
+      - ".github/workflows/build-historical-silver.yml"
+      - "docs/historical-silver-layer.md"
+      - "data/source-registry.json"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Silver adapter modules
+        run: |
+          python -m py_compile \
+            scripts/historical_silver_schema.py \
+            scripts/historical_silver_nbastats.py \
+            scripts/historical_silver_pbpstats.py \
+            scripts/build_historical_silver.py
+      - name: Run synthetic SQLite self-test
+        run: |
+          python scripts/build_historical_silver.py \
+            --self-test \
+            --output-dir /tmp/nbavl-silver-self-test
+          python -m json.tool /tmp/nbavl-silver-self-test/self-test.json >/dev/null
+
+  live-build:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      MAX_DOWNLOAD_MB: ${{ github.event_name == 'workflow_dispatch' && inputs.max_download_mb || '600' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build full historical Silver SQLite in temporary storage
+        run: |
+          rm -rf /tmp/nbavl-historical-silver
+          python scripts/build_historical_silver.py \
+            --max-download-mb "$MAX_DOWNLOAD_MB" \
+            --output-dir /tmp/nbavl-historical-silver
+      - name: Validate Silver outputs
+        run: |
+          python - <<'PY'
+          import gzip
+          import json
+          import sqlite3
+          import tempfile
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-historical-silver')
+          report = json.loads((root / 'silver-build-report.json').read_text())
+          tables = report['outputs']['tables']
+          assert tables['games'] >= 1200, tables
+          assert tables['pbp_events'] >= 500000, tables
+          assert tables['possessions'] >= 200000, tables
+          assert tables['team_game_features'] >= 2400, tables
+          assert report['quality']['team_inference_pass'] is True
+
+          with tempfile.NamedTemporaryFile(suffix='.sqlite') as tmp:
+              with gzip.open(root / 'historical-silver.sqlite.gz', 'rb') as src:
+                  tmp.write(src.read())
+                  tmp.flush()
+              db = sqlite3.connect(tmp.name)
+              names = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+              assert {'games', 'pbp_events', 'possessions', 'team_game_features'} <= names
+              db.close()
+          print(json.dumps(report['decision'], ensure_ascii=False, indent=2))
+          PY
+      - name: Upload Silver database and QA artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-database
+          path: |
+            /tmp/nbavl-historical-silver/historical-silver.sqlite.gz
+            /tmp/nbavl-historical-silver/silver-build-report.json
+            /tmp/nbavl-historical-silver/silver-sample.json
+          retention-days: 14
+          if-no-files-found: error

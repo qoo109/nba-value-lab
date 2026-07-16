@@ -1,13 +1,15 @@
 {
-  "schema_version": "1.0.0",
-  "pilot_version": "NBA Value Lab V4.5 historical data pilot",
-  "updated_at": "2026-07-16T21:00:00+08:00",
+  "schema_version": "1.1.0",
+  "pilot_name": "NBA Value Lab historical data pilot",
+  "follows_current_site_version": true,
+  "updated_at": "2026-07-16T22:30:00+08:00",
+  "phase2_source_keys": ["pbpstats_2023", "nbastats_2023"],
   "storage_policy": {
     "commit_raw_archives": false,
     "commit_extracted_raw_data": false,
     "workflow_temp_only": true,
     "artifact_reports_only": true,
-    "maximum_download_mb_default": 600
+    "maximum_download_mb_per_source_default": 600
   },
   "sources": {
     "pbpstats_2023": {
@@ -15,8 +17,14 @@
       "source_role": "possession_level_pilot",
       "season_label": "2023-24",
       "url": "https://github.com/shufinskiy/nba_data/raw/main/datasets/pbpstats_2023.tar.xz",
-      "expected_fields_any": ["GAMEID", "GAMEDATE", "PERIOD", "STARTTIME", "ENDTIME", "STARTTYPE", "EVENTS"],
-      "candidate_primary_keys": [["GAMEID", "PERIOD", "STARTTIME", "ENDTIME"]],
+      "preferred_filename_contains": "pbpstats",
+      "game_id_fields": ["GAMEID"],
+      "expected_fields_any": ["GAMEID", "GAMEDATE", "PERIOD", "STARTTIME", "ENDTIME", "STARTTYPE", "OPPONENT", "EVENTS"],
+      "candidate_primary_keys": [
+        ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME"],
+        ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT"]
+      ],
+      "silver_sample_fields": ["GAMEID", "GAMEDATE", "PERIOD", "STARTTIME", "ENDTIME", "STARTTYPE", "OPPONENT", "FG2A", "FG2M", "FG3A", "FG3M", "OFFENSIVEREBOUNDS", "TURNOVERS"],
       "license_status": "upstream_code_license_verified_data_redistribution_not_assumed"
     },
     "nbastats_2023": {
@@ -24,8 +32,11 @@
       "source_role": "event_level_pbp_pilot",
       "season_label": "2023-24",
       "url": "https://github.com/shufinskiy/nba_data/raw/main/datasets/nbastats_2023.tar.xz",
-      "expected_fields_any": ["GAME_ID", "EVENTNUM", "PERIOD", "PCTIMESTRING", "SCORE", "SCOREMARGIN"],
+      "preferred_filename_contains": "nbastats",
+      "game_id_fields": ["GAME_ID"],
+      "expected_fields_any": ["GAME_ID", "EVENTNUM", "EVENTMSGTYPE", "PERIOD", "PCTIMESTRING", "SCORE", "SCOREMARGIN"],
       "candidate_primary_keys": [["GAME_ID", "EVENTNUM"]],
+      "silver_sample_fields": ["GAME_ID", "EVENTNUM", "EVENTMSGTYPE", "EVENTMSGACTIONTYPE", "PERIOD", "PCTIMESTRING", "SCORE", "SCOREMARGIN", "PLAYER1_ID", "PLAYER1_TEAM_ID"],
       "license_status": "upstream_code_license_verified_data_redistribution_not_assumed"
     }
   }

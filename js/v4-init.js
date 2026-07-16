@@ -92,12 +92,13 @@ async function loadV5Ui() {
     loadStylesheetOnce("./css/v5-mobile-p1.css?v=5.2", "data-v51-mobile"),
     loadStylesheetOnce("./css/v5-routing-p2.css?v=5.2", "data-v52-routing"),
     loadStylesheetOnce("./css/v5-trends-p2.css?v=5.2", "data-v52-trends"),
+    loadStylesheetOnce("./css/v5-compact-decision.css?v=5.2.1", "data-v521-compact-decision"),
   ]);
   await loadScriptOnce("./js/v5/core/namespace.js?v=5.2", "data-v5-namespace", () => Boolean(window.NBAVL?.v5));
   await loadScriptOnce("./js/v5/utils/format.js?v=5.2", "data-v5-format", () => Boolean(window.NBAVL?.v5?.modules?.format));
   await loadScriptOnce("./js/v5/utils/history.js?v=5.2", "data-v52-history", () => Boolean(window.NBAVL?.v5?.modules?.history));
   await loadScriptOnce("./js/v5/utils/sparkline.js?v=5.2", "data-v52-sparkline", () => Boolean(window.NBAVL?.v5?.modules?.sparkline));
-  await loadScriptOnce("./js/v5/components/cards.js?v=5.2", "data-v5-cards", () => Boolean(window.NBAVL?.v5?.modules?.cards));
+  await loadScriptOnce("./js/v5/components/cards.js?v=5.2.1", "data-v5-cards", () => Boolean(window.NBAVL?.v5?.modules?.cards));
   await loadScriptOnce("./js/v5/components/drawer.js?v=5.2", "data-v5-drawer", () => Boolean(window.NBAVL?.v5?.modules?.drawer));
   await loadScriptOnce("./js/v5/pages/dashboard.js?v=5.2", "data-v5-dashboard", () => Boolean(window.NBAVL?.v5?.modules?.dashboard));
   await loadScriptOnce("./js/v5/pages/performance-dashboard.js?v=5.2", "data-v51-performance", () => Boolean(window.NBAVL?.v5?.modules?.performanceDashboard));

@@ -12,11 +12,13 @@ from typing import Any
 
 import recheck_t5_snapshot as prior
 from append_research_record_v410 import append_many
-from multi_main_policy import apply_multi_main, rebuild_multi_lock_index
+from multi_main_policy import apply_multi_main, load_active_configs, rebuild_multi_lock_index
 
 ROOT = prior.ROOT
 LOCKS_DIR = prior.LOCKS_DIR
 LOCKS_INDEX = prior.LOCKS_DIR / "index.json"
+prior.load_active_configs = lambda: load_active_configs(ROOT, ROOT / "models" / "manifest.json")
+prior.append_many = append_many
 
 
 def previous_selected_ids(top: dict[str, Any], previous_output: Path | None) -> list[str]:

@@ -1,0 +1,80 @@
+name: Lock T-60m research records
+
+on:
+  workflow_dispatch:
+    inputs:
+      input_path:
+        description: "Repository path to a research T-60m input JSON"
+        required: true
+        default: "data/fixtures/t60-lock-example.json"
+      dry_run:
+        description: "Validate only; fixture inputs require true"
+        required: true
+        type: boolean
+        default: true
+  pull_request:
+    paths:
+      - "scripts/lock_t60_snapshot.py"
+      - "scripts/append_research_record.py"
+      - "data/fixtures/t60-lock-example.json"
+      - ".github/workflows/lock-t60-research.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "scripts/lock_t60_snapshot.py"
+      - "scripts/append_research_record.py"
+      - "data/fixtures/t60-lock-example.json"
+      - ".github/workflows/lock-t60-research.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: t60-research-lock
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dry-run bundled T-60m fixture
+        run: |
+          python scripts/lock_t60_snapshot.py \
+            data/fixtures/t60-lock-example.json \
+            --dry-run \
+            --output /tmp/t60-lock-output.json
+          python -m json.tool /tmp/t60-lock-output.json >/dev/null
+
+      - name: Validate selected input
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          INPUT_PATH: ${{ inputs.input_path }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          test -f "$INPUT_PATH"
+          if [ "$DRY_RUN" = "true" ]; then
+            python scripts/lock_t60_snapshot.py "$INPUT_PATH" --dry-run --output /tmp/selected-t60-output.json
+          else
+            python scripts/lock_t60_snapshot.py "$INPUT_PATH" --output /tmp/selected-t60-output.json
+          fi
+          python -m json.tool /tmp/selected-t60-output.json >/dev/null
+
+      - name: Commit immutable lock and compact records
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == false
+        run: |
+          if git diff --quiet -- data/history data/locks; then
+            echo "No lock changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/history data/locks
+          git commit -m "research: lock T-60m predictions and price evaluations"
+          git push

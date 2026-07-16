@@ -70,4 +70,6 @@ jobs:
           node --check js/v5/components/cards.js
           node --check js/v5/components/drawer.js
           node --check js/v5/pages/dashboard.js
+          node --check js/v5/pages/performance-dashboard.js
+          node --check js/v5/pages/research-timeline.js
           node --check js/v5/bootstrap.js

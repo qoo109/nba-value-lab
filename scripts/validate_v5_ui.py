@@ -87,15 +87,16 @@ def main() -> int:
         require(relative in init_text, f"V5 loader is missing stylesheet {relative}")
 
     require("V5 UI failed to load; continuing with V4.10 UI" in init_text, "V4.10 fallback is missing")
-    require('dataset.appVersion = v5Ready ? "V5.3"' in init_text, "V5.3 app version is not active")
-    require("dashboard.js?v=5.3" in init_text, "V5.3 dashboard cache version is missing")
+    require('dataset.appVersion = v5Ready ? "V5.3.1"' in init_text, "V5.3.1 app version is not active")
+    require("dashboard.js?v=5.3.1" in init_text, "V5.3.1 dashboard cache version is missing")
+    require("cards.js?v=5.3.1" in init_text, "V5.3.1 cards cache version is missing")
     require("v5-density-v53.css?v=5.3" in init_text, "V5.3 density stylesheet cache version is missing")
     require("window.showDetail = open" in (ROOT / "js/v5/components/drawer.js").read_text(encoding="utf-8"), "Drawer does not replace showDetail")
 
     cards = (ROOT / "js/v5/components/cards.js").read_text(encoding="utf-8")
     require("window.renderTopPick" in cards, "V5 cards do not replace top-pick renderer")
     require("window.renderCards" in cards, "V5 cards do not replace candidate renderer")
-    require("v52-compact-decision" in cards and "v52-decision-note" in cards, "Compact decision-strip markup is missing")
+    require("v52-compact-decision" not in cards, "Decision strip must not remain inside the main-pick renderer")
 
     compact = (ROOT / "css/v5-compact-decision.css").read_text(encoding="utf-8")
     require("grid-template-columns: minmax(0, 1fr) !important" in compact, "Top-pick layout is not forced to one column")
@@ -117,6 +118,9 @@ def main() -> int:
 
     dashboard = (ROOT / "js/v5/pages/dashboard.js").read_text(encoding="utf-8")
     dashboard_order = [
+        "decisionStrip,",
+        'analysis.querySelector(".date-rail")',
+        'analysis.querySelector(".timing-strip")',
         'analysis.querySelector(".games-section")',
         "market,",
         'analysis.querySelector(".hero-grid")',
@@ -127,10 +131,13 @@ def main() -> int:
         'sectionShell(analysis.querySelector(".pipeline-card"))',
     ]
     order_positions = [dashboard.index(token) for token in dashboard_order]
-    require(order_positions == sorted(order_positions), "Dashboard sections are not in candidate-market-result-model order")
+    require(order_positions == sorted(order_positions), "Dashboard sections are not in decision-candidate-market-result order")
+    require('strip.id = "v531DecisionStrip"' in dashboard, "Top decision strip id is missing")
+    require('className = "v5-hero-heading v52-compact-decision"' in dashboard, "Top decision strip styling is missing")
+    require("今日決策" in dashboard and "今日主要場次" in dashboard, "Top decision wording is missing")
     require("if (market?.matches(\"details\")) market.open = true" in dashboard, "Market table must open by default")
     require('document.documentElement.dataset.visualDensity = "balanced"' in dashboard, "Balanced density marker is missing")
-    require('document.documentElement.dataset.uiVersion = "5.3"' in dashboard, "V5.3 UI version is missing")
+    require('document.documentElement.dataset.uiVersion = "5.3.1"' in dashboard, "V5.3.1 UI version is missing")
 
     bootstrap = (ROOT / "js/v5/bootstrap.js").read_text(encoding="utf-8")
     for module in ("performanceDashboard", "performanceTrends", "researchTimeline", "marketTrends", "router"):
@@ -158,7 +165,7 @@ def main() -> int:
     require("env(safe-area-inset-bottom)" in mobile, "Mobile safe-area support is missing")
     require("position: fixed" in mobile, "Mobile bottom navigation is missing")
 
-    print("V5.3 balanced visual density valid")
+    print("V5.3.1 top decision strip valid")
     return 0
 
 

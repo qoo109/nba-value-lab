@@ -12,7 +12,11 @@
     records
       .filter((record) => record.main_candidate && typeof record.won === "boolean")
       .sort((a, b) => eventTime(a).localeCompare(eventTime(b)))
-      .forEach((record) => latest.set(record.prediction_id || record.price_evaluation_id, record));
+      .forEach((record) => {
+        const key = [record.game_id, record.selection_team_id || record.target].filter(Boolean).join("::")
+          || record.prediction_id || record.price_evaluation_id;
+        latest.set(key, record);
+      });
     return [...latest.values()].sort((a, b) => eventTime(a).localeCompare(eventTime(b)));
   }
 
@@ -86,7 +90,7 @@
     const section = document.createElement("section");
     section.id = "v51PerformanceDashboard";
     section.className = "v51-performance";
-    section.innerHTML = `<div class="section-heading"><div><span class="eyebrow">PAPER PERFORMANCE</span><h2>歷史績效 Dashboard</h2><p>只統計已有賽果的正式主要場次；同一 prediction 的多次價格評估只計一次。</p></div><span class="v51-sample-label" id="v51PerformanceSample">樣本 0</span></div><div class="v51-performance-grid" id="v51PerformanceGrid"></div>`;
+    section.innerHTML = `<div class="section-heading"><div><span class="eyebrow">PAPER PERFORMANCE</span><h2>歷史績效 Dashboard</h2><p>只統計已有賽果的正式主要場次；同場同選擇方只保留時間較新的最終版本。</p></div><span class="v51-sample-label" id="v51PerformanceSample">樣本 0</span></div><div class="v51-performance-grid" id="v51PerformanceGrid"></div>`;
     summary.insertAdjacentElement("afterend", section);
   }
 

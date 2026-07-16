@@ -95,6 +95,7 @@ async function loadV5Ui() {
     loadStylesheetOnce("./css/v5-compact-decision.css?v=5.3.1", "data-v521-compact-decision"),
     loadStylesheetOnce("./css/v5-density-v53.css?v=5.3", "data-v53-density"),
     loadStylesheetOnce("./css/v5-decision-group-v532.css?v=5.3.2", "data-v532-decision-group"),
+    loadStylesheetOnce("./css/v5-explanations-v533.css?v=5.3.3", "data-v533-explanations"),
   ]);
   await loadScriptOnce("./js/v5/core/namespace.js?v=5.2", "data-v5-namespace", () => Boolean(window.NBAVL?.v5));
   await loadScriptOnce("./js/v5/utils/format.js?v=5.2", "data-v5-format", () => Boolean(window.NBAVL?.v5?.modules?.format));
@@ -102,7 +103,7 @@ async function loadV5Ui() {
   await loadScriptOnce("./js/v5/utils/sparkline.js?v=5.2", "data-v52-sparkline", () => Boolean(window.NBAVL?.v5?.modules?.sparkline));
   await loadScriptOnce("./js/v5/components/cards.js?v=5.3.1", "data-v5-cards", () => Boolean(window.NBAVL?.v5?.modules?.cards));
   await loadScriptOnce("./js/v5/components/drawer.js?v=5.2", "data-v5-drawer", () => Boolean(window.NBAVL?.v5?.modules?.drawer));
-  await loadScriptOnce("./js/v5/pages/dashboard.js?v=5.3.2", "data-v5-dashboard", () => Boolean(window.NBAVL?.v5?.modules?.dashboard));
+  await loadScriptOnce("./js/v5/pages/dashboard.js?v=5.3.3", "data-v5-dashboard", () => Boolean(window.NBAVL?.v5?.modules?.dashboard));
   await loadScriptOnce("./js/v5/pages/performance-dashboard.js?v=5.2", "data-v51-performance", () => Boolean(window.NBAVL?.v5?.modules?.performanceDashboard));
   await loadScriptOnce("./js/v5/pages/performance-trends.js?v=5.2", "data-v52-performance-trends", () => Boolean(window.NBAVL?.v5?.modules?.performanceTrends));
   await loadScriptOnce("./js/v5/pages/research-timeline.js?v=5.2", "data-v51-timeline", () => Boolean(window.NBAVL?.v5?.modules?.researchTimeline));
@@ -150,7 +151,7 @@ async function init() {
   bindEvents();
   updateCalculator(true);
   document.documentElement.dataset.modelVersion = activeModelLabel();
-  document.documentElement.dataset.appVersion = v5Ready ? "V5.3.2" : "V4.10";
+  document.documentElement.dataset.appVersion = v5Ready ? "V5.3.3" : "V4.10";
 }
 
 init().catch((error) => {

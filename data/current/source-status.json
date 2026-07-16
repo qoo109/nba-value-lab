@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "generated_at": "2026-07-16T04:03:44Z",
+    "overall_status": "degraded",
+    "formal_model_publishable": false,
+    "reason": "The schedule/status layer is initialized. Injuries, market consensus and calibrated model outputs are not connected yet."
+  },
+  "sources": [
+    {
+      "source_id": "nba_schedule_static",
+      "status": "pending_first_run",
+      "stale": true,
+      "observed_at": null,
+      "fetched_at": null,
+      "data_age_hours": null,
+      "adapter_version": "nba-free-data-v1",
+      "error": null
+    },
+    {
+      "source_id": "nba_live_scoreboard",
+      "status": "stale",
+      "stale": true,
+      "observed_at": "2026-05-10T00:00:00Z",
+      "fetched_at": "2026-07-16T04:03:44Z",
+      "data_age_hours": 1600.06,
+      "adapter_version": "nba-free-data-v1",
+      "error": "Public scoreboard feed is returning an offseason/stale snapshot; it must not be treated as current schedule data."
+    }
+  ]
+}

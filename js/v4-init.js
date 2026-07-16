@@ -49,46 +49,59 @@ function loadScriptOnce(src, marker, ready) {
   });
 }
 
+function loadStylesheetOnce(href, marker) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`link[${marker}]`);
+    if (existing) {
+      resolve();
+      return;
+    }
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    link.setAttribute(marker, "true");
+    link.onload = resolve;
+    link.onerror = () => reject(new Error(`Unable to load ${href}`));
+    document.head.appendChild(link);
+  });
+}
+
 function loadV46Coordination() {
-  return loadScriptOnce(
-    "./js/v4-6-model-coordination.js?v=4.10",
-    "data-v46-coordination",
-    () => typeof vDecision === "function" && typeof gDecision === "function",
-  );
+  return loadScriptOnce("./js/v4-6-model-coordination.js?v=5.0", "data-v46-coordination", () => typeof vDecision === "function" && typeof gDecision === "function");
 }
 
 function loadV410MultiMain() {
-  return loadScriptOnce(
-    "./js/v4-10-multi-main.js?v=4.10",
-    "data-v410-multi-main",
-    () => typeof renderMultiMainSummary === "function",
-  );
+  return loadScriptOnce("./js/v4-10-multi-main.js?v=5.0", "data-v410-multi-main", () => typeof renderMultiMainSummary === "function");
 }
 
 function loadV47ResearchLog() {
-  return loadScriptOnce(
-    "./js/v4-7-research-log.js?v=4.10",
-    "data-v47-research-log",
-    () => typeof initResearchLog === "function",
-  );
+  return loadScriptOnce("./js/v4-7-research-log.js?v=5.0", "data-v47-research-log", () => typeof initResearchLog === "function");
 }
 
 function loadV49LockStatus() {
-  return loadScriptOnce(
-    "./js/v4-8-lock-status.js?v=4.10",
-    "data-v49-lock-status",
-    () => typeof initT60LockStatus === "function",
-  );
+  return loadScriptOnce("./js/v4-8-lock-status.js?v=5.0", "data-v49-lock-status", () => typeof initT60LockStatus === "function");
 }
 
-function updateV410Shell() {
+async function loadV5Ui() {
+  await Promise.all([
+    loadStylesheetOnce("./css/v5-tokens.css?v=5.0", "data-v5-tokens"),
+    loadStylesheetOnce("./css/v5-layout.css?v=5.0", "data-v5-layout"),
+    loadStylesheetOnce("./css/v5-components.css?v=5.0", "data-v5-components"),
+  ]);
+  await loadScriptOnce("./js/v5/core/namespace.js?v=5.0", "data-v5-namespace", () => Boolean(window.NBAVL?.v5));
+  await loadScriptOnce("./js/v5/utils/format.js?v=5.0", "data-v5-format", () => Boolean(window.NBAVL?.v5?.modules?.format));
+  await loadScriptOnce("./js/v5/components/cards.js?v=5.0", "data-v5-cards", () => Boolean(window.NBAVL?.v5?.modules?.cards));
+  await loadScriptOnce("./js/v5/components/drawer.js?v=5.0", "data-v5-drawer", () => Boolean(window.NBAVL?.v5?.modules?.drawer));
+  await loadScriptOnce("./js/v5/pages/dashboard.js?v=5.0", "data-v5-dashboard", () => Boolean(window.NBAVL?.v5?.modules?.dashboard));
+  await loadScriptOnce("./js/v5/bootstrap.js?v=5.0", "data-v5-bootstrap", () => typeof window.NBAVL?.v5?.prepare === "function");
+}
+
+function updateFallbackShell() {
   document.title = `NBA Value Lab V4.10｜${activeModelLabel()}`;
   const header = document.querySelector(".header-status");
   if (header) header.innerHTML = `<span class="status-dot"></span>V4.10・${activeModelLabel()}・主要 2／最多 3`;
   const footerVersion = document.querySelector("footer > span:first-child");
   if (footerVersion) footerVersion.textContent = "NBA VALUE LAB V4.10";
-  const methodTitle = document.querySelector(".method-card h2");
-  if (methodTitle) methodTitle.textContent = "V3.1 與 G1.1 分開判定・主要場次目標 2、最多 3";
 }
 
 async function init() {
@@ -98,7 +111,17 @@ async function init() {
   await loadV410MultiMain();
   await loadV47ResearchLog();
   await loadV49LockStatus();
-  updateV410Shell();
+
+  let v5Ready = false;
+  try {
+    await loadV5Ui();
+    window.NBAVL.v5.prepare();
+    v5Ready = true;
+  } catch (error) {
+    console.warn("V5 UI failed to load; continuing with V4.10 UI:", error);
+    updateFallbackShell();
+  }
+
   applyTheme(document.documentElement.dataset.theme || "light");
   renderTopPick();
   renderMultiMainSummary();
@@ -108,14 +131,15 @@ async function init() {
   renderModelRegistryStatus();
   await initResearchLog();
   await initT60LockStatus();
+  if (v5Ready) window.NBAVL.v5.afterRender();
   bindEvents();
   updateCalculator(true);
   document.documentElement.dataset.modelVersion = activeModelLabel();
-  document.documentElement.dataset.appVersion = "V4.10";
+  document.documentElement.dataset.appVersion = v5Ready ? "V5.0" : "V4.10";
 }
 
 init().catch((error) => {
   console.error("NBA Value Lab initialization failed:", error);
   const header = document.querySelector(".header-status");
-  if (header) header.innerHTML = '<span class="status-dot"></span>V4.10・初始化失敗';
+  if (header) header.innerHTML = '<span class="status-dot"></span>初始化失敗';
 });

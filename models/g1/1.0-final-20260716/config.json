@@ -1,0 +1,183 @@
+{
+  "engine_id": "G",
+  "version": "1.0",
+  "revision_id": "G1-FINAL-20260716",
+  "status": "research",
+  "stage": 1,
+  "role": "bidirectional_moneyline_data_gate_price_layer_and_main_selection",
+  "market": {
+    "league": "NBA",
+    "type": "pregame_two_way_moneyline",
+    "includes_overtime": true,
+    "model_before_price_filter": true
+  },
+  "price_bands": [
+    {
+      "id": "extreme_low",
+      "min": 1.01,
+      "max": 1.2,
+      "min_inclusive": true,
+      "max_inclusive": false,
+      "label": "極低價層",
+      "required_margin_pp": null,
+      "eligible": false,
+      "maximum_conclusion": "只記錄"
+    },
+    {
+      "id": "low_research",
+      "min": 1.2,
+      "max": 1.35,
+      "min_inclusive": true,
+      "max_inclusive": false,
+      "label": "低價研究層",
+      "required_margin_pp": 7.0,
+      "eligible": false,
+      "maximum_conclusion": "ㄆ級・延伸研究"
+    },
+    {
+      "id": "favorite_core",
+      "min": 1.35,
+      "max": 1.6,
+      "min_inclusive": true,
+      "max_inclusive": true,
+      "label": "偏熱門核心層",
+      "required_margin_pp": 5.0,
+      "eligible": true,
+      "maximum_conclusion": "ㄅ級・研究候選"
+    },
+    {
+      "id": "near_even_core",
+      "min": 1.6,
+      "max": 2.2,
+      "min_inclusive": false,
+      "max_inclusive": true,
+      "label": "接近盤／小冷核心層",
+      "required_margin_pp": 6.0,
+      "eligible": true,
+      "maximum_conclusion": "ㄅ級・研究候選"
+    },
+    {
+      "id": "medium_high_extension",
+      "min": 2.2,
+      "max": 3.5,
+      "min_inclusive": false,
+      "max_inclusive": true,
+      "label": "中高價研究層",
+      "required_margin_pp": 8.0,
+      "eligible": false,
+      "maximum_conclusion": "ㄆ級・延伸研究"
+    },
+    {
+      "id": "high_volatility",
+      "min": 3.5,
+      "max": null,
+      "min_inclusive": false,
+      "max_inclusive": false,
+      "label": "高波動研究層",
+      "required_margin_pp": null,
+      "eligible": false,
+      "maximum_conclusion": "只記錄"
+    }
+  ],
+  "analysis_gate": {
+    "statuses": ["可分析", "條件式可分析", "資料不足"],
+    "coverage_stop_below_pct": 50,
+    "critical_identity_required": true,
+    "same_book_same_market_same_time_two_sided_odds_required": true,
+    "independent_fundamental_baseline_required": true,
+    "injury_scenario_required_when_center_impact_ge_pp": 3,
+    "source_conflict_must_be_resolved": true,
+    "market_rules_required": true,
+    "out_of_distribution_blocks_publish": true
+  },
+  "coverage": {
+    "method": "weighted_evidence_completeness",
+    "missing_weights_not_redistributed": true,
+    "weights_pct": {
+      "long_term_strength": 25,
+      "recent_form": 12,
+      "opponent_quality": 10,
+      "matchup_and_four_factors": 18,
+      "injuries_and_rotation": 15,
+      "rest_travel_load": 10,
+      "tactics_and_lineups": 5,
+      "home_and_environment": 5
+    },
+    "high_min_pct": 85,
+    "medium_min_pct": 65,
+    "low_min_pct": 50,
+    "insufficient_below_pct": 50
+  },
+  "grading": {
+    "watch_gap_min_pp": -3.0,
+    "low_confidence_maximum_grade": "ㄆ",
+    "news_risk_2_maximum_grade": "ㄆ",
+    "news_risk_3_price_grade": "價格判斷停止",
+    "extension_cap": "ㄆ級・延伸研究",
+    "dual_side_conflict_grade": "雙邊價值衝突"
+  },
+  "dual_side_consistency": {
+    "neutral_probabilities_must_sum_to_pct": 100,
+    "market_consensus_must_sum_to_pct": 100,
+    "both_sides_b_math_triggers_conflict": true,
+    "conflict_blocks_main_selection": true,
+    "price_change_must_not_change_game_probability_vector": true
+  },
+  "core_gate": {
+    "coverage_min_pct": 85,
+    "interval_width_max_pp": 6,
+    "comparison_sources_min": 3,
+    "threshold_buffer_min_pp": 1,
+    "model_market_gap_max_pp": 5,
+    "independent_evidence_min_if_gap_exceeded": 2,
+    "news_risk_max": 1,
+    "confidence_required": "高",
+    "injury_and_rotation_confirmation_required": true,
+    "minutes_limit_confirmation_threshold_pp": 3,
+    "out_of_distribution_allowed": false,
+    "unmodeled_reverse_path_allowed": false,
+    "stale_warning_allowed": false,
+    "core_max": 1,
+    "t60_status": "主要場次待 T-5m 確認",
+    "t5_status": "最終主要場次"
+  },
+  "selection": {
+    "official_main_max": 1,
+    "allow_zero_main": true,
+    "ui_priority_candidates_max": 2,
+    "ui_priority_is_official_g1_grade": false,
+    "ranking_order": [
+      "data_freshness_and_no_critical_gap",
+      "injury_and_rotation_certainty",
+      "narrower_interval",
+      "larger_main_surplus",
+      "better_explained_model_market_gap",
+      "fewer_unresolved_reverse_paths",
+      "more_stable_similar_case_calibration_and_clv"
+    ],
+    "highest_ev_alone_forbidden": true,
+    "highest_neutral_probability_alone_forbidden": true
+  },
+  "probability_model": {
+    "target_book_price_excluded_from_probability_features": true,
+    "components": ["P_F", "P_M", "R_outcome", "calibration"],
+    "market_consensus_excludes_target_book": true,
+    "minimum_comparison_sources_for_main": 3,
+    "outputs": ["P_C", "P_N", "P_O"]
+  },
+  "snapshot_policy": {
+    "T-24h": {"maximum_grade": "ㄆ", "purpose": "research_preview"},
+    "T-60m": {"locks_prediction": true, "main_status": "pending_T-5m"},
+    "T-5m": {"rerun_main_selection": true, "price_only_change_does_not_change_probability": true},
+    "Closing": {"validation_only": true, "must_not_rewrite_prediction": true}
+  },
+  "publication": {
+    "allow_formal_stake": false,
+    "formal_stake_fraction": 0,
+    "requires_injury_confirmation": true,
+    "requires_source_lineage": true,
+    "requires_stage_2": true,
+    "external_status": "模型驗證與紙上測試"
+  },
+  "source_sha256": "502826a241f1fc9643dbc1ed87dedd62500fca4290bf2721d4df87604565d9e8"
+}

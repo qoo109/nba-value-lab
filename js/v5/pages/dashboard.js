@@ -88,19 +88,19 @@
     const title = panel.querySelector(".view-hero h1");
     const copy = panel.querySelector(".view-hero p");
     const recordsHeading = panel.querySelector("#historyGeneratedAt")?.closest("section")?.querySelector("h2");
-    if (title) title.textContent = "研究 Timeline 與歷史績效";
-    if (copy) copy.textContent = "依時間查看鎖定、價格、基本面、Closing 與賽果事件；績效只使用已有正式結果的主要場次。";
+    if (title) title.textContent = "研究 Timeline、績效與價格趨勢";
+    if (copy) copy.textContent = "依時間查看鎖定、價格、基本面、Closing 與賽果，並追蹤紙上淨值、CLV、勝率與盤口變化。";
     if (recordsHeading) recordsHeading.textContent = "研究事件 Timeline";
   }
 
   function updateShell() {
     document.documentElement.classList.add("v5-ui");
-    document.documentElement.dataset.uiVersion = "5.1";
-    document.title = `NBA Value Lab V5.1｜${activeModelLabel()}`;
+    document.documentElement.dataset.uiVersion = "5.2";
+    document.title = `NBA Value Lab V5.2｜${activeModelLabel()}`;
     const header = document.querySelector(".header-status");
-    if (header) header.innerHTML = `<span class="status-dot"></span>V5.1・${activeModelLabel()}・主要 2／最多 3`;
+    if (header) header.innerHTML = `<span class="status-dot"></span>V5.2・${activeModelLabel()}・主要 2／最多 3`;
     const footer = document.querySelector("footer > span:first-child");
-    if (footer) footer.textContent = "NBA VALUE LAB V5.1";
+    if (footer) footer.textContent = "NBA VALUE LAB V5.2";
   }
 
   function afterRender() {

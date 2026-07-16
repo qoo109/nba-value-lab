@@ -41,6 +41,16 @@
     return value === null || value === undefined || value === "" ? fallback : String(value);
   }
 
+  function escapeHtml(value) {
+    return safeText(value, "").replace(/[&<>'"]/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;",
+    }[character]));
+  }
+
   v5.modules.format = {
     stars,
     starText,
@@ -48,5 +58,6 @@
     probability,
     reasons,
     safeText,
+    escapeHtml,
   };
 }());

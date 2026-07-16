@@ -3,10 +3,6 @@
 (function () {
   const v5 = window.NBAVL.v5;
 
-  function dateValue(record) {
-    return record.price_evaluated_at || record.evaluation_cutoff || record.predicted_at || record.observed_at || "";
-  }
-
   function formatDate(value) {
     if (!value) return { date: "—", time: "—" };
     const date = new Date(value);
@@ -19,29 +15,30 @@
 
   function eventMeta(record) {
     if (record.won !== null && record.won !== undefined) {
-      return { type: "outcome", label: record.won ? "賽果確認・勝" : "賽果確認・負", tone: record.won ? "positive" : "negative" };
+      return { label: record.won ? "賽果確認・勝" : "賽果確認・負", tone: record.won ? "positive" : "negative" };
     }
-    if (record.evaluation_stage === "Closing") return { type: "closing", label: "Closing／CLV", tone: "neutral" };
-    if (record.change_type === "fundamental_update") return { type: "fundamental", label: "基本面更新", tone: "warning" };
-    if (record.change_type === "price_only") return { type: "price", label: "價格更新", tone: "info" };
-    if (record.evaluation_stage === "T-5m") return { type: "final", label: "T−5m 最終複核", tone: "strong" };
-    if (record.evaluation_stage === "T-60m") return { type: "lock", label: "T−60m 鎖定", tone: "strong" };
-    return { type: "preview", label: record.evaluation_stage || "研究快照", tone: "neutral" };
+    if (record.evaluation_stage === "Closing") return { label: "Closing／CLV", tone: "neutral" };
+    if (record.change_type === "fundamental_update") return { label: "基本面更新", tone: "warning" };
+    if (record.change_type === "price_only") return { label: "價格更新", tone: "info" };
+    if (record.evaluation_stage === "T-5m") return { label: "T−5m 最終複核", tone: "strong" };
+    if (record.evaluation_stage === "T-60m") return { label: "T−60m 鎖定", tone: "strong" };
+    return { label: record.evaluation_stage || "研究快照", tone: "neutral" };
   }
 
   function probability(record) {
-    const value = record.p_conservative;
-    return value == null ? "—" : `${(Number(value) * 100).toFixed(1)}%`;
+    const value = v5.modules.history.numeric(record.p_conservative);
+    return value === null ? "—" : `${(value * 100).toFixed(1)}%`;
   }
 
   function odds(record) {
-    return record.target_odds == null ? "—" : Number(record.target_odds).toFixed(3);
+    const value = v5.modules.history.numeric(record.target_odds);
+    return value === null ? "—" : value.toFixed(3);
   }
 
   function clv(record) {
-    if (record.clv_odds == null) return "—";
-    const value = Number(record.clv_odds) * 100;
-    return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`;
+    const value = v5.modules.history.numeric(record.clv_odds);
+    if (value === null) return "—";
+    return `${value >= 0 ? "+" : ""}${(value * 100).toFixed(1)}%`;
   }
 
   function matchesFilters(record) {
@@ -56,17 +53,22 @@
   }
 
   function item(record) {
-    const stamp = formatDate(dateValue(record));
+    const format = v5.modules.format;
+    const stamp = formatDate(v5.modules.history.eventTime(record));
     const meta = eventMeta(record);
     const model = `V${record.model_v || "—"} × G${record.model_g || "—"}`;
+    const team = format.escapeHtml(record.selection_team_id || record.target || "—");
+    const game = format.escapeHtml(record.game_id || "—");
+    const status = format.escapeHtml(record.main_status || (record.ui_priority_candidate ? "網站優先候選" : "一般研究紀錄"));
+    const id = format.escapeHtml(record.price_evaluation_id || record.prediction_id || "—");
     return `<article class="v51-timeline-item tone-${meta.tone}">
       <div class="v51-timeline-time"><strong>${stamp.time}</strong><span>${stamp.date}</span></div>
       <div class="v51-timeline-dot" aria-hidden="true"></div>
       <div class="v51-timeline-card">
-        <div class="v51-timeline-head"><span class="v51-event-chip">${meta.label}</span><span>${model}</span></div>
-        <div class="v51-timeline-main"><div><strong>${record.selection_team_id || record.target || "—"}</strong><span>${record.game_id || "—"}</span></div><div><strong>${probability(record)}</strong><span>保守勝率</span></div></div>
-        <div class="v51-timeline-metrics"><span>賠率 <strong>${odds(record)}</strong></span><span>G1 <strong>${record.g_grade || "—"}</strong></span><span>CLV <strong>${clv(record)}</strong></span></div>
-        <div class="v51-timeline-foot"><span>${record.main_status || (record.ui_priority_candidate ? "網站優先候選" : "一般研究紀錄")}</span><code>${record.price_evaluation_id || record.prediction_id || "—"}</code></div>
+        <div class="v51-timeline-head"><span class="v51-event-chip">${format.escapeHtml(meta.label)}</span><span>${model}</span></div>
+        <div class="v51-timeline-main"><div><strong>${team}</strong><span>${game}</span></div><div><strong>${probability(record)}</strong><span>保守勝率</span></div></div>
+        <div class="v51-timeline-metrics"><span>賠率 <strong>${odds(record)}</strong></span><span>G1 <strong>${format.escapeHtml(record.g_grade || "—")}</strong></span><span>CLV <strong>${clv(record)}</strong></span></div>
+        <div class="v51-timeline-foot"><span>${status}</span><code>${id}</code></div>
       </div>
     </article>`;
   }
@@ -86,7 +88,7 @@
     const target = document.querySelector("#v51ResearchTimeline");
     if (!target) return;
     const records = Array.isArray(window.__NBA_RESEARCH_HISTORY__?.records) ? window.__NBA_RESEARCH_HISTORY__.records : [];
-    const filtered = records.filter(matchesFilters).sort((a, b) => dateValue(b).localeCompare(dateValue(a)));
+    const filtered = records.filter(matchesFilters).sort((a, b) => v5.modules.history.eventTime(b).localeCompare(v5.modules.history.eventTime(a)));
     target.innerHTML = filtered.length
       ? filtered.map(item).join("")
       : `<div class="v51-timeline-empty"><strong>尚無正式研究事件</strong><span>示範 slate 不會出現在 Timeline。正式 T−60m、T−5m、Closing 與賽果追加後才會顯示。</span></div>`;

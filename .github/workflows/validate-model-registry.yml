@@ -66,10 +66,15 @@ jobs:
           node --check js/v4-init.js
           node --check js/v4-live-data.js
           node --check js/v5/core/namespace.js
+          node --check js/v5/core/router.js
           node --check js/v5/utils/format.js
+          node --check js/v5/utils/history.js
+          node --check js/v5/utils/sparkline.js
           node --check js/v5/components/cards.js
           node --check js/v5/components/drawer.js
           node --check js/v5/pages/dashboard.js
           node --check js/v5/pages/performance-dashboard.js
+          node --check js/v5/pages/performance-trends.js
           node --check js/v5/pages/research-timeline.js
+          node --check js/v5/pages/market-trends.js
           node --check js/v5/bootstrap.js

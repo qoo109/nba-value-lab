@@ -15,7 +15,7 @@ FILES = {
     "js/v5/utils/sparkline.js": 180,
     "js/v5/components/cards.js": 300,
     "js/v5/components/drawer.js": 320,
-    "js/v5/pages/dashboard.js": 280,
+    "js/v5/pages/dashboard.js": 300,
     "js/v5/pages/performance-dashboard.js": 260,
     "js/v5/pages/performance-trends.js": 220,
     "js/v5/pages/research-timeline.js": 260,
@@ -31,6 +31,7 @@ FILES = {
     "css/v5-trends-p2.css": 360,
     "css/v5-compact-decision.css": 180,
     "css/v5-density-v53.css": 360,
+    "css/v5-decision-group-v532.css": 160,
 }
 
 LOAD_ORDER = [
@@ -60,6 +61,7 @@ STYLES = [
     "css/v5-trends-p2.css",
     "css/v5-compact-decision.css",
     "css/v5-density-v53.css",
+    "css/v5-decision-group-v532.css",
 ]
 
 
@@ -87,10 +89,11 @@ def main() -> int:
         require(relative in init_text, f"V5 loader is missing stylesheet {relative}")
 
     require("V5 UI failed to load; continuing with V4.10 UI" in init_text, "V4.10 fallback is missing")
-    require('dataset.appVersion = v5Ready ? "V5.3.1"' in init_text, "V5.3.1 app version is not active")
-    require("dashboard.js?v=5.3.1" in init_text, "V5.3.1 dashboard cache version is missing")
-    require("cards.js?v=5.3.1" in init_text, "V5.3.1 cards cache version is missing")
+    require('dataset.appVersion = v5Ready ? "V5.3.2"' in init_text, "V5.3.2 app version is not active")
+    require("dashboard.js?v=5.3.2" in init_text, "V5.3.2 dashboard cache version is missing")
+    require("cards.js?v=5.3.1" in init_text, "V5 cards cache version is missing")
     require("v5-density-v53.css?v=5.3" in init_text, "V5.3 density stylesheet cache version is missing")
+    require("v5-decision-group-v532.css?v=5.3.2" in init_text, "V5.3.2 decision-group stylesheet cache version is missing")
     require("window.showDetail = open" in (ROOT / "js/v5/components/drawer.js").read_text(encoding="utf-8"), "Drawer does not replace showDetail")
 
     cards = (ROOT / "js/v5/components/cards.js").read_text(encoding="utf-8")
@@ -116,28 +119,35 @@ def main() -> int:
     require("padding: 9px 10px" in density, "Market table rows were not compacted")
     require("--v53-gap-page" in density and "--v53-pad-card" in density, "V5.3 spacing tokens are missing")
 
+    grouped_style = (ROOT / "css/v5-decision-group-v532.css").read_text(encoding="utf-8")
+    require(".v532-decision-group" in grouped_style, "Decision group styling is missing")
+    require("gap: 8px" in grouped_style, "Decision strip and main cards are not visually grouped")
+    require("+ .games-section" in grouped_style, "Grouped decision block is not connected to candidate spacing")
+
     dashboard = (ROOT / "js/v5/pages/dashboard.js").read_text(encoding="utf-8")
+    require("function ensureDecisionGroup" in dashboard, "Decision group builder is missing")
+    require('group.id = "v532DecisionGroup"' in dashboard, "Decision group id is missing")
+    require('group.appendChild(strip)' in dashboard and 'group.appendChild(heroGrid)' in dashboard, "Decision strip and main cards are not placed in the same group")
+    order_block = dashboard.split("const priorityOrder = [", 1)[1].split("].filter(Boolean);", 1)[0]
     dashboard_order = [
-        "decisionStrip,",
         'analysis.querySelector(".date-rail")',
         'analysis.querySelector(".timing-strip")',
+        "decisionGroup,",
         'analysis.querySelector(".games-section")',
         "market,",
-        'analysis.querySelector(".hero-grid")',
         'sectionShell(analysis.querySelector(".calculator"))',
         'analysis.querySelector(".v5-model-disclosure")',
         'sectionShell(analysis.querySelector(".source-card"))',
         'sectionShell(analysis.querySelector(".weights-card"))',
         'sectionShell(analysis.querySelector(".pipeline-card"))',
     ]
-    order_positions = [dashboard.index(token) for token in dashboard_order]
-    require(order_positions == sorted(order_positions), "Dashboard sections are not in decision-candidate-market-result order")
-    require('strip.id = "v531DecisionStrip"' in dashboard, "Top decision strip id is missing")
-    require('className = "v5-hero-heading v52-compact-decision"' in dashboard, "Top decision strip styling is missing")
-    require("今日決策" in dashboard and "今日主要場次" in dashboard, "Top decision wording is missing")
+    order_positions = [order_block.index(token) for token in dashboard_order]
+    require(order_positions == sorted(order_positions), "Dashboard sections are not in date-timing-decision-candidate-market order")
+    require('strip.id = "v531DecisionStrip"' in dashboard, "Decision strip id is missing")
+    require("今日決策" in dashboard and "今日主要場次" in dashboard, "Decision wording is missing")
     require("if (market?.matches(\"details\")) market.open = true" in dashboard, "Market table must open by default")
     require('document.documentElement.dataset.visualDensity = "balanced"' in dashboard, "Balanced density marker is missing")
-    require('document.documentElement.dataset.uiVersion = "5.3.1"' in dashboard, "V5.3.1 UI version is missing")
+    require('document.documentElement.dataset.uiVersion = "5.3.2"' in dashboard, "V5.3.2 UI version is missing")
 
     bootstrap = (ROOT / "js/v5/bootstrap.js").read_text(encoding="utf-8")
     for module in ("performanceDashboard", "performanceTrends", "researchTimeline", "marketTrends", "router"):
@@ -165,7 +175,7 @@ def main() -> int:
     require("env(safe-area-inset-bottom)" in mobile, "Mobile safe-area support is missing")
     require("position: fixed" in mobile, "Mobile bottom navigation is missing")
 
-    print("V5.3.1 top decision strip valid")
+    print("V5.3.2 grouped decision and main-card layout valid")
     return 0
 
 

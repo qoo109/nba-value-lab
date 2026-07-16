@@ -1,0 +1,115 @@
+name: Audit historical NBA source
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_key:
+        description: "Configured source key"
+        required: true
+        type: choice
+        options:
+          - pbpstats_2023
+          - nbastats_2023
+        default: pbpstats_2023
+      max_download_mb:
+        description: "Hard download limit in MB"
+        required: true
+        default: "600"
+  pull_request:
+    paths:
+      - "config/historical-source-pilot.json"
+      - "scripts/audit_historical_source.py"
+      - ".github/workflows/audit-historical-source.yml"
+      - "docs/historical-data-pilot-v4.5.md"
+  push:
+    branches:
+      - "agent/v4-5-historical-source-pilot"
+    paths:
+      - "config/historical-source-pilot.json"
+      - "scripts/audit_historical_source.py"
+      - ".github/workflows/audit-historical-source.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile audit tool
+        run: python -m py_compile scripts/audit_historical_source.py
+      - name: Run synthetic archive self-test
+        run: |
+          python scripts/audit_historical_source.py \
+            --self-test \
+            --output /tmp/historical-source-self-test.json
+          python -m json.tool /tmp/historical-source-self-test.json >/dev/null
+          python - <<'PY'
+          import json
+          payload = json.load(open('/tmp/historical-source-self-test.json', encoding='utf-8'))
+          assert payload['self_test'] == 'passed'
+          assert payload['analysis']['sample_rows'] == 2
+          assert payload['analysis']['expected_fields_missing'] == []
+          assert payload['analysis']['candidate_key_checks'][0]['sample_duplicate_rows'] == 0
+          print('historical source audit self-test passed')
+          PY
+
+  live-pilot:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_KEY: ${{ github.event_name == 'workflow_dispatch' && inputs.source_key || 'pbpstats_2023' }}
+      MAX_DOWNLOAD_MB: ${{ github.event_name == 'workflow_dispatch' && inputs.max_download_mb || '600' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Audit real historical archive in temporary storage
+        run: |
+          mkdir -p /tmp/nbavl-historical-audit
+          python scripts/audit_historical_source.py \
+            --source "$SOURCE_KEY" \
+            --max-download-mb "$MAX_DOWNLOAD_MB" \
+            --max-files 80 \
+            --sample-rows 5000 \
+            --output "/tmp/nbavl-historical-audit/${SOURCE_KEY}.json"
+          python -m json.tool "/tmp/nbavl-historical-audit/${SOURCE_KEY}.json" >/dev/null
+      - name: Print compact audit summary
+        run: |
+          python - <<'PY'
+          import json, os
+          key = os.environ['SOURCE_KEY']
+          path = f'/tmp/nbavl-historical-audit/{key}.json'
+          payload = json.load(open(path, encoding='utf-8'))
+          summary = {
+              'source_key': key,
+              'archive_mb': payload['archive']['megabytes'],
+              'archive_sha256': payload['archive']['sha256'],
+              'member_count': payload['archive']['member_count'],
+              'file_count': payload['archive']['file_count'],
+              'sampled_file_count': payload['inspection']['sampled_file_count'],
+              'sampled_distinct_games_lower_bound': payload['inspection']['sampled_distinct_games_lower_bound'],
+              'expected_fields_found_any': payload['inspection']['expected_fields_found_any'],
+              'expected_fields_missing_all': payload['inspection']['expected_fields_missing_all'],
+              'inspection_errors': len(payload['inspection']['errors']),
+              'schema_usable': payload['decision']['schema_usable'],
+          }
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          if not payload['decision']['schema_usable']:
+              raise SystemExit('archive schema is not usable for the current pilot')
+          PY
+      - name: Upload compact audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-source-audit-${{ env.SOURCE_KEY }}
+          path: /tmp/nbavl-historical-audit/*.json
+          retention-days: 14
+          if-no-files-found: error

@@ -9,6 +9,7 @@ on:
       - "schemas/**"
       - "scripts/validate_model_registry.py"
       - "scripts/multi_main_policy.py"
+      - "scripts/test_multi_main_policy.py"
       - "js/v4-data.js"
       - "js/v4-core.js"
       - "js/v4-render.js"
@@ -24,6 +25,7 @@ on:
       - "schemas/**"
       - "scripts/validate_model_registry.py"
       - "scripts/multi_main_policy.py"
+      - "scripts/test_multi_main_policy.py"
       - "js/v4-data.js"
       - "js/v4-core.js"
       - "js/v4-render.js"
@@ -48,8 +50,10 @@ jobs:
           python-version: "3.12"
       - name: Validate registry and configs
         run: python scripts/validate_model_registry.py
-      - name: Check Python policy syntax
-        run: python -m py_compile scripts/multi_main_policy.py
+      - name: Test G1.1 multi-main policy
+        run: |
+          python -m py_compile scripts/multi_main_policy.py scripts/test_multi_main_policy.py
+          PYTHONPATH=scripts python scripts/test_multi_main_policy.py
       - name: Check JavaScript syntax
         run: |
           node --check js/v4-data.js

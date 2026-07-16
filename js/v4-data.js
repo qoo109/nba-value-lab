@@ -1,7 +1,7 @@
 "use strict";
 
 const MODEL_VERSION = "V3.1 × G1 FINAL";
-const APP_VERSION = "V4.6";
+const APP_VERSION = "V4.7";
 const THEME_KEY = "nba-value-lab-theme";
 
 const gradeInfo = {
@@ -84,25 +84,28 @@ let activeFilter = "全部";
 // MODEL_REGISTRY_V4_5
 const DEFAULT_MODEL_REGISTRY = {
   manifest: {
-    schema_version: 1,
+    schema_version: 2,
     active: {
-      V: { engine_id: "V", version: "3.0", config: "models/v3/3.0/config.json", spec: "models/v3/3.0/spec.md" },
-      G: { engine_id: "G", version: "1.0", config: "models/g1/1.0/config.json", spec: "models/g1/1.0/spec.md" },
+      V: { engine_id: "V", version: "3.1", config: "models/v3/3.1/config.json", spec: "models/v3/3.1/spec.md" },
+      G: { engine_id: "G", version: "1.0", config: "models/g1/1.0-final-20260716/config.json", spec: "models/g1/1.0-final-20260716/spec.md" },
     },
+    coordination: { config: "models/coordination/v3.1-g1-final/config.json" },
   },
   V: {
-    engine_id: "V", version: "3.0",
+    engine_id: "V", version: "3.1",
     odds_scope: { min: 1.40, max: 1.60 },
     required_margin_pp: 5,
-    early_preview_extra_margin_pp: 2,
+    early_preview_extra_margin_pp: 0,
   },
   G: {
     engine_id: "G", version: "1.0",
     price_bands: [
+      { min: 1.01, max: 1.20, min_inclusive: true, max_inclusive: false, label: "極低價層", required_margin_pp: 5, eligible: false },
       { min: 1.20, max: 1.35, min_inclusive: true, max_inclusive: false, label: "低價研究層", required_margin_pp: 7, eligible: false },
       { min: 1.35, max: 1.60, min_inclusive: true, max_inclusive: true, label: "偏熱門核心層", required_margin_pp: 5, eligible: true },
       { min: 1.60, max: 2.20, min_inclusive: false, max_inclusive: true, label: "接近盤／小冷核心層", required_margin_pp: 6, eligible: true },
       { min: 2.20, max: 3.50, min_inclusive: false, max_inclusive: true, label: "中高價研究層", required_margin_pp: 8, eligible: false },
+      { min: 3.50, max: 100, min_inclusive: false, max_inclusive: true, label: "高波動研究層", required_margin_pp: 99, eligible: false },
     ],
     grading: { watch_gap_min_pp: -3 },
     core_gate: {
@@ -111,6 +114,8 @@ const DEFAULT_MODEL_REGISTRY = {
       threshold_buffer_min_pp: 1,
       news_risk_max: 1,
       confidence_required: "高",
+      comparison_sources_min: 3,
+      model_market_gap_review_pp: 5,
       core_max: 1,
       priority_max: 2,
     },
@@ -186,7 +191,7 @@ function renderModelRegistryStatus() {
         <dl>
           <div><dt>核心賠率範圍</dt><dd>${modelV().odds_scope.min.toFixed(2)}～${modelV().odds_scope.max.toFixed(2)}</dd></div>
           <div><dt>安全邊際</dt><dd>${modelV().required_margin_pp.toFixed(1)}pp</dd></div>
-          <div><dt>21:00 額外邊際</dt><dd>+${modelV().early_preview_extra_margin_pp.toFixed(1)}pp</dd></div>
+          <div><dt>預覽限制</dt><dd>T−24h 原則最高 ㄆ級</dd></div>
         </dl>
       </article>
       <article class="registry-card ${loaded ? "licensed" : "restricted"}">
@@ -195,7 +200,7 @@ function renderModelRegistryStatus() {
         <dl>
           <div><dt>核心覆蓋率</dt><dd>≥ ${modelG().core_gate.coverage_min_pct}%</dd></div>
           <div><dt>區間寬度</dt><dd>≤ ${modelG().core_gate.interval_width_max_pp}pp</dd></div>
-          <div><dt>核心／優先</dt><dd>${modelG().core_gate.core_max}／${modelG().core_gate.priority_max}</dd></div>
+          <div><dt>主要場次</dt><dd>${modelG().core_gate.core_max} 場上限</dd></div>
         </dl>
       </article>
     </div>`;

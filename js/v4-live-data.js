@@ -77,7 +77,7 @@
     else panel.prepend(section);
 
     const header = document.querySelector(".header-status");
-    if (header) header.innerHTML = `<span class="status-dot"></span>V4.4・資料層${meta.overall_status === "ok" ? "正常" : "降級"}`;
+    if (header) header.innerHTML = `<span class="status-dot"></span>V4.5・資料層${meta.overall_status === "ok" ? "正常" : "降級"}`;
   }
 
   async function load() {
@@ -92,7 +92,7 @@
       renderHealth(status);
     } catch (error) {
       const header = document.querySelector(".header-status");
-      if (header) header.innerHTML = '<span class="status-dot"></span>V4.4・資料層讀取失敗';
+      if (header) header.innerHTML = '<span class="status-dot"></span>V4.5・資料層讀取失敗';
       console.warn("NBA Value Lab live data layer:", error);
     }
   }

@@ -28,18 +28,24 @@ function bindEvents() {
   $("#detailModal").addEventListener("click", (event) => { if (event.target === $("#detailModal")) $("#detailModal").close(); });
 }
 
-function init() {
+async function init() {
   loadReadabilityStyles();
+  await loadModelRegistry();
   updateVersionText();
   applyTheme(document.documentElement.dataset.theme || "light");
   renderTopPick();
   renderTable();
   renderCards();
   renderCalculatorOptions();
+  renderModelRegistryStatus();
   bindEvents();
   updateCalculator(true);
-  document.documentElement.dataset.modelVersion = MODEL_VERSION;
+  document.documentElement.dataset.modelVersion = activeModelLabel();
   document.documentElement.dataset.appVersion = APP_VERSION;
 }
 
-init();
+init().catch((error) => {
+  console.error("NBA Value Lab initialization failed:", error);
+  const header = document.querySelector(".header-status");
+  if (header) header.innerHTML = '<span class="status-dot"></span>V4.5・初始化失敗';
+});

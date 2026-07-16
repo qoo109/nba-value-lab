@@ -8,7 +8,7 @@ function loadReadabilityStyles() {
 }
 
 function updateVersionText() {
-  document.title = `NBA Value Lab ${APP_VERSION}｜V3 × G1`;
+  document.title = `NBA Value Lab ${APP_VERSION}｜${activeModelLabel()}`;
   const footerVersion = document.querySelector("footer > span:first-child");
   if (footerVersion) footerVersion.textContent = `NBA VALUE LAB ${APP_VERSION}`;
 }
@@ -25,13 +25,16 @@ function noVig(candidate) {
   const opponent = rawImplied(candidate.opponent.odds);
   return target !== null && opponent !== null ? target / (target + opponent) * 100 : null;
 }
+function bandContains(band, odds) {
+  const aboveMin = band.min_inclusive === false ? odds > band.min : odds >= band.min;
+  const belowMax = band.max_inclusive === false ? odds < band.max : odds <= band.max;
+  return aboveMin && belowMax;
+}
 function priceBand(odds) {
   if (!Number.isFinite(odds) || odds <= 1) return { label: "無效價格", margin: null, eligible: false };
-  if (odds < 1.20) return { label: "極低價層", margin: null, eligible: false };
-  if (odds < 1.35) return { label: "低價研究層", margin: 7, eligible: false };
-  if (odds <= 1.60) return { label: "偏熱門核心層", margin: 5, eligible: true };
-  if (odds <= 2.20) return { label: "接近盤／小冷核心層", margin: 6, eligible: true };
-  if (odds <= 3.50) return { label: "中高價研究層", margin: 8, eligible: false };
+  const configured = modelG().price_bands.find((band) => bandContains(band, odds));
+  if (configured) return { label: configured.label, margin: configured.required_margin_pp, eligible: Boolean(configured.eligible) };
+  if (odds < modelG().price_bands[0].min) return { label: "極低價層", margin: null, eligible: false };
   return { label: "高波動研究層", margin: null, eligible: false };
 }
 function edge(candidate, odds = candidate.target.odds) {
@@ -74,10 +77,10 @@ function gradeAtPrice(candidate, odds = candidate.target.odds) {
   const band = priceBand(odds);
   const gap = thresholdGap(candidate, odds);
   if (gap !== null && gap >= 0) {
-    if (band.eligible && game.newsRisk <= 1 && game.confidence !== "低") return "ㄅ";
+    if (band.eligible && game.newsRisk <= modelG().core_gate.news_risk_max && game.confidence !== "低") return "ㄅ";
     return "ㄆ";
   }
-  if (gap !== null && gap >= -3) return "ㄆ";
+  if (gap !== null && gap >= modelG().grading.watch_gap_min_pp) return "ㄆ";
   return "ㄇ";
 }
 function candidateGrade(candidate) { return gradeAtPrice(candidate); }
@@ -102,7 +105,8 @@ function toggleTheme() {
 
 function engineLabel(candidate) {
   const odds = candidate.target.odds;
-  return Number.isFinite(odds) && odds >= 1.40 && odds <= 1.60 ? "V3＋G1" : "G1";
+  const scope = modelV().odds_scope;
+  return Number.isFinite(odds) && odds >= scope.min && odds <= scope.max ? `V${modelV().version}＋G${modelG().version}` : `G${modelG().version}`;
 }
 
 function intervalWidth(candidate) {
@@ -114,15 +118,16 @@ function intervalWidth(candidate) {
 function mainGateEligible(candidate) {
   const game = candidate.game;
   const gap = thresholdGap(candidate);
+  const gate = modelG().core_gate;
   return candidateGrade(candidate) === "ㄅ"
     && game.coreReady === true
-    && game.confidence === "高"
-    && game.coverage >= 85
+    && game.confidence === gate.confidence_required
+    && game.coverage >= gate.coverage_min_pct
     && intervalWidth(candidate) !== null
-    && intervalWidth(candidate) <= 6
+    && intervalWidth(candidate) <= gate.interval_width_max_pp
     && gap !== null
-    && gap >= 1
-    && game.newsRisk <= 1;
+    && gap >= gate.threshold_buffer_min_pp
+    && game.newsRisk <= gate.news_risk_max;
 }
 
 function rankedQualified() {
@@ -141,8 +146,9 @@ function rankedQualified() {
 
 function selectionBoard() {
   const qualified = rankedQualified();
-  const core = qualified.find(mainGateEligible) || null;
-  const priority = qualified.filter((candidate) => !core || candidate.id !== core.id).slice(0, 2);
+  const gate = modelG().core_gate;
+  const core = gate.core_max > 0 ? qualified.find(mainGateEligible) || null : null;
+  const priority = qualified.filter((candidate) => !core || candidate.id !== core.id).slice(0, Math.max(0, gate.priority_max));
   const general = qualified.filter((candidate) => !core || candidate.id !== core.id)
     .filter((candidate) => !priority.some((item) => item.id === candidate.id));
   return { core, priority, general, qualified };

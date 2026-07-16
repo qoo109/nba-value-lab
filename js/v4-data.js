@@ -1,7 +1,7 @@
 "use strict";
 
-const MODEL_VERSION = "V3 × G1";
-const APP_VERSION = "V4.4";
+const MODEL_VERSION = "V × G Registry";
+const APP_VERSION = "V4.5";
 const THEME_KEY = "nba-value-lab-theme";
 
 const gradeInfo = {
@@ -79,3 +79,126 @@ const candidates = games.flatMap((game) => ["away", "home"].map((side) => {
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 let activeFilter = "全部";
+
+
+// MODEL_REGISTRY_V4_5
+const DEFAULT_MODEL_REGISTRY = {
+  manifest: {
+    schema_version: 1,
+    active: {
+      V: { engine_id: "V", version: "3.0", config: "models/v3/3.0/config.json", spec: "models/v3/3.0/spec.md" },
+      G: { engine_id: "G", version: "1.0", config: "models/g1/1.0/config.json", spec: "models/g1/1.0/spec.md" },
+    },
+  },
+  V: {
+    engine_id: "V", version: "3.0",
+    odds_scope: { min: 1.40, max: 1.60 },
+    required_margin_pp: 5,
+    early_preview_extra_margin_pp: 2,
+  },
+  G: {
+    engine_id: "G", version: "1.0",
+    price_bands: [
+      { min: 1.20, max: 1.35, min_inclusive: true, max_inclusive: false, label: "低價研究層", required_margin_pp: 7, eligible: false },
+      { min: 1.35, max: 1.60, min_inclusive: true, max_inclusive: true, label: "偏熱門核心層", required_margin_pp: 5, eligible: true },
+      { min: 1.60, max: 2.20, min_inclusive: false, max_inclusive: true, label: "接近盤／小冷核心層", required_margin_pp: 6, eligible: true },
+      { min: 2.20, max: 3.50, min_inclusive: false, max_inclusive: true, label: "中高價研究層", required_margin_pp: 8, eligible: false },
+    ],
+    grading: { watch_gap_min_pp: -3 },
+    core_gate: {
+      coverage_min_pct: 85,
+      interval_width_max_pp: 6,
+      threshold_buffer_min_pp: 1,
+      news_risk_max: 1,
+      confidence_required: "高",
+      core_max: 1,
+      priority_max: 2,
+    },
+  },
+};
+
+let runtimeModelRegistry = JSON.parse(JSON.stringify(DEFAULT_MODEL_REGISTRY));
+let modelRegistryLoadState = { status: "fallback", error: null, loaded_at: null };
+
+function modelV() { return runtimeModelRegistry.V || DEFAULT_MODEL_REGISTRY.V; }
+function modelG() { return runtimeModelRegistry.G || DEFAULT_MODEL_REGISTRY.G; }
+function activeModelLabel() { return `V${modelV().version} × G${modelG().version}`; }
+
+function validateLoadedModelConfig(engine, config) {
+  if (!config || typeof config !== "object") throw new Error(`${engine} config must be an object`);
+  if (config.engine_id !== engine) throw new Error(`${engine} config engine_id mismatch`);
+  if (!config.version) throw new Error(`${engine} config missing version`);
+  if (engine === "G" && !Array.isArray(config.price_bands)) throw new Error("G config missing price_bands");
+  return config;
+}
+
+async function fetchJsonNoStore(path) {
+  const response = await fetch(path, { cache: "no-store" });
+  if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
+  return response.json();
+}
+
+async function loadModelRegistry() {
+  try {
+    const manifest = await fetchJsonNoStore("./models/manifest.json");
+    const vEntry = manifest?.active?.V;
+    const gEntry = manifest?.active?.G;
+    if (!vEntry?.config || !gEntry?.config) throw new Error("manifest active V/G config paths are missing");
+    const [vConfig, gConfig] = await Promise.all([
+      fetchJsonNoStore(`./${vEntry.config}`),
+      fetchJsonNoStore(`./${gEntry.config}`),
+    ]);
+    runtimeModelRegistry = {
+      manifest,
+      V: validateLoadedModelConfig("V", vConfig),
+      G: validateLoadedModelConfig("G", gConfig),
+    };
+    modelRegistryLoadState = { status: "loaded", error: null, loaded_at: new Date().toISOString() };
+  } catch (error) {
+    runtimeModelRegistry = JSON.parse(JSON.stringify(DEFAULT_MODEL_REGISTRY));
+    modelRegistryLoadState = { status: "fallback", error: String(error), loaded_at: new Date().toISOString() };
+    console.warn("NBA Value Lab model registry fallback:", error);
+  }
+  document.documentElement.dataset.modelRegistry = modelRegistryLoadState.status;
+  document.documentElement.dataset.vModelVersion = modelV().version;
+  document.documentElement.dataset.gModelVersion = modelG().version;
+  return runtimeModelRegistry;
+}
+
+function renderModelRegistryStatus() {
+  const panel = document.querySelector('[data-panel="sources"]');
+  if (!panel || document.querySelector("#modelRegistryStatus")) return;
+  const hero = panel.querySelector(".sources-hero");
+  const section = document.createElement("section");
+  section.id = "modelRegistryStatus";
+  section.className = "storage-card";
+  const loaded = modelRegistryLoadState.status === "loaded";
+  section.innerHTML = `
+    <div>
+      <span class="eyebrow">MODEL REGISTRY</span>
+      <h2>${activeModelLabel()}・${loaded ? "已從 GitHub 設定載入" : "使用內建安全預設"}</h2>
+      <p>規格文件供人閱讀，config.json 供網站執行。更新 manifest 與設定後，GitHub Actions 會先驗證，再由 Pages 自動發布。</p>
+    </div>
+    <div class="registry-grid">
+      <article class="registry-card ${loaded ? "licensed" : "restricted"}">
+        <div><span>V ENGINE</span><em>V${modelV().version}</em></div>
+        <h2>價格價值與最低接受賠率</h2>
+        <dl>
+          <div><dt>核心賠率範圍</dt><dd>${modelV().odds_scope.min.toFixed(2)}～${modelV().odds_scope.max.toFixed(2)}</dd></div>
+          <div><dt>安全邊際</dt><dd>${modelV().required_margin_pp.toFixed(1)}pp</dd></div>
+          <div><dt>21:00 額外邊際</dt><dd>+${modelV().early_preview_extra_margin_pp.toFixed(1)}pp</dd></div>
+        </dl>
+      </article>
+      <article class="registry-card ${loaded ? "licensed" : "restricted"}">
+        <div><span>G ENGINE</span><em>G${modelG().version}</em></div>
+        <h2>資料 Gate 與優先序</h2>
+        <dl>
+          <div><dt>核心覆蓋率</dt><dd>≥ ${modelG().core_gate.coverage_min_pct}%</dd></div>
+          <div><dt>區間寬度</dt><dd>≤ ${modelG().core_gate.interval_width_max_pp}pp</dd></div>
+          <div><dt>核心／優先</dt><dd>${modelG().core_gate.core_max}／${modelG().core_gate.priority_max}</dd></div>
+        </dl>
+      </article>
+    </div>`;
+  if (hero) hero.insertAdjacentElement("afterend", section);
+  else panel.prepend(section);
+}

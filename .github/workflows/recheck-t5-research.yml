@@ -1,0 +1,132 @@
+name: Recheck T-5m research records
+
+on:
+  workflow_dispatch:
+    inputs:
+      input_path:
+        description: "Repository path to a research T-5m input JSON"
+        required: true
+        default: "data/fixtures/t5-recheck-example.json"
+      dry_run:
+        description: "Validate only; fixture inputs require true"
+        required: true
+        type: boolean
+        default: true
+  pull_request:
+    paths:
+      - "scripts/recheck_t5_snapshot.py"
+      - "scripts/lock_t60_snapshot_v49.py"
+      - "scripts/append_research_record_v49.py"
+      - "data/fixtures/t5-recheck-example.json"
+      - ".github/workflows/recheck-t5-research.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "scripts/recheck_t5_snapshot.py"
+      - "scripts/lock_t60_snapshot_v49.py"
+      - "scripts/append_research_record_v49.py"
+      - "data/fixtures/t5-recheck-example.json"
+      - ".github/workflows/recheck-t5-research.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: t5-research-recheck
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile research pipeline
+        run: |
+          python -m py_compile \
+            scripts/lock_t60_snapshot.py \
+            scripts/lock_t60_snapshot_v49.py \
+            scripts/recheck_t5_snapshot.py \
+            scripts/append_research_record.py \
+            scripts/append_research_record_v49.py
+
+      - name: Build enriched T-60m fixture output
+        run: |
+          python scripts/lock_t60_snapshot_v49.py \
+            data/fixtures/t60-lock-example.json \
+            --dry-run \
+            --output /tmp/t60-v49-output.json
+
+      - name: Dry-run bundled T-5m fixture
+        run: |
+          python scripts/recheck_t5_snapshot.py \
+            data/fixtures/t5-recheck-example.json \
+            --previous-output /tmp/t60-v49-output.json \
+            --dry-run \
+            --output /tmp/t5-v49-output.json
+          python -m json.tool /tmp/t5-v49-output.json >/dev/null
+          python - <<'PY'
+          import json
+          payload = json.load(open('/tmp/t5-v49-output.json', encoding='utf-8'))
+          selection = payload['selection']
+          records = payload['records']
+          selected = selection['selected_prediction_id']
+          assert selection['main_status'] == '最終主要場次'
+          assert selection['price_only_count'] == 2
+          assert selection['fundamental_update_count'] == 2
+          assert selection['main_changed_from_t60'] is False
+          assert selected == selection['t60_selected_prediction_id']
+          selected_record = next(item for item in records if item['prediction_id'] == selected)
+          assert selected_record['selection_team_id'] == 'DEN'
+          assert selected_record['main_status'] == '最終主要場次'
+          assert selected_record['change_type'] == 'price_only'
+          assert any(item['selection_team_id'] == 'NYK' and item['change_type'] == 'fundamental_update' for item in records)
+          print('V4.9 fixture validated')
+          PY
+
+      - name: Prove fixture cannot write formal history
+        run: |
+          if python scripts/recheck_t5_snapshot.py \
+            data/fixtures/t5-recheck-example.json \
+            --previous-output /tmp/t60-v49-output.json; then
+            echo "Fixture unexpectedly wrote formal history"
+            exit 1
+          fi
+          test ! -f data/history/2026-10.jsonl
+
+      - name: Validate selected input
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          INPUT_PATH: ${{ inputs.input_path }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          test -f "$INPUT_PATH"
+          if [ "$DRY_RUN" = "true" ]; then
+            if [ "$INPUT_PATH" = "data/fixtures/t5-recheck-example.json" ]; then
+              python scripts/lock_t60_snapshot_v49.py data/fixtures/t60-lock-example.json --dry-run --output /tmp/manual-t60-output.json
+              python scripts/recheck_t5_snapshot.py "$INPUT_PATH" --previous-output /tmp/manual-t60-output.json --dry-run --output /tmp/manual-t5-output.json
+            else
+              python scripts/recheck_t5_snapshot.py "$INPUT_PATH" --dry-run --output /tmp/manual-t5-output.json
+            fi
+          else
+            python scripts/recheck_t5_snapshot.py "$INPUT_PATH" --output /tmp/manual-t5-output.json
+          fi
+          python -m json.tool /tmp/manual-t5-output.json >/dev/null
+
+      - name: Commit immutable final lock and compact records
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == false
+        run: |
+          if git diff --quiet -- data/history data/locks; then
+            echo "No T-5m changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/history data/locks
+          git commit -m "research: finalize T-5m predictions and price evaluations"
+          git push

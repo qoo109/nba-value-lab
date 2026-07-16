@@ -1,8 +1,7 @@
 {
-  "generated_at": "2026-07-16T04:03:44Z",
+  "generated_at": "2026-07-16T04:05:25.255912Z",
   "collector_version": "4.4.0",
-  "python": null,
+  "python": "3.12.13",
   "game_count": 0,
-  "active_source": null,
-  "next_step": "Run the Update NBA free data workflow manually or wait for the next scheduled run."
+  "active_source": null
 }

@@ -1,30 +1,34 @@
 {
   "meta": {
-    "generated_at": "2026-07-16T04:03:44Z",
+    "generated_at": "2026-07-16T04:05:25.255912Z",
     "overall_status": "degraded",
     "formal_model_publishable": false,
-    "reason": "The schedule/status layer is initialized. Injuries, market consensus and calibrated model outputs are not connected yet."
+    "reason": "Schedule/status layer only; injuries, market consensus and model calibration are not yet connected."
   },
   "sources": [
     {
       "source_id": "nba_schedule_static",
-      "status": "pending_first_run",
-      "stale": true,
+      "url": "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_1.json",
+      "status": "error",
       "observed_at": null,
-      "fetched_at": null,
+      "fetched_at": "2026-07-16T04:05:25.255916Z",
       "data_age_hours": null,
+      "stale": true,
+      "raw_hash": null,
       "adapter_version": "nba-free-data-v1",
-      "error": null
+      "error": "HTTPError: HTTP Error 403: Forbidden"
     },
     {
       "source_id": "nba_live_scoreboard",
-      "status": "stale",
+      "url": "https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json",
+      "status": "error",
+      "observed_at": null,
+      "fetched_at": "2026-07-16T04:05:25.317052Z",
+      "data_age_hours": null,
       "stale": true,
-      "observed_at": "2026-05-10T00:00:00Z",
-      "fetched_at": "2026-07-16T04:03:44Z",
-      "data_age_hours": 1600.06,
+      "raw_hash": null,
       "adapter_version": "nba-free-data-v1",
-      "error": "Public scoreboard feed is returning an offseason/stale snapshot; it must not be treated as current schedule data."
+      "error": "HTTPError: HTTP Error 403: Forbidden"
     }
   ]
 }

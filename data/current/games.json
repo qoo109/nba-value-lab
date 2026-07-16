@@ -1,13 +1,12 @@
 {
   "meta": {
-    "generated_at": "2026-07-16T04:03:44Z",
+    "generated_at": "2026-07-16T04:05:25.255912Z",
     "timezone": "Asia/Taipei",
     "window_start": "2026-07-16",
     "window_end": "2026-07-19",
     "active_source": null,
     "game_count": 0,
-    "data_mode": "free_public_sources",
-    "status": "offseason_or_awaiting_first_workflow_run"
+    "data_mode": "free_public_sources"
   },
   "games": []
 }

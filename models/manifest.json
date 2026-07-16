@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "registry_version": "1.1.0",
-  "updated_at": "2026-07-16T09:00:00+08:00",
+  "registry_version": "1.2.0",
+  "updated_at": "2026-07-16T15:30:00+08:00",
   "active": {
     "V": {
       "engine_id": "V",
@@ -12,21 +12,22 @@
     },
     "G": {
       "engine_id": "G",
-      "version": "1.0",
-      "revision_id": "G1-FINAL-20260716",
-      "config": "models/g1/1.0-final-20260716/config.json",
-      "spec": "models/g1/1.0-final-20260716/spec.md"
+      "version": "1.1",
+      "revision_id": "G1.1-MAIN2-MAX3-20260716",
+      "config": "models/g1/1.1-main-2-max-3/config.json",
+      "spec": "models/g1/1.1-main-2-max-3/spec.md"
     }
   },
   "coordination": {
-    "coordination_id": "V3.1_X_G1-FINAL-20260716",
-    "version": "1.0.0",
-    "config": "models/coordination/v3.1-g1-final/config.json"
+    "coordination_id": "V3.1_X_G1.1-MAIN2-MAX3-20260716",
+    "version": "1.1.0",
+    "config": "models/coordination/v3.1-g1.1-main-2-max-3/config.json"
   },
   "compatibility": {
-    "frontend_min": "4.6.0",
-    "prediction_record_schema": "1.1.0",
-    "requires_separate_engine_grades": true
+    "frontend_min": "4.10.0",
+    "prediction_record_schema": "1.2.0",
+    "requires_separate_engine_grades": true,
+    "supports_multiple_main_selections": true
   },
   "deployment": {
     "auto_publish_on_main": true,

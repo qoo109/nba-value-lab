@@ -8,12 +8,15 @@ on:
       - "models/**"
       - "schemas/**"
       - "scripts/validate_model_registry.py"
+      - "scripts/multi_main_policy.py"
+      - "scripts/test_multi_main_policy.py"
       - "js/v4-data.js"
       - "js/v4-core.js"
       - "js/v4-render.js"
       - "js/v4-6-model-coordination.js"
       - "js/v4-7-research-log.js"
       - "js/v4-8-lock-status.js"
+      - "js/v4-10-multi-main.js"
       - "js/v4-init.js"
       - ".github/workflows/validate-model-registry.yml"
   pull_request:
@@ -21,12 +24,15 @@ on:
       - "models/**"
       - "schemas/**"
       - "scripts/validate_model_registry.py"
+      - "scripts/multi_main_policy.py"
+      - "scripts/test_multi_main_policy.py"
       - "js/v4-data.js"
       - "js/v4-core.js"
       - "js/v4-render.js"
       - "js/v4-6-model-coordination.js"
       - "js/v4-7-research-log.js"
       - "js/v4-8-lock-status.js"
+      - "js/v4-10-multi-main.js"
       - "js/v4-init.js"
       - ".github/workflows/validate-model-registry.yml"
 
@@ -44,6 +50,10 @@ jobs:
           python-version: "3.12"
       - name: Validate registry and configs
         run: python scripts/validate_model_registry.py
+      - name: Test G1.1 multi-main policy
+        run: |
+          python -m py_compile scripts/multi_main_policy.py scripts/test_multi_main_policy.py
+          PYTHONPATH=scripts python scripts/test_multi_main_policy.py
       - name: Check JavaScript syntax
         run: |
           node --check js/v4-data.js
@@ -52,5 +62,6 @@ jobs:
           node --check js/v4-6-model-coordination.js
           node --check js/v4-7-research-log.js
           node --check js/v4-8-lock-status.js
+          node --check js/v4-10-multi-main.js
           node --check js/v4-init.js
           node --check js/v4-live-data.js

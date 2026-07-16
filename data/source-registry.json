@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "4.3.0",
-  "updated_at": "2026-07-16T12:00:00+08:00",
+  "registry_version": "4.5.0",
+  "updated_at": "2026-07-16T21:00:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -53,6 +53,17 @@
       "requires_secret": false,
       "quality_checks": ["adapter_version", "endpoint_schema", "rate_limit", "timeout"],
       "notes": "client 使用 MIT License；NBA.com endpoint 可能改動"
+    },
+    {
+      "source_id": "shufinskiy_nba_data",
+      "name": "shufinskiy/nba_data historical archives",
+      "status": "pilot",
+      "mode": "bounded_archive_audit",
+      "domains": ["historical_play_by_play", "possessions", "shot_coordinates", "cross_source_validation"],
+      "requires_secret": false,
+      "quality_checks": ["download_limit", "sha256", "safe_extract", "schema", "null_rate", "candidate_key_duplicates", "game_coverage"],
+      "storage_policy": "workflow_temp_only_no_raw_commit",
+      "notes": "NBA Value Lab V4.5 歷史資料試驗；先測 pbpstats_2023 與 nbastats_2023。上游資料再發布權不作推定。"
     },
     {
       "source_id": "basketball_reference",

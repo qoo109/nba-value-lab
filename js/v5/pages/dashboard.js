@@ -122,12 +122,13 @@
 
   function updateShell() {
     document.documentElement.classList.add("v5-ui");
-    document.documentElement.dataset.uiVersion = "5.2";
-    document.title = `NBA Value Lab V5.2｜${activeModelLabel()}`;
+    document.documentElement.dataset.uiVersion = "5.3";
+    document.documentElement.dataset.visualDensity = "balanced";
+    document.title = `NBA Value Lab V5.3｜${activeModelLabel()}`;
     const header = document.querySelector(".header-status");
-    if (header) header.innerHTML = `<span class="status-dot"></span>V5.2・${activeModelLabel()}・主要 2／最多 3`;
+    if (header) header.innerHTML = `<span class="status-dot"></span>V5.3・${activeModelLabel()}・主要 2／最多 3`;
     const footer = document.querySelector("footer > span:first-child");
-    if (footer) footer.textContent = "NBA VALUE LAB V5.2";
+    if (footer) footer.textContent = "NBA VALUE LAB V5.3";
   }
 
   function afterRender() {

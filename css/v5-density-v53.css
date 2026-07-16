@@ -1,0 +1,336 @@
+.v5-ui {
+  --v53-gap-page: 12px;
+  --v53-gap-card: 10px;
+  --v53-pad-card: 14px;
+}
+
+.v5-ui .page-shell {
+  padding-top: 14px;
+  padding-bottom: 54px;
+}
+
+.v5-ui .panel {
+  gap: var(--v53-gap-page);
+}
+
+.v5-ui .date-rail {
+  gap: 5px;
+  padding: 7px;
+  border-radius: 14px;
+}
+
+.v5-ui .date-rail > div {
+  min-height: 50px;
+  gap: 10px;
+  padding: 0 12px;
+}
+
+.v5-ui .timing-strip {
+  gap: 6px;
+}
+
+.v5-ui .timing-strip > div {
+  min-height: 44px;
+  padding: 9px 11px;
+  border-radius: 10px;
+}
+
+.v5-ui .games-section,
+.v5-ui .market-table-section,
+.v5-ui .calculator,
+.v5-ui .source-card,
+.v5-ui .weights-card,
+.v5-ui .pipeline-card,
+.v5-ui .candidate-grid,
+.v5-ui .protocol-grid,
+.v5-ui .validation-metrics,
+.v5-ui .registry-grid {
+  margin-top: 0;
+}
+
+.v5-ui .section-heading {
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.v5-ui .section-heading h2,
+.v5-ui .source-card h2,
+.v5-ui .calculator h2,
+.v5-ui .weights-card h2,
+.v5-ui .pipeline-card h2,
+.v5-ui .storage-card h2 {
+  margin-top: 4px;
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  line-height: 1.15;
+}
+
+.v5-ui .section-heading p,
+.v5-ui .view-hero p,
+.v5-ui .sources-hero p {
+  line-height: 1.55;
+}
+
+.v5-ui .games-grid,
+.v5-ui .candidate-grid,
+.v5-ui .v5-main-grid {
+  gap: var(--v53-gap-card);
+}
+
+.v5-ui .v5-candidate-card {
+  gap: 10px;
+  padding: var(--v53-pad-card);
+}
+
+.v5-ui .v5-candidate-top {
+  gap: 10px;
+}
+
+.v5-ui .v5-candidate-top h3 {
+  margin-top: 6px;
+  font-size: 1.85rem;
+}
+
+.v5-ui .v5-candidate-key {
+  gap: 6px;
+}
+
+.v5-ui .v5-candidate-key > div {
+  gap: 2px;
+  padding: 7px 8px;
+  border-radius: 8px;
+}
+
+.v5-ui .v5-candidate-bottom,
+.v5-ui .v5-main-card-meta,
+.v5-ui .v5-main-card-head {
+  gap: 6px;
+}
+
+.v5-ui .v5-main-card {
+  min-height: 258px;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.v5-ui .v5-team-code {
+  margin-bottom: 5px;
+  font-size: clamp(2.45rem, 8vw, 4.5rem);
+}
+
+.v5-ui .v5-primary-number strong {
+  font-size: clamp(2rem, 6vw, 3.3rem);
+}
+
+.v5-ui .v5-main-card-body {
+  gap: 12px;
+}
+
+.v5-ui .v5-reason-list {
+  gap: 4px;
+  padding: 10px 11px 10px 26px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.v5-ui .v5-card-action {
+  font-size: 13px;
+}
+
+.v5-ui .v5-model-disclosure,
+.v5-ui .v5-disclosure {
+  border-radius: 14px;
+}
+
+.v5-ui .v5-model-disclosure > summary,
+.v5-ui .v5-disclosure > summary {
+  min-height: 46px;
+  gap: 10px;
+  padding: 10px 13px;
+}
+
+.v5-ui .v5-model-disclosure > summary::after,
+.v5-ui .v5-disclosure > summary::after {
+  font-size: 18px;
+}
+
+.v5-ui .v5-model-disclosure > summary small,
+.v5-ui .v5-disclosure > summary small {
+  max-width: 58%;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v5-ui .table-scroll {
+  border-radius: 11px;
+}
+
+.v5-ui .market-table th {
+  padding: 9px 10px;
+}
+
+.v5-ui .market-table td {
+  padding: 9px 10px;
+  font-size: 10.5px;
+}
+
+.v5-ui .market-table td:first-child strong {
+  font-size: 12px;
+}
+
+.v5-ui .market-table td:first-child small {
+  margin-top: 3px;
+}
+
+.v5-ui .calculator,
+.v5-ui .source-card,
+.v5-ui .weights-card,
+.v5-ui .pipeline-card {
+  gap: 18px;
+  padding: 18px;
+}
+
+.v5-ui .calculator input,
+.v5-ui .calculator select {
+  height: 40px;
+}
+
+.v5-ui .source-grid > div,
+.v5-ui .weight-grid > div {
+  min-height: 58px;
+  gap: 5px;
+  padding: 10px;
+}
+
+.v5-ui .pipeline-steps span {
+  padding: 10px 7px;
+}
+
+.v5-ui .view-hero,
+.v5-ui .sources-hero {
+  gap: 24px;
+  padding: 24px;
+}
+
+.v5-ui .view-hero h1,
+.v5-ui .sources-hero h1 {
+  margin: 9px 0 8px;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.v5-ui .state-card {
+  min-height: 112px;
+  gap: 8px;
+  padding: 16px;
+}
+
+.v5-ui .state-card strong {
+  font-size: 24px;
+}
+
+.v5-ui .validation-metrics .metric,
+.v5-ui .validation-grid article,
+.v5-ui .registry-card,
+.v5-ui .storage-card {
+  padding: 17px;
+}
+
+.v5-ui .validation-grid,
+.v5-ui .registry-grid {
+  gap: 10px;
+}
+
+.v5-ui .empty-state,
+.v5-ui .no-results {
+  min-height: 130px;
+}
+
+.v5-ui .v5-drawer-content {
+  gap: 14px;
+  padding: 16px;
+}
+
+.v5-ui .v5-drawer-section {
+  padding: 14px;
+}
+
+@media (min-width: 760px) {
+  .v5-ui .page-shell {
+    padding: 18px 22px 68px;
+  }
+
+  .v5-ui .site-header {
+    min-height: 58px;
+    padding-block: 8px;
+  }
+
+  .v5-ui .date-rail {
+    padding: 6px;
+  }
+
+  .v5-ui .v5-main-grid:has(> :only-child) {
+    grid-template-columns: minmax(0, 390px);
+  }
+}
+
+@media (min-width: 1100px) {
+  .v5-ui .panel {
+    gap: 11px;
+  }
+
+  .v5-ui .games-grid,
+  .v5-ui .candidate-grid {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 719px) {
+  .v5-ui .page-shell {
+    padding-top: 10px;
+  }
+
+  .v5-ui .date-rail {
+    padding: 6px;
+  }
+
+  .v5-ui .date-rail > div {
+    min-height: 46px;
+    padding-inline: 10px;
+  }
+
+  .v5-ui .timing-strip > div {
+    min-height: 42px;
+    padding: 8px 9px;
+    font-size: 12px;
+  }
+
+  .v5-ui .section-heading {
+    margin-bottom: 7px;
+  }
+
+  .v5-ui .section-heading .table-hint {
+    display: none;
+  }
+
+  .v5-ui .v5-main-card {
+    min-height: 238px;
+    padding: 14px;
+  }
+
+  .v5-ui .v5-candidate-card {
+    padding: 12px;
+  }
+
+  .v5-ui .v5-model-disclosure > summary small,
+  .v5-ui .v5-disclosure > summary small {
+    display: none;
+  }
+
+  .v5-ui .view-hero,
+  .v5-ui .sources-hero {
+    gap: 14px;
+    padding: 18px;
+  }
+}

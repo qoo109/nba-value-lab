@@ -30,6 +30,7 @@ FILES = {
     "css/v5-routing-p2.css": 180,
     "css/v5-trends-p2.css": 360,
     "css/v5-compact-decision.css": 180,
+    "css/v5-density-v53.css": 360,
 }
 
 LOAD_ORDER = [
@@ -58,6 +59,7 @@ STYLES = [
     "css/v5-routing-p2.css",
     "css/v5-trends-p2.css",
     "css/v5-compact-decision.css",
+    "css/v5-density-v53.css",
 ]
 
 
@@ -85,8 +87,9 @@ def main() -> int:
         require(relative in init_text, f"V5 loader is missing stylesheet {relative}")
 
     require("V5 UI failed to load; continuing with V4.10 UI" in init_text, "V4.10 fallback is missing")
-    require('dataset.appVersion = v5Ready ? "V5.2"' in init_text, "V5.2 app version is not active")
-    require("dashboard.js?v=5.2.2" in init_text, "Reordered dashboard cache version is missing")
+    require('dataset.appVersion = v5Ready ? "V5.3"' in init_text, "V5.3 app version is not active")
+    require("dashboard.js?v=5.3" in init_text, "V5.3 dashboard cache version is missing")
+    require("v5-density-v53.css?v=5.3" in init_text, "V5.3 density stylesheet cache version is missing")
     require("window.showDetail = open" in (ROOT / "js/v5/components/drawer.js").read_text(encoding="utf-8"), "Drawer does not replace showDetail")
 
     cards = (ROOT / "js/v5/components/cards.js").read_text(encoding="utf-8")
@@ -97,7 +100,20 @@ def main() -> int:
     compact = (ROOT / "css/v5-compact-decision.css").read_text(encoding="utf-8")
     require("grid-template-columns: minmax(0, 1fr) !important" in compact, "Top-pick layout is not forced to one column")
     require("white-space: nowrap" in compact, "Decision strip is not kept to one line")
-    require("v52-decision-note" in compact, "Compact decision note styling is missing")
+
+    density = (ROOT / "css/v5-density-v53.css").read_text(encoding="utf-8")
+    for token in (
+        ".v5-ui .panel",
+        ".v5-ui .v5-main-card",
+        ".v5-ui .v5-candidate-card",
+        ".v5-ui .market-table td",
+        ".v5-ui .v5-disclosure > summary",
+        "@media (max-width: 719px)",
+    ):
+        require(token in density, f"V5.3 density rule missing: {token}")
+    require("min-height: 258px" in density, "Main card height was not compacted")
+    require("padding: 9px 10px" in density, "Market table rows were not compacted")
+    require("--v53-gap-page" in density and "--v53-pad-card" in density, "V5.3 spacing tokens are missing")
 
     dashboard = (ROOT / "js/v5/pages/dashboard.js").read_text(encoding="utf-8")
     dashboard_order = [
@@ -113,7 +129,8 @@ def main() -> int:
     order_positions = [dashboard.index(token) for token in dashboard_order]
     require(order_positions == sorted(order_positions), "Dashboard sections are not in candidate-market-result-model order")
     require("if (market?.matches(\"details\")) market.open = true" in dashboard, "Market table must open by default")
-    require('analysis.dataset.sectionOrder = "candidates-market-results-tools-model-sources"' in dashboard, "Dashboard order marker is missing")
+    require('document.documentElement.dataset.visualDensity = "balanced"' in dashboard, "Balanced density marker is missing")
+    require('document.documentElement.dataset.uiVersion = "5.3"' in dashboard, "V5.3 UI version is missing")
 
     bootstrap = (ROOT / "js/v5/bootstrap.js").read_text(encoding="utf-8")
     for module in ("performanceDashboard", "performanceTrends", "researchTimeline", "marketTrends", "router"):
@@ -141,7 +158,7 @@ def main() -> int:
     require("env(safe-area-inset-bottom)" in mobile, "Mobile safe-area support is missing")
     require("position: fixed" in mobile, "Mobile bottom navigation is missing")
 
-    print("V5.2 dashboard priority order valid")
+    print("V5.3 balanced visual density valid")
     return 0
 
 

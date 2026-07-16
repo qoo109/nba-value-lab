@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0.0",
+  "registry_version": "4.3.0",
+  "updated_at": "2026-07-16T12:00:00+08:00",
+  "timezone": "Asia/Taipei",
+  "sources": [
+    {
+      "source_id": "user_odds",
+      "name": "使用者手動雙邊盤口",
+      "status": "active",
+      "mode": "manual",
+      "domains": ["odds"],
+      "snapshots": ["21:00", "T-60m", "T-5m", "Closing"],
+      "requires_secret": false,
+      "notes": "同一莊家、同一市場、同一時間的雙邊十進位賠率"
+    },
+    {
+      "source_id": "derived_schedule",
+      "name": "賽程衍生特徵",
+      "status": "active",
+      "mode": "derived",
+      "domains": ["rest", "travel", "timezone", "schedule_density"],
+      "requires_secret": false,
+      "notes": "由賽程、場館座標與 IANA 時區資料計算"
+    },
+    {
+      "source_id": "nba_injury_official",
+      "name": "NBA Official Injury Reports",
+      "status": "pilot",
+      "mode": "crawler",
+      "domains": ["injuries"],
+      "requires_secret": false,
+      "snapshots": ["21:00", "T-60m", "T-5m"],
+      "quality_checks": ["timestamp", "pdf_schema", "raw_hash", "duplicate_revision"],
+      "notes": "解析失敗時停止發布，不猜測欄位"
+    },
+    {
+      "source_id": "nba_live_cdn",
+      "name": "NBA Live Data CDN",
+      "status": "pilot",
+      "mode": "api",
+      "domains": ["schedule", "scores", "boxscore", "play_by_play"],
+      "requires_secret": false,
+      "quality_checks": ["http_status", "schema_version", "game_id", "timestamp"],
+      "notes": "官方公開 JSON，無商業 SLA"
+    },
+    {
+      "source_id": "nba_api",
+      "name": "swar/nba_api",
+      "status": "pilot",
+      "mode": "api_client",
+      "domains": ["stats", "live_data", "rotation", "historical_import"],
+      "requires_secret": false,
+      "quality_checks": ["adapter_version", "endpoint_schema", "rate_limit", "timeout"],
+      "notes": "client 使用 MIT License；NBA.com endpoint 可能改動"
+    },
+    {
+      "source_id": "basketball_reference",
+      "name": "Basketball-Reference",
+      "status": "manual",
+      "mode": "manual_import",
+      "domains": ["historical_crosscheck"],
+      "requires_secret": false,
+      "notes": "只作人工核對與小量匯入；自動化前先完成條款與 robots 審查"
+    }
+  ]
+}

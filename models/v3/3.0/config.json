@@ -1,0 +1,28 @@
+{
+  "engine_id": "V",
+  "version": "3.0",
+  "status": "research",
+  "role": "price_value_engine",
+  "odds_scope": {
+    "min": 1.4,
+    "max": 1.6
+  },
+  "required_margin_pp": 5.0,
+  "early_preview_extra_margin_pp": 2.0,
+  "probability_outputs": [
+    "conservative",
+    "neutral",
+    "optimistic"
+  ],
+  "price_outputs": [
+    "break_even_probability",
+    "no_vig_probability",
+    "conservative_ev",
+    "minimum_acceptable_odds"
+  ],
+  "publication": {
+    "allow_formal_stake": false,
+    "requires_calibration": true,
+    "requires_point_in_time_validation": true
+  }
+}

@@ -16,10 +16,10 @@
 
 - game ID 與日期
 - 主客隊 ID／縮寫
-- 最終比分
+- 官方最終比分
 - 最高節數與實際比賽分鐘
 - PBP 事件數與 Possession 數
-- 跨來源比分驗證結果
+- Possession 得分重建 QA
 - 品質旗標
 
 ### `pbp_events`
@@ -50,15 +50,16 @@ GAMEID
 
 - 進攻方與防守方
 - 回合起訖時間與起始類型
-- 得分、二分／三分、罰球
-- 進攻籃板與失誤
-- 回合內事件數與事件文字
-- 品質旗標
+- 二分／三分、罰球、進攻籃板與失誤
+- 事件文字重建的回合得分
+- 回合內事件數與品質旗標
 
 ### `team_game_features`
 
 每場每隊一列：
 
+- 官方得分與對手官方得分
+- Possession 事件重建得分，僅供 QA
 - Possessions
 - Pace
 - OffRtg／DefRtg／NetRtg
@@ -66,14 +67,13 @@ GAMEID
 - TOV%（估計四要素分母）
 - ORB%（以投籃未進次數估計）
 - FTr
-- 與官方最終比分的交叉驗證
 
 ## 指標定義
 
 ```text
 Pace = 48 × (Team Poss + Opp Poss) / (2 × Game Minutes)
-OffRtg = 100 × Team Points / Team Poss
-DefRtg = 100 × Opp Points / Opp Poss
+OffRtg = 100 × Official Team Points / Team Poss
+DefRtg = 100 × Official Opp Points / Opp Poss
 eFG% = (FGM + 0.5 × 3PM) / FGA
 TOV% = TOV / (FGA + 0.44 × FTA + TOV)
 FTr = FTA / FGA
@@ -82,15 +82,23 @@ ORB% estimate = ORB / Missed FG
 
 `ORB% estimate` 不是正式 Box Score ORB%，因為目前來源沒有完整對手防守籃板欄位。它會保留明確名稱，不與正式 ORB% 混用。
 
-## 得分重算
+## 得分來源與 QA
 
-Possession 得分由下列資料計算：
+正式 OffRtg／DefRtg 使用 `nbastats` 的官方最終比分，不使用事件文字推估。
+
+Possession 得分另由下式重建：
 
 ```text
 2 × FG2M + 3 × FG3M + made free throws parsed from EVENTS
 ```
 
-再與 `nbastats` 最終比分比對。正式模型特徵管線要求至少 98% 已知比分比賽一致；不一致比賽保留，但會標記品質旗標，不能直接進訓練集。
+重建分數只用來偵測技術犯規、同秒罰球與特殊回合歸屬問題。它不會覆蓋官方分數，也不會直接作為 Rating 的分子。
+
+正式模型特徵管線要求：
+
+- 官方比分覆蓋率至少 98%
+- Team-game 特徵覆蓋率至少 98%
+- 進攻方辨識零失敗
 
 ## 產物
 

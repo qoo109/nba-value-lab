@@ -103,17 +103,22 @@ jobs:
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           assert selection['target_main_count'] == 2
           assert selection['maximum_main_count'] == 3
-          assert 0 <= selection['selected_count'] <= 3
+          assert selection['selected_count'] == 2
           assert selection['price_only_count'] == 2
           assert selection['fundamental_update_count'] == 2
-          assert selection['main_changed_from_t60'] is False
-          assert selection['selected_prediction_ids'] == selection['t60_selected_prediction_ids']
-          selected = selection['selected_prediction_ids'][0]
-          selected_record = next(item for item in records if item['prediction_id'] == selected)
-          assert selected_record['selection_team_id'] == 'DEN'
-          assert selected_record['main_status'].startswith('最終主要場次 1/')
-          assert selected_record['change_type'] == 'price_only'
-          assert any(item['selection_team_id'] == 'NYK' and item['change_type'] == 'fundamental_update' for item in records)
+          assert selection['main_changed_from_t60'] is True
+          assert len(selection['t60_selected_prediction_ids']) == 1
+          assert len(selection['selected_prediction_ids']) == 2
+          selected_records = [
+              next(item for item in records if item['prediction_id'] == prediction_id)
+              for prediction_id in selection['selected_prediction_ids']
+          ]
+          assert [item['selection_team_id'] for item in selected_records] == ['DEN', 'NYK']
+          assert selected_records[0]['main_status'] == '最終主要場次 1/2'
+          assert selected_records[1]['main_status'] == '最終主要場次 2/2'
+          assert selected_records[0]['change_type'] == 'price_only'
+          assert selected_records[1]['change_type'] == 'fundamental_update'
+          assert selected_records[0]['prediction_id'] == selection['t60_selected_prediction_ids'][0]
           print('V4.10 multi-main T-5m fixture validated')
           PY
 

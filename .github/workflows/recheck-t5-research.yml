@@ -14,17 +14,22 @@ on:
         default: true
   pull_request:
     paths:
+      - "models/**"
       - "scripts/recheck_t5_snapshot.py"
-      - "scripts/lock_t60_snapshot_v49.py"
-      - "scripts/append_research_record_v49.py"
+      - "scripts/recheck_t5_snapshot_v410.py"
+      - "scripts/lock_t60_snapshot_v410.py"
+      - "scripts/multi_main_policy.py"
+      - "scripts/append_research_record_v410.py"
       - "data/fixtures/t5-recheck-example.json"
       - ".github/workflows/recheck-t5-research.yml"
   push:
     branches: ["main"]
     paths:
-      - "scripts/recheck_t5_snapshot.py"
-      - "scripts/lock_t60_snapshot_v49.py"
-      - "scripts/append_research_record_v49.py"
+      - "models/**"
+      - "scripts/recheck_t5_snapshot_v410.py"
+      - "scripts/lock_t60_snapshot_v410.py"
+      - "scripts/multi_main_policy.py"
+      - "scripts/append_research_record_v410.py"
       - "data/fixtures/t5-recheck-example.json"
       - ".github/workflows/recheck-t5-research.yml"
 
@@ -41,7 +46,6 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -51,49 +55,53 @@ jobs:
           python -m py_compile \
             scripts/lock_t60_snapshot.py \
             scripts/lock_t60_snapshot_v49.py \
+            scripts/lock_t60_snapshot_v410.py \
             scripts/recheck_t5_snapshot.py \
-            scripts/append_research_record.py \
-            scripts/append_research_record_v49.py
+            scripts/recheck_t5_snapshot_v410.py \
+            scripts/multi_main_policy.py \
+            scripts/append_research_record_v410.py
 
-      - name: Build enriched T-60m fixture output
+      - name: Build G1.1 T-60m fixture output
         run: |
-          python scripts/lock_t60_snapshot_v49.py \
+          python scripts/lock_t60_snapshot_v410.py \
             data/fixtures/t60-lock-example.json \
             --dry-run \
-            --output /tmp/t60-v49-output.json
+            --output /tmp/t60-v410-output.json
 
       - name: Dry-run bundled T-5m fixture
         run: |
-          python scripts/recheck_t5_snapshot.py \
+          python scripts/recheck_t5_snapshot_v410.py \
             data/fixtures/t5-recheck-example.json \
-            --previous-output /tmp/t60-v49-output.json \
+            --previous-output /tmp/t60-v410-output.json \
             --dry-run \
-            --output /tmp/t5-v49-output.json
-          python -m json.tool /tmp/t5-v49-output.json >/dev/null
+            --output /tmp/t5-v410-output.json
+          python -m json.tool /tmp/t5-v410-output.json >/dev/null
           python - <<'PY'
           import json
-          payload = json.load(open('/tmp/t5-v49-output.json', encoding='utf-8'))
+          payload = json.load(open('/tmp/t5-v410-output.json', encoding='utf-8'))
           selection = payload['selection']
           records = payload['records']
-          selected = selection['selected_prediction_id']
-          assert selection['main_status'] == '最終主要場次'
+          assert selection['target_main_count'] == 2
+          assert selection['maximum_main_count'] == 3
+          assert 0 <= selection['selected_count'] <= 3
           assert selection['price_only_count'] == 2
           assert selection['fundamental_update_count'] == 2
           assert selection['main_changed_from_t60'] is False
-          assert selected == selection['t60_selected_prediction_id']
+          assert selection['selected_prediction_ids'] == selection['t60_selected_prediction_ids']
+          selected = selection['selected_prediction_ids'][0]
           selected_record = next(item for item in records if item['prediction_id'] == selected)
           assert selected_record['selection_team_id'] == 'DEN'
-          assert selected_record['main_status'] == '最終主要場次'
+          assert selected_record['main_status'] == '最終主要場次 1/1'
           assert selected_record['change_type'] == 'price_only'
           assert any(item['selection_team_id'] == 'NYK' and item['change_type'] == 'fundamental_update' for item in records)
-          print('V4.9 fixture validated')
+          print('V4.10 multi-main T-5m fixture validated')
           PY
 
       - name: Prove fixture cannot write formal history
         run: |
-          if python scripts/recheck_t5_snapshot.py \
+          if python scripts/recheck_t5_snapshot_v410.py \
             data/fixtures/t5-recheck-example.json \
-            --previous-output /tmp/t60-v49-output.json; then
+            --previous-output /tmp/t60-v410-output.json; then
             echo "Fixture unexpectedly wrote formal history"
             exit 1
           fi
@@ -108,13 +116,13 @@ jobs:
           test -f "$INPUT_PATH"
           if [ "$DRY_RUN" = "true" ]; then
             if [ "$INPUT_PATH" = "data/fixtures/t5-recheck-example.json" ]; then
-              python scripts/lock_t60_snapshot_v49.py data/fixtures/t60-lock-example.json --dry-run --output /tmp/manual-t60-output.json
-              python scripts/recheck_t5_snapshot.py "$INPUT_PATH" --previous-output /tmp/manual-t60-output.json --dry-run --output /tmp/manual-t5-output.json
+              python scripts/lock_t60_snapshot_v410.py data/fixtures/t60-lock-example.json --dry-run --output /tmp/manual-t60-output.json
+              python scripts/recheck_t5_snapshot_v410.py "$INPUT_PATH" --previous-output /tmp/manual-t60-output.json --dry-run --output /tmp/manual-t5-output.json
             else
-              python scripts/recheck_t5_snapshot.py "$INPUT_PATH" --dry-run --output /tmp/manual-t5-output.json
+              python scripts/recheck_t5_snapshot_v410.py "$INPUT_PATH" --dry-run --output /tmp/manual-t5-output.json
             fi
           else
-            python scripts/recheck_t5_snapshot.py "$INPUT_PATH" --output /tmp/manual-t5-output.json
+            python scripts/recheck_t5_snapshot_v410.py "$INPUT_PATH" --output /tmp/manual-t5-output.json
           fi
           python -m json.tool /tmp/manual-t5-output.json >/dev/null
 
@@ -128,5 +136,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/history data/locks
-          git commit -m "research: finalize T-5m predictions and price evaluations"
+          git commit -m "research: finalize G1.1 T-5m multi-main records"
           git push

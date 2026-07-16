@@ -15,7 +15,7 @@ FILES = {
     "js/v5/utils/sparkline.js": 180,
     "js/v5/components/cards.js": 300,
     "js/v5/components/drawer.js": 320,
-    "js/v5/pages/dashboard.js": 320,
+    "js/v5/pages/dashboard.js": 340,
     "js/v5/pages/performance-dashboard.js": 260,
     "js/v5/pages/performance-trends.js": 220,
     "js/v5/pages/research-timeline.js": 260,
@@ -91,8 +91,8 @@ def main() -> int:
         require(relative in init_text, f"V5 loader is missing stylesheet {relative}")
 
     require("V5 UI failed to load; continuing with V4.10 UI" in init_text, "V4.10 fallback is missing")
-    require('dataset.appVersion = v5Ready ? "V5.3.3"' in init_text, "V5.3.3 app version is not active")
-    require("dashboard.js?v=5.3.3" in init_text, "V5.3.3 dashboard cache version is missing")
+    require('dataset.appVersion = v5Ready ? "V5.3.4"' in init_text, "V5.3.4 app version is not active")
+    require("dashboard.js?v=5.3.4" in init_text, "V5.3.4 dashboard cache version is missing")
     require("cards.js?v=5.3.1" in init_text, "V5 cards cache version is missing")
     require("v5-density-v53.css?v=5.3" in init_text, "V5.3 density stylesheet cache version is missing")
     require("v5-decision-group-v532.css?v=5.3.2" in init_text, "Decision-group stylesheet cache version is missing")
@@ -135,11 +135,19 @@ def main() -> int:
     require("function ensureDecisionGroup" in dashboard, "Decision group builder is missing")
     require('group.id = "v532DecisionGroup"' in dashboard, "Decision group id is missing")
     require('group.appendChild(strip)' in dashboard and 'group.appendChild(heroGrid)' in dashboard, "Decision strip and main cards are not grouped")
-    require("function ensureExplanationGroup" in dashboard, "Explanation group builder is missing")
+    require("function ensureModelDisclosure" in dashboard, "Model disclosure normalizer is missing")
+    require('method.closest(".v5-model-disclosure")' in dashboard, "Model disclosure is not anchored to the actual method card")
+    require("function syncExplanationGroup" in dashboard, "Explanation group synchronization is missing")
     require('group.id = "v533ExplanationGroup"' in dashboard, "Explanation group id is missing")
+    require("ensureModelDisclosure(analysis)" in dashboard, "Model rules are not explicitly collected into the explanation group")
+    require("list.appendChild(item)" in dashboard, "Explanation items are not moved into one list")
+    require('details.open = false' in dashboard and 'item.open = false' in dashboard, "Explanation items do not default to collapsed")
+    require("function watchExplanationGroup" in dashboard, "Explanation group repair observer is missing")
+    require("MutationObserver" in dashboard, "Explanation group is not protected against later rerenders")
+    require("requestAnimationFrame" in dashboard, "Explanation group is not verified after layout")
+    require('dataset.explanationGroupVerified = "true"' in dashboard, "Explanation group verification marker is missing")
     for label in ("模型與分級規則", "資料來源策略", "證據覆蓋權重", "研究快照流程"):
         require(label in dashboard, f"Explanation label missing: {label}")
-    require("items.forEach((item) => list.appendChild(item))" in dashboard, "Explanation items are not moved into one list")
 
     order_block = dashboard.split("const priorityOrder = [", 1)[1].split("].filter(Boolean);", 1)[0]
     dashboard_order = [
@@ -153,7 +161,7 @@ def main() -> int:
     ]
     order_positions = [order_block.index(token) for token in dashboard_order]
     require(order_positions == sorted(order_positions), "Dashboard sections are not in decision-candidate-market-explanation order")
-    require('document.documentElement.dataset.uiVersion = "5.3.3"' in dashboard, "V5.3.3 UI version is missing")
+    require('document.documentElement.dataset.uiVersion = "5.3.4"' in dashboard, "V5.3.4 UI version is missing")
     require("方法與資料說明" in dashboard, "Grouped explanation heading is missing")
     require("if (market?.matches(\"details\")) market.open = true" in dashboard, "Market table must open by default")
 
@@ -183,7 +191,7 @@ def main() -> int:
     require("env(safe-area-inset-bottom)" in mobile, "Mobile safe-area support is missing")
     require("position: fixed" in mobile, "Mobile bottom navigation is missing")
 
-    print("V5.3.3 grouped explanations valid")
+    print("V5.3.4 model explanation grouping repair valid")
     return 0
 
 

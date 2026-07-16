@@ -69,7 +69,30 @@
     return group;
   }
 
-  function ensureExplanationGroup(analysis) {
+  function ensureModelDisclosure(analysis) {
+    const method = analysis.querySelector(".method-card");
+    if (!method) return null;
+    let details = method.closest(".v5-model-disclosure");
+    if (!details) {
+      details = document.createElement("details");
+      details.className = "v5-model-disclosure";
+      const summary = document.createElement("summary");
+      summary.innerHTML = `<span>模型與分級規則</span><small>${activeModelLabel()}</small>`;
+      method.parentNode.insertBefore(details, method);
+      details.append(summary, method);
+    }
+    details.open = false;
+
+    analysis.querySelectorAll(".v5-model-disclosure").forEach((duplicate) => {
+      if (duplicate === details) return;
+      const duplicateMethod = duplicate.querySelector(".method-card");
+      if (duplicateMethod && !details.contains(duplicateMethod)) details.appendChild(duplicateMethod);
+      duplicate.remove();
+    });
+    return details;
+  }
+
+  function ensureExplanationGroupShell(analysis) {
     let group = analysis.querySelector("#v533ExplanationGroup");
     if (!group) {
       group = document.createElement("section");
@@ -85,22 +108,31 @@
       </header>
       <div class="v533-explanation-list"></div>`;
     }
+    return group;
+  }
 
+  function syncExplanationGroup(analysis) {
+    const group = ensureExplanationGroupShell(analysis);
     const list = group.querySelector(".v533-explanation-list");
     const items = [
-      analysis.querySelector(".v5-model-disclosure"),
+      ensureModelDisclosure(analysis),
       sectionShell(analysis.querySelector(".source-card")),
       sectionShell(analysis.querySelector(".weights-card")),
       sectionShell(analysis.querySelector(".pipeline-card")),
     ].filter(Boolean);
-    items.forEach((item) => list.appendChild(item));
+
+    items.forEach((item) => {
+      if (item.matches("details")) item.open = false;
+      list.appendChild(item);
+    });
+    group.dataset.itemCount = String(items.length);
     return group;
   }
 
   function reorderAnalysis(analysis) {
     const decisionGroup = ensureDecisionGroup(analysis);
     const market = sectionShell(analysis.querySelector(".market-table-section"));
-    const explanationGroup = ensureExplanationGroup(analysis);
+    const explanationGroup = syncExplanationGroup(analysis);
     if (market?.matches("details")) market.open = true;
 
     const priorityOrder = [
@@ -117,6 +149,20 @@
     analysis.dataset.sectionOrder = "date-timing-decision-candidates-market-tools-explanations";
   }
 
+  function watchExplanationGroup(analysis) {
+    if (analysis.__v534ExplanationObserver) return;
+    const observer = new MutationObserver(() => {
+      const methodDisclosure = analysis.querySelector(".method-card")?.closest(".v5-model-disclosure");
+      const list = analysis.querySelector("#v533ExplanationGroup .v533-explanation-list");
+      if (methodDisclosure && list && methodDisclosure.parentElement !== list) {
+        syncExplanationGroup(analysis);
+        document.documentElement.dataset.explanationGroupRepaired = "true";
+      }
+    });
+    observer.observe(analysis, { childList: true, subtree: true });
+    analysis.__v534ExplanationObserver = observer;
+  }
+
   function simplifyAnalysis() {
     const analysis = document.querySelector('[data-panel="analysis"]');
     if (!analysis) return;
@@ -127,16 +173,7 @@
       topPick.classList.add("v5-top-pick");
     }
 
-    const method = analysis.querySelector(".method-card");
-    if (method && !method.closest(".v5-model-disclosure")) {
-      const details = document.createElement("details");
-      details.className = "v5-model-disclosure";
-      const summary = document.createElement("summary");
-      summary.innerHTML = `<span>模型與分級規則</span><small>${activeModelLabel()}</small>`;
-      method.parentNode.insertBefore(details, method);
-      details.append(summary, method);
-    }
-
+    ensureModelDisclosure(analysis);
     wrapSection(analysis.querySelector(".market-table-section"), "完整市場總表", {
       hint: "Gap、EV、Coverage 與全部雙向候選",
       open: true,
@@ -147,6 +184,13 @@
     wrapSection(analysis.querySelector(".weights-card"), "證據覆蓋權重", { hint: "資料完整度，不是直接勝率係數" });
     wrapSection(analysis.querySelector(".pipeline-card"), "研究快照流程", { hint: "T−60m、T−5m 與 Closing" });
     reorderAnalysis(analysis);
+    watchExplanationGroup(analysis);
+
+    requestAnimationFrame(() => {
+      syncExplanationGroup(analysis);
+      reorderAnalysis(analysis);
+      document.documentElement.dataset.explanationGroupVerified = "true";
+    });
   }
 
   function updateCandidatePanel() {
@@ -186,13 +230,13 @@
 
   function updateShell() {
     document.documentElement.classList.add("v5-ui");
-    document.documentElement.dataset.uiVersion = "5.3.3";
+    document.documentElement.dataset.uiVersion = "5.3.4";
     document.documentElement.dataset.visualDensity = "balanced";
-    document.title = `NBA Value Lab V5.3.3｜${activeModelLabel()}`;
+    document.title = `NBA Value Lab V5.3.4｜${activeModelLabel()}`;
     const header = document.querySelector(".header-status");
-    if (header) header.innerHTML = `<span class="status-dot"></span>V5.3.3・${activeModelLabel()}・主要 2／最多 3`;
+    if (header) header.innerHTML = `<span class="status-dot"></span>V5.3.4・${activeModelLabel()}・主要 2／最多 3`;
     const footer = document.querySelector("footer > span:first-child");
-    if (footer) footer.textContent = "NBA VALUE LAB V5.3.3";
+    if (footer) footer.textContent = "NBA VALUE LAB V5.3.4";
   }
 
   function afterRender() {
@@ -210,6 +254,6 @@
     reorderAnalysis,
     ensureDecisionStrip,
     ensureDecisionGroup,
-    ensureExplanationGroup,
+    syncExplanationGroup,
   };
 }());

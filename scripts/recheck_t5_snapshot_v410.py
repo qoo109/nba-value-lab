@@ -12,10 +12,11 @@ from typing import Any
 
 import recheck_t5_snapshot as prior
 from append_research_record_v410 import append_many
-from multi_main_policy import apply_multi_main
+from multi_main_policy import apply_multi_main, rebuild_multi_lock_index
 
 ROOT = prior.ROOT
 LOCKS_DIR = prior.LOCKS_DIR
+LOCKS_INDEX = prior.LOCKS_DIR / "index.json"
 
 
 def previous_selected_ids(top: dict[str, Any], previous_output: Path | None) -> list[str]:
@@ -36,15 +37,9 @@ def run(input_path: Path, *, dry_run: bool, previous_output: Path | None = None,
     top = prior.load_json(input_path)
     if top.get("data_mode") == "fixture" and not dry_run:
         raise ValueError("fixture data can only run with --dry-run")
-
     with tempfile.TemporaryDirectory() as directory:
         raw_output = Path(directory) / "single-main-output.json"
-        prior.run(
-            input_path,
-            dry_run=True,
-            previous_output=previous_output,
-            output_path=raw_output,
-        )
+        prior.run(input_path, dry_run=True, previous_output=previous_output, output_path=raw_output)
         payload = prior.load_json(raw_output)
 
     manifest, _, g_config, _ = prior.load_active_configs()
@@ -55,7 +50,6 @@ def run(input_path: Path, *, dry_run: bool, previous_output: Path | None = None,
     selection["t60_selected_prediction_ids"] = old_ids
     selection["t60_selected_prediction_id"] = old_ids[0] if old_ids else None
     selection["main_changed_from_t60"] = selection["selected_prediction_ids"] != old_ids
-
     for trace in selection.get("ranking_trace", []):
         match = next((record for record in records if record["prediction_id"] == trace.get("prediction_id")), None)
         if match:
@@ -67,7 +61,6 @@ def run(input_path: Path, *, dry_run: bool, previous_output: Path | None = None,
     if output_path:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
     if dry_run:
         append_many(records, validate_only=True)
         print(json.dumps(selection, ensure_ascii=False, indent=2))
@@ -83,7 +76,7 @@ def run(input_path: Path, *, dry_run: bool, previous_output: Path | None = None,
     try:
         append_many(records)
         os.replace(temp, lock_path)
-        prior.rebuild_locks_index()
+        rebuild_multi_lock_index(LOCKS_DIR, LOCKS_INDEX, ROOT)
     finally:
         if temp.exists():
             temp.unlink()

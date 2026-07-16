@@ -68,7 +68,7 @@ jobs:
             --dry-run \
             --output /tmp/t60-v410-output.json
 
-      - name: Dry-run bundled T-5m fixture
+      - name: Generate bundled T-5m fixture output
         run: |
           python scripts/recheck_t5_snapshot_v410.py \
             data/fixtures/t5-recheck-example.json \
@@ -76,11 +76,15 @@ jobs:
             --dry-run \
             --output /tmp/t5-v410-output.json
           python -m json.tool /tmp/t5-v410-output.json >/dev/null
+
+      - name: Assert bundled T-5m fixture result
+        run: |
           python - <<'PY'
           import json
           payload = json.load(open('/tmp/t5-v410-output.json', encoding='utf-8'))
           selection = payload['selection']
           records = payload['records']
+          print(json.dumps(selection, ensure_ascii=False, indent=2))
           assert selection['target_main_count'] == 2
           assert selection['maximum_main_count'] == 3
           assert 0 <= selection['selected_count'] <= 3

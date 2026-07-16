@@ -1,0 +1,69 @@
+.v5-ui [data-panel]:not([hidden]) {
+  animation: v52-page-enter 180ms ease both;
+}
+
+.v5-ui .tab-button[aria-current="page"] {
+  position: relative;
+}
+
+.v5-ui .tab-button[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  right: 16px;
+  bottom: 4px;
+  left: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: .7;
+}
+
+@keyframes v52-page-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 719px) {
+  .v5-ui .tab-button[data-route] {
+    position: relative;
+    gap: 2px;
+    padding-top: 24px;
+  }
+
+  .v5-ui .tab-button[data-route]::before {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .v5-ui .tab-button[data-route="dashboard"]::before { content: "◫"; }
+  .v5-ui .tab-button[data-route="picks"]::before { content: "★"; }
+  .v5-ui .tab-button[data-route="validation"]::before { content: "✓"; }
+  .v5-ui .tab-button[data-route="sources"]::before { content: "◇"; }
+  .v5-ui .tab-button[data-route="research"]::before { content: "↗"; }
+
+  .v5-ui .tab-button[aria-current="page"] {
+    background: var(--v5-text);
+    color: var(--v5-surface);
+    transform: translateY(-2px);
+  }
+
+  .v5-ui .tab-button[aria-current="page"]::after {
+    display: none;
+  }
+}
+
+@media (min-width: 720px) {
+  .v5-ui .tab-button[aria-current="page"] {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 18%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v5-ui [data-panel]:not([hidden]) {
+    animation: none;
+  }
+}

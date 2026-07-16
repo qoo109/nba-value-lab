@@ -1,0 +1,61 @@
+{
+  "engine_id": "G",
+  "version": "1.0",
+  "status": "research",
+  "role": "data_gate_and_priority_engine",
+  "price_bands": [
+    {
+      "min": 1.2,
+      "max": 1.35,
+      "min_inclusive": true,
+      "max_inclusive": false,
+      "label": "低價研究層",
+      "required_margin_pp": 7.0,
+      "eligible": false
+    },
+    {
+      "min": 1.35,
+      "max": 1.6,
+      "min_inclusive": true,
+      "max_inclusive": true,
+      "label": "偏熱門核心層",
+      "required_margin_pp": 5.0,
+      "eligible": true
+    },
+    {
+      "min": 1.6,
+      "max": 2.2,
+      "min_inclusive": false,
+      "max_inclusive": true,
+      "label": "接近盤／小冷核心層",
+      "required_margin_pp": 6.0,
+      "eligible": true
+    },
+    {
+      "min": 2.2,
+      "max": 3.5,
+      "min_inclusive": false,
+      "max_inclusive": true,
+      "label": "中高價研究層",
+      "required_margin_pp": 8.0,
+      "eligible": false
+    }
+  ],
+  "grading": {
+    "watch_gap_min_pp": -3.0
+  },
+  "core_gate": {
+    "coverage_min_pct": 85,
+    "interval_width_max_pp": 6,
+    "threshold_buffer_min_pp": 1,
+    "news_risk_max": 1,
+    "confidence_required": "高",
+    "core_max": 1,
+    "priority_max": 2
+  },
+  "publication": {
+    "allow_formal_stake": false,
+    "requires_injury_confirmation": true,
+    "requires_source_lineage": true
+  }
+}

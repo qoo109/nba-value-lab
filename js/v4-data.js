@@ -1,7 +1,7 @@
 "use strict";
 
 const MODEL_VERSION = "V3 × G1";
-const APP_VERSION = "V4.2";
+const APP_VERSION = "V4.4";
 const THEME_KEY = "nba-value-lab-theme";
 
 const gradeInfo = {

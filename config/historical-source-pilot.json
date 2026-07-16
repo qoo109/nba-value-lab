@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "pilot_name": "NBA Value Lab historical data pilot",
   "follows_current_site_version": true,
-  "updated_at": "2026-07-16T23:10:00+08:00",
+  "updated_at": "2026-07-16T23:30:00+08:00",
   "phase2_source_keys": ["pbpstats_2023", "nbastats_2023"],
   "storage_policy": {
     "commit_raw_archives": false,
@@ -14,7 +14,8 @@
   "sources": {
     "pbpstats_2023": {
       "provider": "shufinskiy/nba_data",
-      "source_role": "possession_level_pilot",
+      "source_role": "possession_event_enriched_pilot",
+      "normalization_mode": "group_events_into_possessions",
       "season_label": "2023-24",
       "url": "https://github.com/shufinskiy/nba_data/raw/main/datasets/pbpstats_2023.tar.xz",
       "preferred_filename_contains": "pbpstats",
@@ -27,12 +28,20 @@
         ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT", "DESCRIPTION", "EVENTS"],
         ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT", "DESCRIPTION", "EVENTS", "URL"]
       ],
+      "grouping_rules": [
+        {
+          "name": "possession_group",
+          "fields": ["GAMEID", "PERIOD", "STARTTIME", "ENDTIME", "OPPONENT"],
+          "consistency_fields": ["GAMEDATE", "STARTTYPE", "FG2A", "FG2M", "FG3A", "FG3M", "NONSHOOTINGFOULSTHATRESULTEDINFTS", "OFFENSIVEREBOUNDS", "SHOOTINGFOULSDRAWN", "STARTSCOREDIFFERENTIAL", "TURNOVERS", "EVENTS"]
+        }
+      ],
       "silver_sample_fields": ["GAMEID", "GAMEDATE", "PERIOD", "STARTTIME", "ENDTIME", "STARTTYPE", "OPPONENT", "FG2A", "FG2M", "FG3A", "FG3M", "OFFENSIVEREBOUNDS", "TURNOVERS", "EVENTS", "DESCRIPTION", "URL"],
       "license_status": "upstream_code_license_verified_data_redistribution_not_assumed"
     },
     "nbastats_2023": {
       "provider": "shufinskiy/nba_data",
       "source_role": "event_level_pbp_pilot",
+      "normalization_mode": "event_rows",
       "season_label": "2023-24",
       "url": "https://github.com/shufinskiy/nba_data/raw/main/datasets/nbastats_2023.tar.xz",
       "preferred_filename_contains": "nbastats",
@@ -42,6 +51,7 @@
         ["GAME_ID", "EVENTNUM"],
         ["GAME_ID", "EVENTNUM", "EVENTMSGTYPE", "EVENTMSGACTIONTYPE", "PERIOD", "PCTIMESTRING", "PLAYER1_ID"]
       ],
+      "grouping_rules": [],
       "silver_sample_fields": ["GAME_ID", "EVENTNUM", "EVENTMSGTYPE", "EVENTMSGACTIONTYPE", "PERIOD", "PCTIMESTRING", "SCORE", "SCOREMARGIN", "PLAYER1_ID", "PLAYER1_TEAM_ID", "HOMEDESCRIPTION", "NEUTRALDESCRIPTION", "VISITORDESCRIPTION"],
       "license_status": "upstream_code_license_verified_data_redistribution_not_assumed"
     }

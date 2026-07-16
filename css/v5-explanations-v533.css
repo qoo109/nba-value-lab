@@ -1,0 +1,75 @@
+.v5-ui .v533-explanation-group {
+  overflow: hidden;
+  border: 1px solid var(--v5-border);
+  border-radius: var(--v5-radius-md);
+  background: var(--v5-surface);
+  box-shadow: var(--v5-shadow-sm);
+}
+
+.v5-ui .v533-explanation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  background: var(--v5-surface-soft);
+  border-bottom: 1px solid var(--v5-border);
+}
+
+.v5-ui .v533-explanation-heading h2 {
+  margin: 2px 0 0;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.v5-ui .v533-explanation-heading small {
+  color: var(--v5-text-soft);
+  font-size: .78rem;
+  text-align: right;
+}
+
+.v5-ui .v533-explanation-list {
+  display: grid;
+  gap: 0;
+}
+
+.v5-ui .v533-explanation-list > .v5-disclosure,
+.v5-ui .v533-explanation-list > .v5-model-disclosure {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.v5-ui .v533-explanation-list > * + * {
+  border-top: 1px solid var(--v5-border);
+}
+
+.v5-ui .v533-explanation-list > .v5-disclosure > summary,
+.v5-ui .v533-explanation-list > .v5-model-disclosure > summary {
+  min-height: 46px;
+  padding: 10px 14px;
+  background: transparent;
+}
+
+.v5-ui .v533-explanation-list > details[open] > summary {
+  background: color-mix(in srgb, var(--v5-accent-soft) 46%, transparent);
+}
+
+@media (max-width: 719px) {
+  .v5-ui .v533-explanation-heading {
+    align-items: flex-start;
+    padding: 12px 13px;
+  }
+
+  .v5-ui .v533-explanation-heading small {
+    display: none;
+  }
+
+  .v5-ui .v533-explanation-list > .v5-disclosure > summary,
+  .v5-ui .v533-explanation-list > .v5-model-disclosure > summary {
+    min-height: 44px;
+    padding: 9px 12px;
+  }
+}

@@ -69,9 +69,38 @@
     return group;
   }
 
+  function ensureExplanationGroup(analysis) {
+    let group = analysis.querySelector("#v533ExplanationGroup");
+    if (!group) {
+      group = document.createElement("section");
+      group.id = "v533ExplanationGroup";
+      group.className = "v533-explanation-group";
+      group.setAttribute("aria-labelledby", "v533ExplanationTitle");
+      group.innerHTML = `<header class="v533-explanation-heading">
+        <div>
+          <span class="eyebrow">REFERENCE</span>
+          <h2 id="v533ExplanationTitle">方法與資料說明</h2>
+        </div>
+        <small>模型、來源、權重與研究流程集中查看</small>
+      </header>
+      <div class="v533-explanation-list"></div>`;
+    }
+
+    const list = group.querySelector(".v533-explanation-list");
+    const items = [
+      analysis.querySelector(".v5-model-disclosure"),
+      sectionShell(analysis.querySelector(".source-card")),
+      sectionShell(analysis.querySelector(".weights-card")),
+      sectionShell(analysis.querySelector(".pipeline-card")),
+    ].filter(Boolean);
+    items.forEach((item) => list.appendChild(item));
+    return group;
+  }
+
   function reorderAnalysis(analysis) {
     const decisionGroup = ensureDecisionGroup(analysis);
     const market = sectionShell(analysis.querySelector(".market-table-section"));
+    const explanationGroup = ensureExplanationGroup(analysis);
     if (market?.matches("details")) market.open = true;
 
     const priorityOrder = [
@@ -81,14 +110,11 @@
       analysis.querySelector(".games-section"),
       market,
       sectionShell(analysis.querySelector(".calculator")),
-      analysis.querySelector(".v5-model-disclosure"),
-      sectionShell(analysis.querySelector(".source-card")),
-      sectionShell(analysis.querySelector(".weights-card")),
-      sectionShell(analysis.querySelector(".pipeline-card")),
+      explanationGroup,
     ].filter(Boolean);
 
     priorityOrder.forEach((section) => analysis.appendChild(section));
-    analysis.dataset.sectionOrder = "date-timing-decision-results-candidates-market-tools-model-sources";
+    analysis.dataset.sectionOrder = "date-timing-decision-candidates-market-tools-explanations";
   }
 
   function simplifyAnalysis() {
@@ -160,13 +186,13 @@
 
   function updateShell() {
     document.documentElement.classList.add("v5-ui");
-    document.documentElement.dataset.uiVersion = "5.3.2";
+    document.documentElement.dataset.uiVersion = "5.3.3";
     document.documentElement.dataset.visualDensity = "balanced";
-    document.title = `NBA Value Lab V5.3.2｜${activeModelLabel()}`;
+    document.title = `NBA Value Lab V5.3.3｜${activeModelLabel()}`;
     const header = document.querySelector(".header-status");
-    if (header) header.innerHTML = `<span class="status-dot"></span>V5.3.2・${activeModelLabel()}・主要 2／最多 3`;
+    if (header) header.innerHTML = `<span class="status-dot"></span>V5.3.3・${activeModelLabel()}・主要 2／最多 3`;
     const footer = document.querySelector("footer > span:first-child");
-    if (footer) footer.textContent = "NBA VALUE LAB V5.3.2";
+    if (footer) footer.textContent = "NBA VALUE LAB V5.3.3";
   }
 
   function afterRender() {
@@ -178,5 +204,12 @@
     document.querySelector("#multiMainSummary")?.setAttribute("hidden", "");
   }
 
-  v5.modules.dashboard = { afterRender, wrapSection, reorderAnalysis, ensureDecisionStrip, ensureDecisionGroup };
+  v5.modules.dashboard = {
+    afterRender,
+    wrapSection,
+    reorderAnalysis,
+    ensureDecisionStrip,
+    ensureDecisionGroup,
+    ensureExplanationGroup,
+  };
 }());

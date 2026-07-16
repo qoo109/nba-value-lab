@@ -28,10 +28,39 @@ function bindEvents() {
   $("#detailModal").addEventListener("click", (event) => { if (event.target === $("#detailModal")) $("#detailModal").close(); });
 }
 
+function loadV46Coordination() {
+  if (typeof vDecision === "function" && typeof gDecision === "function") return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-v46-coordination]');
+    if (existing) {
+      existing.addEventListener("load", resolve, { once: true });
+      existing.addEventListener("error", reject, { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "./js/v4-6-model-coordination.js?v=4.6";
+    script.dataset.v46Coordination = "true";
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("Unable to load V4.6 model coordination"));
+    document.head.appendChild(script);
+  });
+}
+
+function updateV46Shell() {
+  document.title = `NBA Value Lab V4.6｜${activeModelLabel()}`;
+  const header = document.querySelector(".header-status");
+  if (header) header.innerHTML = `<span class="status-dot"></span>V4.6・${activeModelLabel()}`;
+  const footerVersion = document.querySelector("footer > span:first-child");
+  if (footerVersion) footerVersion.textContent = "NBA VALUE LAB V4.6";
+  const methodTitle = document.querySelector(".method-card h2");
+  if (methodTitle) methodTitle.textContent = "V3.1 與 G1 分開判定，由協調層統整";
+}
+
 async function init() {
   loadReadabilityStyles();
+  await loadV46Coordination();
   await loadModelRegistry();
-  updateVersionText();
+  updateV46Shell();
   applyTheme(document.documentElement.dataset.theme || "light");
   renderTopPick();
   renderTable();
@@ -41,11 +70,11 @@ async function init() {
   bindEvents();
   updateCalculator(true);
   document.documentElement.dataset.modelVersion = activeModelLabel();
-  document.documentElement.dataset.appVersion = APP_VERSION;
+  document.documentElement.dataset.appVersion = "V4.6";
 }
 
 init().catch((error) => {
   console.error("NBA Value Lab initialization failed:", error);
   const header = document.querySelector(".header-status");
-  if (header) header.innerHTML = '<span class="status-dot"></span>V4.5・初始化失敗';
+  if (header) header.innerHTML = '<span class="status-dot"></span>V4.6・初始化失敗';
 });

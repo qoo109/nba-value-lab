@@ -1,0 +1,73 @@
+name: Verify Market Residual Analysis live
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/verify-market-residual-live.yml"
+      - "scripts/analyze_market_residuals.py"
+      - "scripts/run_market_residual_analysis.py"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  live-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas kagglehub
+      - name: Download walk-forward predictions
+        run: |
+          rm -rf /tmp/nbavl-walk-forward-source
+          mkdir -p /tmp/nbavl-walk-forward-source
+          gh run download "29551715399" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name model-walk-forward-v2 \
+            --dir /tmp/nbavl-walk-forward-source
+      - name: Run live market residual analysis
+        run: |
+          rm -rf /tmp/nbavl-market-residual-live-verify
+          PYTHONPATH=scripts python scripts/run_market_residual_analysis.py \
+            --dataset-handle christophertreasure/nba-odds-data \
+            --predictions /tmp/nbavl-walk-forward-source/walk-forward-predictions.csv \
+            --output-dir /tmp/nbavl-market-residual-live-verify
+      - name: Validate report
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-market-residual-live-verify')
+          status = json.loads((root / 'market-residual-run-status.json').read_text())
+          report = json.loads((root / 'analysis/market-residual-analysis-report.json').read_text())
+          assert status['market_residual_analysis_complete'] is True, status
+          assert status['temporary_raw_and_normalized_files_deleted'] is True, status
+          assert report['coverage']['matched_games'] >= 1800, report['coverage']
+          assert report['decision']['forward_holdout_complete'] is True, report['decision']
+          assert report['decision']['ready_for_betting_edge_claim'] is False, report['decision']
+          print(json.dumps({
+            'coverage': report['coverage'],
+            'forward_holdout': report['forward_holdout_blend'],
+            'decision': report['decision'],
+          }, indent=2))
+          PY
+      - name: Upload aggregate reports only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-residual-live-verification
+          path: |
+            /tmp/nbavl-market-residual-live-verify/market-residual-run-status.json
+            /tmp/nbavl-market-residual-live-verify/market-residual-import-report.json
+            /tmp/nbavl-market-residual-live-verify/analysis/market-residual-analysis-report.json
+            /tmp/nbavl-market-residual-live-verify/analysis/market-residual-segment-summary.csv
+          retention-days: 3
+          if-no-files-found: warn

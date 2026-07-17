@@ -1,0 +1,105 @@
+name: Validate injury feature residual audit v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/audit_injury_feature_residuals.py"
+      - ".github/workflows/validate-injury-feature-residual-audit-v1.yml"
+      - "docs/injury-feature-residual-audit-v1.md"
+  workflow_dispatch:
+    inputs:
+      model_run_id:
+        description: "Workflow run containing model-walk-forward-v2"
+        required: true
+        default: "29551715399"
+      injury_run_id:
+        description: "Workflow run containing team-injury-burden-v1"
+        required: true
+        default: "29583862945"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy scipy
+      - name: Compile and test residual audit
+        run: |
+          python -m py_compile scripts/audit_injury_feature_residuals.py
+          rm -rf /tmp/nbavl-injury-residual-self-test
+          python scripts/audit_injury_feature_residuals.py \
+            --self-test \
+            --output-dir /tmp/nbavl-injury-residual-self-test
+
+  live-audit:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy scipy
+      - name: Download model and injury artifacts
+        run: |
+          rm -rf /tmp/nbavl-injury-residual-source /tmp/nbavl-injury-residual-output
+          mkdir -p /tmp/nbavl-injury-residual-source/model /tmp/nbavl-injury-residual-source/injury
+          gh run download "${{ github.event.inputs.model_run_id || '29551715399' }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name model-walk-forward-v2 \
+            --dir /tmp/nbavl-injury-residual-source/model
+          gh run download "${{ github.event.inputs.injury_run_id || '29583862945' }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name team-injury-burden-v1 \
+            --dir /tmp/nbavl-injury-residual-source/injury
+          PREDICTIONS="$(find /tmp/nbavl-injury-residual-source/model -name 'walk-forward-predictions.csv' -print -quit)"
+          INJURY="$(find /tmp/nbavl-injury-residual-source/injury -name 'matchup-injury-burden.csv' -print -quit)"
+          test -n "$PREDICTIONS"
+          test -n "$INJURY"
+          echo "PREDICTIONS=$PREDICTIONS" >> "$GITHUB_ENV"
+          echo "INJURY=$INJURY" >> "$GITHUB_ENV"
+      - name: Run point-in-time residual audit
+        run: |
+          python scripts/audit_injury_feature_residuals.py \
+            --predictions "$PREDICTIONS" \
+            --injury-matchups "$INJURY" \
+            --output-dir /tmp/nbavl-injury-residual-output
+      - name: Validate diagnostic-only decision
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/nbavl-injury-residual-output/injury-residual-audit-report.json').read_text())
+          assert report['coverage']['joined_rows'] == 11, report
+          assert report['coverage']['feature_ready_rows'] == 7, report
+          assert report['quality']['game_identity_mismatches'] == 0, report
+          assert report['quality']['all_feature_ready_rows_have_complete_snapshots'] is True, report
+          assert report['decision']['ready_for_injury_feature_model_training'] is False, report
+          assert report['decision']['ready_for_probability_adjustment'] is False, report
+          assert report['decision']['ready_for_betting_edge_claim'] is False, report
+          assert report['guardrails']['small_sample_activation_blocked'] is True, report
+          assert report['guardrails']['model_refit_performed'] is False, report
+          print(json.dumps(report, indent=2))
+          PY
+      - name: Upload residual audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: injury-feature-residual-audit-v1
+          path: |
+            /tmp/nbavl-injury-residual-output/injury-residual-audit-report.json
+            /tmp/nbavl-injury-residual-output/injury-residual-audit-rows.csv
+          retention-days: 14
+          if-no-files-found: error

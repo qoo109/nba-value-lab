@@ -6,6 +6,7 @@ on:
       - "data/multi-report-injury-backfill-wave1-times.json"
       - "data/multi-report-injury-backfill-wave2-times.json"
       - "scripts/audit_injury_backfill_wave.py"
+      - "scripts/audit_ready_injury_report_overlap.py"
       - ".github/workflows/validate-injury-backfill-wave2.yml"
       - "docs/injury-backfill-wave2-acquisition.md"
       - "PROJECT_STATUS.md"
@@ -28,15 +29,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Compile reusable acquisition audit
-        run: python -m py_compile scripts/audit_injury_backfill_wave.py
-      - name: Run deterministic acquisition audit self-test
+      - name: Compile reusable acquisition audits
+        run: |
+          python -m py_compile scripts/audit_injury_backfill_wave.py
+          python -m py_compile scripts/audit_ready_injury_report_overlap.py
+      - name: Run deterministic acquisition audit self-tests
         run: |
           rm -rf /tmp/nbavl-wave2-self-test
           python scripts/audit_injury_backfill_wave.py \
             --self-test \
-            --output-dir /tmp/nbavl-wave2-self-test
-          python -m json.tool /tmp/nbavl-wave2-self-test/injury-backfill-wave-audit.json >/dev/null
+            --output-dir /tmp/nbavl-wave2-self-test/generic
+          python scripts/audit_ready_injury_report_overlap.py \
+            --self-test \
+            --output-dir /tmp/nbavl-wave2-self-test/ready
+          python -m json.tool /tmp/nbavl-wave2-self-test/generic/injury-backfill-wave-audit.json >/dev/null
+          python -m json.tool /tmp/nbavl-wave2-self-test/ready/ready-overlap-audit.json >/dev/null
 
   live-acquisition:
     needs: self-test
@@ -121,6 +128,15 @@ jobs:
             --team-panel "$ROOT/team/multi-report-team-submission-panel.csv" \
             --sensitive-root "$ROOT" \
             --output-dir "$ROOT/audit"
+      - name: Run single-report-ready overlap audit
+        id: ready_overlap_audit
+        if: always()
+        continue-on-error: true
+        run: |
+          python scripts/audit_ready_injury_report_overlap.py \
+            --player-source-index "$ROOT/player/multi-report-source-index.csv" \
+            --team-source-index "$ROOT/team/multi-report-team-submission-source-index.csv" \
+            --output-dir "$ROOT/ready-overlap"
       - name: Verify no player-level files remain
         if: always()
         run: |
@@ -153,6 +169,10 @@ jobs:
             /tmp/nbavl-wave2-acquisition/team/multi-report-team-submission-panel.csv
             /tmp/nbavl-wave2-acquisition/audit/injury-backfill-wave-audit.json
             /tmp/nbavl-wave2-acquisition/audit/injury-backfill-wave-report-index.csv
+            /tmp/nbavl-wave2-acquisition/ready-overlap/ready-overlap-audit.json
+            /tmp/nbavl-wave2-acquisition/ready-overlap/ready-overlap-report-index.csv
+            /tmp/nbavl-wave2-acquisition/ready-overlap/ready-overlap-report-times.json
+            /tmp/nbavl-wave2-acquisition/ready-overlap/ready-player-source-index.csv
           retention-days: 14
           if-no-files-found: error
       - name: Enforce acquisition gate
@@ -162,10 +182,17 @@ jobs:
           import json
           import os
           from pathlib import Path
-          report = json.loads((Path(os.environ['ROOT']) / 'audit/injury-backfill-wave-audit.json').read_text())
-          assert report['decision']['ready_for_wave1_feature_backfill'] is True, report
-          assert report['decision']['ready_for_model_training'] is False
-          assert report['decision']['ready_for_probability_adjustment'] is False
-          assert report['decision']['ready_for_betting_edge_claim'] is False
-          print(json.dumps({'coverage': report['coverage'], 'decision': report['decision']}, indent=2))
+          root = Path(os.environ['ROOT'])
+          generic = json.loads((root / 'audit/injury-backfill-wave-audit.json').read_text())
+          ready = json.loads((root / 'ready-overlap/ready-overlap-audit.json').read_text())
+          assert generic['decision']['ready_for_wave1_feature_backfill'] is True, generic
+          assert ready['decision']['ready_for_feature_backfill'] is True, ready
+          assert ready['decision']['ready_for_model_training'] is False
+          assert ready['decision']['ready_for_probability_adjustment'] is False
+          assert ready['decision']['ready_for_betting_edge_claim'] is False
+          print(json.dumps({
+              'parsed_coverage': generic['coverage'],
+              'ready_coverage': ready['coverage'],
+              'decision': ready['decision'],
+          }, indent=2))
           PY

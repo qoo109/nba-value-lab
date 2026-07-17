@@ -22,7 +22,7 @@ import pymupdf
 
 from validate_injury_lineup_snapshots import validate
 
-VERSION = "official-nba-injury-report-pdf-pilot-v1.4"
+VERSION = "official-nba-injury-report-pdf-pilot-v1.5"
 LAYOUT_VERSION = "official-landscape-seven-column-2023-v1"
 ET = ZoneInfo("America/New_York")
 TEAM_NAME_TO_ABBR = {
@@ -75,8 +75,6 @@ def parse_report_time(value: str) -> datetime:
 
 def report_url(report_time: datetime) -> str:
     local = report_time.astimezone(ET)
-    # Official publication links encode the report hour and AM/PM only. The report published
-    # at 08:30 ET is stored as Injury-Report_YYYY-MM-DD_08AM.pdf.
     filename = local.strftime("Injury-Report_%Y-%m-%d_%I%p.pdf")
     return f"https://ak-static.cms.nba.com/referee/injury/{filename}"
 
@@ -134,8 +132,6 @@ def page_words(page: pymupdf.Page) -> list[dict[str, Any]]:
     words = []
     for x0, y0, x1, y1, text, block, line, word in page.get_text("words", sort=True):
         center_y = (float(y0) + float(y1)) / 2.0
-        # Continuation pages place valid rows above 95pt. Footer/page-number content begins
-        # around 540pt, so the body window intentionally starts at 40pt.
         if center_y < 40.0 or center_y > 530.0:
             continue
         words.append({
@@ -217,8 +213,14 @@ def parse_pdf(path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
             lower = 40.0 if anchor_index == 0 else (anchors[anchor_index - 1] + anchor) / 2.0
             upper = 530.0 if anchor_index + 1 == len(anchors) else (anchor + anchors[anchor_index + 1]) / 2.0
             band = [word for word in body_words if lower <= word["center_y"] < upper]
-            player_words = [word for word in band if word_column(word["x0"]) == "player_name"]
-            status_words = [word for word in band if word_column(word["x0"]) == "current_status"]
+            player_words = [
+                word for word in band
+                if word_column(word["x0"]) == "player_name" and abs(word["center_y"] - anchor) <= 3.5
+            ]
+            status_words = [
+                word for word in band
+                if word_column(word["x0"]) == "current_status" and abs(word["center_y"] - anchor) <= 3.5
+            ]
             reason_words = [word for word in band if word_column(word["x0"]) == "reason"]
             player = join_words(player_words)
             status = join_words(status_words)

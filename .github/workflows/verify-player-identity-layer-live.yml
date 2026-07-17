@@ -43,8 +43,36 @@ jobs:
             --output-dir /tmp/nbavl-player-identity-live/match \
             > /tmp/nbavl-player-identity-live/match-execution.log 2>&1
           CODE=$?
+          echo "$CODE" > /tmp/nbavl-player-identity-live/match-exit-code.txt
           cat /tmp/nbavl-player-identity-live/match-execution.log
-          exit "$CODE"
+          exit 0
+      - name: Write temporary unmatched-name diagnostic
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-player-identity-live')
+          snapshots = {
+              row['snapshot_record_id']: row
+              for row in csv.DictReader((root / 'injury/validation/injury-lineup-snapshots-normalized.csv').open())
+          }
+          unmatched = []
+          for row in csv.DictReader((root / 'match/injury-player-id-map.csv').open()):
+              if row['match_method'] != 'unmatched':
+                  continue
+              source = snapshots[row['snapshot_record_id']]
+              unmatched.append({
+                  'snapshot_record_id': row['snapshot_record_id'],
+                  'team_abbr': source['team_abbr'],
+                  'player_name': source['player_name'],
+                  'availability_status': source['availability_status'],
+                  'reason_category': source['reason_category'],
+              })
+          payload = {'unmatched_count': len(unmatched), 'unmatched': unmatched}
+          (root / 'unmatched-player-diagnostic.json').write_text(json.dumps(payload, indent=2) + '\n')
+          print(json.dumps(payload, indent=2))
+          PY
       - name: Validate identity coverage and remove name-level rows
         run: |
           python - <<'PY'
@@ -71,6 +99,8 @@ jobs:
           name: player-identity-layer-live
           path: |
             /tmp/nbavl-player-identity-live/match-execution.log
+            /tmp/nbavl-player-identity-live/match-exit-code.txt
+            /tmp/nbavl-player-identity-live/unmatched-player-diagnostic.json
             /tmp/nbavl-player-identity-live/silver/silver-build-report.json
             /tmp/nbavl-player-identity-live/injury/official-injury-report-import-report.json
             /tmp/nbavl-player-identity-live/injury/validation/injury-lineup-validation-report.json

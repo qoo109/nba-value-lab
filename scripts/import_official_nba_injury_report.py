@@ -22,7 +22,7 @@ import pymupdf
 
 from validate_injury_lineup_snapshots import validate
 
-VERSION = "official-nba-injury-report-pdf-pilot-v1.3"
+VERSION = "official-nba-injury-report-pdf-pilot-v1.4"
 LAYOUT_VERSION = "official-landscape-seven-column-2023-v1"
 ET = ZoneInfo("America/New_York")
 TEAM_NAME_TO_ABBR = {
@@ -134,7 +134,9 @@ def page_words(page: pymupdf.Page) -> list[dict[str, Any]]:
     words = []
     for x0, y0, x1, y1, text, block, line, word in page.get_text("words", sort=True):
         center_y = (float(y0) + float(y1)) / 2.0
-        if center_y < 95.0 or center_y > 530.0:
+        # Continuation pages place valid rows above 95pt. Footer/page-number content begins
+        # around 540pt, so the body window intentionally starts at 40pt.
+        if center_y < 40.0 or center_y > 530.0:
             continue
         words.append({
             "x0": float(x0), "y0": float(y0), "x1": float(x1), "y1": float(y1),
@@ -151,10 +153,29 @@ def is_header_line(line: dict[str, Any]) -> bool:
     return "Game Date" in combined and "Player Name" in combined and "Current Status" in combined
 
 
+def valid_context_value(field: str, value: str) -> bool:
+    if field == "game_date":
+        return bool(re.fullmatch(r"\d{2}/\d{2}/\d{4}", value))
+    if field == "game_time":
+        return bool(re.fullmatch(r"\d{2}:\d{2}(?: \(ET\))?", value))
+    if field == "matchup":
+        return bool(re.fullmatch(r"[A-Z]{3}@[A-Z]{3}", value))
+    if field == "team":
+        return value in TEAM_NAME_TO_ABBR
+    return False
+
+
+def has_context(cells: dict[str, str]) -> bool:
+    return any(
+        valid_context_value(field, normalize_space(cells.get(field)))
+        for field in ("game_date", "game_time", "matchup", "team")
+    )
+
+
 def update_context(state: dict[str, str], cells: dict[str, str]) -> None:
     for field in ("game_date", "game_time", "matchup", "team"):
         value = normalize_space(cells.get(field))
-        if value:
+        if value and valid_context_value(field, value):
             state[field] = value
 
 
@@ -167,13 +188,15 @@ def parse_pdf(path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
     page_summaries = []
 
     for page_index, page in enumerate(document):
-        words = page_words(page)
-        lines = [line for line in group_physical_lines(words) if not is_header_line(line)]
+        all_words = page_words(page)
+        all_lines = group_physical_lines(all_words)
+        lines = [line for line in all_lines if not is_header_line(line)]
+        body_words = [word for line in lines for word in line["words"]]
         context_events = []
         anchors = []
         for line in lines:
             cells = line["cells"]
-            if any(cells[field] for field in ("game_date", "game_time", "matchup", "team")):
+            if has_context(cells):
                 context_events.append(line)
             status = normalize_space(cells["current_status"])
             if status in ALLOWED_STATUSES:
@@ -191,9 +214,9 @@ def parse_pdf(path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
                 update_context(state, context_events[event_index]["cells"])
                 event_index += 1
 
-            lower = 95.0 if anchor_index == 0 else (anchors[anchor_index - 1] + anchor) / 2.0
+            lower = 40.0 if anchor_index == 0 else (anchors[anchor_index - 1] + anchor) / 2.0
             upper = 530.0 if anchor_index + 1 == len(anchors) else (anchor + anchors[anchor_index + 1]) / 2.0
-            band = [word for word in words if lower <= word["center_y"] < upper]
+            band = [word for word in body_words if lower <= word["center_y"] < upper]
             player_words = [word for word in band if word_column(word["x0"]) == "player_name"]
             status_words = [word for word in band if word_column(word["x0"]) == "current_status"]
             reason_words = [word for word in band if word_column(word["x0"]) == "reason"]

@@ -1,49 +1,49 @@
 # NBA Value Lab — Project Status
 
 更新日期：2026-07-17  
-目前定位：**Research Candidate／Pre-Market-Backtest**  
-研究基準：以本文件「重要 PR」中最新已合併項目為準，不再用網站版本號判定研究成熟度。
+目前定位：**Research Candidate／Pre-Market-Backtest**
 
-本文件是研究管線的正式進度基準。根目錄 `README.md` 仍保留 V4.6／V3.1 × G1 FINAL 的 Legacy UI 與 Model Registry 說明；該版本號不代表目前模型是否可投注或能擊敗市場。
+本文件是研究管線的正式進度基準。根目錄 `README.md` 保留 V4.6／V3.1 × G1 FINAL 的 Legacy UI 與 Model Registry 說明；舊網站版本號不代表模型可投注、可獲利或能擊敗市場。
 
 ## 狀態定義
 
 | 狀態 | 定義 |
 |---|---|
-| Completed | 已完成實作、QA 與指定驗證。 |
-| Negative Result | 實驗已完成，但未通過 promotion gate；不得加入正式模型。 |
-| Research Ready | 資料鏈或研究 proxy 可供下一階段實驗，但不可直接啟用模型、調整勝率或宣稱投注優勢。 |
-| Blocked | 因缺少資料、授權、樣本、精確 timestamp 或正式 holdout 而無法啟用。 |
+| Completed | 實作、QA 與指定驗證已完成。 |
+| Negative Result | 實驗已完成但未通過 promotion gate；不得加入正式模型。 |
+| Research Ready | 資料鏈可供下一階段研究；不可直接調整勝率或下注。 |
+| Blocked | 缺資料、授權、樣本、timestamp 或正式 holdout。 |
 
 ## 核心研究狀態
 
-| 模組 | 狀態 | 目前結論 |
+| 模組 | 狀態 | 正式結論 |
 |---|---|---|
-| Five-season Historical Gold | Completed | 5,824 matchup rows；strict point-in-time、same-day exclusion 與 season reset 通過。 |
-| Logistic + Elo Walk-forward v2 | Completed | 3,688 場 OOF；相對 Elo 的 Log Loss 與 Brier 有小幅且跨 Fold 一致改善。 |
-| Probability Calibration Gate | Completed | Platt／Isotonic 未穩定改善，因此保留 raw Logistic + Elo。 |
-| Closing Market Benchmark | Completed / model lost to market | 1,894 場成功配對；模型明顯輸給 Closing Market。 |
-| Market Residual Analysis v1 | Negative Result | 時間留存選擇 100% Closing Market、0% 模型殘差；不支持把模型加入 Closing Market。 |
-| Rest／Travel／Schedule Context v1 | Negative Result | 已完成 2023–24 untouched holdout，未通過 promotion gate；基礎版本不得重做或加入正式模型。 |
-| Official NBA Injury Importer | Completed | 官方 PDF、publication time、SHA-256、跨頁解析與時間戳 QA 已建立。 |
-| Injury Snapshot → Gold Game ID | Completed | 官方 schedule key 可唯一對齊 Historical Gold；不使用 fuzzy team matching。 |
-| Player Identity Layer | Completed | 單份 pilot 117/118；Multi-report pilot 649/654，0 ambiguous、0 fuzzy guessing。 |
-| Expected Minutes | Research Ready / Research Proxy | prior-only 規則已建立；Multi-report coverage 606/654，但尚未完成 accuracy audit。 |
-| Player Impact Proxy | Research Ready / Research Proxy | 透明 box-score proxy，不是 RAPM、EPM 或官方 metric。 |
+| Five-season Historical Gold | Completed | 5,824 matchup rows；strict point-in-time、same-day exclusion、season reset 通過。 |
+| Logistic + Elo Walk-forward v2 | Completed | 3,688 場 OOF；相對 Elo 的 Log Loss／Brier 有小幅且跨 Fold 一致改善。 |
+| Probability Calibration Gate | Completed | Platt／Isotonic 未穩定改善，保留 raw Logistic + Elo。 |
+| Closing Market Benchmark | Completed / model lost | 1,894 場成功配對；模型明顯輸給 Closing Market。 |
+| Market Residual Analysis v1 | Negative Result | 時間留存選擇 100% Closing Market、0% 模型殘差。 |
+| Rest／Travel／Schedule Context v1 | Negative Result | 2023–24 untouched holdout 未通過，不加入正式模型。 |
+| Official NBA Injury Importer | Completed | 官方 PDF、publication time、SHA-256、跨頁解析與時間 QA 已建立。 |
+| Injury Snapshot → Gold Game ID | Completed | 以日期＋客隊＋主隊唯一對齊，不使用 fuzzy team matching。 |
+| Player Identity Layer | Completed | 單份 pilot 117/118；multi-report pilot 649/654；0 ambiguous、0 fuzzy guessing。 |
+| Expected Minutes | Research Proxy | prior-only 規則已建立；尚未完成 accuracy audit。 |
+| Player Impact Proxy | Research Proxy | 透明 box-score proxy，不是 RAPM、EPM 或官方 metric。 |
 | Team Injury Burden v1 | Research Ready | 單份 pilot 11 場、7 場 feature-ready；未啟用模型。 |
-| Multi-report Injury Panel v1 | Research Ready | 6 份成功球員報告、4 個日期、654 列、41 場 player-ingestion coverage。 |
-| Predeclared Snapshot Selection Policy | Completed | Primary policy 固定為 latest feature-ready snapshot at or before T-60m；不得看結果後改政策。 |
-| Multi-report Injury Feature Backfill v1 | Research Ready | 63 個 long matchup snapshots、41 場獨立比賽；固定 T-60 選出 31 場。 |
-| Injury Team Submission Status v1 | Research Ready | 7/7 官方報告、204 team rows、72 場；87 Not Yet Submitted、2 unknown synthetic；仍只選出 31 場。 |
-| Injury Feature Residual Audit v1 | Research Ready | 7 場的殘差方向符合預期，但樣本不足；訓練、勝率調整與 betting edge 全部禁用。 |
-| Odds schema／source registry／import boundary | Completed | 已建立 bookmaker、snapshot、去水機率、closing-only importer 與安全閘門。 |
-| Real Timestamped Odds Data | Blocked | 尚未取得可稽核的 opening／intraday／closing observation timestamps 資料本體。 |
-| Executable Market Backtest | Blocked | Closing label 不能當作可執行進場價；ROI、CLV、EV、Drawdown 尚不可計算。 |
-| Production Betting Decision Layer | Blocked | 正式 stake 固定為 0；不得宣稱穩定 edge 或獲利能力。 |
+| Multi-report Injury Panel v1 | Research Ready | 6 份成功 player reports、654 rows、41 場 ingestion coverage。 |
+| Predeclared Snapshot Selection | Completed | Primary 固定為 latest feature-ready snapshot at or before T-60m。 |
+| Multi-report Injury Feature Backfill v1 | Research Ready | 63 long snapshots、41 場獨立比賽、31 場 selected。 |
+| Injury Team Submission Status v1 | Research Ready | 7/7 reports、204 team rows、72 場 coverage；selected 仍為 31 場。 |
+| Injury Backfill Wave 1 Acquisition | Research Ready | 36 個固定時間；34 player、33 team、31 overlap；12/12 日期；可進完整 feature backfill。 |
+| Injury Feature Residual Audit v1 | Research Ready | 7 場方向符合預期，但樣本不足。 |
+| Odds schema／source registry／import boundary | Completed | bookmaker、snapshot、去水、closing importer 與安全閘門已完成。 |
+| Real Timestamped Odds Data | Blocked | 缺 opening／intraday／closing observation timestamp 資料本體。 |
+| Executable Market Backtest | Blocked | Closing label 不能當可執行進場價；CLV／EV／ROI／Drawdown 未解鎖。 |
+| Production Betting Decision Layer | Blocked | 正式 stake 固定為 0。 |
 
-## 重要市場基準
+## 市場基準
 
-在成功配對的 1,894 場 Closing benchmark 中：
+成功配對的 1,894 場 Closing benchmark：
 
 | 指標 | 模型 | Closing Market |
 |---|---:|---:|
@@ -51,44 +51,30 @@
 | Brier | 0.2250 | **0.2139** |
 | Accuracy | 63.62% | **66.37%** |
 
-正確結論：
-
 > 模型目前能小幅擊敗 Elo，但沒有證據顯示它能擊敗或改善 NBA Closing Market。
 
-Closing-only archive 沒有精確 observation timestamp，因此只能做 forecast benchmark，不能做 T-60m 進場模擬、ROI、CLV 或投注優勢宣稱。
+Closing-only archive 沒有精確 observation timestamp，只能做 forecast benchmark；不能做 T-60 進場模擬、CLV、EV、ROI 或投注優勢宣稱。
 
 ## 已完成的負結果
 
 ### Rest／Travel／Schedule Context v1
 
-已測試：
+已測試 rest days、back-to-back、3-in-4、4-in-6、5-in-8、previous-leg distance、seven-day distance、timezone direction、altitude gain、road-trip number、same-venue streak。
 
-- rest days
-- back-to-back
-- 3-in-4、4-in-6、5-in-8
-- previous-leg distance
-- seven-day distance
-- timezone direction
-- altitude gain
-- road-trip number
-- same-venue streak
-
-結果未通過 2023–24 untouched holdout，因此暫不加入正式模型。只有在新增更精細、真正不同的資料，例如實際城市行程、起飛時間、海拔暴露時數或球員級負荷後，才重新評估。
+結果未通過 2023–24 untouched holdout。只有新增真正不同的資料，例如實際城市行程、航班時間、海拔暴露或球員級負荷，才重新評估。
 
 ### Market Residual Analysis v1
-
-時間留存混合測試選擇：
 
 ```text
 Closing Market：100%
 模型殘差：0%
 ```
 
-這是已完成的負結果，不得為了追求複雜度而重新包裝成模型 edge。
+不得把此負結果重新包裝成模型 edge。
 
-## Injury 主線目前正式結果
+## Injury 主線正式結果
 
-### Player-derived long panel
+### Pilot player-derived long panel
 
 ```text
 654 player snapshot rows
@@ -99,47 +85,88 @@ Closing Market：100%
 31 selected T-60 independent games
 ```
 
-同一場比賽的多個 publication times 只能作狀態轉換研究，不能冒充多個 holdout 樣本。
-
-### Team submission ledger
+### Pilot team submission reconciliation
 
 ```text
-7 / 7 requested official reports succeeded
+7 / 7 official reports
 204 team submission rows
 72 independent games represented
 115 SUBMITTED_WITH_PLAYER_ROWS
 87 NOT_YET_SUBMITTED
-2 UNKNOWN_NO_PLAYER_ROWS synthetic missing sides
+2 UNKNOWN_NO_PLAYER_ROWS synthetic sides
 0 submission conflicts
 ```
-
-所有 204 team rows 與 72 場比賽均唯一對齊 Historical Gold。
 
 Reconciliation 後：
 
 ```text
 102 matchup snapshots
 72 independent games represented
-52 complete matchup snapshots
-46 feature-ready matchup snapshots
+52 complete snapshots
+46 feature-ready snapshots
 31 selected T-60 independent games
 ```
 
-Team ledger 增加了可稽核的來源覆蓋，但沒有增加 feature-ready selected 樣本。這是正確結果：`NOT_YET_SUBMITTED`、unknown、synthetic missing side 與缺失資料均未被補成健康或零負擔。
+Team ledger 提升來源完整度，沒有灌大 trainable sample。`NOT_YET_SUBMITTED`、unknown、synthetic missing side 與缺失資料均未補成健康或零負擔。
 
-目前 pilot 沒有明確 `SUBMITTED_NO_INJURIES` 團隊，因此沒有新增任何 explicit zero-burden team。
+### Wave 1 calendar-fixed acquisition
 
-## Housekeeping
+Registry：
 
-- [x] 新增 `PROJECT_STATUS.md`
-- [x] README 首段連到本文件
-- [x] 明確分離 Legacy UI 與 Research Pipeline
-- [x] 建立 Completed／Negative Result／Research Ready／Blocked 狀態
-- [x] 不再硬編碼網站版本號作為研究成熟度
-- [ ] 每次重要研究 PR 合併時同步更新本文件
-- [ ] 視需要關閉已被後續主線取代的早期草稿 PR，避免誤導
+```text
+2023-24 Mondays every 14 days
+12 dates
+08:30 / 13:30 / 17:30 ET
+36 candidate reports
+```
 
-## 主線 A — Injury
+正式 acquisition 結果：
+
+```text
+player successes: 34 / 36
+team successes: 33 / 36
+overlap successes: 31 / 36
+overlap dates: 12 / 12
+player normalized rows: 2,942
+player unique ingestion games: 131
+team submission rows: 888
+team unique ingestion games: 162
+```
+
+Team status：
+
+```text
+522 SUBMITTED_WITH_PLAYER_ROWS
+361 NOT_YET_SUBMITTED
+5 UNKNOWN_NO_PLAYER_ROWS
+0 conflicts
+```
+
+固定失敗時間不得替換：
+
+```text
+Player failures
+- 2024-04-08 08:30 ET
+- 2024-04-08 13:30 ET
+
+Team failures
+- 2024-01-01 17:30 ET
+- 2024-01-15 13:30 ET
+- 2024-01-15 17:30 ET
+```
+
+Wave 1 只通過 acquisition gate：
+
+```text
+ready_for_wave1_feature_backfill = true
+ready_for_model_training = false
+ready_for_probability_adjustment = false
+ready_for_betting_edge_claim = false
+```
+
+131／162 是 ingestion coverage，不是 selected game count。必須完成 Gold mapping、identity、prior-only values、team burden、submission reconciliation 與 frozen T-60 selection 後，才能知道真正獨立樣本數。
+
+## Injury 主線 Roadmap
 
 已完成：
 
@@ -147,37 +174,39 @@ Team ledger 增加了可稽核的來源覆蓋，但沒有增加 feature-ready se
 Official Injury Importer
 → Single-report identity／value／team burden
 → Multi-report Injury Panel v1
-→ Predeclared T-60 Snapshot Selection Policy
+→ Frozen T-60 Snapshot Selection
 → Multi-report Injury Feature Backfill v1
 → Team Submission Status v1
-→ Long panel + selected game-level panel
+→ Wave 1 calendar-fixed acquisition audit
 ```
 
-下一步順序：
+下一步：
 
 ```text
-1. 擴充更多官方 publication times 與日期
-2. 至少累積 100 場獨立 selected feature-ready matchup
-3. Expected Minutes Accuracy Audit
-4. 先發／替補／新秀／復出球員分組
-5. Injury Feature Walk-forward Holdout
-6. Calibration／Residual 再驗證
+1. Wave 1 complete feature backfill（只用固定 registry 的成功來源）
+2. Gold game mapping
+3. deterministic player identity
+4. prior-only expected minutes／impact
+5. team submission reconciliation
+6. frozen T-60 selected panel
+7. 計算獨立 selected feature-ready games
+8. 達 100 場後才開始 Expected Minutes Audit／Injury Holdout
 ```
 
-### 樣本門檻
+樣本門檻：
 
 ```text
-目前：31 場獨立 selected games
-最低啟動：100 場獨立 selected feature-ready matchup
-初步可靠：300 場以上
-較理想：500 場以上，跨多個月份／賽季
+目前已驗證 pilot：31 selected games
+最低 holdout 啟動：100 selected feature-ready games
+初步可靠：300 games
+較理想：500 games，跨月份／賽季
 ```
 
-達到 100 只代表可以開始 holdout 實驗，不代表可以啟用模型或下注。
+達到 100 只允許開始 holdout，不代表可啟用模型或下注。
 
-### Snapshot Selection Policy
+## Frozen Snapshot Selection
 
-Primary policy 已預先固定：
+Primary policy：
 
 ```text
 latest feature-ready snapshot at or before T-60m
@@ -188,13 +217,14 @@ latest feature-ready snapshot at or before T-60m
 - both teams snapshot complete
 - both teams feature-ready
 - observed_at 至少早於 tip-off 60 分鐘
-- no fallback
 - latest eligible observed_at wins
-- Not Yet Submitted／unknown／missing team → no selection
+- no fallback
+- Not Yet Submitted／unknown／missing → no selection
+- 多個 publication times 仍只算 1 場獨立比賽
 
-Diagnostic policies 可以比較 coverage，但不可在看過 outcome 後升級為 primary policy。
+Diagnostic policies 可比較 coverage，但不得在看 outcome 後取代 Primary。
 
-## 主線 B — Market
+## Market 主線 Roadmap
 
 已完成：
 
@@ -204,7 +234,7 @@ Odds schema／source registry／import boundary
 → Market residual experiment
 ```
 
-下一步順序：
+下一步：
 
 ```text
 1. Real Timestamped Odds Acquisition／Backfill
@@ -215,7 +245,7 @@ Odds schema／source registry／import boundary
 6. CLV／EV／ROI／Drawdown
 ```
 
-真正缺少的是有 observation timestamp 的合法、可稽核資料本體，不是再建立一套 registry 或基本 schema。
+真正缺的是合法、可稽核且帶 observation timestamp 的 odds 資料本體，不是再建立 registry 或 schema。
 
 ## 兩條主線匯合
 
@@ -227,37 +257,45 @@ Point-in-time Model
 → Holdout EV／CLV／ROI
 ```
 
-## 暫不列入目前主線
-
-以下可作後續 Feature Expansion 候選，但不應取代 Injury 與 Market 兩條主線：
+## 後續候選，不是目前主線
 
 - Lineup Continuity
 - Usage Redistribution
 - Rotation Stability
-- Referee Tendency：僅限授權清楚、歷史覆蓋完整且可 point-in-time 驗證的資料來源
+- Referee Tendency：僅限授權清楚、歷史完整、可 point-in-time 驗證的來源
 - 更精細的球員級旅行與負荷資料
 
 ## 永久研究邊界
 
 - 不使用同日、賽後或未來資料建立賽前特徵。
 - 缺失值不隨意補成 0。
-- 缺報、Not Yet Submitted、unknown 或 synthetic missing side 球隊不視為健康。
+- 缺報、Not Yet Submitted、unknown、synthetic missing side 不視為健康。
 - 只有明確 `SUBMITTED_NO_INJURIES` 才能建立 explicit zero burden。
-- 不使用 fuzzy player identity 或 nearest-name guessing。
+- 不使用 fuzzy identity 或 nearest-name guessing。
 - 多個 snapshots 不可冒充多場獨立比賽。
-- 未完成 timestamped odds join 前，不宣稱 ROI、EV、CLV 或可執行投注 edge。
-- CI 綠燈只代表流程通過；必須讀正式 Artifact QA 數字後才能判定資料有效。
-- 模型目前輸給 Closing Market，正式投注額維持為 0。
+- 固定 acquisition 失敗時間不可用手挑日期替換。
+- 未完成 timestamped odds join 前，不宣稱 CLV、EV、ROI 或 executable edge。
+- CI 綠燈只代表流程完成；必須讀 Artifact QA。
+- 模型目前輸給 Closing Market，正式投注額維持 0。
+
+## Housekeeping
+
+- [x] `PROJECT_STATUS.md` 作為正式基準
+- [x] README 分離 Legacy UI 與 Research Pipeline
+- [x] Completed／Negative Result／Research Ready／Blocked 分區
+- [x] 重要 PR 同步正式 QA 數字
+- [ ] 視需要關閉被後續主線取代的早期草稿 PR
 
 ## 重要 PR
 
-- PR #28 — Fix Christopher Treasure Kaggle closing benchmark
+- PR #28 — Closing benchmark correction
 - PR #29 — Market Residual Analysis v1
-- PR #30 — Feature Expansion v3 context pilot（Rest／Travel 負結果）
+- PR #30 — Rest／Travel context negative result
 - PR #35 — Player Value & Expected Minutes v1
 - PR #36 — Team Injury Burden v1
 - PR #37 — Multi-report Injury Panel v1
 - PR #38 — Injury Feature Residual Audit v1
-- PR #39 — Research status and README correction
+- PR #39 — Research status／README correction
 - PR #40 — Multi-report Injury Feature Backfill v1
 - PR #41 — Injury Team Submission Status v1
+- PR #42 — Injury Backfill Wave 1 Acquisition Audit

@@ -1,0 +1,128 @@
+name: Build Market Residual Analysis v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Workflow run ID containing model-walk-forward-v2"
+        required: true
+        default: "29551715399"
+      dataset_handle:
+        description: "Public Kaggle closing-odds dataset handle"
+        required: true
+        default: "christophertreasure/nba-odds-data"
+  pull_request:
+    paths:
+      - "scripts/analyze_market_residuals.py"
+      - "scripts/run_market_residual_analysis.py"
+      - "scripts/run_christopher_treasure_closing_benchmark.py"
+      - "scripts/evaluate_closing_market_benchmark.py"
+      - ".github/workflows/build-market-residual-analysis.yml"
+      - "docs/market-residual-analysis-v1.md"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install analysis dependencies
+        run: python -m pip install --disable-pip-version-check pandas kagglehub
+      - name: Compile market residual modules
+        run: |
+          python -m py_compile scripts/analyze_market_residuals.py
+          python -m py_compile scripts/run_market_residual_analysis.py
+          python -m py_compile scripts/run_christopher_treasure_closing_benchmark.py
+      - name: Test residual segments and temporal holdout
+        run: |
+          rm -rf /tmp/nbavl-market-residual-test
+          python scripts/analyze_market_residuals.py \
+            --self-test \
+            --output-dir /tmp/nbavl-market-residual-test
+          python -m json.tool /tmp/nbavl-market-residual-test/market-residual-analysis-report.json >/dev/null
+          test -f /tmp/nbavl-market-residual-test/market-residual-segment-summary.csv
+      - name: Test secure end-to-end runner
+        run: |
+          rm -rf /tmp/nbavl-market-residual-runner-test
+          PYTHONPATH=scripts python scripts/run_market_residual_analysis.py \
+            --self-test \
+            --output-dir /tmp/nbavl-market-residual-runner-test
+          python -m json.tool /tmp/nbavl-market-residual-runner-test/market-residual-run-status.json >/dev/null
+          python -m json.tool /tmp/nbavl-market-residual-runner-test/analysis/market-residual-analysis-report.json >/dev/null
+          test ! -f /tmp/nbavl-market-residual-runner-test/closing-moneyline-normalized.csv
+
+  live-analysis:
+    if: github.event_name == 'workflow_dispatch'
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+      DATASET_HANDLE: ${{ inputs.dataset_handle }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install analysis dependencies
+        run: python -m pip install --disable-pip-version-check pandas kagglehub
+      - name: Download walk-forward predictions
+        run: |
+          rm -rf /tmp/nbavl-walk-forward-source
+          mkdir -p /tmp/nbavl-walk-forward-source
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name model-walk-forward-v2 \
+            --dir /tmp/nbavl-walk-forward-source
+          test -f /tmp/nbavl-walk-forward-source/walk-forward-predictions.csv
+      - name: Download closing archive and analyze market residuals
+        run: |
+          rm -rf /tmp/nbavl-market-residual-live
+          PYTHONPATH=scripts python scripts/run_market_residual_analysis.py \
+            --dataset-handle "$DATASET_HANDLE" \
+            --predictions /tmp/nbavl-walk-forward-source/walk-forward-predictions.csv \
+            --source-id kaggle_christophertreasure_nba_odds \
+            --output-dir /tmp/nbavl-market-residual-live
+      - name: Validate residual-analysis guardrails
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-market-residual-live')
+          status = json.loads((root / 'market-residual-run-status.json').read_text())
+          report = json.loads((root / 'analysis/market-residual-analysis-report.json').read_text())
+          assert status['market_residual_analysis_complete'] is True, status
+          assert status['temporary_raw_and_normalized_files_deleted'] is True, status
+          assert report['guardrails']['joined_game_rows_written_to_artifact'] is False, report['guardrails']
+          assert report['guardrails']['roi_computed'] is False, report['guardrails']
+          assert report['guardrails']['clv_computed'] is False, report['guardrails']
+          assert report['decision']['ready_for_production_market_blend'] is False, report['decision']
+          assert report['decision']['ready_for_betting_edge_claim'] is False, report['decision']
+          print(json.dumps({
+            'matched_games': report['coverage']['matched_games'],
+            'matched_seasons': report['coverage']['matched_seasons'],
+            'forward_holdout_complete': report['decision']['forward_holdout_complete'],
+            'incremental_model_signal_detected': report['decision']['incremental_model_signal_detected'],
+          }, indent=2))
+          PY
+      - name: Upload aggregate reports only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-residual-analysis-v1
+          path: |
+            /tmp/nbavl-market-residual-live/market-residual-run-status.json
+            /tmp/nbavl-market-residual-live/market-residual-import-report.json
+            /tmp/nbavl-market-residual-live/analysis/market-residual-analysis-report.json
+            /tmp/nbavl-market-residual-live/analysis/market-residual-segment-summary.csv
+          retention-days: 14
+          if-no-files-found: warn

@@ -1,0 +1,96 @@
+name: Diagnose open player boxscore archive
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/diagnose-open-player-boxscore-archive.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download and inspect MIT-licensed archive
+        run: |
+          rm -rf /tmp/nbavl-open-boxscore-diagnostic
+          mkdir -p /tmp/nbavl-open-boxscore-diagnostic
+          python - <<'PY'
+          import csv
+          import hashlib
+          import json
+          import urllib.request
+          from collections import Counter
+          from pathlib import Path
+
+          base = 'https://raw.githubusercontent.com/NocturneBear/NBA-Data-2010-2024/main/'
+          names = [f'regular_season_box_scores_2010_2024_part_{part}.csv' for part in (1, 2, 3)]
+          reports = []
+          all_seasons = Counter()
+          for name in names:
+              path = Path('/tmp/nbavl-open-boxscore-diagnostic') / name
+              request = urllib.request.Request(base + name, headers={'User-Agent': 'NBA-Value-Lab-Research/1.0'})
+              with urllib.request.urlopen(request, timeout=120) as response:
+                  payload = response.read()
+              path.write_bytes(payload)
+              digest = hashlib.sha256(payload).hexdigest()
+              row_count = 0
+              games = set()
+              players = set()
+              teams = set()
+              seasons = Counter()
+              with path.open('r', encoding='utf-8-sig', errors='replace', newline='') as handle:
+                  reader = csv.DictReader(handle)
+                  headers = list(reader.fieldnames or [])
+                  for row in reader:
+                      row_count += 1
+                      season = str(row.get('season_year') or row.get('SEASON_YEAR') or '').strip()
+                      seasons[season] += 1
+                      all_seasons[season] += 1
+                      games.add(str(row.get('gameId') or row.get('GAME_ID') or '').strip())
+                      players.add(str(row.get('personId') or row.get('PLAYER_ID') or '').strip())
+                      teams.add(str(row.get('teamTricode') or row.get('TEAM_ABBREVIATION') or '').strip())
+              reports.append({
+                  'name': name,
+                  'bytes': len(payload),
+                  'sha256': digest,
+                  'headers': headers,
+                  'rows': row_count,
+                  'unique_games': len(games - {''}),
+                  'unique_players': len(players - {''}),
+                  'unique_teams': len(teams - {''}),
+                  'season_counts': dict(sorted(seasons.items())),
+              })
+              path.unlink()
+          output = {
+              'source_repository': 'NocturneBear/NBA-Data-2010-2024',
+              'license': 'MIT',
+              'files': reports,
+              'combined_season_counts': dict(sorted(all_seasons.items())),
+              'raw_player_rows_uploaded': False,
+          }
+          out = Path('/tmp/nbavl-open-boxscore-diagnostic/report.json')
+          out.write_text(json.dumps(output, indent=2) + '\n')
+          print(json.dumps(output, indent=2))
+          required = {
+              'season_year', 'game_date', 'gameId', 'teamId', 'teamTricode',
+              'personId', 'personName', 'minutes', 'points', 'plusMinusPoints',
+          }
+          assert reports and all(required <= set(item['headers']) for item in reports), output
+          assert sum(item['rows'] for item in reports) >= 200000, output
+          assert any('2023' in season or '2023-24' in season for season in all_seasons), output
+          PY
+      - name: Upload aggregate diagnostic only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-player-boxscore-archive-diagnostic
+          path: /tmp/nbavl-open-boxscore-diagnostic/report.json
+          retention-days: 3
+          if-no-files-found: warn

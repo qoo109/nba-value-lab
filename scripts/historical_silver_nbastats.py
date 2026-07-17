@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from historical_silver_schema import as_int, clean, parse_score, row_fingerprint, stable_id
+from player_identity_core import normalize_player_name, suffixless_player_name
 
 
 def _record_side_team(description, team_abbr, team_id, side_counts, side):
@@ -23,6 +24,92 @@ def _choose_team(counter):
     return counter.most_common(1)[0][0]
 
 
+def _record_player_alias(row, slot, game_id, aliases, report):
+    player_id = clean(row.get(f"PLAYER{slot}_ID"))
+    player_name = clean(row.get(f"PLAYER{slot}_NAME"))
+    if not player_id and not player_name:
+        return
+    if not player_id or not player_name:
+        report["incomplete_player_identity_rows"] += 1
+        return
+    name_key = normalize_player_name(player_name)
+    suffixless_key = suffixless_player_name(player_name)
+    if not name_key:
+        report["unusable_player_name_rows"] += 1
+        return
+    team_id = clean(row.get(f"PLAYER{slot}_TEAM_ID"))
+    team_abbr = clean(row.get(f"PLAYER{slot}_TEAM_ABBREVIATION"))
+    key = (player_id, name_key, team_abbr or "", team_id or "")
+    if key not in aliases:
+        aliases[key] = {
+            "player_id": player_id,
+            "player_name_key": name_key,
+            "player_name_key_suffixless": suffixless_key,
+            "team_id": team_id,
+            "team_abbr": team_abbr,
+            "raw_names": Counter(),
+            "first_game_id": game_id,
+            "last_game_id": game_id,
+            "event_appearances": 0,
+        }
+    item = aliases[key]
+    item["raw_names"][player_name] += 1
+    item["last_game_id"] = game_id
+    item["event_appearances"] += 1
+
+
+def _finalize_aliases(aliases):
+    output = []
+    for item in aliases.values():
+        raw_name = item["raw_names"].most_common(1)[0][0]
+        flags = []
+        if not item["team_abbr"]:
+            flags.append("team_abbr_unavailable")
+        if len(item["raw_names"]) > 1:
+            flags.append("multiple_raw_name_variants")
+        output.append({
+            "player_id": item["player_id"],
+            "player_name_raw": raw_name,
+            "player_name_key": item["player_name_key"],
+            "player_name_key_suffixless": item["player_name_key_suffixless"],
+            "team_id": item["team_id"],
+            "team_abbr": item["team_abbr"],
+            "first_game_id": item["first_game_id"],
+            "last_game_id": item["last_game_id"],
+            "event_appearances": item["event_appearances"],
+            "quality_flags": ",".join(flags),
+        })
+    return sorted(output, key=lambda row: (row["player_id"], row["team_abbr"] or "", row["player_name_key"]))
+
+
+def insert_player_aliases(connection: sqlite3.Connection, aliases, season_label: str, source_id: str):
+    rows = []
+    for item in aliases:
+        alias_id = stable_id(
+            item["player_id"], item["player_name_key"], item["team_abbr"], season_label
+        )
+        rows.append((
+            alias_id,
+            item["player_id"],
+            item["player_name_raw"],
+            item["player_name_key"],
+            item["player_name_key_suffixless"],
+            item["team_id"],
+            item["team_abbr"],
+            season_label,
+            item["first_game_id"],
+            item["last_game_id"],
+            item["event_appearances"],
+            source_id,
+            item["quality_flags"],
+        ))
+    connection.executemany(
+        "INSERT INTO player_aliases VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        rows,
+    )
+    return len(rows)
+
+
 def normalize_nbastats(csv_path: Path, connection: sqlite3.Connection, batch_size: int = 5000):
     games = defaultdict(lambda: {
         "side_counts": {"home": Counter(), "away": Counter()},
@@ -31,6 +118,8 @@ def normalize_nbastats(csv_path: Path, connection: sqlite3.Connection, batch_siz
         "max_period": 0,
         "event_count": 0,
     })
+    aliases = {}
+    alias_report = Counter()
     exact_seen = set()
     exact_duplicates = 0
     event_ids = set()
@@ -63,6 +152,8 @@ def normalize_nbastats(csv_path: Path, connection: sqlite3.Connection, batch_siz
             player1_id = clean(row.get("PLAYER1_ID"))
             player2_id = clean(row.get("PLAYER2_ID"))
             player3_id = clean(row.get("PLAYER3_ID"))
+            for slot in (1, 2, 3):
+                _record_player_alias(row, slot, game_id, aliases, alias_report)
             side = "home" if home_description else "away" if away_description else "neutral"
             description = home_description or away_description or neutral_description
             away_score, home_score = parse_score(row.get("SCORE"))
@@ -110,9 +201,15 @@ def normalize_nbastats(csv_path: Path, connection: sqlite3.Connection, batch_siz
         game["away_team_abbr"], game["away_team_id"] = _choose_team(game["side_counts"]["away"])
         del game["side_counts"]
 
-    return dict(games), {
+    finalized_aliases = _finalize_aliases(aliases)
+    unique_player_ids = len({row["player_id"] for row in finalized_aliases})
+    return dict(games), finalized_aliases, {
         "rows_after_exact_dedupe": len(exact_seen),
         "exact_duplicate_rows": exact_duplicates,
         "event_id_collisions_resolved": event_id_collisions,
         "game_count": len(games),
+        "player_alias_rows": len(finalized_aliases),
+        "unique_player_ids": unique_player_ids,
+        "incomplete_player_identity_rows": int(alias_report["incomplete_player_identity_rows"]),
+        "unusable_player_name_rows": int(alias_report["unusable_player_name_rows"]),
     }

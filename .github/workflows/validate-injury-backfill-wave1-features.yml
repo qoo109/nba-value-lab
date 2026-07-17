@@ -1,0 +1,274 @@
+name: Validate injury backfill wave 1 features
+
+on:
+  pull_request:
+    paths:
+      - "data/multi-report-injury-backfill-wave1-times.json"
+      - "data/injury-snapshot-selection-policy-v1.json"
+      - "scripts/filter_injury_panels_to_acquisition_overlap.py"
+      - "scripts/audit_wave1_injury_feature_backfill.py"
+      - ".github/workflows/validate-injury-backfill-wave1-features.yml"
+      - "docs/injury-backfill-wave1-features.md"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Workflow run containing historical-gold-multiseason"
+        required: true
+        default: "29551715399"
+      registry_file:
+        description: "Calendar-fixed Wave 1 registry"
+        required: true
+        default: "data/multi-report-injury-backfill-wave1-times.json"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Wave 1 feature modules
+        run: |
+          python -m py_compile scripts/filter_injury_panels_to_acquisition_overlap.py
+          python -m py_compile scripts/audit_wave1_injury_feature_backfill.py
+      - name: Run deterministic Wave 1 feature self-tests
+        run: |
+          rm -rf /tmp/nbavl-wave1-feature-self-test
+          python scripts/filter_injury_panels_to_acquisition_overlap.py \
+            --self-test \
+            --output-dir /tmp/nbavl-wave1-feature-self-test/overlap
+          python scripts/audit_wave1_injury_feature_backfill.py \
+            --self-test \
+            --output-dir /tmp/nbavl-wave1-feature-self-test/audit
+          python -m json.tool /tmp/nbavl-wave1-feature-self-test/audit/wave1-injury-feature-backfill-audit.json >/dev/null
+
+  live-feature-backfill:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id || '29551715399' }}
+      REGISTRY_FILE: ${{ github.event.inputs.registry_file || 'data/multi-report-injury-backfill-wave1-times.json' }}
+      ROOT: /tmp/nbavl-wave1-features
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+      - name: Download audited five-season Gold
+        run: |
+          rm -rf "$ROOT"
+          mkdir -p "$ROOT/gold"
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name historical-gold-multiseason \
+            --dir "$ROOT/gold"
+          GOLD_FILE="$(find "$ROOT/gold" -name 'historical-gold-multiseason.sqlite.gz' -print -quit)"
+          test -n "$GOLD_FILE"
+          echo "GOLD_FILE=$GOLD_FILE" >> "$GITHUB_ENV"
+      - name: Rebuild official Wave 1 player panel
+        id: player_panel
+        continue-on-error: true
+        run: |
+          PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
+            --report-times "$REGISTRY_FILE" \
+            --output-dir "$ROOT/player"
+      - name: Rebuild official Wave 1 team submission panel
+        id: team_panel
+        continue-on-error: true
+        run: |
+          PYTHONPATH=scripts python scripts/build_multi_report_team_submission_panel.py \
+            --report-times "$REGISTRY_FILE" \
+            --output-dir "$ROOT/team"
+      - name: Restrict both panels to successful publication-time overlap
+        id: overlap_filter
+        continue-on-error: true
+        run: |
+          python scripts/filter_injury_panels_to_acquisition_overlap.py \
+            --player-panel "$ROOT/player/multi-report-injury-panel-normalized.csv" \
+            --player-source-index "$ROOT/player/multi-report-source-index.csv" \
+            --team-panel "$ROOT/team/multi-report-team-submission-panel.csv" \
+            --team-source-index "$ROOT/team/multi-report-team-submission-source-index.csv" \
+            --output-dir "$ROOT/overlap"
+      - name: Match overlap player and team panels to Historical Gold
+        id: schedule_match
+        continue-on-error: true
+        run: |
+          python scripts/validate_injury_snapshot_schedule_match.py \
+            --snapshot-csv "$ROOT/overlap/overlap-player-injury-panel.csv" \
+            --gold "$GOLD_FILE" \
+            --output-dir "$ROOT/player-schedule"
+          python scripts/validate_injury_snapshot_schedule_match.py \
+            --snapshot-csv "$ROOT/overlap/overlap-team-submission-panel.csv" \
+            --gold "$GOLD_FILE" \
+            --output-dir "$ROOT/team-schedule"
+      - name: Import two Gold-validated boxscore seasons
+        id: boxscores
+        continue-on-error: true
+        run: |
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --season 2022-23 \
+            --gold "$GOLD_FILE" \
+            --output-dir "$ROOT/boxscores-2022"
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --season 2023-24 \
+            --gold "$GOLD_FILE" \
+            --output-dir "$ROOT/boxscores-2023"
+      - name: Combine temporary player boxscores
+        id: combine_boxscores
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import csv
+          import os
+          from pathlib import Path
+          root = Path(os.environ['ROOT'])
+          sources = [
+              root / 'boxscores-2022/open-player-boxscores.csv',
+              root / 'boxscores-2023/open-player-boxscores.csv',
+          ]
+          rows = {}
+          fields = None
+          for path in sources:
+              with path.open('r', encoding='utf-8-sig', newline='') as handle:
+                  reader = csv.DictReader(handle)
+                  fields = fields or list(reader.fieldnames or [])
+                  for row in reader:
+                      rows[(row['SEASON_YEAR'], row['GAME_ID'], row['PLAYER_ID'])] = row
+          output = root / 'combined-player-boxscores.csv'
+          with output.open('w', encoding='utf-8', newline='') as handle:
+              writer = csv.DictWriter(handle, fieldnames=fields)
+              writer.writeheader()
+              writer.writerows(rows[key] for key in sorted(rows))
+          print({'combined_rows': len(rows)})
+          PY
+      - name: Match deterministic player identities
+        id: identity
+        continue-on-error: true
+        run: |
+          PYTHONPATH=scripts python scripts/match_injury_players_from_boxscores.py \
+            --snapshot-csv "$ROOT/overlap/overlap-player-injury-panel.csv" \
+            --game-map-csv "$ROOT/player-schedule/injury-snapshot-game-id-map.csv" \
+            --boxscore-csv "$ROOT/combined-player-boxscores.csv" \
+            --output-dir "$ROOT/identity"
+      - name: Build prior-only expected minutes and player impact
+        id: player_values
+        continue-on-error: true
+        run: |
+          PYTHONPATH=scripts python scripts/build_point_in_time_player_values.py \
+            --player-logs "$ROOT/combined-player-boxscores.csv" \
+            --snapshot-csv "$ROOT/overlap/overlap-player-injury-panel.csv" \
+            --player-id-map "$ROOT/identity/injury-player-id-map.csv" \
+            --output-dir "$ROOT/player-values"
+      - name: Build Wave 1 long injury features
+        id: long_features
+        continue-on-error: true
+        run: |
+          python scripts/build_multi_report_injury_features.py \
+            --snapshot-csv "$ROOT/overlap/overlap-player-injury-panel.csv" \
+            --player-values "$ROOT/player-values/point-in-time-player-values.csv" \
+            --player-id-map "$ROOT/identity/injury-player-id-map.csv" \
+            --game-map "$ROOT/player-schedule/injury-snapshot-game-id-map.csv" \
+            --output-dir "$ROOT/long-features"
+      - name: Reconcile team submission completeness
+        id: reconciliation
+        continue-on-error: true
+        run: |
+          python scripts/reconcile_injury_team_submission_status.py \
+            --team-long "$ROOT/long-features/multi-report-team-injury-burden-long.csv" \
+            --team-submissions "$ROOT/overlap/overlap-team-submission-panel.csv" \
+            --team-game-map "$ROOT/team-schedule/injury-snapshot-game-id-map.csv" \
+            --output-dir "$ROOT/reconciled"
+      - name: Apply frozen T-60 snapshot policy
+        id: selection
+        continue-on-error: true
+        run: |
+          python scripts/select_multi_report_injury_snapshots.py \
+            --long-matchups "$ROOT/reconciled/reconciled-matchup-injury-burden-long.csv" \
+            --policy data/injury-snapshot-selection-policy-v1.json \
+            --output-dir "$ROOT/selected"
+      - name: Remove temporary player-level data before final audit
+        if: always()
+        run: |
+          rm -f "$ROOT/combined-player-boxscores.csv"
+          rm -f "$ROOT/overlap/overlap-player-injury-panel.csv"
+          rm -f "$ROOT/player/multi-report-injury-panel-normalized.csv"
+          find "$ROOT/player" -name 'injury-lineup-snapshots-normalized.csv' -delete 2>/dev/null || true
+          rm -f "$ROOT/identity/injury-player-id-map.csv"
+          rm -f "$ROOT/player-values/point-in-time-player-values.csv"
+          rm -f "$ROOT/boxscores-2022/open-player-boxscores.csv"
+          rm -f "$ROOT/boxscores-2023/open-player-boxscores.csv"
+          find "$ROOT" -name '*.pdf' -delete 2>/dev/null || true
+      - name: Run final aggregate Wave 1 feature audit
+        id: final_audit
+        if: always()
+        continue-on-error: true
+        run: |
+          python scripts/audit_wave1_injury_feature_backfill.py \
+            --overlap-report "$ROOT/overlap/overlap-filter-report.json" \
+            --player-schedule-report "$ROOT/player-schedule/injury-snapshot-schedule-match-report.json" \
+            --team-schedule-report "$ROOT/team-schedule/injury-snapshot-schedule-match-report.json" \
+            --identity-report "$ROOT/identity/injury-player-boxscore-identity-report.json" \
+            --player-value-report "$ROOT/player-values/point-in-time-player-value-report.json" \
+            --feature-report "$ROOT/long-features/multi-report-injury-feature-report.json" \
+            --reconciliation-report "$ROOT/reconciled/injury-team-submission-reconciliation-report.json" \
+            --selection-report "$ROOT/selected/snapshot-selection-report.json" \
+            --selected-csv "$ROOT/selected/selected-matchup-injury-burden.csv" \
+            --sensitive-root "$ROOT" \
+            --output-dir "$ROOT/final-audit"
+      - name: Upload aggregate Wave 1 feature artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: injury-backfill-wave1-features
+          path: |
+            /tmp/nbavl-wave1-features/player/multi-report-injury-panel-report.json
+            /tmp/nbavl-wave1-features/player/multi-report-source-index.csv
+            /tmp/nbavl-wave1-features/team/multi-report-team-submission-report.json
+            /tmp/nbavl-wave1-features/team/multi-report-team-submission-source-index.csv
+            /tmp/nbavl-wave1-features/overlap/overlap-filter-report.json
+            /tmp/nbavl-wave1-features/overlap/overlap-report-index.csv
+            /tmp/nbavl-wave1-features/overlap/overlap-team-submission-panel.csv
+            /tmp/nbavl-wave1-features/player-schedule/injury-snapshot-schedule-match-report.json
+            /tmp/nbavl-wave1-features/player-schedule/injury-snapshot-game-id-map.csv
+            /tmp/nbavl-wave1-features/team-schedule/injury-snapshot-schedule-match-report.json
+            /tmp/nbavl-wave1-features/team-schedule/injury-snapshot-game-id-map.csv
+            /tmp/nbavl-wave1-features/identity/injury-player-boxscore-identity-report.json
+            /tmp/nbavl-wave1-features/player-values/point-in-time-player-value-report.json
+            /tmp/nbavl-wave1-features/long-features/multi-report-injury-feature-report.json
+            /tmp/nbavl-wave1-features/long-features/multi-report-team-injury-burden-long.csv
+            /tmp/nbavl-wave1-features/long-features/multi-report-matchup-injury-burden-long.csv
+            /tmp/nbavl-wave1-features/reconciled/injury-team-submission-reconciliation-report.json
+            /tmp/nbavl-wave1-features/reconciled/reconciled-team-injury-burden-long.csv
+            /tmp/nbavl-wave1-features/reconciled/reconciled-matchup-injury-burden-long.csv
+            /tmp/nbavl-wave1-features/selected/snapshot-selection-report.json
+            /tmp/nbavl-wave1-features/selected/snapshot-selection-audit.csv
+            /tmp/nbavl-wave1-features/selected/selected-matchup-injury-burden.csv
+            /tmp/nbavl-wave1-features/final-audit/wave1-injury-feature-backfill-audit.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Enforce structural Wave 1 feature gate
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          report = json.loads((Path(os.environ['ROOT']) / 'final-audit/wave1-injury-feature-backfill-audit.json').read_text())
+          assert report['decision']['ready_for_wave1_selected_panel_research'] is True, report
+          assert report['decision']['ready_for_injury_feature_walk_forward_holdout'] is False
+          assert report['decision']['ready_for_model_training'] is False
+          assert report['decision']['ready_for_probability_adjustment'] is False
+          assert report['decision']['ready_for_betting_edge_claim'] is False
+          print(json.dumps({'coverage': report['coverage'], 'sample_size': report['sample_size'], 'decision': report['decision']}, indent=2))
+          PY

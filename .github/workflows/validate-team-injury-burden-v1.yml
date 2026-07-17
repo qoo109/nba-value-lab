@@ -48,7 +48,7 @@ jobs:
       - name: Download player value source artifact
         run: |
           rm -rf /tmp/nbavl-team-injury-source /tmp/nbavl-team-injury-output
-          mkdir -p /tmp/nbavl-team-injury-source
+          mkdir -p /tmp/nbavl-team-injury-source /tmp/nbavl-team-injury-output
           gh run download "${{ github.event.inputs.source_run_id || '29575718380' }}" \
             --repo "$GITHUB_REPOSITORY" \
             --name player-value-minutes-v1 \
@@ -64,11 +64,36 @@ jobs:
           echo "GAME_MAP=$GAME_MAP" >> "$GITHUB_ENV"
       - name: Build team and matchup injury burden
         run: |
+          set +e
           python scripts/build_team_injury_burden.py \
             --player-values "$VALUES_FILE" \
             --player-id-map "$PLAYER_MAP" \
             --game-map "$GAME_MAP" \
-            --output-dir /tmp/nbavl-team-injury-output
+            --output-dir /tmp/nbavl-team-injury-output \
+            > /tmp/nbavl-team-injury-output/execution.log 2>&1
+          CODE=$?
+          echo "$CODE" > /tmp/nbavl-team-injury-output/exit-code.txt
+          cat /tmp/nbavl-team-injury-output/execution.log
+          exit 0
+      - name: Upload team burden diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: team-injury-burden-diagnostics
+          path: |
+            /tmp/nbavl-team-injury-output/execution.log
+            /tmp/nbavl-team-injury-output/exit-code.txt
+            /tmp/nbavl-team-injury-output/team-injury-burden-report.json
+            /tmp/nbavl-team-injury-output/team-injury-burden.csv
+            /tmp/nbavl-team-injury-output/matchup-injury-burden.csv
+          retention-days: 3
+          if-no-files-found: warn
+      - name: Require team burden readiness
+        run: |
+          test "$(cat /tmp/nbavl-team-injury-output/exit-code.txt)" = "0"
+          test -s /tmp/nbavl-team-injury-output/team-injury-burden-report.json
+          test -s /tmp/nbavl-team-injury-output/team-injury-burden.csv
+          test -s /tmp/nbavl-team-injury-output/matchup-injury-burden.csv
       - name: Validate aggregate QA
         run: |
           python - <<'PY'

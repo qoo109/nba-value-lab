@@ -25,7 +25,7 @@ jobs:
         run: |
           rm -rf /tmp/nbavl-official-injury-live
           PYTHONPATH=scripts python scripts/import_official_nba_injury_report.py \
-            --report-time "2023-12-18T08:30:00-05:00" \
+            --report-time "2023-12-18T20:30:00-05:00" \
             --output-dir /tmp/nbavl-official-injury-live
       - name: Validate aggregate result and deletion controls
         run: |
@@ -45,6 +45,7 @@ jobs:
           print(json.dumps(report, indent=2))
           PY
       - name: Upload aggregate QA only
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: official-injury-report-live-verification
@@ -52,4 +53,4 @@ jobs:
             /tmp/nbavl-official-injury-live/official-injury-report-import-report.json
             /tmp/nbavl-official-injury-live/validation/injury-lineup-validation-report.json
           retention-days: 3
-          if-no-files-found: error
+          if-no-files-found: warn

@@ -4,83 +4,215 @@
 
 Create prior-only player availability features that can be joined to official injury snapshots without using the target game's result or box score.
 
-## Official source
+This version establishes a research data chain for:
 
-The source pilot uses NBA Official LiveData boxscores:
+1. historical player boxscores;
+2. Gold-controlled game identity and schedule QA;
+3. injury-name to player-ID matching;
+4. expected minutes from earlier appearances only;
+5. a transparent, shrunk player-impact proxy;
+6. explicit missingness when history is unavailable.
+
+## Source selection
+
+### Selected research source
+
+The pipeline uses the MIT-licensed secondary archive:
 
 ```text
-https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json
+https://github.com/NocturneBear/NBA-Data-2010-2024
 ```
 
-The audited historical Gold schedule supplies the request allowlist. Only official 10-digit game IDs already present in `gold_matchup_features` are requested.
+The archive provides regular-season player boxscore rows with:
 
-Each official boxscore provides stable player and team IDs, play and starter status, minutes, base box-score statistics, and plus/minus. The importer verifies that the returned game ID and home/away team tricodes exactly match Gold before accepting any player rows.
+- `gameId`, game date and team tricode;
+- `personId` and player name;
+- minutes and starting position;
+- shooting, rebounding, assists, turnovers, steals, blocks and fouls;
+- points and plus/minus.
 
-The bulk `stats.nba.com/stats/playergamelogs` endpoint was tested first but proved unreliable from GitHub-hosted runners for full-season retrieval. It is not used as the production source for this pilot.
+The repository does not fully document its upstream collection process. It is therefore classified as a **secondary open archive**, not an approved primary source.
 
-## Source validation
+### Official routes tested but not activated
 
-For one regular season, the importer validates:
+Two direct NBA routes were tested from GitHub-hosted runners:
 
-- all requested game IDs come from Gold;
-- returned game ID and home/away teams match Gold exactly;
-- at least 99.5% game coverage;
-- unique `(game_id, player_id)` keys;
-- valid player IDs and minute durations;
-- at least ten played players per completed game;
-- expected season, game, row, and player coverage;
-- response SHA-256 provenance and retry counts.
+- `stats.nba.com/stats/playergamelogs` was unreliable for full-season and segmented retrieval;
+- NBA LiveData CDN boxscores returned HTTP 403 even with ordinary browser request headers.
 
-Requests use bounded concurrency and retries. A failed or mismatched game remains an explicit QA failure rather than being replaced with a guessed source.
+The project does not attempt to bypass those restrictions. The direct-source importers and diagnostics were removed from the final branch.
 
-Player-level source rows are temporary and are deleted before Artifact upload. The retained Artifact contains only source provenance, response hashes, aggregate counts, and QA.
+## Gold-controlled validation
+
+Historical Gold is authoritative for:
+
+- historical `game_id`;
+- official 10-digit game-ID normalization;
+- game date;
+- home and away teams;
+- season label.
+
+Archive rows not found in Gold are excluded rather than guessed. Date or team disagreement is a hard failure.
+
+### Verified coverage
+
+#### 2022–23
+
+- archive roster rows: 31,542
+- played player rows: 25,892
+- unique players: 547
+- Gold games: 1,230
+- matched Gold games: 1,230
+- game coverage: 100%
+- date, team, player-ID and minute errors: 0
+
+#### 2023–24
+
+- archive roster rows: 32,385
+- normalized Gold-matched rows: 32,328
+- played player rows: 26,350
+- unique players: 586
+- Gold games: 1,228
+- matched Gold games: 1,228
+- game coverage: 100%
+- date, team, player-ID and minute errors: 0
+- two archive games not present in audited Gold were excluded
+
+## Minute normalization
+
+The archive normally uses `MM:SS`. It also contains rounded values such as:
+
+```text
+28:60
+39:60
+```
+
+A dedicated diagnostic confirmed that these rows contain valid non-zero boxscores. They are normalized by carrying the rounded sixty seconds into the next minute:
+
+```text
+28:60 → 29:00
+39:60 → 40:00
+```
+
+Values above sixty seconds remain invalid and are blocked.
+
+## Injury player identity
+
+For the official 2023-12-18 08:30 ET injury report:
+
+- injury rows: 118
+- rows matched to historical games: 118
+- player IDs matched: 117
+- high-confidence exact matches: 117
+- player match rate: 99.1525%
+- ambiguous identities: 0
+- fuzzy or nearest-name matching: not used
+- one unmatched OUT player remains blocked
+
+The ID map excludes player names and injury reasons.
 
 ## Point-in-time rule
 
-Official boxscore rows are finalized after games. They may influence only later target games.
-
-For a target game on date `D`, every player feature must use rows where:
+For a target game on date `D`, every player feature uses only rows where:
 
 ```text
 source_game_date < D
 ```
 
-Same-game, same-date, and future rows are excluded. Feature builders must record the latest included source game and the target observation timestamp.
+Same-day and future rows are excluded before any aggregate is calculated.
 
-## Planned expected-minutes baseline
+The verified pilot excluded:
 
-Expected minutes will be derived from prior usage only, using stabilized recent windows:
+- 26 same-day source rows;
+- 2,693 future source rows;
+- strict prior-date violations: 0.
 
-- prior 5-game minutes;
-- prior 10-game minutes;
-- season-to-date minutes;
-- days since last appearance;
-- prior starts where available;
-- offseason carryover only when current-season evidence is missing.
+## Expected-minutes baseline
 
-The output will be capped to the valid NBA range and will retain its sample size and source cutoff.
+Expected minutes use prior appearances only:
 
-## Planned player-value baseline
+- last 5 played games;
+- last 10 played games;
+- current season-to-date;
+- prior-season carryover for small or absent current-season samples.
 
-The first transparent value estimate will use prior box-score contribution and minutes, not target-game statistics. It is a research proxy rather than an official NBA metric.
+For at least five current-season games:
 
-The raw per-game contribution components will include:
+```text
+0.50 × prior-5 minutes
++ 0.30 × prior-10 minutes
++ 0.20 × season-to-date minutes
+```
 
-- points and shooting efficiency;
-- offensive and defensive rebounds;
-- assists, steals, and blocks;
-- turnovers and personal fouls;
-- minutes and plus/minus as separately reported context.
+Small current-season samples blend 60% current-season mean with 40% prior-season last-10 mean. Estimates are capped to 0–48 minutes.
 
-The estimate will be standardized against league rows available before the target date and shrunk toward zero for small samples.
+## Player-impact research proxy
+
+The transparent per-game box contribution is:
+
+```text
+PTS + 0.4×FGM − 0.7×FGA − 0.4×(FTA−FTM)
++ 0.7×OREB + 0.3×DREB
++ STL + 0.7×AST + 0.7×BLK
+− 0.4×PF − TOV
+```
+
+The value is converted to per-36, standardized against league rows available before the target date, supplemented with 0.25 times the prior plus/minus per-36 z-score, and shrunk by:
+
+```text
+n / (n + 8)
+```
+
+The final research proxy is capped to `[-3, 3]`. It is not an official NBA metric.
+
+## Missingness policy
+
+Unknown does not equal zero.
+
+For the verified injury report:
+
+- player-ID map rows: 118
+- feature rows: 117
+- expected-minutes rows: 106
+- player-impact rows: 106
+- expected-minutes coverage: 89.8305%
+- impact coverage: 89.8305%
+- players with no earlier played history: 11
+- missing player IDs: 1
+
+Unknown expected minutes and impact remain null with explicit missingness indicators. Ten of the eleven no-history players were OUT and one was QUESTIONABLE.
+
+## Outputs
+
+The retained ID-only feature output contains:
+
+- snapshot record ID;
+- historical game ID;
+- season, team and player ID;
+- availability status;
+- target date and observation timestamp;
+- expected minutes, method and missingness;
+- prior sample sizes;
+- player-impact estimate and missingness;
+- latest included source game and feature version.
+
+It does not contain player names or injury reasons.
 
 ## Activation boundary
 
-A successful source response does not enable model training. Promotion requires:
+The current decision is:
 
-1. multi-season source reliability;
-2. exact Gold game and player-ID coverage;
-3. strict prior-date feature tests;
-4. expected-minutes backtesting;
-5. injury snapshot joins across multiple report times;
-6. season holdout evaluation against the existing model.
+```text
+ready_for_injury_snapshot_feature_join: true
+ready_for_model_training: false
+ready_for_betting_edge_claim: false
+```
+
+Research join readiness means the values may enter the next team-aggregation experiment with explicit missingness. Promotion still requires:
+
+1. multiple injury reports and publication times;
+2. cross-season feature coverage;
+3. team-level injury burden aggregation;
+4. expected-minutes accuracy evaluation;
+5. season holdout comparison against Walk-forward v2;
+6. no degradation of calibration or market residual metrics.

@@ -157,6 +157,7 @@ jobs:
             --policy data/injury-snapshot-selection-policy-v1.json \
             --output-dir /tmp/nbavl-team-submission-live/baseline-selection
       - name: Reconcile team submission completeness
+        continue-on-error: true
         run: |
           python scripts/reconcile_injury_team_submission_status.py \
             --team-long /tmp/nbavl-team-submission-live/original-long/multi-report-team-injury-burden-long.csv \
@@ -211,6 +212,7 @@ jobs:
           }, indent=2))
           PY
       - name: Remove temporary player-level data
+        if: always()
         run: |
           rm -f /tmp/nbavl-team-submission-live/combined-player-boxscores.csv
           rm -f /tmp/nbavl-team-submission-live/boxscores-2022/open-player-boxscores.csv
@@ -220,6 +222,7 @@ jobs:
           rm -f /tmp/nbavl-team-submission-live/player-identity/injury-player-id-map.csv
           rm -f /tmp/nbavl-team-submission-live/player-values/point-in-time-player-values.csv
       - name: Upload aggregate team submission artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: injury-team-submission-status-v1

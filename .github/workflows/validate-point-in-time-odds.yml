@@ -1,0 +1,156 @@
+name: Validate point-in-time Odds Layer v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      calibration_run_id:
+        description: "Workflow run ID containing probability-calibration-v1"
+        required: true
+        default: "29552717941"
+      odds_input_run_id:
+        description: "Optional workflow run ID containing an odds CSV artifact"
+        required: false
+        default: ""
+      odds_artifact_name:
+        description: "Artifact name containing the odds CSV"
+        required: false
+        default: "point-in-time-odds-input"
+      repo_odds_csv_path:
+        description: "Optional repository CSV path when no artifact run is supplied"
+        required: false
+        default: ""
+      entry_snapshot:
+        description: "Entry snapshot label"
+        required: true
+        default: "T-60m"
+      bookmaker:
+        description: "Optional bookmaker filter"
+        required: false
+        default: ""
+      minimum_edge:
+        description: "Minimum no-vig probability edge"
+        required: true
+        default: "0.025"
+  pull_request:
+    paths:
+      - "scripts/build_point_in_time_odds.py"
+      - ".github/workflows/validate-point-in-time-odds.yml"
+      - "docs/point-in-time-odds-layer-v1.md"
+      - "data/templates/point-in-time-odds-template.csv"
+      - "data/source-registry.json"
+      - "docs/data-sources-v4.3.md"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile odds layer
+        run: python -m py_compile scripts/build_point_in_time_odds.py
+      - name: Run synthetic point-in-time odds self-test
+        run: |
+          rm -rf /tmp/nbavl-odds-self-test
+          python scripts/build_point_in_time_odds.py \
+            --self-test \
+            --output-dir /tmp/nbavl-odds-self-test
+          python -m json.tool /tmp/nbavl-odds-self-test/result/point-in-time-odds-report.json >/dev/null
+          python -m json.tool /tmp/nbavl-odds-self-test/self-test.json >/dev/null
+
+  live-market-backtest:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      (inputs.odds_input_run_id != '' || inputs.repo_odds_csv_path != '')
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CALIBRATION_RUN_ID: ${{ inputs.calibration_run_id }}
+      ODDS_INPUT_RUN_ID: ${{ inputs.odds_input_run_id }}
+      ODDS_ARTIFACT_NAME: ${{ inputs.odds_artifact_name }}
+      REPO_ODDS_CSV_PATH: ${{ inputs.repo_odds_csv_path }}
+      ENTRY_SNAPSHOT: ${{ inputs.entry_snapshot }}
+      BOOKMAKER: ${{ inputs.bookmaker }}
+      MINIMUM_EDGE: ${{ inputs.minimum_edge }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download calibrated predictions
+        run: |
+          rm -rf /tmp/nbavl-calibration-source
+          mkdir -p /tmp/nbavl-calibration-source
+          gh run download "$CALIBRATION_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name probability-calibration-v1 \
+            --dir /tmp/nbavl-calibration-source
+          test -f /tmp/nbavl-calibration-source/calibrated-predictions.csv
+      - name: Prepare odds input
+        run: |
+          rm -rf /tmp/nbavl-odds-input
+          mkdir -p /tmp/nbavl-odds-input
+          if [ -n "$ODDS_INPUT_RUN_ID" ]; then
+            gh run download "$ODDS_INPUT_RUN_ID" \
+              --repo "$GITHUB_REPOSITORY" \
+              --name "$ODDS_ARTIFACT_NAME" \
+              --dir /tmp/nbavl-odds-input
+            ODDS_CSV="$(find /tmp/nbavl-odds-input -type f -name '*.csv' | head -n 1)"
+          else
+            test -n "$REPO_ODDS_CSV_PATH"
+            test -f "$REPO_ODDS_CSV_PATH"
+            cp "$REPO_ODDS_CSV_PATH" /tmp/nbavl-odds-input/
+            ODDS_CSV="/tmp/nbavl-odds-input/$(basename "$REPO_ODDS_CSV_PATH")"
+          fi
+          test -n "$ODDS_CSV"
+          test -f "$ODDS_CSV"
+          echo "ODDS_CSV=$ODDS_CSV" >> "$GITHUB_ENV"
+      - name: Build odds layer and research backtest
+        run: |
+          rm -rf /tmp/nbavl-point-in-time-odds
+          args=(
+            --predictions /tmp/nbavl-calibration-source/calibrated-predictions.csv
+            --odds-csv "$ODDS_CSV"
+            --output-dir /tmp/nbavl-point-in-time-odds
+            --entry-snapshot "$ENTRY_SNAPSHOT"
+            --minimum-edge "$MINIMUM_EDGE"
+          )
+          if [ -n "$BOOKMAKER" ]; then
+            args+=(--bookmaker "$BOOKMAKER")
+          fi
+          python scripts/build_point_in_time_odds.py "${args[@]}"
+      - name: Validate market outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-point-in-time-odds')
+          report = json.loads((root / 'point-in-time-odds-report.json').read_text())
+          assert report['decision']['odds_layer_build_complete'] is True
+          assert report['quality']['point_in_time_violations'] == 0, report['quality']
+          assert report['quality']['team_mismatches'] == 0, report['quality']
+          assert report['coverage']['primary_bookmaker_games'] > 0, report['coverage']
+          assert report['guardrails']['closing_line_used_for_selection'] is False
+          assert report['guardrails']['odds_used_for_model_training'] is False
+          assert (root / 'normalized-odds.csv').exists()
+          assert (root / 'market-edge-records.csv').exists()
+          print(json.dumps(report['decision'], ensure_ascii=False, indent=2))
+          PY
+      - name: Upload odds layer and backtest report
+        uses: actions/upload-artifact@v4
+        with:
+          name: point-in-time-odds-layer-v1
+          path: |
+            /tmp/nbavl-point-in-time-odds/point-in-time-odds-report.json
+            /tmp/nbavl-point-in-time-odds/normalized-odds.csv
+            /tmp/nbavl-point-in-time-odds/market-edge-records.csv
+          retention-days: 14
+          if-no-files-found: error

@@ -17,6 +17,8 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 VERSION = "injury-feature-residual-audit-v1"
+MIN_DIRECTIONAL_DIAGNOSTIC_ROWS = 3
+MIN_ACTIVATION_ROWS = 100
 FEATURES = [
     "weighted_unavailable_minutes_home_minus_away",
     "weighted_absence_impact_signed_home_minus_away",
@@ -31,7 +33,7 @@ def utc_now() -> str:
 
 def safe_corr(x: pd.Series, y: pd.Series) -> dict[str, Any]:
     frame = pd.DataFrame({"x": x, "y": y}).dropna()
-    if len(frame) < 3 or frame["x"].nunique() < 2 or frame["y"].nunique() < 2:
+    if len(frame) < MIN_DIRECTIONAL_DIAGNOSTIC_ROWS or frame["x"].nunique() < 2 or frame["y"].nunique() < 2:
         return {"n": len(frame), "rho": None, "p_value": None}
     result = spearmanr(frame["x"], frame["y"])
     rho = float(result.statistic)
@@ -130,7 +132,6 @@ def audit(predictions_path: Path, injury_path: Path, output_dir: Path) -> dict[s
     joined_output.to_csv(output_dir / "injury-residual-audit-rows.csv", index=False)
 
     eligible_rows = len(eligible)
-    minimum_activation_rows = 100
     all_probability_directions = all(
         item["direction_matches_probability_residual"] is True
         for item in feature_results.values()
@@ -148,7 +149,8 @@ def audit(predictions_path: Path, injury_path: Path, output_dir: Path) -> dict[s
             "joined_rows": len(joined),
             "complete_snapshot_rows": int((joined["matchup_snapshot_complete"] == 1).sum()),
             "feature_ready_rows": eligible_rows,
-            "minimum_rows_for_activation": minimum_activation_rows,
+            "minimum_rows_for_directional_diagnostic": MIN_DIRECTIONAL_DIAGNOSTIC_ROWS,
+            "minimum_rows_for_activation": MIN_ACTIVATION_ROWS,
         },
         "quality": {
             "duplicate_prediction_game_ids": int(predictions["game_id"].duplicated().sum()),
@@ -163,14 +165,16 @@ def audit(predictions_path: Path, injury_path: Path, output_dir: Path) -> dict[s
         "feature_results": feature_results,
         "decision": {
             "directional_signal_detected_in_pilot": (
-                all_probability_directions and all_margin_directions and eligible_rows >= 5
+                all_probability_directions
+                and all_margin_directions
+                and eligible_rows >= MIN_DIRECTIONAL_DIAGNOSTIC_ROWS
             ),
             "ready_for_injury_feature_model_training": False,
             "ready_for_probability_adjustment": False,
             "ready_for_betting_edge_claim": False,
             "reason": (
                 f"Only {eligible_rows} feature-ready games are available; at least "
-                f"{minimum_activation_rows} independent point-in-time games are required before "
+                f"{MIN_ACTIVATION_ROWS} independent point-in-time games are required before "
                 "any activation experiment."
             ),
         },
@@ -179,7 +183,7 @@ def audit(predictions_path: Path, injury_path: Path, output_dir: Path) -> dict[s
             "probabilities_modified": False,
             "causal_claim_made": False,
             "statistical_significance_required_for_directional_pilot": False,
-            "small_sample_activation_blocked": eligible_rows < minimum_activation_rows,
+            "small_sample_activation_blocked": eligible_rows < MIN_ACTIVATION_ROWS,
             "positive_injury_difference_means_more_home_burden": True,
             "expected_residual_direction": "negative",
         },

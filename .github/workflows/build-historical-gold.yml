@@ -1,0 +1,105 @@
+name: Build historical Gold database
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_download_mb:
+        description: "Maximum download MB per Silver source"
+        required: true
+        default: "600"
+  pull_request:
+    paths:
+      - "scripts/historical_gold_schema.py"
+      - "scripts/build_historical_gold.py"
+      - ".github/workflows/build-historical-gold.yml"
+      - "docs/historical-gold-layer.md"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Gold modules
+        run: |
+          python -m py_compile \
+            scripts/historical_gold_schema.py \
+            scripts/build_historical_gold.py
+      - name: Run synthetic point-in-time self-test
+        run: |
+          rm -rf /tmp/nbavl-gold-self-test
+          python scripts/build_historical_gold.py \
+            --self-test \
+            --output-dir /tmp/nbavl-gold-self-test
+          python -m json.tool /tmp/nbavl-gold-self-test/self-test.json >/dev/null
+          python -m json.tool /tmp/nbavl-gold-self-test/gold/gold-build-report.json >/dev/null
+
+  live-build:
+    if: github.event_name == 'workflow_dispatch'
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      MAX_DOWNLOAD_MB: ${{ inputs.max_download_mb }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build audited Silver database in temporary storage
+        run: |
+          rm -rf /tmp/nbavl-historical-silver
+          python scripts/build_historical_silver.py \
+            --max-download-mb "$MAX_DOWNLOAD_MB" \
+            --output-dir /tmp/nbavl-historical-silver
+      - name: Build point-in-time Gold database
+        run: |
+          rm -rf /tmp/nbavl-historical-gold
+          python scripts/build_historical_gold.py \
+            --silver-db /tmp/nbavl-historical-silver/historical-silver.sqlite.gz \
+            --output-dir /tmp/nbavl-historical-gold
+      - name: Validate Gold outputs
+        run: |
+          python - <<'PY'
+          import gzip
+          import json
+          import sqlite3
+          import tempfile
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-historical-gold')
+          report = json.loads((root / 'gold-build-report.json').read_text())
+          tables = report['outputs']['tables']
+          assert tables['gold_team_game_features'] >= 2400, tables
+          assert tables['gold_matchup_features'] >= 1200, tables
+          assert report['quality']['point_in_time']['passed'] is True, report['quality']
+          assert report['quality']['duplicate_team_game_rows'] == 0, report['quality']
+          assert report['quality']['duplicate_matchup_rows'] == 0, report['quality']
+          assert report['coverage']['matchups_prior_20_both_sides'] > 0, report['coverage']
+
+          with tempfile.NamedTemporaryFile(suffix='.sqlite') as tmp:
+              with gzip.open(root / 'historical-gold.sqlite.gz', 'rb') as src:
+                  tmp.write(src.read())
+                  tmp.flush()
+              db = sqlite3.connect(tmp.name)
+              names = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+              assert {'gold_metadata', 'gold_team_game_features', 'gold_matchup_features'} <= names
+              db.close()
+          print(json.dumps(report['decision'], ensure_ascii=False, indent=2))
+          PY
+      - name: Upload Gold database and QA artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-database
+          path: |
+            /tmp/nbavl-historical-gold/historical-gold.sqlite.gz
+            /tmp/nbavl-historical-gold/gold-build-report.json
+            /tmp/nbavl-historical-gold/gold-sample.json
+          retention-days: 14
+          if-no-files-found: error

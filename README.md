@@ -1,10 +1,27 @@
-# NBA Value Lab V4.6
+# NBA Value Lab
 
 NBA 賽前獨贏的勝率、價格價值、資料 Gate 與模型驗證研究平台。
 
+> **目前研究定位：Research Candidate／Pre-Market-Backtest**  
+> 最新研究管線、已完成負結果、阻塞項目與下一步，請以 [`PROJECT_STATUS.md`](./PROJECT_STATUS.md) 為正式基準。  
+> 下方 V4.6／V3.1 × G1 FINAL 內容是保留中的 Legacy UI／Model Registry 說明，不代表目前研究成熟度。
+
 線上網站：<https://qoo109.github.io/nba-value-lab/>
 
-## V4.6：V3.1 × G1 FINAL
+## Research Pipeline 摘要
+
+目前已完成五季 Historical Gold、Logistic + Elo Walk-forward v2、Calibration Gate、Closing Market Benchmark、Market Residual Analysis、Rest／Travel holdout、官方傷病報告 importer、Player Identity、Expected Minutes research proxy、Team Injury Burden、Multi-report Injury Panel 與 Injury Residual Audit。
+
+目前最重要的限制：
+
+- 模型能小幅擊敗 Elo，但在 1,894 場 Closing benchmark 中明顯輸給 Closing Market。
+- Rest／Travel／Schedule Context v1 已完成，但未通過 promotion gate。
+- Multi-report Injury Panel 已可研究，但 ingestion coverage 不等於 feature-ready matchup。
+- Odds schema／source registry 已完成；真正缺少的是有 observation timestamp 的真實 opening／intraday／closing odds 資料。
+- Executable Market Backtest、CLV、EV、ROI、Drawdown 與正式投注決策層仍未解鎖。
+- 正式投注額固定為 0。
+
+## Legacy UI — V4.6：V3.1 × G1 FINAL
 
 目前啟用：
 
@@ -97,6 +114,7 @@ models/
 
 ## 主要檔案
 
+- `PROJECT_STATUS.md`：目前研究管線的正式進度、負結果、阻塞項目與 Roadmap。
 - `index.html`：網站結構。
 - `styles.css`／`readability.css`：響應式介面與深淺色模式。
 - `js/v4-data.js`：示範 slate 與基礎 Registry 載入器。
@@ -115,4 +133,6 @@ models/
 
 ## 研究聲明
 
-目前網站內勝率與候選仍包含示範資料。V3.1 與 G1 尚未完成完整 walk-forward、機率校準、CLV、final holdout 與鎖版前瞻測試，正式投注額固定為 0，不構成投注或獲利保證。
+Legacy UI 內的勝率與候選仍可能包含示範資料。正式研究管線已完成 Walk-forward、Calibration Gate、Closing Market Benchmark 與多個 holdout／殘差實驗，但尚未完成 real timestamped odds backfill、executable market backtest、CLV、EV、ROI、Drawdown 與正式鎖版前瞻測試。
+
+目前沒有證據支持模型能改善 Closing Market，也沒有穩定投注優勢或獲利證據；正式投注額固定為 0，不構成投注或獲利保證。

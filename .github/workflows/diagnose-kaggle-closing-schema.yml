@@ -1,96 +1,83 @@
-name: Diagnose Kaggle closing archive schema
+name: Verify Christopher Treasure closing adapter
 
 on:
   pull_request:
     paths:
       - ".github/workflows/diagnose-kaggle-closing-schema.yml"
+      - "scripts/run_christopher_treasure_closing_benchmark.py"
+      - ".github/workflows/build-kaggle-closing-benchmark.yml"
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
-  diagnose:
+  live-verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install diagnostic dependencies
-        run: python -m pip install --disable-pip-version-check pandas openpyxl xlrd pyarrow kagglehub
-      - name: Download dataset and record schema only
-        env:
-          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      - name: Install benchmark dependencies
+        run: python -m pip install --disable-pip-version-check pandas openpyxl xlrd kagglehub
+      - name: Download walk-forward predictions
         run: |
-          rm -rf /tmp/nbavl-kaggle-schema
-          mkdir -p /tmp/nbavl-kaggle-schema
+          rm -rf /tmp/nbavl-walk-forward-source
+          mkdir -p /tmp/nbavl-walk-forward-source
+          gh run download "29551715399" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name model-walk-forward-v2 \
+            --dir /tmp/nbavl-walk-forward-source
+          test -f /tmp/nbavl-walk-forward-source/walk-forward-predictions.csv
+      - name: Run live Christopher Treasure benchmark
+        run: |
+          rm -rf /tmp/nbavl-christopher-live
+          python scripts/run_christopher_treasure_closing_benchmark.py \
+            --dataset-handle christophertreasure/nba-odds-data \
+            --predictions /tmp/nbavl-walk-forward-source/walk-forward-predictions.csv \
+            --source-id kaggle_christophertreasure_nba_odds \
+            --output-dir /tmp/nbavl-christopher-live
+      - name: Validate live report
+        run: |
           python - <<'PY'
           import json
-          import zipfile
           from pathlib import Path
-
-          import kagglehub
-          import pandas as pd
-
-          out = Path('/tmp/nbavl-kaggle-schema')
-          root = Path(kagglehub.dataset_download(
-              'christophertreasure/nba-odds-data',
-              force_download=True,
-              output_dir=str(out / 'download'),
-          ))
-
-          records = []
-          for path in sorted(p for p in root.rglob('*') if p.is_file()):
-              item = {
-                  'path': str(path.relative_to(root)),
-                  'suffix': path.suffix.lower(),
-                  'size_bytes': path.stat().st_size,
-              }
-              try:
-                  suffix = path.suffix.lower()
-                  if suffix == '.csv':
-                      frame = pd.read_csv(path, nrows=5, sep=None, engine='python')
-                      item['columns'] = [str(c) for c in frame.columns]
-                      item['dtypes'] = {str(c): str(t) for c, t in frame.dtypes.items()}
-                  elif suffix in {'.xlsx', '.xls'}:
-                      book = pd.ExcelFile(path)
-                      item['sheets'] = {}
-                      for sheet in book.sheet_names[:10]:
-                          frame = pd.read_excel(path, sheet_name=sheet, nrows=5)
-                          item['sheets'][str(sheet)] = [str(c) for c in frame.columns]
-                  elif suffix == '.parquet':
-                      frame = pd.read_parquet(path)
-                      item['columns'] = [str(c) for c in frame.columns]
-                      item['row_count'] = int(len(frame))
-                  elif suffix == '.zip':
-                      with zipfile.ZipFile(path) as archive:
-                          item['archive_members'] = archive.namelist()[:200]
-              except Exception as exc:
-                  item['inspection_error'] = f'{type(exc).__name__}: {exc}'
-              records.append(item)
-
-          report = {
-              'dataset_handle': 'christophertreasure/nba-odds-data',
-              'resolved_root': root.name,
-              'file_count': len(records),
-              'files': records,
-              'raw_data_uploaded': False,
-              'sample_rows_uploaded': False,
-          }
-          (out / 'kaggle-schema-diagnostic.json').write_text(
-              json.dumps(report, indent=2) + '\n', encoding='utf-8'
-          )
-          print(json.dumps(report, indent=2))
+          root = Path('/tmp/nbavl-christopher-live')
+          status = json.loads((root / 'kaggle-run-status.json').read_text())
+          import_report = json.loads((root / 'kaggle-selected-import-report.json').read_text())
+          benchmark = json.loads((root / 'benchmark/closing-benchmark-report.json').read_text())
+          assert status['benchmark_complete'] is True, status
+          assert status['temporary_raw_and_normalized_files_deleted'] is True, status
+          assert import_report['source']['detected_schema'] == 'team_centric_mirrored_rows', import_report
+          assert import_report['coverage']['normalized_games'] >= 500, import_report['coverage']
+          assert benchmark['coverage']['matched_games'] > 0, benchmark['coverage']
+          assert benchmark['guardrails']['roi_computed'] is False
+          assert benchmark['guardrails']['clv_computed'] is False
+          assert benchmark['decision']['ready_for_betting_edge_claim'] is False
+          assert not (root / 'selected-import/closing-moneyline-normalized.csv').exists()
+          print(json.dumps({
+            'normalized_games': import_report['coverage']['normalized_games'],
+            'normalized_seasons': import_report['coverage']['season_count'],
+            'matched_games': benchmark['coverage']['matched_games'],
+            'matched_seasons': benchmark['coverage']['matched_seasons'],
+            'model_log_loss': benchmark['aggregate']['model']['log_loss'],
+            'market_log_loss': benchmark['aggregate']['closing_market']['log_loss'],
+          }, indent=2))
           PY
-      - name: Remove downloaded raw data
-        if: always()
-        run: rm -rf /tmp/nbavl-kaggle-schema/download
-      - name: Upload schema report only
+      - name: Upload reports only
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: kaggle-closing-schema-diagnostic
-          path: /tmp/nbavl-kaggle-schema/kaggle-schema-diagnostic.json
+          name: christopher-treasure-live-verification
+          path: |
+            /tmp/nbavl-christopher-live/kaggle-run-status.json
+            /tmp/nbavl-christopher-live/kaggle-candidate-manifest.json
+            /tmp/nbavl-christopher-live/kaggle-selected-import-report.json
+            /tmp/nbavl-christopher-live/benchmark/closing-benchmark-report.json
           retention-days: 3
-          if-no-files-found: error
+          if-no-files-found: warn

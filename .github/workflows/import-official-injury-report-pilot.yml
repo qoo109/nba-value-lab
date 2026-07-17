@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install parser dependencies
-        run: python -m pip install --disable-pip-version-check pandas httpx nba-injury-report-pdf-to-df==0.1.7
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
       - name: Compile importer
         run: |
           python -m py_compile scripts/validate_injury_lineup_snapshots.py
@@ -53,7 +53,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install parser dependencies
-        run: python -m pip install --disable-pip-version-check pandas httpx nba-injury-report-pdf-to-df==0.1.7
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
       - name: Download, parse and validate one official report
         run: |
           rm -rf /tmp/nbavl-official-injury-pilot
@@ -74,6 +74,7 @@ jobs:
           assert report['quality']['normalized_player_rows_retained'] is False, report
           assert report['guardrails']['actual_retrieval_time_stored_separately'] is True, report
           assert report['guardrails']['third_party_injury_client_runtime_dependency'] is False, report
+          assert report['guardrails']['third_party_pdf_parser_runtime_dependency'] is False, report
           assert validation['quality']['point_in_time_rule_passed'] is True, validation
           assert not (root / 'validation/injury-lineup-snapshots-normalized.csv').exists()
           print(json.dumps({

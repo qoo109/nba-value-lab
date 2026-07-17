@@ -53,8 +53,19 @@ jobs:
               LIMIT 3
           ''').fetchall()
           db.close()
+          headers = {
+              'User-Agent': (
+                  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                  'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36'
+              ),
+              'Accept': 'application/json, text/plain, */*',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Origin': 'https://www.nba.com',
+              'Referer': 'https://www.nba.com/',
+              'Connection': 'keep-alive',
+          }
           results = []
-          with httpx.Client(timeout=15, follow_redirects=True) as client:
+          with httpx.Client(timeout=15, follow_redirects=True, headers=headers) as client:
               for game_id, game_date, away, home in rows:
                   url = f'https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json'
                   item = {'game_id': game_id, 'game_date': game_date, 'gold_matchup': f'{away}@{home}'}
@@ -62,6 +73,7 @@ jobs:
                       response = client.get(url)
                       item['status'] = response.status_code
                       item['bytes'] = len(response.content)
+                      item['content_type'] = response.headers.get('content-type', '')
                       response.raise_for_status()
                       game = response.json().get('game', {})
                       item['returned_game_id'] = str(game.get('gameId', '')).zfill(10)

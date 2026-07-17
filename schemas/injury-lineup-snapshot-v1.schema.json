@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/qoo109/nba-value-lab/schemas/injury-lineup-snapshot-v1.schema.json",
+  "title": "NBA Value Lab point-in-time injury and lineup snapshot record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_record_id",
+    "record_type",
+    "game_id",
+    "commence_time",
+    "team_abbr",
+    "opponent_abbr",
+    "is_home",
+    "player_name",
+    "availability_status",
+    "lineup_role",
+    "observed_at",
+    "source_report_time",
+    "source_provider",
+    "source_url",
+    "source_file_sha256"
+  ],
+  "properties": {
+    "snapshot_record_id": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "record_type": {"enum": ["INJURY_STATUS", "LINEUP_STATUS"]},
+    "game_id": {"type": "string", "minLength": 1},
+    "commence_time": {"type": "string", "format": "date-time"},
+    "team_abbr": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "opponent_abbr": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "is_home": {"type": "integer", "minimum": 0, "maximum": 1},
+    "player_id": {"type": "string"},
+    "player_name": {"type": "string", "minLength": 1},
+    "availability_status": {
+      "enum": ["AVAILABLE", "PROBABLE", "QUESTIONABLE", "DOUBTFUL", "OUT", "INACTIVE", "SUSPENDED", "UNKNOWN"]
+    },
+    "lineup_role": {
+      "enum": ["CONFIRMED_STARTER", "PROJECTED_STARTER", "ROTATION", "BENCH", "INACTIVE", "UNKNOWN"]
+    },
+    "reason_category": {
+      "enum": ["INJURY", "ILLNESS", "REST", "PERSONAL", "SUSPENSION", "G_LEAGUE", "OTHER", "UNSPECIFIED"]
+    },
+    "reason_text": {"type": "string"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "source_report_time": {"type": "string", "format": "date-time"},
+    "source_provider": {"type": "string", "minLength": 1},
+    "source_url": {"type": "string", "format": "uri", "pattern": "^https://"},
+    "source_file_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_status_raw": {"type": "string"},
+    "source_lineup_role_raw": {"type": "string"},
+    "prior_expected_minutes": {"type": ["number", "null"], "minimum": 0, "maximum": 48},
+    "prior_impact_estimate": {"type": ["number", "null"], "minimum": -20, "maximum": 20},
+    "player_value_asof": {"type": "string"},
+    "player_value_version": {"type": "string"}
+  }
+}

@@ -1,0 +1,124 @@
+name: Validate multi-report injury panel v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/build_multi_report_injury_panel.py"
+      - "scripts/import_official_nba_injury_report.py"
+      - "scripts/validate_injury_lineup_snapshots.py"
+      - "data/multi-report-injury-pilot-times.json"
+      - ".github/workflows/validate-multi-report-injury-panel-v1.yml"
+      - "docs/multi-report-injury-panel-v1.md"
+  workflow_dispatch:
+    inputs:
+      report_times_file:
+        description: "Repository JSON file containing official report timestamps"
+        required: true
+        default: "data/multi-report-injury-pilot-times.json"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+      - name: Compile and test panel builder
+        run: |
+          python -m py_compile scripts/build_multi_report_injury_panel.py
+          rm -rf /tmp/nbavl-multi-injury-self-test
+          PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
+            --self-test \
+            --output-dir /tmp/nbavl-multi-injury-self-test
+
+  live-pilot:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+      - name: Build official multi-report injury panel
+        run: |
+          rm -rf /tmp/nbavl-multi-injury-panel
+          mkdir -p /tmp/nbavl-multi-injury-panel
+          set +e
+          PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
+            --report-times "${{ github.event.inputs.report_times_file || 'data/multi-report-injury-pilot-times.json' }}" \
+            --output-dir /tmp/nbavl-multi-injury-panel \
+            > /tmp/nbavl-multi-injury-panel/execution.log 2>&1
+          CODE=$?
+          echo "$CODE" > /tmp/nbavl-multi-injury-panel/exit-code.txt
+          cat /tmp/nbavl-multi-injury-panel/execution.log
+          exit 0
+      - name: Upload ingestion diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: multi-report-injury-panel-diagnostics
+          path: |
+            /tmp/nbavl-multi-injury-panel/execution.log
+            /tmp/nbavl-multi-injury-panel/exit-code.txt
+            /tmp/nbavl-multi-injury-panel/multi-report-injury-panel-report.json
+            /tmp/nbavl-multi-injury-panel/multi-report-source-index.csv
+            /tmp/nbavl-multi-injury-panel/reports/**/official-injury-report-import-report.json
+            /tmp/nbavl-multi-injury-panel/reports/**/validation/injury-lineup-validation-report.json
+          retention-days: 3
+          if-no-files-found: warn
+      - name: Require panel readiness
+        run: |
+          test "$(cat /tmp/nbavl-multi-injury-panel/exit-code.txt)" = "0"
+          test -s /tmp/nbavl-multi-injury-panel/multi-report-injury-panel-report.json
+          test -s /tmp/nbavl-multi-injury-panel/multi-report-source-index.csv
+          test -s /tmp/nbavl-multi-injury-panel/multi-report-injury-panel-normalized.csv
+      - name: Validate panel QA and remove player rows
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-multi-injury-panel')
+          report = json.loads((root / 'multi-report-injury-panel-report.json').read_text())
+          assert report['decision']['ready_for_multi_report_identity_value_join'] is True, report
+          assert report['decision']['ready_for_model_training'] is False, report
+          assert report['coverage']['successful_reports'] >= 4, report
+          assert report['coverage']['unique_report_dates'] >= 3, report
+          assert report['coverage']['normalized_player_rows'] >= 300, report
+          assert report['coverage']['failure_rate'] <= 0.50, report
+          assert report['quality']['duplicate_snapshot_rows'] == 0, report
+          assert report['quality']['duplicate_source_urls'] == 0, report
+          assert report['quality']['retained_source_index_contains_player_names'] is False, report
+          assert report['quality']['retained_source_index_contains_injury_reasons'] is False, report
+          index_rows = list(csv.DictReader((root / 'multi-report-source-index.csv').open()))
+          assert len(index_rows) == report['coverage']['successful_reports'], report
+          normalized = root / 'multi-report-injury-panel-normalized.csv'
+          normalized.unlink()
+          for path in root.glob('reports/**/injury-lineup-snapshots-normalized.csv'):
+              path.unlink()
+          assert not normalized.exists()
+          assert not list(root.glob('reports/**/injury-lineup-snapshots-normalized.csv'))
+          print(json.dumps(report, indent=2))
+          PY
+      - name: Upload aggregate source panel
+        uses: actions/upload-artifact@v4
+        with:
+          name: multi-report-injury-panel-v1
+          path: |
+            /tmp/nbavl-multi-injury-panel/multi-report-injury-panel-report.json
+            /tmp/nbavl-multi-injury-panel/multi-report-source-index.csv
+            /tmp/nbavl-multi-injury-panel/reports/**/official-injury-report-import-report.json
+            /tmp/nbavl-multi-injury-panel/reports/**/validation/injury-lineup-validation-report.json
+          retention-days: 14
+          if-no-files-found: error

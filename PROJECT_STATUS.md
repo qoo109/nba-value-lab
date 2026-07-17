@@ -26,16 +26,18 @@
 | Rest／Travel／Schedule Context v1 | Negative Result | 2023–24 untouched holdout 未通過，不加入正式模型。 |
 | Official NBA Injury Importer | Completed | 官方 PDF、publication time、SHA-256、跨頁解析與時間 QA 已建立。 |
 | Injury Snapshot → Gold Game ID | Completed | 日期＋客隊＋主隊唯一對齊；不使用 fuzzy team matching。 |
-| Player Identity Layer | Completed | Wave 1：2,634/2,657 high-confidence，99.1344%；0 ambiguous、0 fuzzy。 |
-| Expected Minutes | Research Proxy / Blocked Audit | Wave 1 prior-only coverage 92.7738%；Accuracy Audit 尚未解鎖。 |
-| Player Impact Proxy | Research Proxy | Wave 1 coverage 92.7738%；透明 box-score proxy，不是 RAPM、EPM 或官方 metric。 |
+| Player Identity Layer | Completed | Wave 1 99.1344%；Wave 2 98.9972%；0 ambiguous、0 fuzzy。 |
+| Expected Minutes | Accuracy Audit Unlocked | Wave 1 coverage 92.7738%；Wave 2 coverage 91.4962%；176 場已解鎖 Accuracy Audit，但尚未驗證準確度。 |
+| Player Impact Proxy | Research Proxy | prior-only 透明 box-score proxy；不是 RAPM、EPM 或官方 metric。 |
 | Team Injury Burden v1 | Research Ready | point-in-time long／matchup burden 已建立；未啟用模型。 |
 | Predeclared Snapshot Selection | Completed | Primary 固定為 latest feature-ready snapshot at or before T-60m。 |
-| Multi-report Injury Feature Pilot | Research Ready | Pilot：63 long snapshots、41 場獨立比賽、31 場 selected。 |
-| Injury Team Submission Status v1 | Research Ready | 缺報、NYS、unknown 與 synthetic side 不會補成健康。 |
-| Injury Backfill Wave 1 Acquisition | Completed | 36 固定時間；34 player、33 team、31 overlap；12/12 日期。 |
-| Injury Backfill Wave 1 Features | Research Ready / 91 of 100 | 結構 QA 全通過；frozen T-60 選出 91 場，未達 Accuracy Audit 門檻。 |
-| Injury Feature Residual Audit v1 | Research Ready | 7 場方向符合預期，但樣本不足。 |
+| Injury Team Submission Status v1 | Research Ready | 缺報、NYS、unknown、synthetic side 不會補成健康。 |
+| Wave 1 Acquisition | Completed | 36 固定時間；34 parsed player、33 team、31 overlap；12/12 日期。 |
+| Wave 1 Features | Research Ready | frozen T-60 選出 91 場獨立比賽。 |
+| Wave 2 Acquisition | Completed | 33 parsed player、31 player-ready、31 team、31 ready overlap；11 日期。 |
+| Wave 2 Features | Research Ready | frozen T-60 選出 85 場獨立比賽。 |
+| Combined Wave 1＋2 Selected Panel | Research Ready / 176 games | 0 跨 Wave 重複；176 場獨立比賽；Expected Minutes Accuracy Audit 已解鎖。 |
+| Injury Feature Walk-forward Holdout | Blocked | 必須先完成並通過 Expected Minutes Accuracy Audit。 |
 | Odds schema／source registry／import boundary | Completed | bookmaker、snapshot、去水、closing importer 與安全閘門已完成。 |
 | Real Timestamped Odds Data | Blocked | 缺 opening／intraday／closing observation timestamp 資料本體。 |
 | Executable Market Backtest | Blocked | Closing label 不能當可執行進場價；CLV／EV／ROI／Drawdown 未解鎖。 |
@@ -80,208 +82,170 @@ Closing Market：100%
 654 player snapshot rows
 63 matchup snapshots
 41 independent games
-52 complete matchup snapshots
-46 feature-ready matchup snapshots
 31 selected T-60 independent games
 ```
 
-### Team submission pilot
+### Wave 1
+
+Acquisition：
 
 ```text
-7 / 7 official reports
-204 team submission rows
-72 independent games represented
-115 SUBMITTED_WITH_PLAYER_ROWS
-87 NOT_YET_SUBMITTED
-2 UNKNOWN_NO_PLAYER_ROWS synthetic sides
-0 conflicts
-31 selected T-60 independent games
+36 calendar-fixed candidate reports
+34 parsed player reports
+33 team reports
+31 player/team overlap reports
+12 overlap dates
 ```
 
-Team ledger 提升來源完整度，沒有灌大 trainable sample。`NOT_YET_SUBMITTED`、unknown、synthetic missing side 與缺失資料均未補成健康或零負擔。
-
-### Wave 1 calendar-fixed acquisition
-
-Registry：
+Full features：
 
 ```text
-2023-24 Mondays every 14 days
-12 dates
+filtered player rows: 2,657
+identity matched: 2,634 / 2,657
+identity rate: 99.1344%
+Expected Minutes／Impact rows: 2,465
+coverage: 92.7738%
+strict prior violations: 0
+same-day rows excluded: 463
+future rows excluded: 43,533
+127 player-derived games
+286 long matchup snapshots
+162 reconciled games
+91 frozen T-60 selected games
+```
+
+Wave 1 正式決定：
+
+```text
+ready_for_wave1_selected_panel_research = true
+ready_for_expected_minutes_accuracy_audit = false
+```
+
+### Wave 2
+
+Calendar registry：
+
+```text
+12 complementary Mondays
 08:30 / 13:30 / 17:30 ET
 36 candidate reports
+0 requested-time overlap with Wave 1
 ```
 
 Acquisition：
 
 ```text
-player successes: 34 / 36
-team successes: 33 / 36
-overlap successes: 31 / 36
-overlap dates: 12 / 12
-player normalized rows before deletion: 2,942
-player ingestion games: 131
-team submission rows: 888
-team ingestion games: 162
+33 player reports parsed
+31 player reports single-report-ready
+31 team reports successful
+31 ready overlap reports
+11 ready overlap dates
 ```
 
-固定失敗時間不可用手挑日期替換：
+固定排除、不可替換：
 
 ```text
-Player failures
-- 2024-04-08 08:30 ET
-- 2024-04-08 13:30 ET
-
-Team failures
-- 2024-01-01 17:30 ET
-- 2024-01-15 13:30 ET
-- 2024-01-15 17:30 ET
+2023-12-25 13:30 ET — parsed but ready=false / team pre-tip QA failed
+2023-12-25 17:30 ET — parsed but ready=false / team pre-tip QA failed
+2024-02-19 08:30 ET — 403
+2024-02-19 13:30 ET — 403
+2024-02-19 17:30 ET — 403
 ```
 
-### Wave 1 full feature backfill
-
-只有 player／team 同時成功的 31 個 publication times 進入 feature chain。
-
-Overlap：
+Full features：
 
 ```text
-filtered player rows: 2,657
-filtered team rows: 832
-player-ingestion games: 127
-team-ledger games: 162
-observed-at mismatches: 0
-rows outside overlap: 0
-```
-
-Gold mapping：
-
-```text
-player games matched: 127 / 127
-team games matched: 162 / 162
-unmatched games: 0
-duplicate Gold keys: 0
-```
-
-Identity：
-
-```text
-matched: 2,634 / 2,657
-match rate: 99.1344%
-high-confidence rate: 99.1344%
-unmatched: 23
-ambiguous: 0
-fuzzy matches: 0
-```
-
-Prior-only values：
-
-```text
-Expected Minutes rows: 2,465
-Player Impact rows: 2,465
-coverage: 92.7738%
-players without prior history: 169
+filtered player rows: 2,493
+filtered team rows: 862
+player Gold match: 122 / 122
+team Gold match: 153 / 153
+identity matched: 2,468 / 2,493
+identity rate: 98.9972%
+Expected Minutes／Impact rows: 2,281
+coverage: 91.4962%
 strict prior violations: 0
-same-day rows excluded: 463
-future rows excluded: 43,533
+same-day rows excluded: 371
+future rows excluded: 42,104
+122 player-derived games
+269 long matchup snapshots
+153 reconciled games
+85 frozen T-60 selected games
 ```
 
-Long panel：
+Wave 2 selection：
 
 ```text
-127 player-derived independent games
-286 long matchup snapshots
-236 complete snapshots
-191 feature-ready snapshots
-0 nonpregame observations
-0 duplicate snapshots
+153 independent games represented
+85 selected independent games
+68 without selection
+54 incomplete
+14 feature unavailable
+0 duplicate selected games
 ```
 
-Team reconciliation：
+### Combined Wave 1＋2
+
+Deduplication key：
 
 ```text
-832 team rows
-416 matchup snapshots
-162 independent games represented
-236 complete snapshots
-191 feature-ready snapshots
-305 NOT_YET_SUBMITTED
-522 SUBMITTED_WITH_PLAYER_ROWS
-5 UNKNOWN_NO_PLAYER_ROWS
-0 reconciliation errors
-0 missing ledgers
-0 side errors
+historical_game_id
 ```
 
-Frozen T-60 selection：
+Predeclared duplicate policy：
 
 ```text
-independent games represented: 162
-selected independent games: 91
-games without selection: 71
-selection rate: 56.1728%
-incomplete: 56
-feature unavailable: 15
-duplicate selected games: 0
+matching date／teams／commence／frozen policy required
+retain later eligible observed_at
+identity or policy conflict blocks the game
 ```
 
-Diagnostic policies：
-
-```text
-latest feature-ready pre-tip: 91
-latest feature-ready at or before T-180m: 88
-```
-
-Diagnostics 不得在看過 outcome 後取代 Primary。
-
-## Sample Gates
+Verified combined result：
 
 ```text
 Wave 1 selected: 91
-minimum Expected Minutes Accuracy Audit gate: 100
-shortfall: 9
-initial reliability: 300
-ideal target: 500
+Wave 2 selected: 85
+raw selected rows: 176
+cross-wave duplicate games: 0
+identity conflicts: 0
+policy conflicts: 0
+duplicate output games: 0
+combined independent games: 176
 ```
 
-目前正式判定：
+Formal decision：
 
 ```text
-ready_for_wave1_selected_panel_research = true
-ready_for_expected_minutes_accuracy_audit = false
+ready_for_combined_selected_panel_research = true
+ready_for_expected_minutes_accuracy_audit = true
 ready_for_injury_feature_walk_forward_holdout = false
 ready_for_model_training = false
 ready_for_probability_adjustment = false
 ready_for_betting_edge_claim = false
 ```
 
-100 場只解鎖 **Expected Minutes Accuracy Audit**，不會直接解鎖 Injury Holdout。Expected Minutes Audit 通過後，才可建立 holdout promotion gate。
+176 場只代表樣本量足以開始 Expected Minutes Accuracy Audit。它不代表 Expected Minutes 已準確，也不代表 Injury Feature 有效。
 
-## Injury 主線 Roadmap
-
-已完成：
+## Sample Gates
 
 ```text
-Official Injury Importer
-→ Single-report identity／value／team burden
-→ Multi-report Injury Panel v1
-→ Frozen T-60 Snapshot Selection
-→ Team Submission Status v1
-→ Wave 1 calendar-fixed acquisition
-→ Wave 1 full feature backfill
+combined selected independent games: 176
+Expected Minutes Accuracy Audit gate: 100 — met
+initial reliability target: 300 — not met
+ideal target: 500 — not met
 ```
 
-下一步：
+流程邊界：
 
 ```text
-1. Wave 2 calendar-fixed acquisition（不可手挑補 9 場）
-2. Wave 2 full feature backfill
-3. 合併 Wave 1＋Wave 2，依 game_id 去重
-4. frozen T-60 selected panel
-5. 達 100 場才執行 Expected Minutes Accuracy Audit
-6. Accuracy Audit 通過後才設計 Injury Walk-forward Holdout
-7. Holdout 通過後才評估 Calibration／Residual
+100+ selected games
+→ Expected Minutes Accuracy Audit
+→ Audit 通過
+→ 才可設計 Injury Feature Walk-forward Holdout
+→ Holdout 通過
+→ 才可評估 Calibration／Residual promotion
 ```
 
-不得降低 100 場門檻、把 repeated snapshots 當新比賽、把 diagnostic policy 升為 Primary，或挑選最有利日期補齊 9 場。
+不得從 176 場直接跳到模型啟用或下注。
 
 ## Frozen Snapshot Selection
 
@@ -300,6 +264,49 @@ latest feature-ready snapshot at or before T-60m
 - no fallback
 - Not Yet Submitted／unknown／missing → no selection
 - 多個 publication times 只算 1 場獨立比賽
+
+Diagnostic policies 可比較 coverage，但不得在看 outcome 後取代 Primary。
+
+## Injury 主線 Roadmap
+
+已完成：
+
+```text
+Official Injury Importer
+→ deterministic identity／prior-only values／team burden
+→ Frozen T-60 Snapshot Selection
+→ Team Submission Status
+→ Wave 1 acquisition + full features
+→ Wave 2 acquisition + full features
+→ Wave 1＋2 deduplicated selected panel（176 games）
+```
+
+下一步：
+
+```text
+1. Predeclare Expected Minutes Accuracy Audit v1 gates
+2. Rebuild player-level predictions for the selected 176 games
+3. Join actual target-game minutes from Gold-validated boxscores
+4. Evaluate overall and subgroup MAE／RMSE／median AE
+5. Evaluate starter／bench／rookie／return-from-injury／status groups
+6. Evaluate missingness, no-appearance and team-level error
+7. Only if Audit passes, design Injury Walk-forward Holdout
+```
+
+## Expected Minutes Accuracy Audit — 必要邊界
+
+尚未執行。至少必須：
+
+- 僅使用 frozen selected 176 個獨立 game IDs；
+- 每個 player prediction 必須在 target game 前產生；
+- target-game actual minutes 只能作 label，不得回流到 prediction；
+- starter、bench、rookie／no-history、復出球員分組；
+- availability status 分組；
+- actual DNP／inactive／未出場必須明確分類，不可一律當作 0 分鐘 prediction success；
+- 報告 MAE、RMSE、median absolute error、bias 與 coverage；
+- team-level minutes/burden aggregation error；
+- 缺失值不得補 0；
+- Audit 通過也不直接啟用模型，只解鎖 holdout 設計。
 
 ## Market 主線 Roadmap
 
@@ -324,24 +331,6 @@ Odds schema／source registry／import boundary
 
 真正缺的是合法、可稽核且帶 observation timestamp 的 odds 資料本體，不是再建立 registry 或 schema。
 
-## 兩條主線匯合
-
-```text
-Point-in-time Model
-＋ Selected Point-in-time Injury
-＋ Executable Point-in-time Odds
-→ True Market Backtest
-→ Holdout EV／CLV／ROI
-```
-
-## 後續候選，不是目前主線
-
-- Lineup Continuity
-- Usage Redistribution
-- Rotation Stability
-- Referee Tendency：僅限授權清楚、歷史完整、可 point-in-time 驗證的來源
-- 更精細的球員級旅行與負荷資料
-
 ## 永久研究邊界
 
 - 不使用同日、賽後或未來資料建立賽前特徵。
@@ -350,18 +339,11 @@ Point-in-time Model
 - 只有明確 `SUBMITTED_NO_INJURIES` 才能建立 explicit zero burden。
 - 不使用 fuzzy identity 或 nearest-name guessing。
 - 多個 snapshots 不可冒充多場獨立比賽。
+- parsed 不等於 single-report-ready；`ready=false` 不得進 feature pipeline。
 - 固定 acquisition 失敗時間不可用手挑日期替換。
 - 未完成 timestamped odds join 前，不宣稱 CLV、EV、ROI 或 executable edge。
 - CI 綠燈只代表流程完成；必須讀 Artifact QA。
 - 模型目前輸給 Closing Market，正式投注額維持 0。
-
-## Housekeeping
-
-- [x] `PROJECT_STATUS.md` 作為正式基準
-- [x] README 分離 Legacy UI 與 Research Pipeline
-- [x] Completed／Negative Result／Research Ready／Blocked 分區
-- [x] 重要 PR 同步正式 QA 數字
-- [ ] 視需要關閉被後續主線取代的早期草稿 PR
 
 ## 重要 PR
 
@@ -375,5 +357,7 @@ Point-in-time Model
 - PR #39 — Research status／README correction
 - PR #40 — Multi-report Injury Feature Backfill v1
 - PR #41 — Injury Team Submission Status v1
-- PR #42 — Injury Backfill Wave 1 Acquisition Audit
-- PR #43 — Injury Backfill Wave 1 Full Features
+- PR #42 — Wave 1 Acquisition Audit
+- PR #43 — Wave 1 Full Features
+- PR #44 — Wave 2 Acquisition + Ready Overlap Audit
+- PR #45 — Wave 2 Full Features + Combined 176-game Panel

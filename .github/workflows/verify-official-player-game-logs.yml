@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "scripts/fetch_official_player_game_logs.py"
+      - "scripts/prepare_gold_livedata_schedule.py"
       - ".github/workflows/verify-official-player-game-logs.yml"
       - "docs/player-value-minutes-v1.md"
   workflow_dispatch:
@@ -32,13 +33,17 @@ jobs:
           python-version: "3.12"
       - name: Install source dependencies
         run: python -m pip install --disable-pip-version-check httpx
-      - name: Compile and test importer
+      - name: Compile and test importers
         run: |
           python -m py_compile scripts/fetch_official_player_game_logs.py
+          python -m py_compile scripts/prepare_gold_livedata_schedule.py
           rm -rf /tmp/nbavl-player-game-logs-self-test
           python scripts/fetch_official_player_game_logs.py \
             --self-test \
-            --output-dir /tmp/nbavl-player-game-logs-self-test
+            --output-dir /tmp/nbavl-player-game-logs-self-test/source
+          python scripts/prepare_gold_livedata_schedule.py \
+            --self-test \
+            --output-dir /tmp/nbavl-player-game-logs-self-test/adapter
 
   live-source-pilot:
     needs: self-test
@@ -64,6 +69,14 @@ jobs:
           GOLD_FILE="$(find /tmp/nbavl-player-game-logs-source -name 'historical-gold-multiseason.sqlite.gz' -print -quit)"
           test -n "$GOLD_FILE"
           echo "GOLD_FILE=$GOLD_FILE" >> "$GITHUB_ENV"
+      - name: Prepare temporary LiveData game IDs
+        run: |
+          mkdir -p /tmp/nbavl-player-game-logs-adapter
+          python scripts/prepare_gold_livedata_schedule.py \
+            --gold "$GOLD_FILE" \
+            --output-db /tmp/nbavl-player-game-logs-adapter/gold-livedata.sqlite \
+            --mapping-csv /tmp/nbavl-player-game-logs-adapter/game-id-map.csv
+          echo "GOLD_LIVEDATA_FILE=/tmp/nbavl-player-game-logs-adapter/gold-livedata.sqlite" >> "$GITHUB_ENV"
       - name: Fetch one official season from LiveData
         run: |
           rm -rf /tmp/nbavl-player-game-logs-live
@@ -71,7 +84,7 @@ jobs:
           set +e
           python scripts/fetch_official_player_game_logs.py \
             --season "${{ github.event.inputs.season || '2023-24' }}" \
-            --gold "$GOLD_FILE" \
+            --gold "$GOLD_LIVEDATA_FILE" \
             --concurrency 8 \
             --retries 3 \
             --timeout-seconds 25 \
@@ -90,10 +103,13 @@ jobs:
           report_path = root / 'official-player-game-logs-report.json'
           assert report_path.exists(), (root / 'execution.log').read_text()
           report = json.loads(report_path.read_text())
+          adapter = json.loads(Path('/tmp/nbavl-player-game-logs-adapter/gold-livedata-id-adapter-report.json').read_text())
           source_rows = root / 'official-player-game-logs.csv'
           if source_rows.exists():
               source_rows.unlink()
           assert not source_rows.exists()
+          assert adapter['ready_for_livedata_requests'] is True, adapter
+          assert adapter['source_database_modified'] is False, adapter
           assert report['decision']['ready_for_point_in_time_feature_build'] is True, report
           assert report['coverage']['schedule_games'] >= 1200, report
           assert report['coverage']['successful_games'] >= 1200, report
@@ -103,7 +119,7 @@ jobs:
           assert report['quality']['duplicate_game_player_keys'] == 0, report
           assert report['quality']['invalid_minutes_rows'] == 0, report
           assert report['quality']['games_with_fewer_than_10_played_players'] == 0, report
-          print(json.dumps(report, indent=2))
+          print(json.dumps({'adapter': adapter, 'source': report}, indent=2))
           PY
       - name: Upload aggregate source diagnostics
         if: always()
@@ -111,6 +127,7 @@ jobs:
         with:
           name: official-player-game-logs-source-pilot
           path: |
+            /tmp/nbavl-player-game-logs-adapter/gold-livedata-id-adapter-report.json
             /tmp/nbavl-player-game-logs-live/execution.log
             /tmp/nbavl-player-game-logs-live/exit-code.txt
             /tmp/nbavl-player-game-logs-live/official-player-game-logs-report.json

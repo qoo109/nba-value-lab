@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Reconcile team submission states with the long injury feature panel.
 
-Only an explicit `SUBMITTED_NO_INJURIES` state may create a zero-burden healthy team.
-`NOT_YET_SUBMITTED`, unknown, missing, or conflicting states remain incomplete.
+Only an explicit SUBMITTED_NO_INJURIES state may create zero burden. A team submission with
+player rows but no player-feature row is retained as a real snapshot with feature unavailable;
+it is not a reconciliation error and cannot be selected by the feature-ready policy.
 """
 from __future__ import annotations
 
@@ -14,9 +15,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-VERSION = "injury-team-submission-reconciliation-v1"
-SUBMITTED_STATES = {"SUBMITTED_WITH_PLAYER_ROWS", "SUBMITTED_NO_INJURIES"}
-ALL_STATES = SUBMITTED_STATES | {"NOT_YET_SUBMITTED", "UNKNOWN_NO_PLAYER_ROWS"}
+VERSION = "injury-team-submission-reconciliation-v1.1"
+ALL_STATES = {
+    "SUBMITTED_WITH_PLAYER_ROWS",
+    "SUBMITTED_NO_INJURIES",
+    "NOT_YET_SUBMITTED",
+    "UNKNOWN_NO_PLAYER_ROWS",
+}
 BURDEN_FIELDS = (
     "definite_out_minutes",
     "doubtful_minutes",
@@ -27,7 +32,7 @@ BURDEN_FIELDS = (
     "weighted_absence_impact_positive",
     "weighted_absence_impact_absolute",
 )
-STATUS_COUNTS = (
+STATUS_COUNT_FIELDS = (
     "available_player_count",
     "probable_player_count",
     "questionable_player_count",
@@ -55,17 +60,17 @@ def write_csv(path: Path, rows: list[dict[str, Any]], fields: list[str]) -> None
         writer.writerows(rows)
 
 
+def as_int(value: Any) -> int:
+    text = str(value or "").strip()
+    return int(float(text)) if text else 0
+
+
 def parse_timestamp(value: Any) -> datetime:
     text = str(value or "").strip().replace("Z", "+00:00")
     parsed = datetime.fromisoformat(text)
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         raise ValueError(f"timestamp must include timezone: {value!r}")
     return parsed.astimezone(timezone.utc)
-
-
-def as_int(value: Any) -> int:
-    text = str(value or "").strip()
-    return int(float(text)) if text else 0
 
 
 def blank_team_row(fields: list[str]) -> dict[str, Any]:
@@ -87,8 +92,8 @@ def make_submission_only_row(
         "observed_at": observed,
         "commence_time": commence,
         "minutes_before_tip": round(minutes, 3),
-        "team_abbr": ledger["team_abbr"],
-        "opponent_abbr": ledger["opponent_abbr"],
+        "team_abbr": str(ledger["team_abbr"]),
+        "opponent_abbr": str(ledger["opponent_abbr"]),
         "is_home": as_int(ledger["is_home"]),
         "team_snapshot_available": 0,
         "team_feature_available": 0,
@@ -103,23 +108,33 @@ def make_submission_only_row(
         "impact_coverage": 0.0,
         "feature_version": VERSION,
     })
-    for field in STATUS_COUNTS:
+    for field in STATUS_COUNT_FIELDS:
         row[field] = 0
     for field in BURDEN_FIELDS:
         row[field] = ""
     return row
 
 
-def apply_submission_state(row: dict[str, Any], ledger: dict[str, str]) -> tuple[dict[str, Any], list[str], bool]:
+def apply_submission_state(
+    row: dict[str, Any],
+    ledger: dict[str, str],
+) -> tuple[dict[str, Any], list[str], bool, bool]:
     status = str(ledger.get("submission_status", "")).strip()
+    source_player_rows = as_int(ledger.get("player_status_rows"))
+    listed_rows = as_int(row.get("listed_player_rows"))
     errors: list[str] = []
     explicit_zero = False
-    player_rows = as_int(ledger.get("player_status_rows"))
-    listed_rows = as_int(row.get("listed_player_rows"))
-    row["team_submission_status"] = status
-    row["team_submission_player_status_rows"] = player_rows
-    row["team_submission_source_hash"] = str(ledger.get("source_file_sha256", ""))
-    row["team_submission_reconciliation_version"] = VERSION
+    player_panel_missing = False
+
+    row.update({
+        "team_submission_status": status,
+        "team_submission_player_status_rows": source_player_rows,
+        "team_submission_source_hash": str(ledger.get("source_file_sha256", "")),
+        "team_submission_synthetic_missing_side": as_int(ledger.get("synthetic_missing_side")),
+        "explicit_zero_burden_from_submitted_no_injuries": 0,
+        "player_panel_missing_for_submitted_team": 0,
+        "team_submission_reconciliation_version": VERSION,
+    })
 
     if status not in ALL_STATES:
         errors.append(f"unknown submission status {status!r}")
@@ -127,29 +142,33 @@ def apply_submission_state(row: dict[str, Any], ledger: dict[str, str]) -> tuple
         row["team_submission_status"] = status
 
     if status == "SUBMITTED_WITH_PLAYER_ROWS":
-        if player_rows <= 0:
+        if source_player_rows <= 0:
             errors.append("submitted-with-player-rows has zero source player rows")
-        if listed_rows <= 0:
-            errors.append("submitted-with-player-rows has no long-panel player rows")
             row["team_snapshot_available"] = 0
             row["team_feature_available"] = 0
         else:
             row["team_snapshot_available"] = 1
+            if listed_rows <= 0:
+                player_panel_missing = True
+                row["team_feature_available"] = 0
+                row["player_panel_missing_for_submitted_team"] = 1
+                for field in BURDEN_FIELDS:
+                    row[field] = ""
     elif status == "SUBMITTED_NO_INJURIES":
-        if player_rows != 0 or listed_rows != 0:
+        if source_player_rows != 0 or listed_rows != 0:
             errors.append("submitted-no-injuries conflicts with player rows")
             row["team_snapshot_available"] = 0
             row["team_feature_available"] = 0
+            for field in BURDEN_FIELDS:
+                row[field] = ""
         else:
             explicit_zero = True
-            row.update({
-                "team_snapshot_available": 1,
-                "team_feature_available": 1,
-                "expected_minutes_coverage": 1.0,
-                "impact_coverage": 1.0,
-                "explicit_zero_burden_from_submitted_no_injuries": 1,
-            })
-            for field in STATUS_COUNTS:
+            row["team_snapshot_available"] = 1
+            row["team_feature_available"] = 1
+            row["expected_minutes_coverage"] = 1.0
+            row["impact_coverage"] = 1.0
+            row["explicit_zero_burden_from_submitted_no_injuries"] = 1
+            for field in STATUS_COUNT_FIELDS:
                 row[field] = 0
             for field in BURDEN_FIELDS:
                 row[field] = 0.0
@@ -158,12 +177,10 @@ def apply_submission_state(row: dict[str, Any], ledger: dict[str, str]) -> tuple
             errors.append(f"{status} conflicts with existing player rows")
         row["team_snapshot_available"] = 0
         row["team_feature_available"] = 0
-        row["explicit_zero_burden_from_submitted_no_injuries"] = 0
         for field in BURDEN_FIELDS:
             row[field] = ""
 
-    row.setdefault("explicit_zero_burden_from_submitted_no_injuries", int(explicit_zero))
-    return row, errors, explicit_zero
+    return row, errors, explicit_zero, player_panel_missing
 
 
 def rebuild_matchups(
@@ -172,16 +189,16 @@ def rebuild_matchups(
 ) -> tuple[list[dict[str, Any]], int]:
     grouped: dict[tuple[str, str], dict[str, dict[str, Any]]] = defaultdict(dict)
     for row in team_rows:
-        key = (str(row["historical_game_id"]), str(row["observed_at"]))
-        grouped[key][str(row["team_abbr"])] = row
+        grouped[(str(row["historical_game_id"]), str(row["observed_at"]))][str(row["team_abbr"])] = row
 
     outputs: list[dict[str, Any]] = []
     side_errors = 0
     for (game_id, observed_at), sides in sorted(
-        grouped.items(), key=lambda item: (game_index.get(item[0][0], {}).get("game_date", ""), item[0])
+        grouped.items(),
+        key=lambda item: (game_index.get(item[0][0], {}).get("game_date", ""), item[0][0], item[0][1]),
     ):
         game = game_index.get(game_id)
-        if not game:
+        if game is None:
             side_errors += 1
             continue
         home = sides.get(game["home_team_abbr"])
@@ -205,11 +222,12 @@ def rebuild_matchups(
             "matchup_feature_available": feature_ready,
             "home_expected_minutes_coverage": home["expected_minutes_coverage"],
             "away_expected_minutes_coverage": away["expected_minutes_coverage"],
-            "minimum_expected_minutes_coverage": min(float(home["expected_minutes_coverage"]), float(away["expected_minutes_coverage"])),
+            "minimum_expected_minutes_coverage": min(float(home["expected_minutes_coverage"] or 0), float(away["expected_minutes_coverage"] or 0)),
             "home_impact_coverage": home["impact_coverage"],
             "away_impact_coverage": away["impact_coverage"],
-            "minimum_impact_coverage": min(float(home["impact_coverage"]), float(away["impact_coverage"])),
+            "minimum_impact_coverage": min(float(home["impact_coverage"] or 0), float(away["impact_coverage"] or 0)),
             "explicit_healthy_team_count": as_int(home.get("explicit_zero_burden_from_submitted_no_injuries")) + as_int(away.get("explicit_zero_burden_from_submitted_no_injuries")),
+            "submitted_team_missing_player_panel_count": as_int(home.get("player_panel_missing_for_submitted_team")) + as_int(away.get("player_panel_missing_for_submitted_team")),
             "feature_version": VERSION,
         }
         for field in BURDEN_FIELDS:
@@ -233,35 +251,37 @@ def reconcile(
     if not original_team_rows:
         raise ValueError("original team long panel is empty")
     base_fields = list(original_team_rows[0])
-    for field in (
+    extra_fields = (
         "team_submission_status",
         "team_submission_player_status_rows",
         "team_submission_source_hash",
+        "team_submission_synthetic_missing_side",
         "explicit_zero_burden_from_submitted_no_injuries",
+        "player_panel_missing_for_submitted_team",
         "team_submission_reconciliation_version",
-    ):
+    )
+    for field in extra_fields:
         if field not in base_fields:
             base_fields.append(field)
 
     official_map: dict[str, dict[str, str]] = {}
     game_index: dict[str, dict[str, str]] = {}
     duplicate_game_maps = 0
-    for row in game_map_rows:
-        if str(row.get("matched", "")).strip().lower() not in {"1", "true"}:
+    for raw in game_map_rows:
+        if str(raw.get("matched", "")).lower() not in {"1", "true"}:
             continue
-        official = str(row.get("official_game_id", "")).strip()
-        historical = str(row.get("historical_game_id", "")).strip()
         item = {
-            "official_game_id": official,
-            "historical_game_id": historical,
-            "game_date": str(row.get("game_date", "")).strip(),
-            "home_team_abbr": str(row.get("home_team_abbr", "")).strip(),
-            "away_team_abbr": str(row.get("away_team_abbr", "")).strip(),
+            "official_game_id": str(raw.get("official_game_id", "")).strip(),
+            "historical_game_id": str(raw.get("historical_game_id", "")).strip(),
+            "game_date": str(raw.get("game_date", "")).strip(),
+            "home_team_abbr": str(raw.get("home_team_abbr", "")).strip(),
+            "away_team_abbr": str(raw.get("away_team_abbr", "")).strip(),
         }
+        official = item["official_game_id"]
         if official in official_map and official_map[official] != item:
             duplicate_game_maps += 1
         official_map[official] = item
-        game_index[historical] = item
+        game_index[item["historical_game_id"]] = item
 
     team_index: dict[tuple[str, str, str], dict[str, Any]] = {}
     duplicate_original_rows = 0
@@ -277,6 +297,7 @@ def reconcile(
     unmapped_submission_rows = 0
     reconciliation_errors: list[str] = []
     explicit_healthy_teams = 0
+    player_panel_missing_teams = 0
     new_team_rows = 0
     status_counts: Counter[str] = Counter()
 
@@ -298,9 +319,10 @@ def reconcile(
             row = make_submission_only_row(base_fields, game, ledger)
             team_index[key] = row
             new_team_rows += 1
-        row, errors, explicit_zero = apply_submission_state(row, ledger)
+        row, errors, explicit_zero, panel_missing = apply_submission_state(row, ledger)
         reconciliation_errors.extend(f"{key}: {message}" for message in errors)
         explicit_healthy_teams += int(explicit_zero)
+        player_panel_missing_teams += int(panel_missing)
         status_counts[str(row["team_submission_status"])] += 1
 
     missing_ledger_rows = 0
@@ -308,13 +330,17 @@ def reconcile(
         if key in ledger_keys:
             continue
         missing_ledger_rows += 1
-        row["team_submission_status"] = "MISSING_TEAM_LEDGER"
-        row["team_submission_player_status_rows"] = ""
-        row["team_submission_source_hash"] = ""
-        row["explicit_zero_burden_from_submitted_no_injuries"] = 0
-        row["team_submission_reconciliation_version"] = VERSION
-        row["team_snapshot_available"] = 0
-        row["team_feature_available"] = 0
+        row.update({
+            "team_submission_status": "MISSING_TEAM_LEDGER",
+            "team_submission_player_status_rows": "",
+            "team_submission_source_hash": "",
+            "team_submission_synthetic_missing_side": 0,
+            "explicit_zero_burden_from_submitted_no_injuries": 0,
+            "player_panel_missing_for_submitted_team": 0,
+            "team_submission_reconciliation_version": VERSION,
+            "team_snapshot_available": 0,
+            "team_feature_available": 0,
+        })
         for field in BURDEN_FIELDS:
             row[field] = ""
 
@@ -326,24 +352,23 @@ def reconcile(
     non_pregame = 0
     for row in team_rows:
         try:
-            if parse_timestamp(row["observed_at"]) >= parse_timestamp(row["commence_time"]):
-                non_pregame += 1
+            non_pregame += int(parse_timestamp(row["observed_at"]) >= parse_timestamp(row["commence_time"]))
         except ValueError:
             non_pregame += 1
 
-    unique_games = len({str(row["historical_game_id"]) for row in matchup_rows})
+    structural_errors = {
+        "duplicate_game_map_rows": duplicate_game_maps,
+        "duplicate_original_team_rows": duplicate_original_rows,
+        "duplicate_submission_rows": duplicate_submission_rows,
+        "unmapped_submission_rows": unmapped_submission_rows,
+        "original_team_rows_without_ledger": missing_ledger_rows,
+        "matchup_side_errors": side_errors,
+        "non_pregame_rows": non_pregame,
+        "reconciliation_errors": len(reconciliation_errors),
+    }
+    quality_ok = all(value == 0 for value in structural_errors.values())
     complete_rows = sum(as_int(row["matchup_snapshot_complete"]) for row in matchup_rows)
     feature_rows = sum(as_int(row["matchup_feature_available"]) for row in matchup_rows)
-    quality_ok = all(value == 0 for value in (
-        duplicate_game_maps,
-        duplicate_original_rows,
-        duplicate_submission_rows,
-        unmapped_submission_rows,
-        missing_ledger_rows,
-        side_errors,
-        non_pregame,
-        len(reconciliation_errors),
-    ))
     report = {
         "schema_version": VERSION,
         "generated_at": utc_now(),
@@ -353,25 +378,21 @@ def reconcile(
             "reconciled_team_rows": len(team_rows),
             "new_submission_only_team_rows": new_team_rows,
             "reconciled_matchup_snapshot_rows": len(matchup_rows),
-            "independent_games": unique_games,
+            "independent_games": len({str(row["historical_game_id"]) for row in matchup_rows}),
             "complete_matchup_snapshot_rows": complete_rows,
             "feature_ready_matchup_snapshot_rows": feature_rows,
             "explicit_submitted_no_injuries_teams": explicit_healthy_teams,
+            "submitted_teams_missing_player_panel": player_panel_missing_teams,
             "submission_status_counts": dict(sorted(status_counts.items())),
         },
         "quality": {
-            "duplicate_game_map_rows": duplicate_game_maps,
-            "duplicate_original_team_rows": duplicate_original_rows,
-            "duplicate_submission_rows": duplicate_submission_rows,
-            "unmapped_submission_rows": unmapped_submission_rows,
-            "original_team_rows_without_ledger": missing_ledger_rows,
-            "matchup_side_errors": side_errors,
-            "non_pregame_rows": non_pregame,
-            "reconciliation_errors": len(reconciliation_errors),
+            **structural_errors,
             "reconciliation_error_examples": reconciliation_errors[:50],
             "not_yet_submitted_imputed_as_zero": False,
             "unknown_submission_imputed_as_zero": False,
+            "synthetic_missing_side_imputed_as_zero": False,
             "explicit_submitted_no_injuries_imputed_as_zero": True,
+            "submitted_team_without_player_panel_remains_feature_unavailable": True,
             "player_names_or_injury_reasons_in_output": False,
         },
         "decision": {
@@ -405,30 +426,31 @@ def reconcile(
 
 
 def self_test(output_dir: Path) -> None:
-    original = [{
+    base = {
         "historical_game_id":"g1","game_date":"2024-01-01","observed_at":"2024-01-01T20:00:00Z",
         "commence_time":"2024-01-02T00:00:00Z","minutes_before_tip":"240","team_abbr":"AAA",
         "opponent_abbr":"BBB","is_home":"1","team_snapshot_available":"1","team_feature_available":"1",
         "listed_player_rows":"1","player_value_rows":"1","missing_player_identity_rows":"0",
         "known_expected_minutes_rows":"1","missing_expected_minutes_rows":"0","expected_minutes_coverage":"1.0",
         "known_impact_rows":"1","missing_impact_rows":"0","impact_coverage":"1.0","feature_version":"old",
-        **{field:"0" for field in STATUS_COUNTS},
+        **{field:"0" for field in STATUS_COUNT_FIELDS},
         **{field:("30" if field == "definite_out_minutes" else "0") for field in BURDEN_FIELDS},
-    }]
+    }
     submissions = [
-        {"game_id":"official:2024-01-01:BBB@AAA","commence_time":"2024-01-02T00:00:00Z","team_abbr":"AAA","opponent_abbr":"BBB","is_home":"1","submission_status":"SUBMITTED_WITH_PLAYER_ROWS","player_status_rows":"1","observed_at":"2024-01-01T20:00:00Z","source_file_sha256":"a"*64},
-        {"game_id":"official:2024-01-01:BBB@AAA","commence_time":"2024-01-02T00:00:00Z","team_abbr":"BBB","opponent_abbr":"AAA","is_home":"0","submission_status":"SUBMITTED_NO_INJURIES","player_status_rows":"0","observed_at":"2024-01-01T20:00:00Z","source_file_sha256":"a"*64},
-        {"game_id":"official:2024-01-02:DDD@CCC","commence_time":"2024-01-03T00:00:00Z","team_abbr":"CCC","opponent_abbr":"DDD","is_home":"1","submission_status":"NOT_YET_SUBMITTED","player_status_rows":"0","observed_at":"2024-01-02T20:00:00Z","source_file_sha256":"b"*64},
-        {"game_id":"official:2024-01-02:DDD@CCC","commence_time":"2024-01-03T00:00:00Z","team_abbr":"DDD","opponent_abbr":"CCC","is_home":"0","submission_status":"NOT_YET_SUBMITTED","player_status_rows":"0","observed_at":"2024-01-02T20:00:00Z","source_file_sha256":"b"*64},
+        {"game_id":"official:2024-01-01:BBB@AAA","commence_time":"2024-01-02T00:00:00Z","team_abbr":"AAA","opponent_abbr":"BBB","is_home":"1","submission_status":"SUBMITTED_WITH_PLAYER_ROWS","player_status_rows":"1","synthetic_missing_side":"0","observed_at":"2024-01-01T20:00:00Z","source_file_sha256":"a"*64},
+        {"game_id":"official:2024-01-01:BBB@AAA","commence_time":"2024-01-02T00:00:00Z","team_abbr":"BBB","opponent_abbr":"AAA","is_home":"0","submission_status":"SUBMITTED_NO_INJURIES","player_status_rows":"0","synthetic_missing_side":"0","observed_at":"2024-01-01T20:00:00Z","source_file_sha256":"a"*64},
+        {"game_id":"official:2024-01-02:DDD@CCC","commence_time":"2024-01-03T00:00:00Z","team_abbr":"CCC","opponent_abbr":"DDD","is_home":"1","submission_status":"SUBMITTED_WITH_PLAYER_ROWS","player_status_rows":"2","synthetic_missing_side":"0","observed_at":"2024-01-02T20:00:00Z","source_file_sha256":"b"*64},
+        {"game_id":"official:2024-01-02:DDD@CCC","commence_time":"2024-01-03T00:00:00Z","team_abbr":"DDD","opponent_abbr":"CCC","is_home":"0","submission_status":"UNKNOWN_NO_PLAYER_ROWS","player_status_rows":"0","synthetic_missing_side":"1","observed_at":"2024-01-02T20:00:00Z","source_file_sha256":"b"*64},
     ]
     maps = [
         {"official_game_id":"official:2024-01-01:BBB@AAA","historical_game_id":"g1","game_date":"2024-01-01","away_team_abbr":"BBB","home_team_abbr":"AAA","matched":"True"},
         {"official_game_id":"official:2024-01-02:DDD@CCC","historical_game_id":"g2","game_date":"2024-01-02","away_team_abbr":"DDD","home_team_abbr":"CCC","matched":"True"},
     ]
-    report = reconcile(original, submissions, maps, output_dir)
+    report = reconcile([base], submissions, maps, output_dir)
     assert report["decision"]["ready_for_predeclared_snapshot_selection"] is True, report
     assert report["coverage"]["independent_games"] == 2, report
     assert report["coverage"]["explicit_submitted_no_injuries_teams"] == 1, report
+    assert report["coverage"]["submitted_teams_missing_player_panel"] == 1, report
     matchups = read_csv(output_dir / "reconciled-matchup-injury-burden-long.csv")
     g1 = next(row for row in matchups if row["historical_game_id"] == "g1")
     g2 = next(row for row in matchups if row["historical_game_id"] == "g2")

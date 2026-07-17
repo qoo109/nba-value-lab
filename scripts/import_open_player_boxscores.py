@@ -56,16 +56,31 @@ def parse_minutes(value: Any) -> float:
         return 0.0
     if re.fullmatch(r"\d+(?:\.\d+)?", text):
         return float(text)
-    match = re.fullmatch(
+
+    clock = re.fullmatch(r"(\d+):(\d{2})(?::(\d{2}(?:\.\d+)?))?", text)
+    if clock:
+        first = int(clock.group(1))
+        second = int(clock.group(2))
+        third = clock.group(3)
+        if third is None:
+            if second >= 60:
+                raise ValueError(f"invalid MM:SS minutes format: {value!r}")
+            return round(first + second / 60, 6)
+        seconds = float(third)
+        if second >= 60 or seconds >= 60:
+            raise ValueError(f"invalid HH:MM:SS minutes format: {value!r}")
+        return round(first * 60 + second + seconds / 60, 6)
+
+    duration = re.fullmatch(
         r"P(?:\d+D)?T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?"
         r"(?:(\d+(?:\.\d+)?)S)?",
         text,
     )
-    if not match:
+    if not duration:
         raise ValueError(f"unsupported minutes format: {value!r}")
-    hours = float(match.group(1) or 0)
-    minutes = float(match.group(2) or 0)
-    seconds = float(match.group(3) or 0)
+    hours = float(duration.group(1) or 0)
+    minutes = float(duration.group(2) or 0)
+    seconds = float(duration.group(3) or 0)
     return round(hours * 60 + minutes + seconds / 60, 6)
 
 
@@ -194,7 +209,6 @@ def import_archive(season: str, gold_path: Path, output_dir: Path) -> dict[str, 
 
         source_reports = []
         accepted: dict[tuple[str, str], dict[str, Any]] = {}
-        archive_games = set()
         unmatched_archive_games = set()
         archive_rows_for_season = 0
         rows_outside_gold = 0
@@ -221,7 +235,6 @@ def import_archive(season: str, gold_path: Path, output_dir: Path) -> dict[str, 
                     except ValueError:
                         rows_outside_gold += 1
                         continue
-                    archive_games.add(official_id)
                     game = schedule.get(official_id)
                     if game is None:
                         unmatched_archive_games.add(official_id)
@@ -354,6 +367,8 @@ def import_archive(season: str, gold_path: Path, output_dir: Path) -> dict[str, 
 
 def self_test(output_dir: Path) -> None:
     assert parse_minutes("PT30M12S") == 30.2
+    assert parse_minutes("34:12") == 34.2
+    assert parse_minutes("1:02:30") == 62.5
     assert normalize_official_game_id("22300061") == "0022300061"
     assert normalize_date("2023-10-24T00:00:00") == "2023-10-24"
     output_dir.mkdir(parents=True, exist_ok=True)

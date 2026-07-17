@@ -1,0 +1,218 @@
+name: Validate multi-report injury feature backfill v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/build_multi_report_injury_features.py"
+      - "scripts/select_multi_report_injury_snapshots.py"
+      - "data/injury-snapshot-selection-policy-v1.json"
+      - "data/multi-report-injury-pilot-times.json"
+      - ".github/workflows/validate-multi-report-injury-feature-backfill-v1.yml"
+      - "docs/multi-report-injury-feature-backfill-v1.md"
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Workflow run containing historical-gold-multiseason"
+        required: true
+        default: "29551715399"
+      report_times_file:
+        description: "Repository JSON containing official report timestamps"
+        required: true
+        default: "data/multi-report-injury-pilot-times.json"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile feature and selection modules
+        run: |
+          python -m py_compile scripts/build_multi_report_injury_features.py
+          python -m py_compile scripts/select_multi_report_injury_snapshots.py
+      - name: Run deterministic long-panel and selection tests
+        run: |
+          rm -rf /tmp/nbavl-multi-feature-self-test
+          python scripts/build_multi_report_injury_features.py \
+            --self-test \
+            --output-dir /tmp/nbavl-multi-feature-self-test/long
+          python scripts/select_multi_report_injury_snapshots.py \
+            --self-test \
+            --output-dir /tmp/nbavl-multi-feature-self-test/selected
+          python -m json.tool /tmp/nbavl-multi-feature-self-test/long/multi-report-injury-feature-report.json >/dev/null
+          python -m json.tool /tmp/nbavl-multi-feature-self-test/selected/snapshot-selection-report.json >/dev/null
+
+  live-pilot:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id || '29551715399' }}
+      REPORT_TIMES_FILE: ${{ github.event.inputs.report_times_file || 'data/multi-report-injury-pilot-times.json' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+      - name: Download audited five-season Gold
+        run: |
+          rm -rf /tmp/nbavl-multi-feature-live
+          mkdir -p /tmp/nbavl-multi-feature-live/gold
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name historical-gold-multiseason \
+            --dir /tmp/nbavl-multi-feature-live/gold
+          GOLD_FILE="$(find /tmp/nbavl-multi-feature-live/gold -name 'historical-gold-multiseason.sqlite.gz' -print -quit)"
+          test -n "$GOLD_FILE"
+          echo "GOLD_FILE=$GOLD_FILE" >> "$GITHUB_ENV"
+      - name: Build temporary official multi-report player panel
+        run: |
+          PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
+            --report-times "$REPORT_TIMES_FILE" \
+            --output-dir /tmp/nbavl-multi-feature-live/injury
+          test -s /tmp/nbavl-multi-feature-live/injury/multi-report-injury-panel-normalized.csv
+      - name: Match all snapshots to Gold games
+        run: |
+          python scripts/validate_injury_snapshot_schedule_match.py \
+            --snapshot-csv /tmp/nbavl-multi-feature-live/injury/multi-report-injury-panel-normalized.csv \
+            --gold "$GOLD_FILE" \
+            --output-dir /tmp/nbavl-multi-feature-live/schedule-match
+      - name: Import two Gold-validated boxscore seasons
+        run: |
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --season 2022-23 \
+            --gold "$GOLD_FILE" \
+            --output-dir /tmp/nbavl-multi-feature-live/boxscores-2022
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --season 2023-24 \
+            --gold "$GOLD_FILE" \
+            --output-dir /tmp/nbavl-multi-feature-live/boxscores-2023
+      - name: Combine temporary player boxscores
+        run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+          root = Path('/tmp/nbavl-multi-feature-live')
+          sources = [
+              root / 'boxscores-2022/open-player-boxscores.csv',
+              root / 'boxscores-2023/open-player-boxscores.csv',
+          ]
+          rows = {}
+          fields = None
+          for path in sources:
+              with path.open('r', encoding='utf-8-sig', newline='') as handle:
+                  reader = csv.DictReader(handle)
+                  fields = fields or list(reader.fieldnames or [])
+                  for row in reader:
+                      key = (row['SEASON_YEAR'], row['GAME_ID'], row['PLAYER_ID'])
+                      rows[key] = row
+          output = root / 'combined-player-boxscores.csv'
+          with output.open('w', encoding='utf-8', newline='') as handle:
+              writer = csv.DictWriter(handle, fieldnames=fields)
+              writer.writeheader()
+              writer.writerows(rows[key] for key in sorted(rows))
+          print({'combined_rows': len(rows)})
+          PY
+      - name: Match deterministic player identities
+        run: |
+          PYTHONPATH=scripts python scripts/match_injury_players_from_boxscores.py \
+            --snapshot-csv /tmp/nbavl-multi-feature-live/injury/multi-report-injury-panel-normalized.csv \
+            --game-map-csv /tmp/nbavl-multi-feature-live/schedule-match/injury-snapshot-game-id-map.csv \
+            --boxscore-csv /tmp/nbavl-multi-feature-live/combined-player-boxscores.csv \
+            --output-dir /tmp/nbavl-multi-feature-live/player-identity
+      - name: Build prior-only player values for every publication time
+        run: |
+          PYTHONPATH=scripts python scripts/build_point_in_time_player_values.py \
+            --player-logs /tmp/nbavl-multi-feature-live/combined-player-boxscores.csv \
+            --snapshot-csv /tmp/nbavl-multi-feature-live/injury/multi-report-injury-panel-normalized.csv \
+            --player-id-map /tmp/nbavl-multi-feature-live/player-identity/injury-player-id-map.csv \
+            --output-dir /tmp/nbavl-multi-feature-live/player-values
+      - name: Build long multi-report injury features
+        run: |
+          python scripts/build_multi_report_injury_features.py \
+            --snapshot-csv /tmp/nbavl-multi-feature-live/injury/multi-report-injury-panel-normalized.csv \
+            --player-values /tmp/nbavl-multi-feature-live/player-values/point-in-time-player-values.csv \
+            --player-id-map /tmp/nbavl-multi-feature-live/player-identity/injury-player-id-map.csv \
+            --game-map /tmp/nbavl-multi-feature-live/schedule-match/injury-snapshot-game-id-map.csv \
+            --output-dir /tmp/nbavl-multi-feature-live/long-features
+      - name: Apply frozen game-level snapshot policy
+        run: |
+          python scripts/select_multi_report_injury_snapshots.py \
+            --long-matchups /tmp/nbavl-multi-feature-live/long-features/multi-report-matchup-injury-burden-long.csv \
+            --policy data/injury-snapshot-selection-policy-v1.json \
+            --output-dir /tmp/nbavl-multi-feature-live/selected
+      - name: Validate QA, sample counting and safety gates
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-multi-feature-live')
+          source = json.loads((root / 'injury/multi-report-injury-panel-report.json').read_text())
+          schedule = json.loads((root / 'schedule-match/injury-snapshot-schedule-match-report.json').read_text())
+          identity = json.loads((root / 'player-identity/injury-player-boxscore-identity-report.json').read_text())
+          values = json.loads((root / 'player-values/point-in-time-player-value-report.json').read_text())
+          long_report = json.loads((root / 'long-features/multi-report-injury-feature-report.json').read_text())
+          selection = json.loads((root / 'selected/snapshot-selection-report.json').read_text())
+          assert source['decision']['ready_for_multi_report_identity_value_join'] is True, source
+          assert schedule['decision']['ready_for_historical_game_id_join'] is True, schedule
+          assert identity['decision']['ready_for_player_id_join'] is True, identity
+          assert identity['quality']['ambiguous_player_rows'] == 0, identity
+          assert values['decision']['ready_for_injury_snapshot_feature_join'] is True, values
+          assert values['quality']['strict_prior_date_violations'] == 0, values
+          assert long_report['decision']['ready_for_predeclared_snapshot_selection'] is True, long_report
+          assert long_report['quality']['non_pregame_observations'] == 0, long_report
+          assert selection['decision']['ready_for_selected_panel_research'] is True, selection
+          assert selection['quality']['duplicate_selected_independent_games'] == 0, selection
+          assert selection['quality']['multiple_snapshots_counted_as_independent_games'] is False, selection
+          assert selection['coverage']['independent_games_selected'] <= selection['coverage']['independent_games_available']
+          selected_rows = list(csv.DictReader((root / 'selected/selected-matchup-injury-burden.csv').open()))
+          assert len(selected_rows) == len({row['historical_game_id'] for row in selected_rows})
+          assert selection['decision']['ready_for_model_training'] is False
+          assert selection['decision']['ready_for_probability_adjustment'] is False
+          assert selection['decision']['ready_for_betting_edge_claim'] is False
+          print(json.dumps({
+              'source_panel': source['coverage'],
+              'long_panel': long_report['coverage'],
+              'selection': selection['coverage'],
+              'sample_size': selection['sample_size'],
+          }, indent=2))
+          PY
+      - name: Remove temporary player-level data
+        run: |
+          rm -f /tmp/nbavl-multi-feature-live/combined-player-boxscores.csv
+          rm -f /tmp/nbavl-multi-feature-live/boxscores-2022/open-player-boxscores.csv
+          rm -f /tmp/nbavl-multi-feature-live/boxscores-2023/open-player-boxscores.csv
+          rm -f /tmp/nbavl-multi-feature-live/injury/multi-report-injury-panel-normalized.csv
+          find /tmp/nbavl-multi-feature-live/injury/reports -name 'injury-lineup-snapshots-normalized.csv' -delete
+          rm -f /tmp/nbavl-multi-feature-live/player-identity/injury-player-id-map.csv
+          rm -f /tmp/nbavl-multi-feature-live/player-values/point-in-time-player-values.csv
+      - name: Upload aggregate research artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: multi-report-injury-feature-backfill-v1
+          path: |
+            /tmp/nbavl-multi-feature-live/injury/multi-report-injury-panel-report.json
+            /tmp/nbavl-multi-feature-live/injury/multi-report-source-index.csv
+            /tmp/nbavl-multi-feature-live/schedule-match/injury-snapshot-schedule-match-report.json
+            /tmp/nbavl-multi-feature-live/schedule-match/injury-snapshot-game-id-map.csv
+            /tmp/nbavl-multi-feature-live/player-identity/injury-player-boxscore-identity-report.json
+            /tmp/nbavl-multi-feature-live/player-values/point-in-time-player-value-report.json
+            /tmp/nbavl-multi-feature-live/long-features/multi-report-injury-feature-report.json
+            /tmp/nbavl-multi-feature-live/long-features/multi-report-team-injury-burden-long.csv
+            /tmp/nbavl-multi-feature-live/long-features/multi-report-matchup-injury-burden-long.csv
+            /tmp/nbavl-multi-feature-live/selected/snapshot-selection-report.json
+            /tmp/nbavl-multi-feature-live/selected/snapshot-selection-audit.csv
+            /tmp/nbavl-multi-feature-live/selected/selected-matchup-injury-burden.csv
+          retention-days: 14
+          if-no-files-found: error

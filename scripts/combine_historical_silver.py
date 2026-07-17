@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Combine independently audited single-season Silver databases."""
-
 from __future__ import annotations
 
 import argparse
@@ -36,29 +35,38 @@ def discover_sources(root: Path) -> list[Path]:
 
 
 def table_counts(db: sqlite3.Connection) -> dict[str, int]:
-    return {table: int(db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]) for table in TABLES}
+    return {
+        table: int(db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+        for table in TABLES
+    }
 
 
 def duplicate_counts(db: sqlite3.Connection) -> dict[str, int]:
-    checks = {
-        "games": "SELECT COUNT(*) - COUNT(DISTINCT game_id) FROM games",
-        "pbp_events": "SELECT COUNT(*) - COUNT(DISTINCT event_id) FROM pbp_events",
-        "possessions": "SELECT COUNT(*) - COUNT(DISTINCT possession_id) FROM possessions",
-        "team_game_features": "SELECT COUNT(*) - COUNT(DISTINCT game_id || ':' || team_abbr) FROM team_game_features",
+    queries = {
+        "games": "SELECT COUNT(*)-COUNT(DISTINCT game_id) FROM games",
+        "pbp_events": "SELECT COUNT(*)-COUNT(DISTINCT event_id) FROM pbp_events",
+        "possessions": "SELECT COUNT(*)-COUNT(DISTINCT possession_id) FROM possessions",
+        "team_game_features": (
+            "SELECT COUNT(*)-COUNT(DISTINCT game_id || ':' || team_abbr) "
+            "FROM team_game_features"
+        ),
     }
-    return {name: int(db.execute(sql).fetchone()[0]) for name, sql in checks.items()}
+    return {key: int(db.execute(sql).fetchone()[0]) for key, sql in queries.items()}
 
 
-def source_metadata(db: sqlite3.Connection) -> dict[str, str]:
+def metadata(db: sqlite3.Connection) -> dict[str, str]:
     try:
         return dict(db.execute("SELECT key, value FROM metadata"))
     except sqlite3.OperationalError:
         return {}
 
 
-def write_preview(db: sqlite3.Connection, path: Path) -> None:
+def write_preview(db: sqlite3.Connection, destination: Path) -> None:
     db.row_factory = sqlite3.Row
-    seasons = [row[0] for row in db.execute("SELECT DISTINCT season_label FROM games ORDER BY season_label")]
+    seasons = [
+        row[0]
+        for row in db.execute("SELECT DISTINCT season_label FROM games ORDER BY season_label")
+    ]
     payload: dict[str, Any] = {
         "schema_version": "multiseason-silver-v1",
         "raw_data_included": False,
@@ -73,70 +81,72 @@ def write_preview(db: sqlite3.Connection, path: Path) -> None:
                 (season,),
             )
         ]
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    destination.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     sqlite_path = output_dir / "historical-silver-multiseason.sqlite"
     gzip_path = output_dir / "historical-silver-multiseason.sqlite.gz"
-    generated_at = utc_now()
-
     if sqlite_path.exists():
         sqlite_path.unlink()
+
+    generated_at = utc_now()
     db = sqlite3.connect(sqlite_path)
     create_schema(db)
-
     manifest: list[dict[str, Any]] = []
+
     with tempfile.TemporaryDirectory(prefix="nbavl-combine-silver-") as temp_name:
         temp = Path(temp_name)
         for index, source in enumerate(sources):
             unpacked = temp / f"season-{index}.sqlite"
             gunzip_to(source, unpacked)
             source_db = sqlite3.connect(unpacked)
-            seasons = [row[0] for row in source_db.execute("SELECT DISTINCT season_label FROM games ORDER BY season_label")]
+            seasons = [
+                row[0]
+                for row in source_db.execute(
+                    "SELECT DISTINCT season_label FROM games ORDER BY season_label"
+                )
+            ]
             if len(seasons) != 1:
-                raise ValueError(f"Expected exactly one season in {source}, found {seasons}")
-            counts = table_counts(source_db)
-            metadata = source_metadata(source_db)
+                source_db.close()
+                raise ValueError(f"Expected one season in {source}, found {seasons}")
+            source_counts = table_counts(source_db)
+            source_metadata = metadata(source_db)
             source_db.close()
 
             db.execute("ATTACH DATABASE ? AS season_db", (str(unpacked),))
             for table in TABLES:
                 db.execute(f"INSERT INTO {table} SELECT * FROM season_db.{table}")
-            db.execute("DETACH DATABASE season_db")
+            # SQLite cannot detach an attached database while its insert
+            # transaction remains open. Commit first, then detach.
             db.commit()
+            db.execute("DETACH DATABASE season_db")
 
             manifest.append({
                 "season_label": seasons[0],
                 "source_file": str(source),
-                "tables": counts,
-                "pbpstats_archive_sha256": metadata.get("pbpstats_archive_sha256"),
-                "nbastats_archive_sha256": metadata.get("nbastats_archive_sha256"),
+                "tables": source_counts,
+                "pbpstats_archive_sha256": source_metadata.get("pbpstats_archive_sha256"),
+                "nbastats_archive_sha256": source_metadata.get("nbastats_archive_sha256"),
             })
 
-    # The single-season adapter preserves its original pilot source IDs. Rewrite
-    # them after the merge so provenance identifies the actual season archive.
     db.execute(
-        """
-        UPDATE pbp_events
-        SET source_id = 'nbastats_' || substr((
-          SELECT season_label FROM games WHERE games.game_id = pbp_events.game_id
-        ), 1, 4)
-        """
+        """UPDATE pbp_events SET source_id='nbastats_' || substr((
+        SELECT season_label FROM games WHERE games.game_id=pbp_events.game_id),1,4)"""
     )
     db.execute(
-        """
-        UPDATE possessions
-        SET source_id = 'pbpstats_' || substr((
-          SELECT season_label FROM games WHERE games.game_id = possessions.game_id
-        ), 1, 4)
-        """
+        """UPDATE possessions SET source_id='pbpstats_' || substr((
+        SELECT season_label FROM games WHERE games.game_id=possessions.game_id),1,4)"""
     )
 
-    manifest_json = json.dumps(manifest, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    manifest_json = json.dumps(
+        manifest, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    )
     manifest_hash = hashlib.sha256(manifest_json.encode("utf-8")).hexdigest()
-    metadata = {
+    combined_metadata = {
         "pipeline_name": "NBA Value Lab combined historical Silver",
         "schema_version": "multiseason-silver-v1",
         "generated_at": generated_at,
@@ -148,20 +158,24 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
         "possession_points_usage": "qa_only",
         "raw_archives_committed": "false",
     }
-    db.executemany("INSERT INTO metadata VALUES (?,?)", metadata.items())
+    db.executemany("INSERT INTO metadata VALUES (?,?)", combined_metadata.items())
     db.commit()
 
     counts = table_counts(db)
     duplicates = duplicate_counts(db)
-    seasons = [row[0] for row in db.execute("SELECT DISTINCT season_label FROM games ORDER BY season_label")]
+    seasons = [
+        row[0]
+        for row in db.execute("SELECT DISTINCT season_label FROM games ORDER BY season_label")
+    ]
     season_game_counts = {
         row[0]: int(row[1])
-        for row in db.execute("SELECT season_label, COUNT(*) FROM games GROUP BY season_label ORDER BY season_label")
+        for row in db.execute(
+            "SELECT season_label, COUNT(*) FROM games GROUP BY season_label ORDER BY season_label"
+        )
     }
     write_preview(db, output_dir / "multiseason-silver-sample.json")
     db.execute("VACUUM")
     db.close()
-
     gzip_file(sqlite_path, gzip_path)
     sqlite_path.unlink()
 
@@ -172,10 +186,7 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
         "seasons": seasons,
         "season_game_counts": season_game_counts,
         "source_manifest": manifest,
-        "outputs": {
-            "database_gzip_bytes": gzip_path.stat().st_size,
-            "tables": counts,
-        },
+        "outputs": {"database_gzip_bytes": gzip_path.stat().st_size, "tables": counts},
         "quality": {
             "duplicate_rows": duplicates,
             "all_duplicate_checks_pass": all(value == 0 for value in duplicates.values()),
@@ -192,8 +203,7 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
         },
     }
     (output_dir / "multiseason-silver-report.json").write_text(
-        json.dumps(report, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
+        json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     return report
 
@@ -205,17 +215,14 @@ def build_fixture(path: Path, season: str, game_id: str) -> None:
         "INSERT INTO games VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (game_id, f"{season[:4]}-10-01", season, "1", "AAA", "2", "BBB", 101, 99, 4, 48.0, 0, 0, None, ""),
     )
-    feature = (
-        game_id, "AAA", "BBB", 1, 101, 99, 101, 99, 90, 90,
-        96.0, 112.2, 110.0, 2.2, 80, 40, 30, 12, 20, 15, 8, 10,
-        0.575, 0.10, 0.20, 0.25, 1, "",
+    rows = [
+        (game_id, "AAA", "BBB", 1, 101, 99, 101, 99, 90, 90, 96.0, 112.2, 110.0, 2.2, 80, 40, 30, 12, 20, 15, 8, 10, .575, .10, .20, .25, 1, ""),
+        (game_id, "BBB", "AAA", 0, 99, 101, 99, 101, 90, 90, 96.0, 110.0, 112.2, -2.2, 82, 39, 31, 11, 18, 14, 7, 11, .543, .11, .18, .22, 1, ""),
+    ]
+    db.executemany(
+        "INSERT INTO team_game_features VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        rows,
     )
-    opponent = (
-        game_id, "BBB", "AAA", 0, 99, 101, 99, 101, 90, 90,
-        96.0, 110.0, 112.2, -2.2, 82, 39, 31, 11, 18, 14, 7, 11,
-        0.543, 0.11, 0.18, 0.22, 1, "",
-    )
-    db.executemany("INSERT INTO team_game_features VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [feature, opponent])
     db.executemany("INSERT INTO metadata VALUES (?,?)", [
         ("pbpstats_archive_sha256", season + "-pbp"),
         ("nbastats_archive_sha256", season + "-nba"),
@@ -228,7 +235,7 @@ def self_test(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     fixture_root = output_dir / "fixtures"
     fixture_root.mkdir(exist_ok=True)
-    sources = []
+    sources: list[Path] = []
     for index, season in enumerate(("2021-22", "2022-23", "2023-24"), 1):
         sqlite_path = fixture_root / f"{season}.sqlite"
         gzip_path = fixture_root / season / "historical-silver.sqlite.gz"

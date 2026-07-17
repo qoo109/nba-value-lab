@@ -1,0 +1,74 @@
+name: Validate injury and lineup snapshot v1
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/validate_injury_lineup_snapshots.py"
+      - "schemas/injury-lineup-snapshot-v1.schema.json"
+      - "data/templates/injury-lineup-snapshot-v1.csv"
+      - "data/injury-lineup-source-registry.json"
+      - "docs/injury-lineup-snapshot-v1.md"
+      - ".github/workflows/validate-injury-lineup-snapshot-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install validation dependencies
+        run: python -m pip install --disable-pip-version-check pandas jsonschema
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_injury_lineup_snapshots.py
+      - name: Run valid and late-snapshot self-tests
+        run: |
+          rm -rf /tmp/nbavl-injury-lineup-self-test
+          python scripts/validate_injury_lineup_snapshots.py \
+            --self-test \
+            --output-dir /tmp/nbavl-injury-lineup-self-test
+          python -m json.tool /tmp/nbavl-injury-lineup-self-test/injury-lineup-validation-report.json >/dev/null
+          python -m json.tool /tmp/nbavl-injury-lineup-self-test/invalid/injury-lineup-validation-report.json >/dev/null
+      - name: Validate repository CSV template
+        run: |
+          rm -rf /tmp/nbavl-injury-lineup-template
+          python scripts/validate_injury_lineup_snapshots.py \
+            --input data/templates/injury-lineup-snapshot-v1.csv \
+            --output-dir /tmp/nbavl-injury-lineup-template
+      - name: Validate normalized rows against JSON Schema
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+          from jsonschema import Draft202012Validator, FormatChecker
+
+          schema = json.loads(Path('schemas/injury-lineup-snapshot-v1.schema.json').read_text())
+          validator = Draft202012Validator(schema, format_checker=FormatChecker())
+          with Path('/tmp/nbavl-injury-lineup-template/injury-lineup-snapshots-normalized.csv').open() as handle:
+              rows = list(csv.DictReader(handle))
+          assert rows, 'normalized template is empty'
+          for row in rows:
+              row['is_home'] = int(row['is_home'])
+              for key in ('prior_expected_minutes', 'prior_impact_estimate'):
+                  row[key] = None if row[key] == '' else float(row[key])
+              errors = sorted(validator.iter_errors(row), key=lambda error: list(error.path))
+              assert not errors, [error.message for error in errors]
+          print({'validated_rows': len(rows)})
+          PY
+      - name: Upload synthetic QA reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: injury-lineup-snapshot-v1-self-test
+          path: |
+            /tmp/nbavl-injury-lineup-self-test/injury-lineup-validation-report.json
+            /tmp/nbavl-injury-lineup-self-test/invalid/injury-lineup-validation-report.json
+            /tmp/nbavl-injury-lineup-template/injury-lineup-validation-report.json
+          retention-days: 7
+          if-no-files-found: error

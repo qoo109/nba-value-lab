@@ -1,0 +1,99 @@
+name: Calibrate walk-forward probabilities
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Workflow run ID containing model-walk-forward-v2"
+        required: true
+        default: "29551715399"
+  pull_request:
+    paths:
+      - "scripts/calibrate_walk_forward.py"
+      - ".github/workflows/calibrate-walk-forward.yml"
+      - "docs/probability-calibration-v1.md"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install calibration dependencies
+        run: python -m pip install --disable-pip-version-check numpy scikit-learn joblib
+      - name: Compile calibration module
+        run: python -m py_compile scripts/calibrate_walk_forward.py
+      - name: Run synthetic season-ordered calibration test
+        run: |
+          rm -rf /tmp/nbavl-calibration-self-test
+          python scripts/calibrate_walk_forward.py \
+            --self-test \
+            --output-dir /tmp/nbavl-calibration-self-test
+          python -m json.tool /tmp/nbavl-calibration-self-test/probability-calibration-report.json >/dev/null
+          python -m json.tool /tmp/nbavl-calibration-self-test/self-test.json >/dev/null
+
+  live-calibration:
+    if: github.event_name == 'workflow_dispatch'
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install calibration dependencies
+        run: python -m pip install --disable-pip-version-check numpy scikit-learn joblib
+      - name: Download walk-forward artifact from selected run
+        run: |
+          rm -rf /tmp/nbavl-walk-forward-source
+          mkdir -p /tmp/nbavl-walk-forward-source
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name model-walk-forward-v2 \
+            --dir /tmp/nbavl-walk-forward-source
+          test -f /tmp/nbavl-walk-forward-source/walk-forward-predictions.csv
+          test -f /tmp/nbavl-walk-forward-source/walk-forward-report.json
+      - name: Evaluate calibration candidates
+        run: |
+          rm -rf /tmp/nbavl-probability-calibration
+          python scripts/calibrate_walk_forward.py \
+            --predictions /tmp/nbavl-walk-forward-source/walk-forward-predictions.csv \
+            --output-dir /tmp/nbavl-probability-calibration
+      - name: Validate calibration outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-probability-calibration')
+          report = json.loads((root / 'probability-calibration-report.json').read_text())
+          assert report['source']['oof_season_count'] >= 3, report['source']
+          assert len(report['evaluation']['folds']) >= 2, report['evaluation']
+          assert report['guardrails']['target_season_excluded_from_calibrator_fit'] is True
+          assert report['guardrails']['calibration_uses_prior_oof_predictions_only'] is True
+          assert report['decision']['calibration_evaluation_complete'] is True
+          assert report['decision']['ready_for_point_in_time_odds_join'] is True
+          assert (root / 'calibrated-predictions.csv').exists()
+          assert (root / 'calibration-candidates.joblib').exists()
+          print(json.dumps(report['decision'], ensure_ascii=False, indent=2))
+          PY
+      - name: Upload calibration report and candidates
+        uses: actions/upload-artifact@v4
+        with:
+          name: probability-calibration-v1
+          path: |
+            /tmp/nbavl-probability-calibration/probability-calibration-report.json
+            /tmp/nbavl-probability-calibration/calibrated-predictions.csv
+            /tmp/nbavl-probability-calibration/calibration-candidates.joblib
+          retention-days: 14
+          if-no-files-found: error

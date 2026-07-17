@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.2.0",
+  "registry_version": "1.3.0",
   "site_version_policy": "follow_current_release",
-  "updated_at": "2026-07-16T23:59:00+08:00",
+  "updated_at": "2026-07-17T11:50:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -10,17 +10,65 @@
       "name": "使用者手動雙邊盤口",
       "status": "active",
       "mode": "manual",
-      "domains": ["odds"],
-      "snapshots": ["21:00", "T-60m", "T-5m", "Closing"],
+      "domains": [
+        "odds"
+      ],
+      "snapshots": [
+        "21:00",
+        "T-60m",
+        "T-5m",
+        "Closing"
+      ],
       "requires_secret": false,
-      "notes": "同一莊家、同一市場、同一時間的雙邊十進位賠率"
+      "quality_checks": [
+        "game_id",
+        "observed_before_commence",
+        "same_bookmaker_two_way_market",
+        "decimal_price_range",
+        "team_match",
+        "raw_hash"
+      ],
+      "notes": "同一莊家、同一市場、同一時間的雙邊十進位賠率；Point-in-time Odds Layer v1 的預設來源"
+    },
+    {
+      "source_id": "the_odds_api_historical",
+      "name": "The Odds API historical snapshots",
+      "status": "disabled",
+      "mode": "paid_api_optional",
+      "domains": [
+        "historical_odds",
+        "moneyline",
+        "spreads",
+        "totals",
+        "closing_line"
+      ],
+      "requires_secret": true,
+      "secret_names": [
+        "THE_ODDS_API_KEY"
+      ],
+      "quality_checks": [
+        "snapshot_timestamp",
+        "commence_time",
+        "bookmaker_last_update",
+        "event_team_match",
+        "two_way_market",
+        "raw_hash",
+        "quota_headers"
+      ],
+      "storage_policy": "workflow_temp_only_raw_json_as_restricted_expiring_artifact",
+      "notes": "官方歷史端點自 2020-06-06 起提供 featured markets；歷史存取需要付費方案。未提供 API key 前保持 disabled。"
     },
     {
       "source_id": "derived_schedule",
       "name": "賽程衍生特徵",
       "status": "active",
       "mode": "derived",
-      "domains": ["rest", "travel", "timezone", "schedule_density"],
+      "domains": [
+        "rest",
+        "travel",
+        "timezone",
+        "schedule_density"
+      ],
       "requires_secret": false,
       "notes": "由賽程、場館座標與 IANA 時區資料計算"
     },
@@ -29,10 +77,21 @@
       "name": "NBA Official Injury Reports",
       "status": "pilot",
       "mode": "crawler",
-      "domains": ["injuries"],
+      "domains": [
+        "injuries"
+      ],
       "requires_secret": false,
-      "snapshots": ["21:00", "T-60m", "T-5m"],
-      "quality_checks": ["timestamp", "pdf_schema", "raw_hash", "duplicate_revision"],
+      "snapshots": [
+        "21:00",
+        "T-60m",
+        "T-5m"
+      ],
+      "quality_checks": [
+        "timestamp",
+        "pdf_schema",
+        "raw_hash",
+        "duplicate_revision"
+      ],
       "notes": "解析失敗時停止發布，不猜測欄位"
     },
     {
@@ -40,9 +99,19 @@
       "name": "NBA Live Data CDN",
       "status": "pilot",
       "mode": "api",
-      "domains": ["schedule", "scores", "boxscore", "play_by_play"],
+      "domains": [
+        "schedule",
+        "scores",
+        "boxscore",
+        "play_by_play"
+      ],
       "requires_secret": false,
-      "quality_checks": ["http_status", "schema_version", "game_id", "timestamp"],
+      "quality_checks": [
+        "http_status",
+        "schema_version",
+        "game_id",
+        "timestamp"
+      ],
       "notes": "官方公開 JSON，無商業 SLA"
     },
     {
@@ -50,9 +119,19 @@
       "name": "swar/nba_api",
       "status": "pilot",
       "mode": "api_client",
-      "domains": ["stats", "live_data", "rotation", "historical_import"],
+      "domains": [
+        "stats",
+        "live_data",
+        "rotation",
+        "historical_import"
+      ],
       "requires_secret": false,
-      "quality_checks": ["adapter_version", "endpoint_schema", "rate_limit", "timeout"],
+      "quality_checks": [
+        "adapter_version",
+        "endpoint_schema",
+        "rate_limit",
+        "timeout"
+      ],
       "notes": "client 使用 MIT License；NBA.com endpoint 可能改動"
     },
     {
@@ -60,9 +139,27 @@
       "name": "shufinskiy/nba_data historical archives",
       "status": "silver_pilot",
       "mode": "full_archive_to_sqlite_adapter",
-      "domains": ["historical_play_by_play", "possessions", "team_game_features", "pace", "off_rtg", "def_rtg", "four_factors", "cross_source_validation"],
+      "domains": [
+        "historical_play_by_play",
+        "possessions",
+        "team_game_features",
+        "pace",
+        "off_rtg",
+        "def_rtg",
+        "four_factors",
+        "cross_source_validation"
+      ],
       "requires_secret": false,
-      "quality_checks": ["download_limit", "sha256", "safe_extract", "exact_deduplication", "possession_grouping", "game_coverage_overlap", "final_score_validation", "feature_coverage"],
+      "quality_checks": [
+        "download_limit",
+        "sha256",
+        "safe_extract",
+        "exact_deduplication",
+        "possession_grouping",
+        "game_coverage_overlap",
+        "final_score_validation",
+        "feature_coverage"
+      ],
       "storage_policy": "workflow_temp_only_full_sqlite_as_expiring_artifact",
       "notes": "NBA Value Lab 歷史 Silver 試驗；版本名稱永遠跟隨網站目前正式版本。完整 SQLite 僅作 14 天 Actions artifact，上游資料再發布權不作推定。"
     },
@@ -71,7 +168,9 @@
       "name": "Basketball-Reference",
       "status": "manual",
       "mode": "manual_import",
-      "domains": ["historical_crosscheck"],
+      "domains": [
+        "historical_crosscheck"
+      ],
       "requires_secret": false,
       "notes": "只作人工核對與小量回填；自動化前先完成條款、robots 與保存權審查"
     }

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.0.0",
-  "updated_at": "2026-07-17T12:25:00+08:00",
+  "registry_version": "1.1.0",
+  "updated_at": "2026-07-17T12:55:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -48,16 +48,29 @@
       "source_id": "kaggle_christophertreasure_nba_odds",
       "name": "Kaggle - Christopher Treasure NBA Odds Data",
       "url": "https://www.kaggle.com/datasets/christophertreasure/nba-odds-data",
-      "status": "closing_benchmark_pilot",
+      "dataset_handle": "christophertreasure/nba-odds-data",
+      "status": "closing_benchmark_live_workflow",
       "use_cases": ["closing_moneyline_benchmark", "spread_reference", "totals_reference"],
       "coverage_claim": "2008-2023 regular seasons; 2023 described as incomplete",
       "timestamp_quality": "closing_label_only_or_unknown",
       "license": "Other (specified in description)",
       "provenance": "Dataset description references SportsbookReviewOnline legacy archive",
-      "automation_allowed": "download_after_manual_approval",
-      "commit_policy": "raw_files_workflow_temp_only",
-      "required_checks": ["sha256", "dataset_version", "columns", "team_mapping", "duplicate_games", "moneyline_range", "overround", "season_coverage"],
-      "notes": "First candidate for closing-market benchmark; never treat as exact point-in-time entry odds."
+      "automation_allowed": "anonymous_first_optional_token_after_manual_approval",
+      "authentication": {
+        "anonymous_public_download_attempted_first": true,
+        "optional_secret": "KAGGLE_API_TOKEN",
+        "secret_required_only_if_kaggle_requests_authentication_or_consent": true
+      },
+      "workflow": ".github/workflows/build-kaggle-closing-benchmark.yml",
+      "commit_policy": "raw_and_normalized_game_files_workflow_temp_only",
+      "artifact_policy": "reports_hashes_schema_and_aggregate_metrics_only",
+      "required_checks": ["sha256", "dataset_version", "columns", "team_mapping", "duplicate_games", "moneyline_range", "overround", "season_coverage", "model_prediction_match_rate"],
+      "guardrails": {
+        "roi_allowed": false,
+        "clv_allowed": false,
+        "betting_edge_claim_allowed": false
+      },
+      "notes": "First automated candidate for a closing-market forecast benchmark; never treat as exact point-in-time entry odds."
     },
     {
       "source_id": "kaggle_ehallmar_nba_historical_betting",

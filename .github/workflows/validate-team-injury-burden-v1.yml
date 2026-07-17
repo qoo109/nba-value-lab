@@ -1,0 +1,108 @@
+name: Validate team injury burden v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/build_team_injury_burden.py"
+      - ".github/workflows/validate-team-injury-burden-v1.yml"
+      - "docs/team-injury-burden-v1.md"
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Workflow run containing player-value-minutes-v1"
+        required: true
+        default: "29575718380"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile and test team burden builder
+        run: |
+          python -m py_compile scripts/build_team_injury_burden.py
+          rm -rf /tmp/nbavl-team-injury-self-test
+          python scripts/build_team_injury_burden.py \
+            --self-test \
+            --output-dir /tmp/nbavl-team-injury-self-test
+
+  live-pilot:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download player value source artifact
+        run: |
+          rm -rf /tmp/nbavl-team-injury-source /tmp/nbavl-team-injury-output
+          mkdir -p /tmp/nbavl-team-injury-source
+          gh run download "${{ github.event.inputs.source_run_id || '29575718380' }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name player-value-minutes-v1 \
+            --dir /tmp/nbavl-team-injury-source
+          VALUES_FILE="$(find /tmp/nbavl-team-injury-source -name 'point-in-time-player-values.csv' -print -quit)"
+          PLAYER_MAP="$(find /tmp/nbavl-team-injury-source -name 'injury-player-id-map.csv' -print -quit)"
+          GAME_MAP="$(find /tmp/nbavl-team-injury-source -name 'injury-snapshot-game-id-map.csv' -print -quit)"
+          test -n "$VALUES_FILE"
+          test -n "$PLAYER_MAP"
+          test -n "$GAME_MAP"
+          echo "VALUES_FILE=$VALUES_FILE" >> "$GITHUB_ENV"
+          echo "PLAYER_MAP=$PLAYER_MAP" >> "$GITHUB_ENV"
+          echo "GAME_MAP=$GAME_MAP" >> "$GITHUB_ENV"
+      - name: Build team and matchup injury burden
+        run: |
+          python scripts/build_team_injury_burden.py \
+            --player-values "$VALUES_FILE" \
+            --player-id-map "$PLAYER_MAP" \
+            --game-map "$GAME_MAP" \
+            --output-dir /tmp/nbavl-team-injury-output
+      - name: Validate aggregate QA
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-team-injury-output')
+          report = json.loads((root / 'team-injury-burden-report.json').read_text())
+          assert report['decision']['ready_for_team_injury_feature_experiment'] is True, report
+          assert report['coverage']['games'] == 11, report
+          assert report['coverage']['team_rows'] == 22, report
+          assert report['coverage']['teams_with_snapshot_rows'] == 20, report
+          assert report['coverage']['complete_snapshot_matchups'] == 9, report
+          assert report['coverage']['complete_snapshot_matchup_rate'] >= 0.80, report
+          assert report['coverage']['feature_ready_matchups'] >= 7, report
+          assert report['quality']['strict_prior_date_violations'] == 0, report
+          assert report['quality']['unknown_status_rows'] == 0, report
+          assert report['quality']['numeric_errors'] == 0, report
+          assert report['quality']['missing_teams_are_not_treated_as_zero_burden'] is True, report
+          teams = list(csv.DictReader((root / 'team-injury-burden.csv').open()))
+          matchups = list(csv.DictReader((root / 'matchup-injury-burden.csv').open()))
+          assert len(teams) == 22
+          assert len(matchups) == 11
+          assert all('player_id' not in row for row in teams)
+          assert all('player_name' not in row for row in teams)
+          print(json.dumps(report, indent=2))
+          PY
+      - name: Upload aggregate injury features
+        uses: actions/upload-artifact@v4
+        with:
+          name: team-injury-burden-v1
+          path: |
+            /tmp/nbavl-team-injury-output/team-injury-burden-report.json
+            /tmp/nbavl-team-injury-output/team-injury-burden.csv
+            /tmp/nbavl-team-injury-output/matchup-injury-burden.csv
+          retention-days: 14
+          if-no-files-found: error

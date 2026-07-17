@@ -87,6 +87,87 @@ ideal target: 500 independent games across multiple months or seasons
 
 Reaching 100 only permits a holdout experiment. It does not activate model training, probability adjustment, or betting claims.
 
+## Verified live pilot
+
+Workflow run:
+
+```text
+29590632622
+```
+
+Official source ingestion:
+
+- requested reports: 7;
+- successful reports: 6;
+- failed reports: 1;
+- unique report dates: 4;
+- normalized player rows: 654;
+- ingestion-covered games: 41;
+- duplicate snapshot rows: 0.
+
+The failed 2024-04-08 08:30 ET report contained 28 `Not Yet Submitted` team rows and no player status rows. It remained an explicit failed report and did not create healthy-team observations.
+
+Gold and identity alignment:
+
+- Gold game matches: 41 / 41;
+- matched snapshot rows: 654 / 654;
+- player IDs matched: 649 / 654, or 99.2355%;
+- high-confidence player IDs: 649;
+- ambiguous identities: 0;
+- unmatched identities: 5, all with `OUT` status;
+- fuzzy and nearest-name matching: 0.
+
+Prior-only player values:
+
+- expected-minutes rows: 606 / 654, or 92.6606%;
+- player-impact rows: 606 / 654, or 92.6606%;
+- players without prior history: 43;
+- same-day source rows excluded: 131;
+- future source rows excluded: 12,355;
+- strict prior-date violations: 0;
+- unknown values remained null.
+
+Long panel:
+
+- independent games: 41;
+- long matchup snapshot rows: 63;
+- long team snapshot rows: 126;
+- complete matchup snapshots: 52;
+- feature-ready matchup snapshots: 46;
+- unique publication times: 6;
+- non-pregame observations: 0;
+- duplicate game-time snapshot rows: 0.
+
+Frozen primary T-60 selection:
+
+- independent games available: 41;
+- independent games selected: 31;
+- primary selection rate: 75.6098%;
+- games without a primary selection: 10;
+- incomplete snapshot rejections: 8 games;
+- feature-unavailable rejections: 2 games;
+- duplicate selected games: 0;
+- fallback selections: 0.
+
+The latest feature-ready pre-tip and T-180 diagnostic policies also selected 31 games in this pilot. This equality is a coverage observation, not permission to change the frozen primary policy.
+
+The 100-independent-game minimum was **not met**. Injury Walk-forward holdout, model training, probability adjustment, and betting-edge claims remain disabled.
+
+## Coverage limitation requiring another data layer
+
+The current official PDF pipeline retains player status rows but does not yet retain an explicit team submission-completeness ledger. A team with no parsed player row is therefore conservatively treated as incomplete.
+
+This prevents a missing or `Not Yet Submitted` team from being interpreted as healthy, but it also means the selected sample may overrepresent games where both teams listed at least one player.
+
+Before a formal injury holdout, add a point-in-time team submission ledger that can distinguish:
+
+- submitted with listed players;
+- submitted with no injuries to report;
+- `Not Yet Submitted`;
+- parser/source missingness.
+
+Until that distinction exists, `31 selected games` means a safe research panel, not a representative model-training sample.
+
 ## Live pilot workflow
 
 ```text

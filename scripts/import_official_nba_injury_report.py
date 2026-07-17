@@ -22,7 +22,7 @@ import pandas as pd
 
 from validate_injury_lineup_snapshots import validate
 
-VERSION = "official-nba-injury-report-pdf-pilot-v1.1"
+VERSION = "official-nba-injury-report-pdf-pilot-v1.2"
 ET = ZoneInfo("America/New_York")
 TEAM_NAME_TO_ABBR = {
     "Atlanta Hawks": "ATL", "Brooklyn Nets": "BKN", "Boston Celtics": "BOS",
@@ -64,16 +64,17 @@ def parse_report_time(value: str) -> datetime:
 
 def report_url(report_time: datetime) -> str:
     local = report_time.astimezone(ET)
-    filename = local.strftime("Injury-Report_%Y-%m-%d_%I_%M%p.pdf")
+    # Official publication links encode the report hour and AM/PM only. For example, the
+    # report published at 08:30 ET is stored as Injury-Report_YYYY-MM-DD_08AM.pdf.
+    filename = local.strftime("Injury-Report_%Y-%m-%d_%I%p.pdf")
     return f"https://ak-static.cms.nba.com/referee/injury/{filename}"
 
 
 def download_pdf(url: str, destination: Path) -> tuple[str, int]:
-    # The official CDN currently rejects Python requests' default TLS/client fingerprint for
-    # these public PDF objects. A standard httpx client is used independently of third-party
-    # injury-report packages; no authentication, cookies or bypass mechanism is involved.
+    # The official CDN currently rejects Python requests' default transport for these public
+    # PDF objects. A standard httpx client works without authentication, cookies or bypasses.
     with httpx.Client(follow_redirects=True, timeout=45.0) as client:
-        response = client.get(url)
+        response = client.get(url=url)
     response.raise_for_status()
     payload = response.content
     if not payload.startswith(b"%PDF"):
@@ -256,6 +257,7 @@ def self_test(output_dir: Path) -> None:
         },
     ]).rename(columns=lambda column: normalize_column(column))
     report_time = parse_report_time("2023-12-18T08:30:00-05:00")
+    assert report_url(report_time).endswith("Injury-Report_2023-12-18_08AM.pdf")
     rows, errors = source_rows(frame, report_time, report_url(report_time), "a" * 64)
     assert not errors, errors
     validation = validate(rows, output_dir)

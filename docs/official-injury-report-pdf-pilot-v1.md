@@ -7,7 +7,7 @@ This pilot converts one archived official NBA Injury Report PDF into the provide
 It is intentionally not a bulk backfill. The first goal is to prove:
 
 - the official URL and report timestamp are preserved;
-- the PDF table can be parsed into the expected seven columns;
+- the seven-column report can be parsed without a third-party injury client or PDF parser;
 - matchup, team, player, status and reason fields are normalized;
 - the report publication time is before the scheduled game;
 - raw PDFs and player-level rows are not uploaded by default.
@@ -18,44 +18,89 @@ Season page:
 
 - <https://official.nba.com/nba-injury-report-2025-26-season/>
 
-PDFs follow the official filename convention:
+The archived PDF URL uses the report date, hour and AM/PM:
 
 ```text
 https://ak-static.cms.nba.com/referee/injury/
-Injury-Report_YYYY-MM-DD_hh_mmAM.pdf
+Injury-Report_YYYY-MM-DD_hhAM.pdf
 ```
 
-The report page states that teams submit injury statuses and reasons before games and that reports are continually updated during the day. Each PDF timestamp must therefore be treated as a separate point-in-time snapshot.
+For example, the report published at 08:30 ET is stored as:
+
+```text
+Injury-Report_2023-12-18_08AM.pdf
+```
+
+The minute is part of the publication timestamp but is not encoded in the PDF filename.
+
+The official report page states that teams submit injury statuses and reasons before games and that reports are continually updated during the day. Each publication timestamp must therefore be treated as a separate point-in-time snapshot.
 
 ## Historical timestamp semantics
 
 For an archived official report:
 
-- `source_report_time` is the publication timestamp encoded by the official report link;
-- `observed_at` uses that same publication timestamp as the earliest verifiable public availability time;
+- `source_report_time` is the official publication timestamp;
+- `observed_at` uses that publication timestamp as the earliest verifiable public availability time;
 - actual download time is stored separately as `retrieved_at` in the aggregate import report.
 
-This prevents a report downloaded today from being misrepresented as a live retrieval performed before the historical game.
+This prevents a report downloaded today from being represented as a live retrieval performed before the historical game.
 
-## Parser
+## Native parser
 
-The pilot uses the MIT-licensed `nba-injury-report-pdf-to-df==0.1.7` package as a replaceable PDF table adapter. It expects:
+The importer uses PyMuPDF word coordinates and the known seven-column landscape layout:
 
-- Game Date
-- Game Time
-- Matchup
-- Team
-- Player Name
-- Current Status
-- Reason
+1. Game Date
+2. Game Time
+3. Matchup
+4. Team
+5. Player Name
+6. Current Status
+7. Reason
 
-The repository's own code performs all provenance, matchup, team, time and contract validation after PDF extraction.
+`Current Status` provides the row anchor. Player text is read only from the same baseline, while the Reason column may span multiple lines between adjacent status anchors.
+
+Date, time, matchup and team values are carried forward only when they match strict field formats. This prevents report headers, publication timestamps and page metadata from changing game context.
+
+Continuation pages may place valid rows above 95 points, so the parser reads the 40–530 point body window while separately excluding the seven-column header.
+
+Current layout identifier:
+
+```text
+official-landscape-seven-column-2023-v1
+```
+
+If the official format changes, the importer must fail its row-count and layout QA rather than silently guessing.
+
+## Validated historical fixture
+
+The live verification uses the official report published on 2023-12-18 at 08:30 ET.
+
+Verified result:
+
+- 8 PDF pages
+- 118 player status rows
+- 10 `NOT YET SUBMITTED` team rows
+- 11 games with at least one player status
+- 20 teams with player rows
+- 0 parser conversion errors
+- 0 contract validation errors
+- 0 contract validation warnings
+
+Status distribution:
+
+- Available: 6
+- Doubtful: 3
+- Out: 80
+- Probable: 5
+- Questionable: 24
+
+The report is ready for the manual official-PDF pilot only. It is not approved for automated multi-season backfill or model training.
 
 ## Game times
 
-Official reports label times as ET and omit AM/PM. The adapter treats scheduled NBA game times from 1:00 through 11:59 as p.m. ET, while 12:xx remains noon. The resulting timezone-aware timestamp is converted to UTC.
+Official reports label scheduled times as ET and omit AM/PM. Scheduled NBA times from 1:00 through 11:59 are interpreted as p.m. ET, while 12:xx remains noon. The timezone-aware result is converted to UTC.
 
-This assumption is recorded as part of the pilot and must be revalidated if the official format changes.
+This assumption is recorded in the pilot and must be revalidated if the official format changes.
 
 ## Privacy and redistribution controls
 
@@ -91,7 +136,7 @@ A successful single-report pilot does not authorize automated multi-season colle
 
 Before bulk backfill, require:
 
-1. reports sampled across multiple seasons and PDF format revisions;
+1. reports sampled across multiple seasons and PDF layout revisions;
 2. game IDs matched against the historical Silver schedule;
 3. player-name resolution and alias QA;
 4. missing-report and duplicate-report handling;

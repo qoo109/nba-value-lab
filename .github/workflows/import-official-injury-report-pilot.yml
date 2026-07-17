@@ -1,0 +1,93 @@
+name: Import official NBA injury report PDF pilot
+
+on:
+  workflow_dispatch:
+    inputs:
+      report_time:
+        description: "Official report time; naive timestamps are interpreted as America/New_York"
+        required: true
+        default: "2023-12-18T08:30:00-05:00"
+  pull_request:
+    paths:
+      - "scripts/import_official_nba_injury_report.py"
+      - "scripts/validate_injury_lineup_snapshots.py"
+      - ".github/workflows/import-official-injury-report-pilot.yml"
+      - "docs/official-injury-report-pdf-pilot-v1.md"
+      - "data/injury-lineup-source-registry.json"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install parser dependencies
+        run: python -m pip install --disable-pip-version-check pandas requests nba-injury-report-pdf-to-df==0.1.7
+      - name: Compile importer
+        run: |
+          python -m py_compile scripts/validate_injury_lineup_snapshots.py
+          python -m py_compile scripts/import_official_nba_injury_report.py
+      - name: Run synthetic official report conversion test
+        run: |
+          rm -rf /tmp/nbavl-official-injury-self-test
+          PYTHONPATH=scripts python scripts/import_official_nba_injury_report.py \
+            --self-test \
+            --output-dir /tmp/nbavl-official-injury-self-test
+          python -m json.tool /tmp/nbavl-official-injury-self-test/injury-lineup-validation-report.json >/dev/null
+          test -f /tmp/nbavl-official-injury-self-test/official-import-self-test.json
+
+  live-pilot:
+    if: github.event_name == 'workflow_dispatch'
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install parser dependencies
+        run: python -m pip install --disable-pip-version-check pandas requests nba-injury-report-pdf-to-df==0.1.7
+      - name: Download, parse and validate one official report
+        run: |
+          rm -rf /tmp/nbavl-official-injury-pilot
+          PYTHONPATH=scripts python scripts/import_official_nba_injury_report.py \
+            --report-time "${{ inputs.report_time }}" \
+            --output-dir /tmp/nbavl-official-injury-pilot
+      - name: Validate report-only guardrails
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-official-injury-pilot')
+          report = json.loads((root / 'official-injury-report-import-report.json').read_text())
+          validation = json.loads((root / 'validation/injury-lineup-validation-report.json').read_text())
+          assert report['decision']['ready_for_manual_official_pdf_pilot'] is True, report
+          assert report['coverage']['validated_rows'] > 0, report
+          assert report['quality']['raw_pdf_deleted'] is True, report
+          assert report['quality']['normalized_player_rows_retained'] is False, report
+          assert report['guardrails']['actual_retrieval_time_stored_separately'] is True, report
+          assert validation['quality']['point_in_time_rule_passed'] is True, validation
+          assert not (root / 'validation/injury-lineup-snapshots-normalized.csv').exists()
+          print(json.dumps({
+            'source': report['source'],
+            'coverage': report['coverage'],
+            'quality': report['quality'],
+            'decision': report['decision'],
+          }, indent=2))
+          PY
+      - name: Upload aggregate provenance and QA only
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-injury-report-pdf-pilot-v1
+          path: |
+            /tmp/nbavl-official-injury-pilot/official-injury-report-import-report.json
+            /tmp/nbavl-official-injury-pilot/validation/injury-lineup-validation-report.json
+          retention-days: 14
+          if-no-files-found: error

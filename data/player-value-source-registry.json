@@ -1,0 +1,71 @@
+{
+  "schema_version": "player-value-source-registry-v1",
+  "updated_at": "2026-07-17T16:35:00+08:00",
+  "sources": [
+    {
+      "source_id": "nocturnebear_nba_data_2010_2024",
+      "name": "NBA Data 2010-2024 player boxscore archive",
+      "url": "https://github.com/NocturneBear/NBA-Data-2010-2024",
+      "license": "MIT",
+      "classification": "secondary_open_archive",
+      "status": "approved_for_gold_validated_research_only",
+      "upstream_collection_method_fully_documented": false,
+      "seasons_used_in_v1": ["2022-23", "2023-24"],
+      "fields_used": [
+        "gameId",
+        "game_date",
+        "teamId",
+        "teamTricode",
+        "personId",
+        "personName",
+        "minutes",
+        "position",
+        "points",
+        "fieldGoalsMade",
+        "fieldGoalsAttempted",
+        "freeThrowsMade",
+        "freeThrowsAttempted",
+        "reboundsOffensive",
+        "reboundsDefensive",
+        "reboundsTotal",
+        "assists",
+        "turnovers",
+        "steals",
+        "blocks",
+        "foulsPersonal",
+        "plusMinusPoints"
+      ],
+      "required_checks": [
+        "game_present_in_gold",
+        "game_date_exact_match",
+        "team_belongs_to_gold_matchup",
+        "player_id_numeric",
+        "minutes_valid_or_explicitly_normalized",
+        "unique_game_player_key",
+        "minimum_played_player_count",
+        "source_sha256"
+      ],
+      "commit_policy": "aggregate_qa_and_id_only_features_only",
+      "model_training_allowed": false,
+      "notes": "Gold controls game identity, date and teams. Archive rows outside Gold are excluded. Holdout validation is required before feature promotion."
+    },
+    {
+      "source_id": "nba_stats_player_game_logs",
+      "name": "NBA Stats PlayerGameLogs endpoint",
+      "url": "https://stats.nba.com/stats/playergamelogs",
+      "classification": "official_primary_source",
+      "status": "inactive_unreliable_from_github_hosted_runner",
+      "automation_allowed": false,
+      "notes": "Full-season and segmented retrieval were tested but were not reliable in GitHub-hosted Actions. No bypass is attempted."
+    },
+    {
+      "source_id": "nba_livedata_boxscores",
+      "name": "NBA Official LiveData boxscores",
+      "url_template": "https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json",
+      "classification": "official_primary_source",
+      "status": "inactive_http_403_from_github_hosted_runner",
+      "automation_allowed": false,
+      "notes": "GitHub-hosted runners returned HTTP 403 with ordinary browser headers. No bypass is attempted."
+    }
+  ]
+}

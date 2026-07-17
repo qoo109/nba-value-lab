@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Match normalized official injury snapshots to audited Silver player IDs."""
+"""Match normalized official injury snapshots to audited NBA Stats player IDs."""
 from __future__ import annotations
 
 import argparse
@@ -25,18 +25,19 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def open_silver(path: Path, temp_root: Path) -> sqlite3.Connection:
+def open_database(path: Path, temp_root: Path, name: str, required_tables: set[str]) -> sqlite3.Connection:
     if path.suffix.lower() == ".gz":
-        sqlite_path = temp_root / "historical-silver.sqlite"
+        sqlite_path = temp_root / f"{name}.sqlite"
         with gzip.open(path, "rb") as source, sqlite_path.open("wb") as target:
             shutil.copyfileobj(source, target, length=1024 * 1024)
     else:
         sqlite_path = path
     db = sqlite3.connect(sqlite_path)
     names = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    if "player_aliases" not in names:
+    missing = sorted(required_tables - names)
+    if missing:
         db.close()
-        raise ValueError("Silver database does not contain player_aliases; rebuild with player-identity-layer-v1")
+        raise ValueError(f"{path} missing required tables: {missing}")
     return db
 
 
@@ -70,12 +71,14 @@ def alias_indexes(db: sqlite3.Connection):
     season_suffixless = defaultdict(set)
     global_suffixless = defaultdict(set)
     alias_rows = 0
+    seasons = set()
     for player_id, name_key, suffixless_key, team_abbr, season_label in db.execute(
         "SELECT player_id, player_name_key, player_name_key_suffixless, team_abbr, season_label FROM player_aliases"
     ):
         alias_rows += 1
         team = str(team_abbr or "")
         season = str(season_label)
+        seasons.add(season)
         exact = str(name_key)
         suffixless = str(suffixless_key)
         add_index(team_season_exact, (season, team, exact), player_id)
@@ -92,6 +95,7 @@ def alias_indexes(db: sqlite3.Connection):
         "season_suffixless": season_suffixless,
         "global_suffixless": global_suffixless,
         "alias_rows": alias_rows,
+        "seasons": sorted(seasons),
     }
 
 
@@ -129,9 +133,14 @@ def choose_player(indexes, season: str, team: str, name: str) -> tuple[str | Non
     return None, "unmatched", "BLOCKED", 0
 
 
-def match(snapshot_rows: list[dict[str, str]], db: sqlite3.Connection, output_dir: Path) -> dict[str, Any]:
-    schedule, duplicate_schedule_keys = schedule_index(db)
-    indexes = alias_indexes(db)
+def match(
+    snapshot_rows: list[dict[str, str]],
+    schedule_db: sqlite3.Connection,
+    alias_db: sqlite3.Connection,
+    output_dir: Path,
+) -> dict[str, Any]:
+    schedule, duplicate_schedule_keys = schedule_index(schedule_db)
+    indexes = alias_indexes(alias_db)
     output = []
     method_counts = defaultdict(int)
     confidence_counts = defaultdict(int)
@@ -210,6 +219,7 @@ def match(snapshot_rows: list[dict[str, str]], db: sqlite3.Connection, output_di
             "matched_player_rows": matched_rows,
             "high_confidence_rows": high_confidence_rows,
             "alias_rows_available": indexes["alias_rows"],
+            "alias_seasons_available": indexes["seasons"],
         },
         "quality": {
             "player_match_rate": match_rate,
@@ -235,6 +245,7 @@ def match(snapshot_rows: list[dict[str, str]], db: sqlite3.Connection, output_di
             "team_and_season_preferred": True,
             "global_fallback_requires_unique_exact_identity": True,
             "ambiguous_names_blocked": True,
+            "future_events_used_only_for_stable_identity_resolution": True,
             "player_names_or_reasons_in_map_output": False,
         },
     }
@@ -258,6 +269,7 @@ def self_test(output_dir: Path) -> None:
     aliases = [
         ("a1", "p1", "Dereck Lively II", "dereck lively ii", "dereck lively", "10", "DAL", "2023-24", "g1", "g1", 4, "nbastats_2023", ""),
         ("a2", "p2", "Nikola Jokic", "nikola jokic", "nikola jokic", "20", "DEN", "2023-24", "g1", "g1", 5, "nbastats_2023", ""),
+        ("a3", "p3", "Steven Adams", "steven adams", "steven adams", "30", "MEM", "2022-23", "g0", "g0", 5, "nbastats_2022", ""),
     ]
     db.executemany("INSERT INTO player_aliases VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", aliases)
     db.commit()
@@ -267,7 +279,7 @@ def self_test(output_dir: Path) -> None:
         writer.writeheader()
         writer.writerow({"snapshot_record_id": "s1", "game_id": "official:2023-12-18:DAL@DEN", "team_abbr": "DAL", "player_name": "Lively II, Dereck"})
         writer.writerow({"snapshot_record_id": "s2", "game_id": "official:2023-12-18:DAL@DEN", "team_abbr": "DEN", "player_name": "Jokić, Nikola"})
-    report = match(read_snapshots(fixture_csv), db, output_dir / "result")
+    report = match(read_snapshots(fixture_csv), db, db, output_dir / "result")
     db.close()
     assert report["quality"]["player_match_rate"] == 1.0, report
     assert report["quality"]["ambiguous_player_rows"] == 0, report
@@ -279,6 +291,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--snapshot-csv", type=Path)
     parser.add_argument("--silver", type=Path)
+    parser.add_argument("--player-directory", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
@@ -289,9 +302,20 @@ def main() -> None:
     if not args.snapshot_csv or not args.silver:
         parser.error("--snapshot-csv and --silver are required unless --self-test is used")
     with tempfile.TemporaryDirectory(prefix="nbavl-player-identity-") as temp_name:
-        db = open_silver(args.silver, Path(temp_name))
-        report = match(read_snapshots(args.snapshot_csv), db, args.output_dir)
-        db.close()
+        temp_root = Path(temp_name)
+        schedule_db = open_database(args.silver, temp_root, "schedule", {"games"})
+        if args.player_directory:
+            alias_db = open_database(args.player_directory, temp_root, "directory", {"player_aliases"})
+        else:
+            names = {row[0] for row in schedule_db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            if "player_aliases" not in names:
+                schedule_db.close()
+                raise ValueError("Silver database does not contain player_aliases and no --player-directory was supplied")
+            alias_db = schedule_db
+        report = match(read_snapshots(args.snapshot_csv), schedule_db, alias_db, args.output_dir)
+        if alias_db is not schedule_db:
+            alias_db.close()
+        schedule_db.close()
     print(json.dumps(report["decision"], indent=2))
     if not report["decision"]["ready_for_player_id_join"]:
         raise SystemExit(2)

@@ -24,9 +24,15 @@ jobs:
       - name: Parse fixed archived official report
         run: |
           rm -rf /tmp/nbavl-official-injury-live
+          mkdir -p /tmp/nbavl-official-injury-live
+          set +e
           PYTHONPATH=scripts python scripts/import_official_nba_injury_report.py \
             --report-time "2023-12-18T20:30:00-05:00" \
-            --output-dir /tmp/nbavl-official-injury-live
+            --output-dir /tmp/nbavl-official-injury-live \
+            > /tmp/nbavl-official-injury-live/execution.log 2>&1
+          CODE=$?
+          cat /tmp/nbavl-official-injury-live/execution.log
+          exit "$CODE"
       - name: Validate aggregate result and deletion controls
         run: |
           python - <<'PY'
@@ -44,12 +50,13 @@ jobs:
           assert not (root / 'validation/injury-lineup-snapshots-normalized.csv').exists()
           print(json.dumps(report, indent=2))
           PY
-      - name: Upload aggregate QA only
+      - name: Upload aggregate QA and execution diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: official-injury-report-live-verification
           path: |
+            /tmp/nbavl-official-injury-live/execution.log
             /tmp/nbavl-official-injury-live/official-injury-report-import-report.json
             /tmp/nbavl-official-injury-live/validation/injury-lineup-validation-report.json
           retention-days: 3

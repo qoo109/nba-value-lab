@@ -63,11 +63,11 @@ def parse_minutes(value: Any) -> float:
         second = int(clock.group(2))
         third = clock.group(3)
         if third is None:
-            if second >= 60:
+            if second > 60:
                 raise ValueError(f"invalid MM:SS minutes format: {value!r}")
             return round(first + second / 60, 6)
         seconds = float(third)
-        if second >= 60 or seconds >= 60:
+        if second >= 60 or seconds > 60:
             raise ValueError(f"invalid HH:MM:SS minutes format: {value!r}")
         return round(first * 60 + second + seconds / 60, 6)
 
@@ -368,6 +368,7 @@ def import_archive(season: str, gold_path: Path, output_dir: Path) -> dict[str, 
 def self_test(output_dir: Path) -> None:
     assert parse_minutes("PT30M12S") == 30.2
     assert parse_minutes("34:12") == 34.2
+    assert parse_minutes("28:60") == 29.0
     assert parse_minutes("1:02:30") == 62.5
     assert normalize_official_game_id("22300061") == "0022300061"
     assert normalize_date("2023-10-24T00:00:00") == "2023-10-24"

@@ -17,12 +17,12 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+import httpx
 import pandas as pd
-import requests
 
 from validate_injury_lineup_snapshots import validate
 
-VERSION = "official-nba-injury-report-pdf-pilot-v1"
+VERSION = "official-nba-injury-report-pdf-pilot-v1.1"
 ET = ZoneInfo("America/New_York")
 TEAM_NAME_TO_ABBR = {
     "Atlanta Hawks": "ATL", "Brooklyn Nets": "BKN", "Boston Celtics": "BOS",
@@ -69,15 +69,17 @@ def report_url(report_time: datetime) -> str:
 
 
 def download_pdf(url: str, destination: Path) -> tuple[str, int]:
-    response = requests.get(
-        url,
-        timeout=45,
-        headers={"User-Agent": "NBA-Value-Lab-Research/1.0 (+https://github.com/qoo109/nba-value-lab)"},
-    )
+    # The official CDN currently rejects Python requests' default TLS/client fingerprint for
+    # these public PDF objects. A standard httpx client is used independently of third-party
+    # injury-report packages; no authentication, cookies or bypass mechanism is involved.
+    with httpx.Client(follow_redirects=True, timeout=45.0) as client:
+        response = client.get(url)
     response.raise_for_status()
     payload = response.content
     if not payload.startswith(b"%PDF"):
-        raise ValueError(f"official report response is not a PDF: content-type={response.headers.get('content-type')}")
+        raise ValueError(
+            f"official report response is not a PDF: content-type={response.headers.get('content-type')}"
+        )
     destination.write_bytes(payload)
     return hashlib.sha256(payload).hexdigest(), len(payload)
 
@@ -122,7 +124,12 @@ def parse_game_time(game_date: Any, game_time: Any) -> datetime:
     return datetime.combine(day, time(hour=hour, minute=minute), tzinfo=ET)
 
 
-def source_rows(frame: pd.DataFrame, report_time: datetime, source_url: str, source_hash: str) -> tuple[list[dict[str, Any]], list[str]]:
+def source_rows(
+    frame: pd.DataFrame,
+    report_time: datetime,
+    source_url: str,
+    source_hash: str,
+) -> tuple[list[dict[str, Any]], list[str]]:
     rows, errors = [], []
     observed_at = iso_utc(report_time)
     for index, item in frame.iterrows():
@@ -148,8 +155,8 @@ def source_rows(frame: pd.DataFrame, report_time: datetime, source_url: str, sou
                 "player_name": str(item["player_name"]).strip(),
                 "source_status_raw": str(item["current_status"]).strip(),
                 "source_reason_raw": str(item["reason"]).strip(),
-                # For archived official reports, the publication timestamp is the point-in-time
-                # availability timestamp. Actual retrieval time is stored in the import report.
+                # For archived official reports, publication time is the earliest verifiable
+                # public availability time. Retrieval time is stored separately below.
                 "observed_at": observed_at,
                 "source_report_time": observed_at,
                 "source_provider": "NBA Official Injury Report",
@@ -188,6 +195,7 @@ def run(report_time_text: str, output_dir: Path, retain_normalized: bool = False
             "retrieved_at": retrieved_at,
             "source_file_sha256": source_hash,
             "source_size_bytes": source_bytes,
+            "download_client": "httpx",
             "parser_package": "nba-injury-report-pdf-to-df",
             "parser_version": importlib.metadata.version("nba-injury-report-pdf-to-df"),
         },
@@ -225,6 +233,7 @@ def run(report_time_text: str, output_dir: Path, retain_normalized: bool = False
             "actual_retrieval_time_stored_separately": True,
             "raw_pdf_committed_or_uploaded": False,
             "player_level_rows_uploaded_by_default": False,
+            "third_party_injury_client_runtime_dependency": False,
         },
     }
     (output_dir / "official-injury-report-import-report.json").write_text(

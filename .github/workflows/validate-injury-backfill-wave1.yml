@@ -1,0 +1,163 @@
+name: Validate injury backfill wave 1 acquisition
+
+on:
+  pull_request:
+    paths:
+      - "data/multi-report-injury-backfill-wave1-times.json"
+      - "scripts/audit_injury_backfill_wave.py"
+      - ".github/workflows/validate-injury-backfill-wave1.yml"
+      - "docs/injury-backfill-wave1-acquisition.md"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+    inputs:
+      registry_file:
+        description: "Calendar-fixed injury report acquisition registry"
+        required: true
+        default: "data/multi-report-injury-backfill-wave1-times.json"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile acquisition audit
+        run: python -m py_compile scripts/audit_injury_backfill_wave.py
+      - name: Run deterministic acquisition audit self-test
+        run: |
+          rm -rf /tmp/nbavl-wave1-self-test
+          python scripts/audit_injury_backfill_wave.py \
+            --self-test \
+            --output-dir /tmp/nbavl-wave1-self-test
+          python -m json.tool /tmp/nbavl-wave1-self-test/injury-backfill-wave-audit.json >/dev/null
+
+  live-acquisition:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      REGISTRY_FILE: ${{ github.event.inputs.registry_file || 'data/multi-report-injury-backfill-wave1-times.json' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install official PDF parser dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+      - name: Validate fixed registry before acquisition
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+          path = Path('${{ env.REGISTRY_FILE }}')
+          payload = json.loads(path.read_text())
+          times = payload['report_times']
+          assert len(times) == 36, len(times)
+          assert len(times) == len(set(times)), 'duplicate timestamps'
+          assert payload['sampling_policy']['candidate_reports'] == 36
+          assert payload['sampling_policy']['dates'] == 12
+          assert payload['acquisition_gate']['minimum_overlapping_successful_reports'] == 18
+          et = ZoneInfo('America/New_York')
+          local = [datetime.fromisoformat(value).astimezone(et) for value in times]
+          assert {item.strftime('%A') for item in local} == {'Monday'}
+          assert {item.strftime('%H:%M') for item in local} == {'08:30', '13:30', '17:30'}
+          print({'candidate_reports': len(times), 'dates': len({item.date() for item in local})})
+          PY
+      - name: Build official player acquisition panel
+        id: player_acquisition
+        continue-on-error: true
+        run: |
+          rm -rf /tmp/nbavl-wave1-acquisition
+          mkdir -p /tmp/nbavl-wave1-acquisition
+          PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
+            --report-times "$REGISTRY_FILE" \
+            --output-dir /tmp/nbavl-wave1-acquisition/player
+      - name: Build official team submission acquisition panel
+        id: team_acquisition
+        continue-on-error: true
+        run: |
+          PYTHONPATH=scripts python scripts/build_multi_report_team_submission_panel.py \
+            --report-times "$REGISTRY_FILE" \
+            --output-dir /tmp/nbavl-wave1-acquisition/team
+      - name: Remove player-level acquisition rows before audit
+        if: always()
+        run: |
+          rm -f /tmp/nbavl-wave1-acquisition/player/multi-report-injury-panel-normalized.csv
+          find /tmp/nbavl-wave1-acquisition/player -name 'injury-lineup-snapshots-normalized.csv' -delete 2>/dev/null || true
+          find /tmp/nbavl-wave1-acquisition/player -name '*.pdf' -delete 2>/dev/null || true
+      - name: Run aggregate acquisition audit
+        id: acquisition_audit
+        if: always()
+        continue-on-error: true
+        run: |
+          test -s /tmp/nbavl-wave1-acquisition/player/multi-report-injury-panel-report.json
+          test -s /tmp/nbavl-wave1-acquisition/player/multi-report-source-index.csv
+          test -s /tmp/nbavl-wave1-acquisition/team/multi-report-team-submission-report.json
+          test -s /tmp/nbavl-wave1-acquisition/team/multi-report-team-submission-source-index.csv
+          test -s /tmp/nbavl-wave1-acquisition/team/multi-report-team-submission-panel.csv
+          python scripts/audit_injury_backfill_wave.py \
+            --registry "$REGISTRY_FILE" \
+            --player-report /tmp/nbavl-wave1-acquisition/player/multi-report-injury-panel-report.json \
+            --player-source-index /tmp/nbavl-wave1-acquisition/player/multi-report-source-index.csv \
+            --team-report /tmp/nbavl-wave1-acquisition/team/multi-report-team-submission-report.json \
+            --team-source-index /tmp/nbavl-wave1-acquisition/team/multi-report-team-submission-source-index.csv \
+            --team-panel /tmp/nbavl-wave1-acquisition/team/multi-report-team-submission-panel.csv \
+            --sensitive-root /tmp/nbavl-wave1-acquisition \
+            --output-dir /tmp/nbavl-wave1-acquisition/audit
+      - name: Verify no player-level files remain
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root = Path('/tmp/nbavl-wave1-acquisition')
+          forbidden = {
+              'multi-report-injury-panel-normalized.csv',
+              'injury-lineup-snapshots-normalized.csv',
+              'injury-player-id-map.csv',
+              'point-in-time-player-values.csv',
+              'combined-player-boxscores.csv',
+              'open-player-boxscores.csv',
+          }
+          found = sorted(str(path) for path in root.rglob('*') if path.is_file() and path.name in forbidden)
+          assert not found, found
+          print({'forbidden_player_files': found})
+          PY
+      - name: Upload aggregate wave 1 acquisition artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: injury-backfill-wave1-acquisition
+          path: |
+            /tmp/nbavl-wave1-acquisition/player/multi-report-injury-panel-report.json
+            /tmp/nbavl-wave1-acquisition/player/multi-report-source-index.csv
+            /tmp/nbavl-wave1-acquisition/team/multi-report-team-submission-report.json
+            /tmp/nbavl-wave1-acquisition/team/multi-report-team-submission-source-index.csv
+            /tmp/nbavl-wave1-acquisition/team/multi-report-team-submission-panel.csv
+            /tmp/nbavl-wave1-acquisition/audit/injury-backfill-wave-audit.json
+            /tmp/nbavl-wave1-acquisition/audit/injury-backfill-wave-report-index.csv
+          retention-days: 14
+          if-no-files-found: error
+      - name: Enforce acquisition gate
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/nbavl-wave1-acquisition/audit/injury-backfill-wave-audit.json').read_text())
+          assert report['decision']['ready_for_wave1_feature_backfill'] is True, report
+          assert report['decision']['ready_for_model_training'] is False
+          assert report['decision']['ready_for_probability_adjustment'] is False
+          assert report['decision']['ready_for_betting_edge_claim'] is False
+          print(json.dumps({
+              'coverage': report['coverage'],
+              'decision': report['decision'],
+          }, indent=2))
+          PY

@@ -1,0 +1,94 @@
+name: Build Model Baseline v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_download_mb:
+        description: "Maximum download MB per Silver source"
+        required: true
+        default: "600"
+  pull_request:
+    paths:
+      - "scripts/build_model_baseline.py"
+      - ".github/workflows/build-model-baseline.yml"
+      - "docs/model-baseline-v1.md"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install model dependencies
+        run: python -m pip install --disable-pip-version-check numpy scikit-learn joblib
+      - name: Compile baseline trainer
+        run: python -m py_compile scripts/build_model_baseline.py
+      - name: Run synthetic chronological self-test
+        run: |
+          rm -rf /tmp/nbavl-baseline-self-test
+          python scripts/build_model_baseline.py --self-test --output-dir /tmp/nbavl-baseline-self-test
+          python -m json.tool /tmp/nbavl-baseline-self-test/baseline-report.json >/dev/null
+          python -m json.tool /tmp/nbavl-baseline-self-test/self-test.json >/dev/null
+
+  live-build:
+    if: github.event_name == 'workflow_dispatch'
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MAX_DOWNLOAD_MB: ${{ inputs.max_download_mb }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install model dependencies
+        run: python -m pip install --disable-pip-version-check numpy scikit-learn joblib
+      - name: Build audited Silver database
+        run: |
+          rm -rf /tmp/nbavl-silver
+          python scripts/build_historical_silver.py --max-download-mb "$MAX_DOWNLOAD_MB" --output-dir /tmp/nbavl-silver
+      - name: Build point-in-time Gold database
+        run: |
+          rm -rf /tmp/nbavl-gold
+          python scripts/build_historical_gold.py --silver-db /tmp/nbavl-silver/historical-silver.sqlite.gz --output-dir /tmp/nbavl-gold
+      - name: Train baseline models
+        run: |
+          rm -rf /tmp/nbavl-baseline
+          python scripts/build_model_baseline.py \
+            --silver-db /tmp/nbavl-silver/historical-silver.sqlite.gz \
+            --gold-db /tmp/nbavl-gold/historical-gold.sqlite.gz \
+            --output-dir /tmp/nbavl-baseline
+      - name: Validate model outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-baseline')
+          report = json.loads((root / 'baseline-report.json').read_text())
+          assert report['dataset']['rows'] >= 1200, report['dataset']
+          assert report['guardrails']['chronological_split'] is True
+          assert report['guardrails']['random_shuffle'] is False
+          assert report['decision']['ready_for_baseline_review'] is True
+          assert (root / 'home-win-logistic.joblib').exists()
+          assert (root / 'home-margin-ridge.joblib').exists()
+          assert (root / 'baseline-predictions.csv').exists()
+          print(json.dumps(report['evaluation']['test'], indent=2))
+          PY
+      - name: Upload baseline models and reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-baseline-v1
+          path: |
+            /tmp/nbavl-baseline/home-win-logistic.joblib
+            /tmp/nbavl-baseline/home-margin-ridge.joblib
+            /tmp/nbavl-baseline/baseline-report.json
+            /tmp/nbavl-baseline/baseline-predictions.csv
+          retention-days: 14
+          if-no-files-found: error

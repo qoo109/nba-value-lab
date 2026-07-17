@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "dataset_handle": "christophertreasure/nba-odds-data",
+  "source_id": "kaggle_christophertreasure_nba_odds",
+  "default_prediction_run_id": "29551715399",
+  "download_mode": "anonymous_first_optional_KAGGLE_API_TOKEN",
+  "raw_storage_policy": "workflow_temp_only",
+  "artifact_policy": "reports_and_hashes_only",
+  "benchmark_scope": "closing_market_forecast_accuracy_only",
+  "roi_allowed": false,
+  "clv_allowed": false,
+  "betting_edge_claim_allowed": false
+}

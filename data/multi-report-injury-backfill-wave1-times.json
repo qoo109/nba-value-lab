@@ -11,6 +11,16 @@
     "dates": 12,
     "candidate_reports": 36
   },
+  "acquisition_gate": {
+    "minimum_successful_player_reports": 18,
+    "minimum_successful_team_reports": 18,
+    "minimum_overlapping_successful_reports": 18,
+    "minimum_unique_successful_dates": 8,
+    "maximum_failure_rate_per_pipeline": 0.50,
+    "require_unique_requested_timestamps": true,
+    "require_zero_team_submission_conflicts": true,
+    "require_player_rows_removed_before_artifact": true
+  },
   "report_times": [
     "2023-11-06T08:30:00-05:00",
     "2023-11-06T13:30:00-05:00",
@@ -50,7 +60,7 @@
     "2024-04-08T17:30:00-04:00"
   ],
   "notes": [
-    "Dates and slots were fixed by calendar before inspecting outcomes, market prices, or feature coverage.",
+    "Dates, slots, and acquisition thresholds were fixed before inspecting outcomes, market prices, or feature coverage.",
     "Unavailable official PDFs must be recorded as failures and may not be replaced with hand-picked dates.",
     "This registry is an acquisition wave, not a trainable sample table."
   ]

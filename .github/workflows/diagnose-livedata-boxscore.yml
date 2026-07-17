@@ -1,0 +1,97 @@
+name: Diagnose NBA LiveData boxscores
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/diagnose-livedata-boxscore.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install diagnostic dependency
+        run: python -m pip install --disable-pip-version-check httpx
+      - name: Download and adapt Gold schedule
+        run: |
+          rm -rf /tmp/nbavl-livedata-diagnostic
+          mkdir -p /tmp/nbavl-livedata-diagnostic/source /tmp/nbavl-livedata-diagnostic/out
+          gh run download "29551715399" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name historical-gold-multiseason \
+            --dir /tmp/nbavl-livedata-diagnostic/source
+          GOLD_FILE="$(find /tmp/nbavl-livedata-diagnostic/source -name 'historical-gold-multiseason.sqlite.gz' -print -quit)"
+          python scripts/prepare_gold_livedata_schedule.py \
+            --gold "$GOLD_FILE" \
+            --output-db /tmp/nbavl-livedata-diagnostic/gold.sqlite \
+            --mapping-csv /tmp/nbavl-livedata-diagnostic/game-id-map.csv
+      - name: Query three official boxscores without player output
+        run: |
+          python - <<'PY'
+          import json
+          import sqlite3
+          from pathlib import Path
+          import httpx
+
+          db = sqlite3.connect('/tmp/nbavl-livedata-diagnostic/gold.sqlite')
+          rows = db.execute('''
+              SELECT m.game_id, m.game_date, m.away_team_abbr, m.home_team_abbr
+              FROM gold_matchup_features m
+              JOIN gold_team_game_features h ON h.feature_id=m.home_feature_id
+              WHERE h.season_label='2023-24'
+              ORDER BY m.game_date, m.game_id
+              LIMIT 3
+          ''').fetchall()
+          db.close()
+          results = []
+          with httpx.Client(timeout=15, follow_redirects=True) as client:
+              for game_id, game_date, away, home in rows:
+                  url = f'https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json'
+                  item = {'game_id': game_id, 'game_date': game_date, 'gold_matchup': f'{away}@{home}'}
+                  try:
+                      response = client.get(url)
+                      item['status'] = response.status_code
+                      item['bytes'] = len(response.content)
+                      response.raise_for_status()
+                      game = response.json().get('game', {})
+                      item['returned_game_id'] = str(game.get('gameId', '')).zfill(10)
+                      item['returned_matchup'] = (
+                          f"{(game.get('awayTeam') or {}).get('teamTricode','')}@"
+                          f"{(game.get('homeTeam') or {}).get('teamTricode','')}"
+                      )
+                      item['player_count'] = sum(
+                          len((game.get(side) or {}).get('players') or [])
+                          for side in ('awayTeam', 'homeTeam')
+                      )
+                      item['success'] = (
+                          item['returned_game_id'] == game_id
+                          and item['returned_matchup'] == item['gold_matchup']
+                      )
+                  except Exception as exc:
+                      item['success'] = False
+                      item['error'] = f'{type(exc).__name__}: {exc}'
+                  results.append(item)
+          output = {'results': results, 'player_rows_uploaded': False}
+          path = Path('/tmp/nbavl-livedata-diagnostic/out/diagnostic.json')
+          path.write_text(json.dumps(output, indent=2) + '\n')
+          print(json.dumps(output, indent=2))
+          assert all(item['success'] for item in results), output
+          PY
+      - name: Upload aggregate diagnostic only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: livedata-boxscore-diagnostic
+          path: /tmp/nbavl-livedata-diagnostic/out/diagnostic.json
+          retention-days: 3
+          if-no-files-found: warn

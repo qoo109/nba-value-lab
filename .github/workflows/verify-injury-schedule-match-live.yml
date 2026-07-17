@@ -1,0 +1,74 @@
+name: Verify injury snapshot schedule match live
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/verify-injury-schedule-match-live.yml"
+      - "scripts/validate_injury_snapshot_schedule_match.py"
+      - "scripts/import_official_nba_injury_report.py"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  live-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install importer and matching dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+      - name: Download multi-season Gold artifact
+        run: |
+          rm -rf /tmp/nbavl-injury-match-source
+          mkdir -p /tmp/nbavl-injury-match-source
+          gh run download "29551715399" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name historical-gold-multiseason \
+            --dir /tmp/nbavl-injury-match-source
+      - name: Import fixed official report and match schedule
+        run: |
+          rm -rf /tmp/nbavl-injury-match-import /tmp/nbavl-injury-match-output
+          PYTHONPATH=scripts python scripts/import_official_nba_injury_report.py \
+            --report-time "2023-12-18T08:30:00-05:00" \
+            --retain-normalized \
+            --output-dir /tmp/nbavl-injury-match-import
+          GOLD_FILE="$(find /tmp/nbavl-injury-match-source -name 'historical-gold-multiseason.sqlite.gz' -print -quit)"
+          python scripts/validate_injury_snapshot_schedule_match.py \
+            --snapshot-csv /tmp/nbavl-injury-match-import/validation/injury-lineup-snapshots-normalized.csv \
+            --gold "$GOLD_FILE" \
+            --output-dir /tmp/nbavl-injury-match-output
+      - name: Validate exact match and remove player-level output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/nbavl-injury-match-output/injury-snapshot-schedule-match-report.json').read_text())
+          assert report['decision']['ready_for_historical_game_id_join'] is True, report
+          assert report['coverage']['snapshot_rows'] == 118, report
+          assert report['quality']['game_match_rate'] == 1.0, report
+          assert report['quality']['unmatched_games'] == 0, report
+          assert report['quality']['snapshot_side_errors'] == 0, report
+          player_rows = Path('/tmp/nbavl-injury-match-import/validation/injury-lineup-snapshots-normalized.csv')
+          player_rows.unlink()
+          assert not player_rows.exists()
+          print(json.dumps(report, indent=2))
+          PY
+      - name: Upload aggregate QA only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: injury-snapshot-schedule-match-live
+          path: |
+            /tmp/nbavl-injury-match-import/official-injury-report-import-report.json
+            /tmp/nbavl-injury-match-import/validation/injury-lineup-validation-report.json
+            /tmp/nbavl-injury-match-output/injury-snapshot-schedule-match-report.json
+            /tmp/nbavl-injury-match-output/injury-snapshot-game-id-map.csv
+          retention-days: 3
+          if-no-files-found: warn

@@ -1,0 +1,121 @@
+name: Diagnose official NBA injury PDF layout
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/diagnose-official-injury-pdf-layout.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PDF diagnostics
+        run: python -m pip install --disable-pip-version-check httpx pymupdf
+      - name: Inspect table geometry without uploading player rows
+        run: |
+          rm -rf /tmp/nbavl-official-pdf-layout
+          mkdir -p /tmp/nbavl-official-pdf-layout
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+          import httpx
+          import pymupdf
+
+          url = 'https://ak-static.cms.nba.com/referee/injury/Injury-Report_2023-12-18_08AM.pdf'
+          pdf_path = Path('/tmp/nbavl-official-pdf-layout/report.pdf')
+          response = httpx.get(url, timeout=45, follow_redirects=True)
+          response.raise_for_status()
+          pdf_path.write_bytes(response.content)
+
+          known_headers = {
+              'Game Date', 'Game Time', 'Matchup', 'Team',
+              'Player Name', 'Current Status', 'Reason',
+          }
+          status_words = {'Available', 'Probable', 'Questionable', 'Doubtful', 'Out'}
+
+          def classify(cell):
+              text = re.sub(r'\s+', ' ', str(cell or '')).strip()
+              if not text:
+                  return ''
+              if text in known_headers:
+                  return text
+              if text in status_words:
+                  return f'STATUS:{text}'
+              if re.fullmatch(r'\d{2}/\d{2}/\d{4}', text):
+                  return f'DATE:{text}'
+              if re.fullmatch(r'\d{2}:\d{2} \(ET\)', text):
+                  return f'TIME:{text}'
+              if re.fullmatch(r'[A-Z]{3}@[A-Z]{3}', text):
+                  return f'MATCHUP:{text}'
+              if 'NOT YET SUBMITTED' in text.upper():
+                  return 'NOT_YET_SUBMITTED'
+              return f'TEXT[len={len(text)},lines={text.count(chr(10))+1}]'
+
+          document = pymupdf.open(pdf_path)
+          pages = []
+          for page_index, page in enumerate(document):
+              finder = page.find_tables()
+              page_result = {
+                  'page': page_index + 1,
+                  'width': page.rect.width,
+                  'height': page.rect.height,
+                  'table_count': len(finder.tables),
+                  'tables': [],
+              }
+              for table_index, table in enumerate(finder.tables):
+                  extracted = table.extract()
+                  header_names = list(table.header.names) if table.header else []
+                  page_result['tables'].append({
+                      'table': table_index + 1,
+                      'bbox': [round(value, 2) for value in table.bbox],
+                      'column_count': table.col_count,
+                      'row_count': table.row_count,
+                      'header_names': header_names,
+                      'sample_shape_only': [
+                          [classify(cell) for cell in row]
+                          for row in extracted[:8]
+                      ],
+                  })
+              header_blocks = []
+              for block in page.get_text('blocks'):
+                  text = re.sub(r'\s+', ' ', block[4]).strip()
+                  if any(header in text for header in known_headers):
+                      header_blocks.append({
+                          'bbox': [round(value, 2) for value in block[:4]],
+                          'text': text,
+                      })
+              page_result['header_blocks'] = header_blocks
+              pages.append(page_result)
+
+          output = {
+              'url': url,
+              'pdf_bytes': len(response.content),
+              'page_count': len(document),
+              'pages': pages,
+              'raw_pdf_uploaded': False,
+              'player_rows_uploaded': False,
+          }
+          Path('/tmp/nbavl-official-pdf-layout/diagnostic.json').write_text(
+              json.dumps(output, indent=2) + '\n', encoding='utf-8'
+          )
+          pdf_path.unlink()
+          print(json.dumps(output, indent=2))
+          assert any(page['table_count'] > 0 for page in pages), output
+          PY
+      - name: Upload sanitized table diagnostics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-injury-pdf-layout-diagnostic
+          path: /tmp/nbavl-official-pdf-layout/diagnostic.json
+          retention-days: 3
+          if-no-files-found: warn

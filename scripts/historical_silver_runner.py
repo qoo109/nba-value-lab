@@ -11,7 +11,7 @@ from collections import Counter
 from pathlib import Path
 
 from historical_phase2_core import download, extract, select_csv
-from historical_silver_nbastats import normalize_nbastats
+from historical_silver_nbastats import insert_player_aliases, normalize_nbastats
 from historical_silver_pbpstats import aggregate_team_features, insert_possessions, normalize_pbpstats
 from historical_silver_schema import create_schema, gzip_file
 
@@ -117,9 +117,13 @@ def update_reconstruction_flags(db, games, feature_rows):
 
 def write_sample(db, path):
     db.row_factory = sqlite3.Row
-    payload = {"schema_version": "0.2.0-silver", "raw_data_included": False, "tables": {}}
+    payload = {"schema_version": "0.3.0-silver", "raw_data_included": False, "tables": {}}
     for table in ("games", "pbp_events", "possessions", "team_game_features"):
         payload["tables"][table] = [dict(row) for row in db.execute(f"SELECT * FROM {table} LIMIT 5")]
+    payload["tables"]["player_aliases"] = {
+        "row_count": int(db.execute("SELECT COUNT(*) FROM player_aliases").fetchone()[0]),
+        "sample_rows_included": False,
+    }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
@@ -128,6 +132,8 @@ def build(config_path, output_dir, max_mb):
     output_dir.mkdir(parents=True, exist_ok=True)
     sqlite_path = output_dir / "historical-silver.sqlite"
     gzip_path = output_dir / "historical-silver.sqlite.gz"
+    season_label = config["sources"]["pbpstats_2023"]["season_label"]
+    source_id = f"nbastats_{season_label[:4]}"
 
     with tempfile.TemporaryDirectory(prefix="nbavl-silver-") as temp:
         temp = Path(temp)
@@ -139,13 +145,11 @@ def build(config_path, output_dir, max_mb):
         )
         db = sqlite3.connect(sqlite_path)
         create_schema(db)
-        nb_games, nb_report = normalize_nbastats(nba_csv, db)
+        nb_games, player_aliases, nb_report = normalize_nbastats(nba_csv, db)
+        player_alias_count = insert_player_aliases(db, player_aliases, season_label, source_id)
         possessions, opponents, dates, pbp_report = normalize_pbpstats(pbp_csv)
         insert_possessions(db, possessions)
-        games = make_games(
-            nb_games, opponents, dates, possessions,
-            config["sources"]["pbpstats_2023"]["season_label"],
-        )
+        games = make_games(nb_games, opponents, dates, possessions, season_label)
         insert_games(db, games)
         features, feature_report = aggregate_team_features(possessions, games)
         db.executemany(FEATURE_INSERT, features)
@@ -155,6 +159,7 @@ def build(config_path, output_dir, max_mb):
             "follows_current_site_version": "true",
             "rating_points_source": "nbastats_official_final_score",
             "possession_points_usage": "qa_only",
+            "player_identity_schema": "player-aliases-v1",
             "pbpstats_archive_sha256": pbp_source["sha256"],
             "nbastats_archive_sha256": nba_source["sha256"],
             "raw_archives_committed": "false",
@@ -172,8 +177,13 @@ def build(config_path, output_dir, max_mb):
     inference_pass = pbp_report["team_inference_failures"] == 0
     official_pass = feature_report["official_score_coverage_rate"] >= 0.98
     feature_pass = feature_report["team_game_row_count"] >= 2 * int(game_count * 0.98)
+    alias_pass = (
+        player_alias_count == nb_report["player_alias_rows"]
+        and nb_report["unique_player_ids"] >= 300
+        and nb_report["unusable_player_name_rows"] == 0
+    )
     report = {
-        "schema_version": "1.1.0",
+        "schema_version": "1.2.0",
         "pipeline_name": "NBA Value Lab historical Silver adapters",
         "follows_current_site_version": True,
         "sources": {
@@ -185,6 +195,7 @@ def build(config_path, output_dir, max_mb):
             "tables": {
                 "games": game_count,
                 "pbp_events": nb_report["rows_after_exact_dedupe"],
+                "player_aliases": player_alias_count,
                 "possessions": pbp_report["possession_count"],
                 "team_game_features": feature_report["team_game_row_count"],
             },
@@ -195,9 +206,11 @@ def build(config_path, output_dir, max_mb):
             "team_inference_pass": inference_pass,
             "official_score_coverage_pass_98pct": official_pass,
             "feature_coverage_pass_98pct": feature_pass,
+            "player_alias_identity_pass": alias_pass,
         },
         "decision": {
             "ready_for_private_model_feature_pipeline": inference_pass and official_pass and feature_pass,
+            "ready_for_player_identity_matching": alias_pass,
             "rating_points_source": "nbastats_official_final_score",
             "possession_points_status": "qa_only_not_used_for_ratings",
             "raw_data_public_commit_allowed": False,
@@ -216,7 +229,7 @@ def self_test(output_dir):
     db = sqlite3.connect(output_dir / "self-test.sqlite")
     create_schema(db)
     names = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    assert {"games", "pbp_events", "possessions", "team_game_features"} <= names
+    assert {"games", "pbp_events", "player_aliases", "possessions", "team_game_features"} <= names
     db.close()
     (output_dir / "self-test.json").write_text('{"passed":true}\n', encoding="utf-8")
 

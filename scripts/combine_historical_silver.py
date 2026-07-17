@@ -15,7 +15,7 @@ from typing import Any
 
 from historical_silver_schema import create_schema, gzip_file
 
-TABLES = ("games", "pbp_events", "possessions", "team_game_features")
+TABLES = ("games", "pbp_events", "player_aliases", "possessions", "team_game_features")
 
 
 def utc_now() -> str:
@@ -34,9 +34,14 @@ def discover_sources(root: Path) -> list[Path]:
     return paths
 
 
+def existing_tables(db: sqlite3.Connection) -> set[str]:
+    return {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+
+
 def table_counts(db: sqlite3.Connection) -> dict[str, int]:
+    available = existing_tables(db)
     return {
-        table: int(db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+        table: int(db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]) if table in available else 0
         for table in TABLES
     }
 
@@ -45,6 +50,7 @@ def duplicate_counts(db: sqlite3.Connection) -> dict[str, int]:
     queries = {
         "games": "SELECT COUNT(*)-COUNT(DISTINCT game_id) FROM games",
         "pbp_events": "SELECT COUNT(*)-COUNT(DISTINCT event_id) FROM pbp_events",
+        "player_aliases": "SELECT COUNT(*)-COUNT(DISTINCT player_alias_id) FROM player_aliases",
         "possessions": "SELECT COUNT(*)-COUNT(DISTINCT possession_id) FROM possessions",
         "team_game_features": (
             "SELECT COUNT(*)-COUNT(DISTINCT game_id || ':' || team_abbr) "
@@ -68,9 +74,11 @@ def write_preview(db: sqlite3.Connection, destination: Path) -> None:
         for row in db.execute("SELECT DISTINCT season_label FROM games ORDER BY season_label")
     ]
     payload: dict[str, Any] = {
-        "schema_version": "multiseason-silver-v1",
+        "schema_version": "multiseason-silver-v1.1",
         "raw_data_included": False,
         "seasons": seasons,
+        "player_alias_rows": int(db.execute("SELECT COUNT(*) FROM player_aliases").fetchone()[0]),
+        "player_alias_samples_included": False,
         "sample_games": {},
     }
     for season in seasons:
@@ -104,6 +112,7 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
             unpacked = temp / f"season-{index}.sqlite"
             gunzip_to(source, unpacked)
             source_db = sqlite3.connect(unpacked)
+            source_tables = existing_tables(source_db)
             seasons = [
                 row[0]
                 for row in source_db.execute(
@@ -119,9 +128,8 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
 
             db.execute("ATTACH DATABASE ? AS season_db", (str(unpacked),))
             for table in TABLES:
-                db.execute(f"INSERT INTO {table} SELECT * FROM season_db.{table}")
-            # SQLite cannot detach an attached database while its insert
-            # transaction remains open. Commit first, then detach.
+                if table in source_tables:
+                    db.execute(f"INSERT INTO {table} SELECT * FROM season_db.{table}")
             db.commit()
             db.execute("DETACH DATABASE season_db")
 
@@ -129,6 +137,7 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
                 "season_label": seasons[0],
                 "source_file": str(source),
                 "tables": source_counts,
+                "player_alias_table_present": "player_aliases" in source_tables,
                 "pbpstats_archive_sha256": source_metadata.get("pbpstats_archive_sha256"),
                 "nbastats_archive_sha256": source_metadata.get("nbastats_archive_sha256"),
             })
@@ -141,6 +150,7 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
         """UPDATE possessions SET source_id='pbpstats_' || substr((
         SELECT season_label FROM games WHERE games.game_id=possessions.game_id),1,4)"""
     )
+    db.execute("UPDATE player_aliases SET source_id='nbastats_' || substr(season_label,1,4)")
 
     manifest_json = json.dumps(
         manifest, ensure_ascii=False, sort_keys=True, separators=(",", ":")
@@ -148,7 +158,7 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
     manifest_hash = hashlib.sha256(manifest_json.encode("utf-8")).hexdigest()
     combined_metadata = {
         "pipeline_name": "NBA Value Lab combined historical Silver",
-        "schema_version": "multiseason-silver-v1",
+        "schema_version": "multiseason-silver-v1.1",
         "generated_at": generated_at,
         "season_count": str(len(manifest)),
         "season_labels": ",".join(item["season_label"] for item in manifest),
@@ -156,6 +166,7 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
         "source_manifest_json": manifest_json,
         "rating_points_source": "nbastats_official_final_score",
         "possession_points_usage": "qa_only",
+        "player_identity_schema": "player-aliases-v1",
         "raw_archives_committed": "false",
     }
     db.executemany("INSERT INTO metadata VALUES (?,?)", combined_metadata.items())
@@ -173,24 +184,40 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
             "SELECT season_label, COUNT(*) FROM games GROUP BY season_label ORDER BY season_label"
         )
     }
+    alias_season_counts = {
+        row[0]: int(row[1])
+        for row in db.execute(
+            "SELECT season_label, COUNT(*) FROM player_aliases GROUP BY season_label ORDER BY season_label"
+        )
+    }
+    unique_player_ids = int(db.execute("SELECT COUNT(DISTINCT player_id) FROM player_aliases").fetchone()[0])
     write_preview(db, output_dir / "multiseason-silver-sample.json")
     db.execute("VACUUM")
     db.close()
     gzip_file(sqlite_path, gzip_path)
     sqlite_path.unlink()
 
+    alias_ready = (
+        len(alias_season_counts) == len(seasons)
+        and counts["player_aliases"] >= 1000
+        and unique_player_ids >= 400
+        and duplicates["player_aliases"] == 0
+    )
     report = {
-        "schema_version": "multiseason-silver-v1",
+        "schema_version": "multiseason-silver-v1.1",
         "generated_at": generated_at,
         "source_manifest_sha256": manifest_hash,
         "seasons": seasons,
         "season_game_counts": season_game_counts,
+        "player_alias_season_counts": alias_season_counts,
+        "unique_player_ids": unique_player_ids,
         "source_manifest": manifest,
         "outputs": {"database_gzip_bytes": gzip_path.stat().st_size, "tables": counts},
         "quality": {
             "duplicate_rows": duplicates,
             "all_duplicate_checks_pass": all(value == 0 for value in duplicates.values()),
             "season_count": len(seasons),
+            "player_alias_identity_pass": alias_ready,
         },
         "decision": {
             "ready_for_multiseason_gold": (
@@ -199,6 +226,7 @@ def merge_sources(sources: list[Path], output_dir: Path) -> dict[str, Any]:
                 and counts["team_game_features"] >= 6000
                 and all(value == 0 for value in duplicates.values())
             ),
+            "ready_for_player_identity_matching": alias_ready,
             "raw_data_public_commit_allowed": False,
         },
     }
@@ -223,6 +251,14 @@ def build_fixture(path: Path, season: str, game_id: str) -> None:
         "INSERT INTO team_game_features VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         rows,
     )
+    db.execute(
+        "INSERT INTO player_aliases VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            f"alias-{season}", f"player-{season}", "Example Player", "example player",
+            "example player", "10", "AAA", season, game_id, game_id, 1,
+            f"nbastats_{season[:4]}", "",
+        ),
+    )
     db.executemany("INSERT INTO metadata VALUES (?,?)", [
         ("pbpstats_archive_sha256", season + "-pbp"),
         ("nbastats_archive_sha256", season + "-nba"),
@@ -246,6 +282,7 @@ def self_test(output_dir: Path) -> None:
     report = merge_sources(sources, output_dir / "result")
     assert report["quality"]["season_count"] == 3
     assert report["outputs"]["tables"]["games"] == 3
+    assert report["outputs"]["tables"]["player_aliases"] == 3
     assert report["outputs"]["tables"]["team_game_features"] == 6
     assert report["quality"]["all_duplicate_checks_pass"] is True
     (output_dir / "self-test.json").write_text('{"passed":true}\n', encoding="utf-8")

@@ -1,0 +1,206 @@
+name: Build multi-season walk-forward model
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_download_mb:
+        description: "Maximum download MB per source archive"
+        required: true
+        default: "600"
+      season_start_years_json:
+        description: "JSON array of NBA season start years"
+        required: true
+        default: "[2019,2020,2021,2022,2023]"
+  pull_request:
+    paths:
+      - "scripts/combine_historical_silver.py"
+      - "scripts/build_historical_gold_multiseason.py"
+      - "scripts/build_model_walk_forward.py"
+      - ".github/workflows/build-model-walk-forward.yml"
+      - "docs/historical-expansion-walk-forward-v2.md"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install model dependencies
+        run: python -m pip install --disable-pip-version-check numpy scikit-learn joblib
+      - name: Compile expansion modules
+        run: |
+          python -m py_compile \
+            scripts/combine_historical_silver.py \
+            scripts/build_historical_gold_multiseason.py \
+            scripts/build_model_walk_forward.py
+      - name: Test multi-season Silver merge
+        run: |
+          rm -rf /tmp/nbavl-combine-self-test
+          python scripts/combine_historical_silver.py \
+            --self-test \
+            --output-dir /tmp/nbavl-combine-self-test
+          python -m json.tool /tmp/nbavl-combine-self-test/self-test.json >/dev/null
+      - name: Test season-aware Gold features
+        run: |
+          rm -rf /tmp/nbavl-gold-multiseason-self-test
+          python scripts/build_historical_gold_multiseason.py \
+            --self-test \
+            --output-dir /tmp/nbavl-gold-multiseason-self-test
+          python -m json.tool /tmp/nbavl-gold-multiseason-self-test/self-test.json >/dev/null
+      - name: Test walk-forward model
+        run: |
+          rm -rf /tmp/nbavl-walk-forward-self-test
+          python scripts/build_model_walk_forward.py \
+            --self-test \
+            --output-dir /tmp/nbavl-walk-forward-self-test
+          python -m json.tool /tmp/nbavl-walk-forward-self-test/walk-forward-report.json >/dev/null
+          python -m json.tool /tmp/nbavl-walk-forward-self-test/self-test.json >/dev/null
+
+  season-build:
+    if: github.event_name == 'workflow_dispatch'
+    needs: self-test
+    strategy:
+      fail-fast: false
+      matrix:
+        season: ${{ fromJSON(inputs.season_start_years_json) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    env:
+      SEASON_START: ${{ matrix.season }}
+      MAX_DOWNLOAD_MB: ${{ inputs.max_download_mb }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate season-specific source config
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          year = int(os.environ['SEASON_START'])
+          season_label = f"{year}-{str(year + 1)[-2:]}"
+          config = json.loads(Path('config/historical-source-pilot.json').read_text(encoding='utf-8'))
+          for kind in ('pbpstats', 'nbastats'):
+              source = config['sources'][f'{kind}_2023']
+              source['season_label'] = season_label
+              source['url'] = f'https://github.com/shufinskiy/nba_data/raw/main/datasets/{kind}_{year}.tar.xz'
+          Path('/tmp/season-config.json').write_text(json.dumps(config, indent=2), encoding='utf-8')
+          print(season_label)
+          PY
+      - name: Build audited season Silver database
+        run: |
+          rm -rf "/tmp/silver-${SEASON_START}"
+          python scripts/build_historical_silver.py \
+            --config /tmp/season-config.json \
+            --max-download-mb "$MAX_DOWNLOAD_MB" \
+            --output-dir "/tmp/silver-${SEASON_START}"
+      - name: Validate season output
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          root = Path(f"/tmp/silver-{os.environ['SEASON_START']}")
+          report = json.loads((root / 'silver-build-report.json').read_text())
+          assert report['decision']['ready_for_private_model_feature_pipeline'] is True, report['decision']
+          assert report['outputs']['tables']['games'] >= 1000, report['outputs']
+          print(json.dumps(report['outputs']['tables'], indent=2))
+          PY
+      - name: Upload temporary season database
+        uses: actions/upload-artifact@v4
+        with:
+          name: silver-season-${{ matrix.season }}
+          path: |
+            /tmp/silver-${{ matrix.season }}/historical-silver.sqlite.gz
+            /tmp/silver-${{ matrix.season }}/silver-build-report.json
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
+
+  combine-model:
+    if: github.event_name == 'workflow_dispatch'
+    needs: season-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install model dependencies
+        run: python -m pip install --disable-pip-version-check numpy scikit-learn joblib
+      - name: Download all season artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: silver-season-*
+          path: /tmp/season-artifacts
+          merge-multiple: false
+      - name: Combine audited Silver seasons
+        run: |
+          rm -rf /tmp/nbavl-silver-multiseason
+          python scripts/combine_historical_silver.py \
+            --input-root /tmp/season-artifacts \
+            --output-dir /tmp/nbavl-silver-multiseason
+      - name: Build season-aware point-in-time Gold
+        run: |
+          rm -rf /tmp/nbavl-gold-multiseason
+          python scripts/build_historical_gold_multiseason.py \
+            --silver-db /tmp/nbavl-silver-multiseason/historical-silver-multiseason.sqlite.gz \
+            --output-dir /tmp/nbavl-gold-multiseason
+      - name: Train season walk-forward models
+        run: |
+          rm -rf /tmp/nbavl-model-walk-forward
+          python scripts/build_model_walk_forward.py \
+            --silver-db /tmp/nbavl-silver-multiseason/historical-silver-multiseason.sqlite.gz \
+            --gold-db /tmp/nbavl-gold-multiseason/historical-gold-multiseason.sqlite.gz \
+            --output-dir /tmp/nbavl-model-walk-forward
+      - name: Validate expanded outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          silver = json.loads(Path('/tmp/nbavl-silver-multiseason/multiseason-silver-report.json').read_text())
+          gold = json.loads(Path('/tmp/nbavl-gold-multiseason/multiseason-gold-report.json').read_text())
+          model = json.loads(Path('/tmp/nbavl-model-walk-forward/walk-forward-report.json').read_text())
+          assert silver['decision']['ready_for_multiseason_gold'] is True, silver['decision']
+          assert silver['outputs']['tables']['games'] >= 5000, silver['outputs']
+          assert gold['decision']['ready_for_walk_forward_model'] is True, gold['decision']
+          assert gold['quality']['point_in_time']['passed'] is True, gold['quality']
+          assert model['dataset']['season_count'] >= 5, model['dataset']
+          assert model['dataset']['walk_forward_fold_count'] >= 3, model['dataset']
+          assert model['decision']['ready_for_calibration_pilot'] is True, model['decision']
+          print(json.dumps(model['walk_forward']['aggregate_oof'], indent=2))
+          PY
+      - name: Upload multi-season Gold and QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-multiseason
+          path: |
+            /tmp/nbavl-silver-multiseason/multiseason-silver-report.json
+            /tmp/nbavl-silver-multiseason/multiseason-silver-sample.json
+            /tmp/nbavl-gold-multiseason/historical-gold-multiseason.sqlite.gz
+            /tmp/nbavl-gold-multiseason/multiseason-gold-report.json
+            /tmp/nbavl-gold-multiseason/multiseason-gold-sample.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Upload walk-forward models and reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-walk-forward-v2
+          path: |
+            /tmp/nbavl-model-walk-forward/home-win-logistic-elo-v2.joblib
+            /tmp/nbavl-model-walk-forward/home-margin-ridge-elo-v2.joblib
+            /tmp/nbavl-model-walk-forward/walk-forward-report.json
+            /tmp/nbavl-model-walk-forward/walk-forward-predictions.csv
+          retention-days: 14
+          if-no-files-found: error

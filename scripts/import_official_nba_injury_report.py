@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.metadata
 import json
 import re
 import tempfile
@@ -19,10 +18,12 @@ from zoneinfo import ZoneInfo
 
 import httpx
 import pandas as pd
+import pymupdf
 
 from validate_injury_lineup_snapshots import validate
 
-VERSION = "official-nba-injury-report-pdf-pilot-v1.2"
+VERSION = "official-nba-injury-report-pdf-pilot-v1.3"
+LAYOUT_VERSION = "official-landscape-seven-column-2023-v1"
 ET = ZoneInfo("America/New_York")
 TEAM_NAME_TO_ABBR = {
     "Atlanta Hawks": "ATL", "Brooklyn Nets": "BKN", "Boston Celtics": "BOS",
@@ -37,9 +38,19 @@ TEAM_NAME_TO_ABBR = {
     "San Antonio Spurs": "SAS", "Toronto Raptors": "TOR", "Utah Jazz": "UTA",
     "Washington Wizards": "WAS",
 }
-EXPECTED_COLUMNS = {
+ALLOWED_STATUSES = {"Available", "Probable", "Questionable", "Doubtful", "Out"}
+OUTPUT_COLUMNS = [
     "game_date", "game_time", "matchup", "team", "player_name", "current_status", "reason"
-}
+]
+COLUMN_BOUNDS = (
+    ("game_date", 0.0, 100.0),
+    ("game_time", 100.0, 190.0),
+    ("matchup", 190.0, 255.0),
+    ("team", 255.0, 415.0),
+    ("player_name", 415.0, 575.0),
+    ("current_status", 575.0, 655.0),
+    ("reason", 655.0, 900.0),
+)
 
 
 def utc_now() -> str:
@@ -50,8 +61,8 @@ def iso_utc(value: datetime) -> str:
     return value.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def normalize_column(value: Any) -> str:
-    return re.sub(r"[^a-z0-9]+", "_", str(value).strip().lower()).strip("_")
+def normalize_space(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "")).strip()
 
 
 def parse_report_time(value: str) -> datetime:
@@ -64,15 +75,13 @@ def parse_report_time(value: str) -> datetime:
 
 def report_url(report_time: datetime) -> str:
     local = report_time.astimezone(ET)
-    # Official publication links encode the report hour and AM/PM only. For example, the
-    # report published at 08:30 ET is stored as Injury-Report_YYYY-MM-DD_08AM.pdf.
+    # Official publication links encode the report hour and AM/PM only. The report published
+    # at 08:30 ET is stored as Injury-Report_YYYY-MM-DD_08AM.pdf.
     filename = local.strftime("Injury-Report_%Y-%m-%d_%I%p.pdf")
     return f"https://ak-static.cms.nba.com/referee/injury/{filename}"
 
 
 def download_pdf(url: str, destination: Path) -> tuple[str, int]:
-    # The official CDN currently rejects Python requests' default transport for these public
-    # PDF objects. A standard httpx client works without authentication, cookies or bypasses.
     with httpx.Client(follow_redirects=True, timeout=45.0) as client:
         response = client.get(url=url)
     response.raise_for_status()
@@ -85,22 +94,162 @@ def download_pdf(url: str, destination: Path) -> tuple[str, int]:
     return hashlib.sha256(payload).hexdigest(), len(payload)
 
 
-def parse_pdf(path: Path) -> pd.DataFrame:
-    try:
-        from nba_injury_report_pdf_to_df import pdf_to_df
-    except ImportError as exc:
-        raise RuntimeError("nba-injury-report-pdf-to-df==0.1.7 is required") from exc
-    frame = pdf_to_df(str(path))
-    if not isinstance(frame, pd.DataFrame):
-        frame = pd.DataFrame(frame)
-    frame = frame.rename(columns={column: normalize_column(column) for column in frame.columns})
-    missing = sorted(EXPECTED_COLUMNS - set(frame.columns))
-    if missing:
-        raise ValueError(f"official PDF parser missing columns: {missing}; got={list(frame.columns)}")
-    for column in ("game_date", "game_time", "matchup", "team"):
-        frame[column] = frame[column].replace("", pd.NA).ffill()
-    frame = frame.dropna(subset=["game_date", "game_time", "matchup", "team", "player_name"])
-    return frame.reset_index(drop=True)
+def word_column(x0: float) -> str | None:
+    for name, left, right in COLUMN_BOUNDS:
+        if left <= x0 < right:
+            return name
+    return None
+
+
+def join_words(words: list[dict[str, Any]]) -> str:
+    ordered = sorted(words, key=lambda item: (item["center_y"], item["x0"]))
+    return normalize_space(" ".join(item["text"] for item in ordered))
+
+
+def group_physical_lines(words: list[dict[str, Any]], tolerance: float = 2.5) -> list[dict[str, Any]]:
+    lines: list[dict[str, Any]] = []
+    for word in sorted(words, key=lambda item: (item["center_y"], item["x0"])):
+        target = None
+        for line in reversed(lines[-4:]):
+            if abs(line["center_y"] - word["center_y"]) <= tolerance:
+                target = line
+                break
+        if target is None:
+            target = {"center_y": word["center_y"], "words": []}
+            lines.append(target)
+        target["words"].append(word)
+        target["center_y"] = sum(item["center_y"] for item in target["words"]) / len(target["words"])
+    for line in lines:
+        line["words"].sort(key=lambda item: item["x0"])
+        cells = {name: [] for name, _, _ in COLUMN_BOUNDS}
+        for word in line["words"]:
+            column = word_column(word["x0"])
+            if column:
+                cells[column].append(word)
+        line["cells"] = {name: join_words(items) for name, items in cells.items()}
+    return lines
+
+
+def page_words(page: pymupdf.Page) -> list[dict[str, Any]]:
+    words = []
+    for x0, y0, x1, y1, text, block, line, word in page.get_text("words", sort=True):
+        center_y = (float(y0) + float(y1)) / 2.0
+        if center_y < 95.0 or center_y > 530.0:
+            continue
+        words.append({
+            "x0": float(x0), "y0": float(y0), "x1": float(x1), "y1": float(y1),
+            "center_y": center_y, "text": str(text),
+            "block": int(block), "line": int(line), "word": int(word),
+        })
+    return words
+
+
+def is_header_line(line: dict[str, Any]) -> bool:
+    if line["center_y"] >= 125.0:
+        return False
+    combined = " ".join(item["text"] for item in line["words"])
+    return "Game Date" in combined and "Player Name" in combined and "Current Status" in combined
+
+
+def update_context(state: dict[str, str], cells: dict[str, str]) -> None:
+    for field in ("game_date", "game_time", "matchup", "team"):
+        value = normalize_space(cells.get(field))
+        if value:
+            state[field] = value
+
+
+def parse_pdf(path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
+    document = pymupdf.open(path)
+    state = {"game_date": "", "game_time": "", "matchup": "", "team": ""}
+    records: list[dict[str, str]] = []
+    parse_errors: list[str] = []
+    submission_rows = 0
+    page_summaries = []
+
+    for page_index, page in enumerate(document):
+        words = page_words(page)
+        lines = [line for line in group_physical_lines(words) if not is_header_line(line)]
+        context_events = []
+        anchors = []
+        for line in lines:
+            cells = line["cells"]
+            if any(cells[field] for field in ("game_date", "game_time", "matchup", "team")):
+                context_events.append(line)
+            status = normalize_space(cells["current_status"])
+            if status in ALLOWED_STATUSES:
+                anchors.append(line["center_y"])
+            if "NOT YET SUBMITTED" in normalize_space(cells["reason"]).upper():
+                submission_rows += 1
+
+        anchors = sorted({round(value, 3) for value in anchors})
+        context_events.sort(key=lambda item: item["center_y"])
+        event_index = 0
+        page_records = 0
+
+        for anchor_index, anchor in enumerate(anchors):
+            while event_index < len(context_events) and context_events[event_index]["center_y"] <= anchor + 2.5:
+                update_context(state, context_events[event_index]["cells"])
+                event_index += 1
+
+            lower = 95.0 if anchor_index == 0 else (anchors[anchor_index - 1] + anchor) / 2.0
+            upper = 530.0 if anchor_index + 1 == len(anchors) else (anchor + anchors[anchor_index + 1]) / 2.0
+            band = [word for word in words if lower <= word["center_y"] < upper]
+            player_words = [word for word in band if word_column(word["x0"]) == "player_name"]
+            status_words = [word for word in band if word_column(word["x0"]) == "current_status"]
+            reason_words = [word for word in band if word_column(word["x0"]) == "reason"]
+            player = join_words(player_words)
+            status = join_words(status_words)
+            reason = join_words(reason_words)
+
+            row_errors = []
+            if not player:
+                row_errors.append("missing player name")
+            if status not in ALLOWED_STATUSES:
+                row_errors.append(f"invalid status {status!r}")
+            for field in ("game_date", "game_time", "matchup", "team"):
+                if not state[field]:
+                    row_errors.append(f"missing carried {field}")
+            if row_errors:
+                parse_errors.append(
+                    f"page {page_index + 1} anchor {anchor:.2f}: " + "; ".join(row_errors)
+                )
+                continue
+
+            records.append({
+                "game_date": state["game_date"],
+                "game_time": state["game_time"],
+                "matchup": state["matchup"],
+                "team": state["team"],
+                "player_name": player,
+                "current_status": status,
+                "reason": reason,
+            })
+            page_records += 1
+
+        while event_index < len(context_events):
+            update_context(state, context_events[event_index]["cells"])
+            event_index += 1
+
+        page_summaries.append({
+            "page": page_index + 1,
+            "physical_lines": len(lines),
+            "status_anchors": len(anchors),
+            "parsed_player_rows": page_records,
+        })
+
+    frame = pd.DataFrame(records, columns=OUTPUT_COLUMNS)
+    qa = {
+        "layout_version": LAYOUT_VERSION,
+        "page_count": len(document),
+        "parsed_player_rows": int(len(frame)),
+        "not_yet_submitted_team_rows": int(submission_rows),
+        "parse_errors": len(parse_errors),
+        "parse_error_examples": parse_errors[:50],
+        "page_summaries": page_summaries,
+    }
+    if frame.empty:
+        raise ValueError(f"native PDF parser produced no player rows: {qa}")
+    return frame, qa
 
 
 def parse_matchup(value: Any) -> tuple[str, str]:
@@ -117,7 +266,6 @@ def parse_game_time(game_date: Any, game_time: Any) -> datetime:
     if not match:
         raise ValueError(f"unsupported game time: {game_time!r}")
     hour, minute = int(match.group(1)), int(match.group(2))
-    # NBA reports use ET and omit AM/PM. Scheduled games are noon-or-later ET.
     if 1 <= hour <= 11:
         hour += 12
     if hour > 23 or minute > 59:
@@ -136,7 +284,7 @@ def source_rows(
     for index, item in frame.iterrows():
         try:
             away, home = parse_matchup(item["matchup"])
-            team_name = str(item["team"]).strip()
+            team_name = normalize_space(item["team"])
             team = TEAM_NAME_TO_ABBR[team_name]
             if team not in {away, home}:
                 raise ValueError(f"team {team} does not belong to matchup {away}@{home}")
@@ -153,11 +301,9 @@ def source_rows(
                 "opponent_abbr": opponent,
                 "is_home": int(team == home),
                 "player_id": "",
-                "player_name": str(item["player_name"]).strip(),
-                "source_status_raw": str(item["current_status"]).strip(),
-                "source_reason_raw": str(item["reason"]).strip(),
-                # For archived official reports, publication time is the earliest verifiable
-                # public availability time. Retrieval time is stored separately below.
+                "player_name": normalize_space(item["player_name"]),
+                "source_status_raw": normalize_space(item["current_status"]),
+                "source_reason_raw": normalize_space(item["reason"]),
                 "observed_at": observed_at,
                 "source_report_time": observed_at,
                 "source_provider": "NBA Official Injury Report",
@@ -177,7 +323,7 @@ def run(report_time_text: str, output_dir: Path, retain_normalized: bool = False
     with tempfile.TemporaryDirectory(prefix="nbavl-official-injury-") as temp_name:
         pdf_path = Path(temp_name) / "official-injury-report.pdf"
         source_hash, source_bytes = download_pdf(url, pdf_path)
-        parsed = parse_pdf(pdf_path)
+        parsed, parser_qa = parse_pdf(pdf_path)
         raw_rows, conversion_errors = source_rows(parsed, report_time, url, source_hash)
         validation_dir = output_dir / "validation"
         validation = validate(raw_rows, validation_dir)
@@ -186,6 +332,7 @@ def run(report_time_text: str, output_dir: Path, retain_normalized: bool = False
             normalized_path.unlink()
 
     status_counts = parsed["current_status"].astype(str).str.strip().value_counts().sort_index().to_dict()
+    all_conversion_errors = parser_qa["parse_error_examples"] + conversion_errors
     report = {
         "schema_version": VERSION,
         "generated_at": utc_now(),
@@ -197,8 +344,9 @@ def run(report_time_text: str, output_dir: Path, retain_normalized: bool = False
             "source_file_sha256": source_hash,
             "source_size_bytes": source_bytes,
             "download_client": "httpx",
-            "parser_package": "nba-injury-report-pdf-to-df",
-            "parser_version": importlib.metadata.version("nba-injury-report-pdf-to-df"),
+            "parser_engine": "PyMuPDF native word coordinates",
+            "parser_version": pymupdf.VersionBind,
+            "layout_version": LAYOUT_VERSION,
         },
         "coverage": {
             "pdf_parsed_rows": int(len(parsed)),
@@ -207,21 +355,23 @@ def run(report_time_text: str, output_dir: Path, retain_normalized: bool = False
             "games": int(validation["coverage"]["games"]),
             "teams": int(validation["coverage"]["teams"]),
             "players": int(validation["coverage"]["players"]),
+            "not_yet_submitted_team_rows": int(parser_qa["not_yet_submitted_team_rows"]),
             "raw_status_counts": status_counts,
         },
         "quality": {
-            "conversion_errors": len(conversion_errors),
-            "conversion_error_examples": conversion_errors[:50],
+            "conversion_errors": len(all_conversion_errors),
+            "conversion_error_examples": all_conversion_errors[:50],
             "contract_errors": int(validation["quality"]["errors"]),
             "contract_warnings": int(validation["quality"]["warnings"]),
             "point_in_time_rule_passed": bool(validation["quality"]["point_in_time_rule_passed"]),
             "raw_pdf_deleted": True,
             "normalized_player_rows_retained": bool(retain_normalized),
+            "parser_qa": parser_qa,
         },
         "decision": {
             "ready_for_manual_official_pdf_pilot": bool(
                 raw_rows
-                and not conversion_errors
+                and not all_conversion_errors
                 and validation["decision"]["ready_for_point_in_time_feature_build"]
             ),
             "ready_for_automated_backfill": False,
@@ -235,6 +385,7 @@ def run(report_time_text: str, output_dir: Path, retain_normalized: bool = False
             "raw_pdf_committed_or_uploaded": False,
             "player_level_rows_uploaded_by_default": False,
             "third_party_injury_client_runtime_dependency": False,
+            "third_party_pdf_parser_runtime_dependency": False,
         },
     }
     (output_dir / "official-injury-report-import-report.json").write_text(
@@ -244,21 +395,21 @@ def run(report_time_text: str, output_dir: Path, retain_normalized: bool = False
 
 
 def self_test(output_dir: Path) -> None:
-    frame = pd.DataFrame([
-        {
-            "Game Date": "12/18/2023", "Game Time": "09:00 (ET)", "Matchup": "DAL@DEN",
-            "Team": "Dallas Mavericks", "Player Name": "Lively II, Dereck",
-            "Current Status": "Out", "Reason": "Injury/Illness - Left Ankle; Sprain",
-        },
-        {
-            "Game Date": "12/18/2023", "Game Time": "09:00 (ET)", "Matchup": "DAL@DEN",
-            "Team": "Denver Nuggets", "Player Name": "Gordon, Aaron",
-            "Current Status": "Probable", "Reason": "Injury/Illness - Right Heel; Strain",
-        },
-    ]).rename(columns=lambda column: normalize_column(column))
     report_time = parse_report_time("2023-12-18T08:30:00-05:00")
     assert report_url(report_time).endswith("Injury-Report_2023-12-18_08AM.pdf")
-    rows, errors = source_rows(frame, report_time, report_url(report_time), "a" * 64)
+    synthetic = pd.DataFrame([
+        {
+            "game_date": "12/18/2023", "game_time": "09:00 (ET)", "matchup": "DAL@DEN",
+            "team": "Dallas Mavericks", "player_name": "Lively II, Dereck",
+            "current_status": "Out", "reason": "Injury/Illness - Left Ankle; Sprain",
+        },
+        {
+            "game_date": "12/18/2023", "game_time": "09:00 (ET)", "matchup": "DAL@DEN",
+            "team": "Denver Nuggets", "player_name": "Gordon, Aaron",
+            "current_status": "Probable", "reason": "Injury/Illness - Right Heel; Strain",
+        },
+    ])
+    rows, errors = source_rows(synthetic, report_time, report_url(report_time), "a" * 64)
     assert not errors, errors
     validation = validate(rows, output_dir)
     assert validation["normalized_rows"] == 2, validation

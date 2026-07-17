@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0.0",
+  "registry_version": "1.0.0",
+  "updated_at": "2026-07-17T12:25:00+08:00",
+  "timezone": "Asia/Taipei",
+  "sources": [
+    {
+      "source_id": "oddsportal_nba_results",
+      "name": "OddsPortal NBA historical results and odds",
+      "url": "https://www.oddsportal.com/basketball/usa/nba/results/",
+      "status": "manual_reference_only",
+      "use_cases": ["single_game_crosscheck", "multi_book_visual_comparison", "manual_qa"],
+      "coverage_claim": "NBA season pages visible from 1998-99 onward as of 2026-07-17",
+      "timestamp_quality": "web_display_only",
+      "automation_allowed": false,
+      "commit_policy": "no_scraped_database_content",
+      "legal_review": {
+        "terms_url": "https://www.oddsportal.com/terms/",
+        "summary": "Terms restrict use to personal use and prohibit unapproved extraction, scraping, aggregation, recreation and automated requests."
+      },
+      "notes": "Use only for manual spot checks; never use as an automated historical odds feed."
+    },
+    {
+      "source_id": "sportsbookreviewsonline_nba_archive_legacy",
+      "name": "SportsbookReviewOnline legacy NBA odds archive",
+      "url": "https://sportsbookreviewsonline.com/scoresoddsarchives/nba/nbaoddsarchives.htm",
+      "status": "unavailable_legacy_reference",
+      "use_cases": ["provenance_reference"],
+      "availability_checked_at": "2026-07-17",
+      "availability_result": "404",
+      "timestamp_quality": "unknown",
+      "automation_allowed": false,
+      "commit_policy": "do_not_commit_unlicensed_archive_files",
+      "notes": "Use mirrored datasets only after license, provenance and schema review."
+    },
+    {
+      "source_id": "covers_nba_sports_odds_history",
+      "name": "Covers Sports Odds History - NBA",
+      "url": "https://www.covers.com/sportsoddshistory/nba-odds/",
+      "status": "manual_futures_reference",
+      "use_cases": ["championship_futures", "conference_futures", "season_win_totals", "historical_futures_research"],
+      "timestamp_quality": "futures_archive_display",
+      "automation_allowed": false,
+      "commit_policy": "manual_notes_only",
+      "notes": "Not suitable for game-level moneyline, T-60m, Closing or CLV backtests."
+    },
+    {
+      "source_id": "kaggle_christophertreasure_nba_odds",
+      "name": "Kaggle - Christopher Treasure NBA Odds Data",
+      "url": "https://www.kaggle.com/datasets/christophertreasure/nba-odds-data",
+      "status": "closing_benchmark_pilot",
+      "use_cases": ["closing_moneyline_benchmark", "spread_reference", "totals_reference"],
+      "coverage_claim": "2008-2023 regular seasons; 2023 described as incomplete",
+      "timestamp_quality": "closing_label_only_or_unknown",
+      "license": "Other (specified in description)",
+      "provenance": "Dataset description references SportsbookReviewOnline legacy archive",
+      "automation_allowed": "download_after_manual_approval",
+      "commit_policy": "raw_files_workflow_temp_only",
+      "required_checks": ["sha256", "dataset_version", "columns", "team_mapping", "duplicate_games", "moneyline_range", "overround", "season_coverage"],
+      "notes": "First candidate for closing-market benchmark; never treat as exact point-in-time entry odds."
+    },
+    {
+      "source_id": "kaggle_ehallmar_nba_historical_betting",
+      "name": "Kaggle - Evan Hallmark NBA Historical Stats and Betting Data",
+      "url": "https://www.kaggle.com/datasets/ehallmar/nba-historical-stats-and-betting-data",
+      "status": "manual_review",
+      "use_cases": ["moneyline_crosscheck", "spread_crosscheck", "totals_crosscheck"],
+      "coverage_claim": "Multiple betting and NBA data CSV files; dataset page is several years old",
+      "timestamp_quality": "unknown",
+      "license": "Unknown",
+      "automation_allowed": false,
+      "commit_policy": "no_public_redistribution",
+      "notes": "Do not place in automated pipeline until license and provenance are clarified."
+    },
+    {
+      "source_id": "kaggle_erichqiu_nba_odds_scores",
+      "name": "Kaggle - Eric Qiu NBA Odds and Scores",
+      "url": "https://www.kaggle.com/datasets/erichqiu/nba-odds-and-scores",
+      "status": "crosscheck_pilot",
+      "use_cases": ["scores_crosscheck", "moneyline_crosscheck", "playoff_coverage_check"],
+      "coverage_claim": "Most of the previous decade, regular season and playoffs",
+      "timestamp_quality": "unknown",
+      "license": "CC0 on Kaggle page",
+      "provenance": "Description says compiled from various sources",
+      "automation_allowed": "download_after_schema_review",
+      "commit_policy": "normalized_small_qa_outputs_only",
+      "required_checks": ["source_provenance", "bookmaker_definition", "opening_closing_semantics", "team_mapping", "date_coverage"],
+      "notes": "CC0 label does not remove the need for provenance and timestamp-quality checks."
+    },
+    {
+      "source_id": "kaggle_oddsportal_scraped_datasets",
+      "name": "Kaggle datasets derived from OddsPortal scraping",
+      "status": "blocked_for_automation",
+      "use_cases": ["manual_research_only"],
+      "timestamp_quality": "dataset_specific",
+      "automation_allowed": false,
+      "commit_policy": "do_not_import_without_legal_review",
+      "notes": "A downloadable mirror does not override original website terms or database rights."
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+source_id,source_event_id,game_id,season_label,home_team_abbr,away_team_abbr,commence_time_utc,observed_at_utc,fetched_at_utc,bookmaker,market_key,snapshot_label,home_price_decimal,away_price_decimal,raw_hash,adapter_version
+user_odds,EXAMPLE_EVENT,EXAMPLE_GAME_ID,2023-24,BOS,PHI,2023-10-18T23:30:00Z,2023-10-18T22:30:00Z,2023-10-18T22:31:00Z,ExampleBook,h2h,T-60m,1.80,2.10,,point-in-time-odds-v1
+user_odds,EXAMPLE_EVENT,EXAMPLE_GAME_ID,2023-24,BOS,PHI,2023-10-18T23:30:00Z,2023-10-18T23:25:00Z,2023-10-18T23:25:30Z,ExampleBook,h2h,Closing,1.76,2.18,,point-in-time-odds-v1

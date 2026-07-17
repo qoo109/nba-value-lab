@@ -81,14 +81,46 @@ jobs:
           echo "GOLD_FILE=$GOLD_FILE" >> "$GITHUB_ENV"
       - name: Import two Gold-validated boxscore seasons
         run: |
+          mkdir -p /tmp/nbavl-player-value-live/boxscores-2022 /tmp/nbavl-player-value-live/boxscores-2023
+          set +e
           PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
             --season 2022-23 \
             --gold "$GOLD_FILE" \
-            --output-dir /tmp/nbavl-player-value-live/boxscores-2022
+            --output-dir /tmp/nbavl-player-value-live/boxscores-2022 \
+            > /tmp/nbavl-player-value-live/boxscores-2022/execution.log 2>&1
+          CODE22=$?
+          echo "$CODE22" > /tmp/nbavl-player-value-live/boxscores-2022/exit-code.txt
+          cat /tmp/nbavl-player-value-live/boxscores-2022/execution.log
+
           PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
             --season 2023-24 \
             --gold "$GOLD_FILE" \
-            --output-dir /tmp/nbavl-player-value-live/boxscores-2023
+            --output-dir /tmp/nbavl-player-value-live/boxscores-2023 \
+            > /tmp/nbavl-player-value-live/boxscores-2023/execution.log 2>&1
+          CODE23=$?
+          echo "$CODE23" > /tmp/nbavl-player-value-live/boxscores-2023/exit-code.txt
+          cat /tmp/nbavl-player-value-live/boxscores-2023/execution.log
+          exit 0
+      - name: Upload source import diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-player-boxscore-import-diagnostics
+          path: |
+            /tmp/nbavl-player-value-live/boxscores-2022/execution.log
+            /tmp/nbavl-player-value-live/boxscores-2022/exit-code.txt
+            /tmp/nbavl-player-value-live/boxscores-2022/open-player-boxscore-import-report.json
+            /tmp/nbavl-player-value-live/boxscores-2023/execution.log
+            /tmp/nbavl-player-value-live/boxscores-2023/exit-code.txt
+            /tmp/nbavl-player-value-live/boxscores-2023/open-player-boxscore-import-report.json
+          retention-days: 3
+          if-no-files-found: warn
+      - name: Require both source imports
+        run: |
+          test "$(cat /tmp/nbavl-player-value-live/boxscores-2022/exit-code.txt)" = "0"
+          test "$(cat /tmp/nbavl-player-value-live/boxscores-2023/exit-code.txt)" = "0"
+          test -s /tmp/nbavl-player-value-live/boxscores-2022/open-player-boxscores.csv
+          test -s /tmp/nbavl-player-value-live/boxscores-2023/open-player-boxscores.csv
       - name: Combine temporary boxscore rows
         run: |
           python - <<'PY'

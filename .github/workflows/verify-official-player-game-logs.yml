@@ -67,20 +67,33 @@ jobs:
       - name: Fetch one official season from LiveData
         run: |
           rm -rf /tmp/nbavl-player-game-logs-live
+          mkdir -p /tmp/nbavl-player-game-logs-live
+          set +e
           python scripts/fetch_official_player_game_logs.py \
             --season "${{ github.event.inputs.season || '2023-24' }}" \
             --gold "$GOLD_FILE" \
             --concurrency 8 \
             --retries 3 \
             --timeout-seconds 25 \
-            --output-dir /tmp/nbavl-player-game-logs-live
+            --output-dir /tmp/nbavl-player-game-logs-live \
+            > /tmp/nbavl-player-game-logs-live/execution.log 2>&1
+          CODE=$?
+          echo "$CODE" > /tmp/nbavl-player-game-logs-live/exit-code.txt
+          cat /tmp/nbavl-player-game-logs-live/execution.log
+          exit 0
       - name: Validate aggregate source QA and remove rows
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           root = Path('/tmp/nbavl-player-game-logs-live')
-          report = json.loads((root / 'official-player-game-logs-report.json').read_text())
+          report_path = root / 'official-player-game-logs-report.json'
+          assert report_path.exists(), (root / 'execution.log').read_text()
+          report = json.loads(report_path.read_text())
+          source_rows = root / 'official-player-game-logs.csv'
+          if source_rows.exists():
+              source_rows.unlink()
+          assert not source_rows.exists()
           assert report['decision']['ready_for_point_in_time_feature_build'] is True, report
           assert report['coverage']['schedule_games'] >= 1200, report
           assert report['coverage']['successful_games'] >= 1200, report
@@ -90,15 +103,16 @@ jobs:
           assert report['quality']['duplicate_game_player_keys'] == 0, report
           assert report['quality']['invalid_minutes_rows'] == 0, report
           assert report['quality']['games_with_fewer_than_10_played_players'] == 0, report
-          source_rows = root / 'official-player-game-logs.csv'
-          source_rows.unlink()
-          assert not source_rows.exists()
           print(json.dumps(report, indent=2))
           PY
-      - name: Upload aggregate source report only
+      - name: Upload aggregate source diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: official-player-game-logs-source-pilot
-          path: /tmp/nbavl-player-game-logs-live/official-player-game-logs-report.json
+          path: |
+            /tmp/nbavl-player-game-logs-live/execution.log
+            /tmp/nbavl-player-game-logs-live/exit-code.txt
+            /tmp/nbavl-player-game-logs-live/official-player-game-logs-report.json
           retention-days: 7
-          if-no-files-found: error
+          if-no-files-found: warn

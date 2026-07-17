@@ -13,6 +13,7 @@ on:
         default: "christophertreasure/nba-odds-data"
   pull_request:
     paths:
+      - "scripts/run_christopher_treasure_closing_benchmark.py"
       - "scripts/run_kaggle_closing_benchmark.py"
       - "scripts/import_closing_odds_archive.py"
       - "scripts/evaluate_closing_market_benchmark.py"
@@ -40,7 +41,8 @@ jobs:
           python -m py_compile scripts/import_closing_odds_archive.py
           python -m py_compile scripts/evaluate_closing_market_benchmark.py
           python -m py_compile scripts/run_kaggle_closing_benchmark.py
-      - name: Run local Kaggle runner self-test
+          python -m py_compile scripts/run_christopher_treasure_closing_benchmark.py
+      - name: Run generic Kaggle runner self-test
         run: |
           rm -rf /tmp/nbavl-kaggle-runner-test
           python scripts/run_kaggle_closing_benchmark.py \
@@ -49,6 +51,31 @@ jobs:
           python -m json.tool /tmp/nbavl-kaggle-runner-test/kaggle-run-status.json >/dev/null
           python -m json.tool /tmp/nbavl-kaggle-runner-test/benchmark/closing-benchmark-report.json >/dev/null
           test ! -f /tmp/nbavl-kaggle-runner-test/selected-import/closing-moneyline-normalized.csv
+      - name: Test Christopher Treasure team-centric parser
+        run: |
+          rm -rf /tmp/nbavl-christopher-parser-test
+          mkdir -p /tmp/nbavl-christopher-parser-test
+          PYTHONPATH=scripts python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd
+          from run_christopher_treasure_closing_benchmark import normalize_team_centric_archive
+
+          root = Path('/tmp/nbavl-christopher-parser-test')
+          source = root / 'oddsData.csv'
+          output = root / 'closing.csv'
+          pd.DataFrame([
+            {'date':'2022-10-18','season':2023,'team':'Boston','home/visitor':'H','opponent':'Philadelphia','moneyLine':-140,'opponentMoneyLine':120},
+            {'date':'2022-10-18','season':2023,'team':'Philadelphia','home/visitor':'V','opponent':'Boston','moneyLine':120,'opponentMoneyLine':-140},
+            {'date':'2022-10-19','season':2023,'team':'Phoenix','home/visitor':'H','opponent':'Dallas','moneyLine':-130,'opponentMoneyLine':110},
+            {'date':'2022-10-19','season':2023,'team':'Dallas','home/visitor':'V','opponent':'Phoenix','moneyLine':110,'opponentMoneyLine':-130},
+          ]).to_csv(source, index=False)
+          report = normalize_team_centric_archive(source, output, 'self_test_christopher')
+          assert report['coverage']['normalized_games'] == 2, report
+          assert report['quality']['mirrored_rows_deduplicated'] == 2, report
+          assert output.exists()
+          print(json.dumps(report['quality'], indent=2))
+          PY
 
   live-benchmark:
     if: github.event_name == 'workflow_dispatch'
@@ -79,7 +106,7 @@ jobs:
       - name: Download Kaggle dataset and run closing benchmark
         run: |
           rm -rf /tmp/nbavl-kaggle-closing-benchmark
-          python scripts/run_kaggle_closing_benchmark.py \
+          python scripts/run_christopher_treasure_closing_benchmark.py \
             --dataset-handle "$DATASET_HANDLE" \
             --predictions /tmp/nbavl-walk-forward-source/walk-forward-predictions.csv \
             --source-id kaggle_christophertreasure_nba_odds \
@@ -99,9 +126,9 @@ jobs:
           assert report['decision']['ready_for_betting_edge_claim'] is False, report['decision']
           assert not (root / 'selected-import/closing-moneyline-normalized.csv').exists()
           print(json.dumps({
-              'matched_games': report['coverage']['matched_games'],
-              'matched_seasons': report['coverage']['matched_seasons'],
-              'ready_for_market_accuracy_comparison': report['decision']['ready_for_market_accuracy_comparison'],
+            'matched_games': report['coverage']['matched_games'],
+            'matched_seasons': report['coverage']['matched_seasons'],
+            'ready_for_market_accuracy_comparison': report['decision']['ready_for_market_accuracy_comparison'],
           }, indent=2))
           PY
       - name: Upload reports only

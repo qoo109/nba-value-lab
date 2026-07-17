@@ -31,7 +31,7 @@ dates: 12
 candidate reports: 36
 ```
 
-Unavailable official PDFs remain failed observations. They may not be replaced by dates selected after seeing data quality, outcomes, market prices, or feature coverage.
+Unavailable or structurally rejected official PDFs remain failed observations. They may not be replaced by dates selected after seeing data quality, outcomes, market prices, or feature coverage.
 
 ## Predeclared acquisition gate
 
@@ -53,7 +53,7 @@ Additional mandatory gates:
 - aggregate reports agree with source indexes;
 - player-level normalized rows are deleted before Artifact upload.
 
-These thresholds cannot be loosened after seeing the Wave 1 results.
+These thresholds were not changed after seeing the Wave 1 results.
 
 ## Acquisition pipelines
 
@@ -105,6 +105,84 @@ The audit records:
 - structural conflicts;
 - sensitive file deletion status.
 
+## Verified official result
+
+Verified workflow run:
+
+```text
+29594037731
+```
+
+### Report availability
+
+| Item | Result |
+|---|---:|
+| Candidate reports | 36 |
+| Calendar dates | 12 |
+| Player pipeline successes | 34 |
+| Team pipeline successes | 33 |
+| Overlapping successes | 31 |
+| Player successful dates | 12 |
+| Team successful dates | 12 |
+| Overlapping successful dates | 12 |
+| Player failure rate | 5.56% |
+| Team failure rate | 8.33% |
+
+Every predeclared acquisition threshold passed.
+
+### Source coverage
+
+| Item | Result |
+|---|---:|
+| Temporary normalized player rows | 2,942 |
+| Player-report unique games | 131 |
+| Team submission rows | 888 |
+| Team-ledger unique games | 162 |
+| `SUBMITTED_WITH_PLAYER_ROWS` | 522 |
+| `NOT_YET_SUBMITTED` | 361 |
+| `UNKNOWN_NO_PLAYER_ROWS` | 5 |
+| Team submission conflicts | 0 |
+
+The player and team game counts are ingestion coverage, not selected independent model samples.
+
+### Fixed failed report times
+
+Player pipeline failures:
+
+```text
+2024-04-08T08:30:00-04:00
+2024-04-08T13:30:00-04:00
+```
+
+Both official reports contained only `NOT YET SUBMITTED` team contexts and no player status rows. They remain failed player observations; the team submission pipeline retains the unsubmitted states.
+
+Team pipeline failures:
+
+```text
+2024-01-01T17:30:00-05:00
+2024-01-15T13:30:00-05:00
+2024-01-15T17:30:00-05:00
+```
+
+These reports failed the team parser's strict pre-tip context QA. They remain fixed failures and were not replaced. The full feature backfill may use only publication times that passed both pipelines unless a separate parser-improvement PR revalidates the same fixed registry.
+
+### Quality and privacy gates
+
+```text
+duplicate requested timestamps: 0
+duplicate player source times: 0
+duplicate team source times: 0
+duplicate player source URLs: 0
+duplicate team source URLs: 0
+unexpected successful timestamps: 0
+team submission conflicts: 0
+forbidden player-level files retained: 0
+registry errors: 0
+aggregate/source-index crosscheck failures: 0
+```
+
+The latest Artifact reproduced the first run's core coverage values.
+
 ## Artifact boundary
 
 Artifact:
@@ -134,13 +212,13 @@ Deleted before audit and Artifact upload:
 
 ## Decision boundary
 
-Passing Wave 1 means only:
+Wave 1 passed:
 
 ```text
 ready_for_wave1_feature_backfill = true
 ```
 
-It never means:
+It remains false for:
 
 ```text
 ready_for_model_training
@@ -148,7 +226,15 @@ ready_for_probability_adjustment
 ready_for_betting_edge_claim
 ```
 
-After a passing acquisition audit, a separate PR must rebuild player identity, prior-only expected minutes, player impact, team injury burden, team submission reconciliation, and the already frozen T-60 selected panel.
+The next phase must use the fixed successful overlap and separately rebuild:
+
+- Gold game mapping;
+- deterministic player identity;
+- prior-only expected minutes;
+- player impact proxy;
+- team injury burden;
+- team submission reconciliation;
+- the already frozen T-60 selected panel.
 
 The independent-game sample gate remains:
 
@@ -157,3 +243,5 @@ minimum holdout start: 100 selected feature-ready games
 initial reliability: 300 games
 ideal target: 500 games across months or seasons
 ```
+
+Passing acquisition does not establish how many of the 131 player-ingestion games will survive identity, expected-minutes, completeness, and frozen T-60 selection gates.

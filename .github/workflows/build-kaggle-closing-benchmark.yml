@@ -1,0 +1,118 @@
+name: Build Kaggle closing market benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Workflow run ID containing model-walk-forward-v2"
+        required: true
+        default: "29551715399"
+      dataset_handle:
+        description: "Public Kaggle dataset handle"
+        required: true
+        default: "christophertreasure/nba-odds-data"
+  pull_request:
+    paths:
+      - "scripts/run_kaggle_closing_benchmark.py"
+      - "scripts/import_closing_odds_archive.py"
+      - "scripts/evaluate_closing_market_benchmark.py"
+      - ".github/workflows/build-kaggle-closing-benchmark.yml"
+      - "docs/kaggle-closing-benchmark-v1.md"
+      - "data/historical-odds-source-registry.json"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install benchmark dependencies
+        run: python -m pip install --disable-pip-version-check pandas openpyxl xlrd kagglehub
+      - name: Compile benchmark modules
+        run: |
+          python -m py_compile scripts/import_closing_odds_archive.py
+          python -m py_compile scripts/evaluate_closing_market_benchmark.py
+          python -m py_compile scripts/run_kaggle_closing_benchmark.py
+      - name: Run local Kaggle runner self-test
+        run: |
+          rm -rf /tmp/nbavl-kaggle-runner-test
+          python scripts/run_kaggle_closing_benchmark.py \
+            --self-test \
+            --output-dir /tmp/nbavl-kaggle-runner-test
+          python -m json.tool /tmp/nbavl-kaggle-runner-test/kaggle-run-status.json >/dev/null
+          python -m json.tool /tmp/nbavl-kaggle-runner-test/benchmark/closing-benchmark-report.json >/dev/null
+          test ! -f /tmp/nbavl-kaggle-runner-test/selected-import/closing-moneyline-normalized.csv
+
+  live-benchmark:
+    if: github.event_name == 'workflow_dispatch'
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+      DATASET_HANDLE: ${{ inputs.dataset_handle }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install benchmark dependencies
+        run: python -m pip install --disable-pip-version-check pandas openpyxl xlrd kagglehub
+      - name: Download walk-forward predictions
+        run: |
+          rm -rf /tmp/nbavl-walk-forward-source
+          mkdir -p /tmp/nbavl-walk-forward-source
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name model-walk-forward-v2 \
+            --dir /tmp/nbavl-walk-forward-source
+          test -f /tmp/nbavl-walk-forward-source/walk-forward-predictions.csv
+      - name: Download Kaggle dataset and run closing benchmark
+        run: |
+          rm -rf /tmp/nbavl-kaggle-closing-benchmark
+          python scripts/run_kaggle_closing_benchmark.py \
+            --dataset-handle "$DATASET_HANDLE" \
+            --predictions /tmp/nbavl-walk-forward-source/walk-forward-predictions.csv \
+            --source-id kaggle_christophertreasure_nba_odds \
+            --output-dir /tmp/nbavl-kaggle-closing-benchmark
+      - name: Validate benchmark guardrails
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-kaggle-closing-benchmark')
+          status = json.loads((root / 'kaggle-run-status.json').read_text())
+          report = json.loads((root / 'benchmark/closing-benchmark-report.json').read_text())
+          assert status['benchmark_complete'] is True, status
+          assert status['temporary_raw_and_normalized_files_deleted'] is True, status
+          assert report['guardrails']['roi_computed'] is False, report['guardrails']
+          assert report['guardrails']['clv_computed'] is False, report['guardrails']
+          assert report['decision']['ready_for_betting_edge_claim'] is False, report['decision']
+          assert not (root / 'selected-import/closing-moneyline-normalized.csv').exists()
+          print(json.dumps({
+              'matched_games': report['coverage']['matched_games'],
+              'matched_seasons': report['coverage']['matched_seasons'],
+              'ready_for_market_accuracy_comparison': report['decision']['ready_for_market_accuracy_comparison'],
+          }, indent=2))
+          PY
+      - name: Upload reports only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kaggle-closing-market-benchmark-v1
+          path: |
+            /tmp/nbavl-kaggle-closing-benchmark/kaggle-run-status.json
+            /tmp/nbavl-kaggle-closing-benchmark/kaggle-candidate-manifest.json
+            /tmp/nbavl-kaggle-closing-benchmark/kaggle-selected-import-report.json
+            /tmp/nbavl-kaggle-closing-benchmark/benchmark/closing-benchmark-report.json
+          retention-days: 14
+          if-no-files-found: warn

@@ -56,6 +56,40 @@ The workflow consumes the `historical-gold-multiseason` Artifact and reads only:
 
 from `gold_matchup_features`.
 
+## Validated historical fixture
+
+The official 2023-12-18 08:30 ET report was matched against the five-season Gold schedule.
+
+Verified result:
+
+- 118 normalized injury rows
+- 11 unique games with player status rows
+- 11 historical game IDs matched
+- 118 player rows assigned to matched games
+- 100% exact game match rate
+- 0 unmatched games
+- 0 duplicated Gold schedule keys
+- 0 home/away side errors
+- 5,824 Gold schedule rows available to the matcher
+
+Matched games:
+
+| Official key | Historical game ID |
+|---|---:|
+| `official:2023-12-18:BKN@UTA` | `22300357` |
+| `official:2023-12-18:CHA@TOR` | `22300354` |
+| `official:2023-12-18:CHI@PHI` | `22300351` |
+| `official:2023-12-18:DAL@DEN` | `22300356` |
+| `official:2023-12-18:DET@ATL` | `22300352` |
+| `official:2023-12-18:HOU@CLE` | `22300349` |
+| `official:2023-12-18:LAC@IND` | `22300350` |
+| `official:2023-12-18:MEM@OKC` | `22300355` |
+| `official:2023-12-18:MIN@MIA` | `22300353` |
+| `official:2023-12-18:NYK@LAL` | `22300359` |
+| `official:2023-12-18:WAS@SAC` | `22300358` |
+
+This fixture is ready for the historical game-ID join. It is not yet ready for player identity joining or model training.
+
 ## Usage
 
 ```bash

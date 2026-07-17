@@ -19,7 +19,7 @@ jobs:
           python-version: "3.12"
       - name: Install official-source client
         run: python -m pip install --disable-pip-version-check 'nba-injury-report[pandas]==0.1.0'
-      - name: Query fixed historical report and record aggregate schema and URL literals
+      - name: Query fixed historical report and record aggregate schema plus HTTP settings
         run: |
           rm -rf /tmp/nbavl-official-injury-api-diagnostic
           mkdir -p /tmp/nbavl-official-injury-api-diagnostic
@@ -33,14 +33,23 @@ jobs:
 
           package_root = Path(nba_injury_report.__file__).parent
           url_literals = set()
-          endpoint_fragments = set()
+          endpoint_fragments = []
+          http_setting_fragments = []
           for path in package_root.rglob('*.py'):
               text = path.read_text(encoding='utf-8')
+              lines = text.splitlines()
               url_literals.update(re.findall(r'https?://[^\"\'\s)]+', text))
-              for line in text.splitlines():
+              for index, line in enumerate(lines):
                   lowered = line.lower()
-                  if any(token in lowered for token in ('ak-static', 'injury-report_', 'httpx.get', 'client.get')):
-                      endpoint_fragments.add(line.strip())
+                  if any(token in lowered for token in ('ak-static', 'injury-report_', 'client.get')):
+                      endpoint_fragments.append({'file': str(path.relative_to(package_root)), 'line': index + 1, 'text': line.strip()})
+                  if any(token in lowered for token in ('httpx.client', 'headers=', 'user-agent', 'accept=', 'referer', 'cookies=', 'follow_redirects', 'http2=')):
+                      start, end = max(0, index - 2), min(len(lines), index + 3)
+                      http_setting_fragments.append({
+                          'file': str(path.relative_to(package_root)),
+                          'line': index + 1,
+                          'context': [lines[number].rstrip() for number in range(start, end)],
+                      })
 
           results = []
           for timestamp in ('2023-12-18T08:30:00', '2023-12-18T20:30:00'):
@@ -66,7 +75,8 @@ jobs:
               'package': 'nba-injury-report==0.1.0',
               'package_root_files': sorted(str(path.relative_to(package_root)) for path in package_root.rglob('*.py')),
               'url_literals': sorted(url_literals),
-              'endpoint_fragments': sorted(endpoint_fragments),
+              'endpoint_fragments': endpoint_fragments,
+              'http_setting_fragments': http_setting_fragments,
               'results': results,
               'player_rows_uploaded': False,
           }

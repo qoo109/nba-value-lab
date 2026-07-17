@@ -4,27 +4,40 @@
 
 Create prior-only player availability features that can be joined to official injury snapshots without using the target game's result or box score.
 
-The first source pilot uses the NBA Official Stats `PlayerGameLogs` endpoint. A season response contains player and team IDs, game IDs and dates, minutes, base box-score statistics, and plus/minus.
+## Official source
 
-## Source endpoint
+The source pilot uses NBA Official LiveData boxscores:
 
 ```text
-https://stats.nba.com/stats/playergamelogs
+https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json
 ```
 
-The pilot requests one regular season at a time and validates:
+The audited historical Gold schedule supplies the request allowlist. Only official 10-digit game IDs already present in `gold_matchup_features` are requested.
 
-- required player, team, game and date identifiers;
-- minutes and plus/minus coverage;
+Each official boxscore provides stable player and team IDs, play and starter status, minutes, base box-score statistics, and plus/minus. The importer verifies that the returned game ID and home/away team tricodes exactly match Gold before accepting any player rows.
+
+The bulk `stats.nba.com/stats/playergamelogs` endpoint was tested first but proved unreliable from GitHub-hosted runners for full-season retrieval. It is not used as the production source for this pilot.
+
+## Source validation
+
+For one regular season, the importer validates:
+
+- all requested game IDs come from Gold;
+- returned game ID and home/away teams match Gold exactly;
+- at least 99.5% game coverage;
 - unique `(game_id, player_id)` keys;
-- official 10-digit game IDs;
-- expected season, game and player coverage.
+- valid player IDs and minute durations;
+- at least ten played players per completed game;
+- expected season, game, row, and player coverage;
+- response SHA-256 provenance and retry counts.
 
-Player-level source rows are temporary and are deleted before Artifact upload. The retained Artifact contains only source provenance, response hash, aggregate counts, and QA.
+Requests use bounded concurrency and retries. A failed or mismatched game remains an explicit QA failure rather than being replaced with a guessed source.
+
+Player-level source rows are temporary and are deleted before Artifact upload. The retained Artifact contains only source provenance, response hashes, aggregate counts, and QA.
 
 ## Point-in-time rule
 
-Official player game logs are finalized after games. They may influence only later target games.
+Official boxscore rows are finalized after games. They may influence only later target games.
 
 For a target game on date `D`, every player feature must use rows where:
 
@@ -66,7 +79,7 @@ The estimate will be standardized against league rows available before the targe
 A successful source response does not enable model training. Promotion requires:
 
 1. multi-season source reliability;
-2. exact Silver game and player-ID coverage;
+2. exact Gold game and player-ID coverage;
 3. strict prior-date feature tests;
 4. expected-minutes backtesting;
 5. injury snapshot joins across multiple report times;

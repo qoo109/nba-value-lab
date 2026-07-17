@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install parser dependencies
-        run: python -m pip install --disable-pip-version-check pandas httpx nba-injury-report-pdf-to-df==0.1.7
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
       - name: Parse fixed archived official pregame report
         run: |
           rm -rf /tmp/nbavl-official-injury-live
@@ -42,12 +42,15 @@ jobs:
           report = json.loads((root / 'official-injury-report-import-report.json').read_text())
           validation = json.loads((root / 'validation/injury-lineup-validation-report.json').read_text())
           assert report['decision']['ready_for_manual_official_pdf_pilot'] is True, report
-          assert report['coverage']['validated_rows'] >= 100, report
+          assert report['coverage']['validated_rows'] == 118, report
+          assert report['coverage']['not_yet_submitted_team_rows'] == 10, report
           assert report['coverage']['games'] >= 10, report
           assert report['quality']['conversion_errors'] == 0, report
           assert report['quality']['contract_errors'] == 0, report
           assert report['source']['download_client'] == 'httpx', report
+          assert report['source']['parser_engine'] == 'PyMuPDF native word coordinates', report
           assert report['guardrails']['third_party_injury_client_runtime_dependency'] is False, report
+          assert report['guardrails']['third_party_pdf_parser_runtime_dependency'] is False, report
           assert validation['decision']['ready_for_point_in_time_feature_build'] is True, validation
           assert not (root / 'validation/injury-lineup-snapshots-normalized.csv').exists()
           print(json.dumps(report, indent=2))

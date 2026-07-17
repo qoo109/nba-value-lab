@@ -123,6 +123,23 @@ def create_schema(connection: sqlite3.Connection) -> None:
           source_row_number INTEGER NOT NULL
         );
 
+        CREATE TABLE player_aliases (
+          player_alias_id TEXT PRIMARY KEY,
+          player_id TEXT NOT NULL,
+          player_name_raw TEXT NOT NULL,
+          player_name_key TEXT NOT NULL,
+          player_name_key_suffixless TEXT NOT NULL,
+          team_id TEXT,
+          team_abbr TEXT,
+          season_label TEXT NOT NULL,
+          first_game_id TEXT,
+          last_game_id TEXT,
+          event_appearances INTEGER NOT NULL,
+          source_id TEXT NOT NULL,
+          quality_flags TEXT NOT NULL,
+          UNIQUE(player_id, player_name_key, team_abbr, season_label)
+        );
+
         CREATE TABLE possessions (
           possession_id TEXT PRIMARY KEY,
           game_id TEXT NOT NULL,
@@ -184,6 +201,9 @@ def create_schema(connection: sqlite3.Connection) -> None:
         );
 
         CREATE INDEX idx_pbp_events_game ON pbp_events(game_id, period, event_num);
+        CREATE INDEX idx_player_alias_key ON player_aliases(player_name_key, team_abbr, season_label);
+        CREATE INDEX idx_player_alias_suffixless ON player_aliases(player_name_key_suffixless, team_abbr, season_label);
+        CREATE INDEX idx_player_alias_player ON player_aliases(player_id, season_label);
         CREATE INDEX idx_possessions_game ON possessions(game_id, period, start_clock);
         CREATE INDEX idx_possessions_offense ON possessions(offense_team_abbr, game_id);
         CREATE INDEX idx_features_team ON team_game_features(team_abbr, game_id);

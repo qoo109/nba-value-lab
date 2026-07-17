@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """Build a point-in-time team submission-status panel from official NBA injury PDFs.
 
-This parser retains no player names or injury reasons. It distinguishes explicit submitted
-teams, explicit no-injury teams, Not Yet Submitted teams, and unresolved team contexts.
-Raw PDFs live only in temporary storage.
+The output contains team/game provenance only. Player names, injury reasons, and raw PDF bytes are
+never retained. A missing side is synthesized as UNKNOWN_NO_PLAYER_ROWS rather than silently treated
+as healthy or causing the whole report to be discarded.
 """
 from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import tempfile
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -21,7 +20,6 @@ import pymupdf
 
 from import_official_nba_injury_report import (
     ALLOWED_STATUSES,
-    ET,
     TEAM_NAME_TO_ABBR,
     download_pdf,
     group_physical_lines,
@@ -36,7 +34,7 @@ from import_official_nba_injury_report import (
     update_context,
 )
 
-VERSION = "multi-report-team-submission-panel-v1"
+VERSION = "multi-report-team-submission-panel-v1.1"
 NO_INJURY_MARKERS = (
     "NO INJURIES TO REPORT",
     "NO INJURY TO REPORT",
@@ -79,8 +77,7 @@ def write_csv(path: Path, rows: list[dict[str, Any]], fields: list[str]) -> None
 
 def classify_submission(*, player_status_rows: int, not_yet_submitted: bool, no_injuries: bool) -> tuple[str, bool]:
     active = int(player_status_rows > 0) + int(not_yet_submitted) + int(no_injuries)
-    conflict = active > 1
-    if conflict:
+    if active > 1:
         return "UNKNOWN_NO_PLAYER_ROWS", True
     if player_status_rows > 0:
         return "SUBMITTED_WITH_PLAYER_ROWS", False
@@ -89,6 +86,38 @@ def classify_submission(*, player_status_rows: int, not_yet_submitted: bool, no_
     if not_yet_submitted:
         return "NOT_YET_SUBMITTED", False
     return "UNKNOWN_NO_PLAYER_ROWS", False
+
+
+def parse_official_game_id(game_id: str) -> tuple[str, str]:
+    matchup = game_id.rsplit(":", 1)[-1]
+    away, home = matchup.split("@", 1)
+    return away, home
+
+
+def base_record(
+    *, game_id: str, commence_time: str, team: str, away: str, home: str,
+    observed_at: str, source_url: str, source_hash: str,
+) -> dict[str, Any]:
+    opponent = home if team == away else away
+    return {
+        "record_type": "TEAM_SUBMISSION_STATUS",
+        "game_id": game_id,
+        "commence_time": commence_time,
+        "team_abbr": team,
+        "opponent_abbr": opponent,
+        "is_home": int(team == home),
+        "submission_status": "UNKNOWN_NO_PLAYER_ROWS",
+        "player_status_rows": 0,
+        "not_yet_submitted_marker": 0,
+        "no_injuries_marker": 0,
+        "submission_conflict": 0,
+        "synthetic_missing_side": 0,
+        "observed_at": observed_at,
+        "source_report_time": observed_at,
+        "source_provider": "NBA Official Injury Report",
+        "source_url": source_url,
+        "source_file_sha256": source_hash,
+    }
 
 
 def extract_team_submissions(
@@ -100,15 +129,13 @@ def extract_team_submissions(
     document = pymupdf.open(pdf_path)
     state = {"game_date": "", "game_time": "", "matchup": "", "team": ""}
     records: dict[tuple[str, str], dict[str, Any]] = {}
+    game_meta: dict[str, dict[str, str]] = {}
     context_errors: list[str] = []
     marker_lines = 0
     status_anchor_lines = 0
 
     for page_index, page in enumerate(document):
-        lines = [
-            line for line in group_physical_lines(page_words(page))
-            if not is_header_line(line)
-        ]
+        lines = [line for line in group_physical_lines(page_words(page)) if not is_header_line(line)]
         for line in lines:
             cells = line["cells"]
             update_context(state, cells)
@@ -123,35 +150,38 @@ def extract_team_submissions(
                 team = TEAM_NAME_TO_ABBR[team_name]
                 if team not in {away, home}:
                     raise ValueError(f"team {team} does not belong to {away}@{home}")
-                opponent = home if team == away else away
                 commence = parse_game_time(game_date, game_time)
                 if report_time >= commence:
                     raise ValueError("report timestamp is not before scheduled tip-off")
                 game_id = f"official:{commence.date().isoformat()}:{away}@{home}"
+                observed_at = iso_utc(report_time)
+                commence_time = iso_utc(commence)
             except Exception as exc:
                 context_errors.append(
                     f"page {page_index + 1} line {line['center_y']:.2f}: {type(exc).__name__}: {exc}"
                 )
                 continue
 
+            game_meta[game_id] = {
+                "away": away,
+                "home": home,
+                "commence_time": commence_time,
+                "observed_at": observed_at,
+            }
             key = (game_id, team)
-            record = records.setdefault(key, {
-                "record_type": "TEAM_SUBMISSION_STATUS",
-                "game_id": game_id,
-                "commence_time": iso_utc(commence),
-                "team_abbr": team,
-                "opponent_abbr": opponent,
-                "is_home": int(team == home),
-                "observed_at": iso_utc(report_time),
-                "source_report_time": iso_utc(report_time),
-                "source_provider": "NBA Official Injury Report",
-                "source_url": source_url,
-                "source_file_sha256": source_hash,
-                "player_status_rows": 0,
-                "not_yet_submitted_marker": 0,
-                "no_injuries_marker": 0,
-            })
-
+            record = records.setdefault(
+                key,
+                base_record(
+                    game_id=game_id,
+                    commence_time=commence_time,
+                    team=team,
+                    away=away,
+                    home=home,
+                    observed_at=observed_at,
+                    source_url=source_url,
+                    source_hash=source_hash,
+                ),
+            )
             combined = normalize_space(" ".join(str(value) for value in cells.values())).upper()
             if "NOT YET SUBMITTED" in combined:
                 record["not_yet_submitted_marker"] = 1
@@ -163,6 +193,26 @@ def extract_team_submissions(
             if status in ALLOWED_STATUSES:
                 record["player_status_rows"] += 1
                 status_anchor_lines += 1
+
+    synthetic_missing_sides = 0
+    for game_id, meta in game_meta.items():
+        for team in (meta["away"], meta["home"]):
+            key = (game_id, team)
+            if key in records:
+                continue
+            row = base_record(
+                game_id=game_id,
+                commence_time=meta["commence_time"],
+                team=team,
+                away=meta["away"],
+                home=meta["home"],
+                observed_at=meta["observed_at"],
+                source_url=source_url,
+                source_hash=source_hash,
+            )
+            row["synthetic_missing_side"] = 1
+            records[key] = row
+            synthetic_missing_sides += 1
 
     output: list[dict[str, Any]] = []
     conflicts = 0
@@ -178,26 +228,26 @@ def extract_team_submissions(
         output.append(record)
     output.sort(key=lambda row: (row["commence_time"], row["game_id"], row["team_abbr"]))
 
-    games: dict[str, list[dict[str, Any]]] = {}
+    games: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in output:
-        games.setdefault(str(row["game_id"]), []).append(row)
-    invalid_team_counts = sum(len(rows) != 2 for rows in games.values())
+        games[str(row["game_id"])].append(row)
     duplicate_keys = len(output) - len({(row["game_id"], row["team_abbr"]) for row in output})
+    invalid_team_counts = sum(len(rows) != 2 for rows in games.values())
     statuses = Counter(str(row["submission_status"]) for row in output)
-    qa = {
+    return output, {
         "page_count": len(document),
         "team_rows": len(output),
         "games": len(games),
         "submission_status_counts": dict(sorted(statuses.items())),
         "marker_lines": marker_lines,
         "player_status_anchor_lines": status_anchor_lines,
+        "synthetic_unknown_team_rows": synthetic_missing_sides,
         "context_errors": len(context_errors),
         "context_error_examples": context_errors[:50],
         "submission_conflicts": conflicts,
         "duplicate_game_team_rows": duplicate_keys,
         "games_without_exactly_two_teams": invalid_team_counts,
     }
-    return output, qa
 
 
 def build(report_times_file: Path, output_dir: Path) -> dict[str, Any]:
@@ -230,6 +280,7 @@ def build(report_times_file: Path, output_dir: Path) -> dict[str, Any]:
                 "retrieved_at": retrieved_at,
                 "team_rows": qa["team_rows"],
                 "games": qa["games"],
+                "synthetic_unknown_team_rows": qa["synthetic_unknown_team_rows"],
                 "submission_status_counts": json.dumps(qa["submission_status_counts"], sort_keys=True),
             })
         except Exception as exc:
@@ -242,16 +293,12 @@ def build(report_times_file: Path, output_dir: Path) -> dict[str, Any]:
 
     all_rows.sort(key=lambda row: (row["observed_at"], row["game_id"], row["team_abbr"]))
     duplicate_rows = len(all_rows) - len({
-        (row["source_file_sha256"], row["game_id"], row["team_abbr"])
-        for row in all_rows
+        (row["source_file_sha256"], row["game_id"], row["team_abbr"]) for row in all_rows
     })
     status_counts = Counter(str(row["submission_status"]) for row in all_rows)
-    unique_games = {str(row["game_id"]) for row in all_rows}
-    report_dates = {
-        parse_report_time(row["requested_report_time"]).date().isoformat()
-        for row in source_index
-    }
+    report_dates = {parse_report_time(row["requested_report_time"]).date().isoformat() for row in source_index}
     failure_rate = len(failures) / len(requested_times) if requested_times else 1.0
+    synthetic_rows = sum(int(row["synthetic_missing_side"]) for row in all_rows)
     ready = (
         len(source_index) >= 4
         and len(report_dates) >= 3
@@ -265,12 +312,13 @@ def build(report_times_file: Path, output_dir: Path) -> dict[str, Any]:
     row_fields = [
         "record_type", "game_id", "commence_time", "team_abbr", "opponent_abbr", "is_home",
         "submission_status", "player_status_rows", "not_yet_submitted_marker", "no_injuries_marker",
-        "submission_conflict", "observed_at", "source_report_time", "source_provider", "source_url",
-        "source_file_sha256",
+        "submission_conflict", "synthetic_missing_side", "observed_at", "source_report_time",
+        "source_provider", "source_url", "source_file_sha256",
     ]
     index_fields = [
         "requested_report_time", "observed_at", "source_url", "source_file_sha256",
-        "source_size_bytes", "retrieved_at", "team_rows", "games", "submission_status_counts",
+        "source_size_bytes", "retrieved_at", "team_rows", "games", "synthetic_unknown_team_rows",
+        "submission_status_counts",
     ]
     write_csv(output_dir / "multi-report-team-submission-panel.csv", all_rows, row_fields)
     write_csv(output_dir / "multi-report-team-submission-source-index.csv", source_index, index_fields)
@@ -285,7 +333,8 @@ def build(report_times_file: Path, output_dir: Path) -> dict[str, Any]:
             "unique_report_dates": len(report_dates),
             "unique_report_times": len({row["observed_at"] for row in all_rows}),
             "team_submission_rows": len(all_rows),
-            "unique_games": len(unique_games),
+            "unique_games": len({str(row["game_id"]) for row in all_rows}),
+            "synthetic_unknown_team_rows": synthetic_rows,
             "submission_status_counts": dict(sorted(status_counts.items())),
         },
         "quality": {
@@ -295,6 +344,7 @@ def build(report_times_file: Path, output_dir: Path) -> dict[str, Any]:
             "failed_report_examples": failures[:20],
             "raw_pdfs_retained": False,
             "player_names_or_injury_reasons_retained": False,
+            "missing_sides_synthesized_as_unknown_not_healthy": True,
         },
         "decision": {
             "ready_for_team_submission_reconciliation": ready,
@@ -310,6 +360,7 @@ def build(report_times_file: Path, output_dir: Path) -> dict[str, Any]:
             "explicit_submitted_no_injuries_may_create_zero_burden": True,
             "not_yet_submitted_may_create_zero_burden": False,
             "unknown_no_player_rows_may_create_zero_burden": False,
+            "synthetic_missing_side_may_create_zero_burden": False,
             "source_publication_time_used_as_observed_at": True,
             "player_level_data_in_output": False,
         },

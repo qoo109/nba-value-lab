@@ -17,11 +17,20 @@
 |---|---|---|---|---|---|
 | `user_odds` | 使用者手動雙邊盤口 | active | 21:00／T-60m／T-5m／Closing 價格快照 | manual | 必須同一莊家、同一市場、同一時間 |
 | `the_odds_api_historical` | The Odds API historical snapshots | disabled | 2020 年後 moneyline／spread／total 歷史快照 | paid API | 歷史端點需付費；API key 僅放 GitHub Secret；原始 JSON 不公開提交 |
+| `kaggle_christophertreasure_nba_odds` | Kaggle NBA Odds Data | pilot | 2008-2023 closing-market benchmark | manual download/import | 2023 不完整；授權為 Other；沒有精確 observed timestamp |
+| `kaggle_erichqiu_nba_odds_scores` | Kaggle NBA Odds and Scores | pilot | 比分與 moneyline 交叉驗證 | manual download/import | 須驗證 various sources provenance 與開收盤定義 |
+| `oddsportal_nba_results` | OddsPortal NBA historical results | manual | 單場與跨莊家人工核對 | browser/manual | 條款禁止未經同意的 scraping、aggregation 與 automated requests |
+| `covers_nba_sports_odds_history` | Covers NBA Sports Odds History | manual | 冠軍／分區／勝場 futures 研究 | browser/manual | 不屬於逐場 moneyline 或 CLV 資料 |
 | `derived_schedule` | 自行計算賽程衍生特徵 | active | 休息差、背靠背、旅行、時區、賽程密度 | derived | 依賽程與場館座標重建 |
 | `nba_injury_official` | NBA Official Injury Reports | pilot | 傷病、疾病、休息與報告修訂 | crawler | PDF schema 變動時停止發布 |
 | `nba_live_cdn` | NBA Live Data CDN | pilot | 賽程、比數、狀態、Box Score、PBP | api | 無商業 SLA，必須驗證 schema |
 | `nba_api` | swar/nba_api | pilot | NBA.com Stats 與 Live Data client | api | client 為 MIT；NBA endpoint 可能變動 |
 | `basketball_reference` | Basketball-Reference | manual | 歷史核對與小量回填 | import/manual | 自動化前先審查條款、robots 與保存權 |
+
+完整歷史賠率來源審查與分級：
+
+- `docs/historical-odds-source-evaluation-v1.md`
+- `data/historical-odds-source-registry.json`
 
 ## 每筆資料最低品質欄位
 
@@ -89,9 +98,19 @@ away_price_decimal
 5. 報告 model-versus-market、EV、CLV、ROI、最大回撤與門檻敏感度。
 6. 在 500 場、3 季、80% Closing 覆蓋前不開啟正式市場回測判定。
 
+### Phase E — Closing-only Historical Benchmark
+
+1. 匯入 SBR／Kaggle 常見 CSV、XLSX 或 XLS 歷史檔。
+2. 支援一場兩列的 `Date, Rot, VH, Team, ML` 與一場一列 wide schema。
+3. 將 American moneyline 轉為 decimal、overround 與 no-vig probability。
+4. 與 Walk-forward OOF 預測依日期及主客隊配對。
+5. 只比較 Log Loss、Brier 與 accuracy，不計算 ROI 或 CLV。
+6. 沒有 exact observed timestamp 的資料永遠不得升級為 point-in-time backtest。
+
 ## 暫不啟用
 
 - 每五分鐘自動盤口。
 - 未由使用者主動啟用的付費商業 API。
 - 未完成條款審查的公開網站大量爬蟲。
+- OddsPortal 或其他明確禁止 automated requests 的網站爬蟲。
 - 將大型原始 PDF、HTML、PBP 或多年賠率直接放入 GitHub Pages repository。

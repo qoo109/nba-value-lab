@@ -1,0 +1,112 @@
+name: Validate player identity layer v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      report_time:
+        description: "Official injury report timestamp in America/New_York"
+        required: true
+        default: "2023-12-18T08:30:00-05:00"
+  pull_request:
+    paths:
+      - "scripts/player_identity_core.py"
+      - "scripts/historical_silver_schema.py"
+      - "scripts/historical_silver_nbastats.py"
+      - "scripts/historical_silver_runner.py"
+      - "scripts/combine_historical_silver.py"
+      - "scripts/match_injury_snapshot_players.py"
+      - ".github/workflows/validate-player-identity-layer.yml"
+      - "docs/player-identity-layer-v1.md"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile identity and Silver modules
+        run: |
+          python -m py_compile scripts/player_identity_core.py
+          python -m py_compile scripts/historical_silver_schema.py
+          python -m py_compile scripts/historical_silver_nbastats.py
+          python -m py_compile scripts/historical_silver_runner.py
+          python -m py_compile scripts/combine_historical_silver.py
+          python -m py_compile scripts/match_injury_snapshot_players.py
+      - name: Run schema and identity self-tests
+        run: |
+          rm -rf /tmp/nbavl-player-identity-self-test
+          mkdir -p /tmp/nbavl-player-identity-self-test
+          PYTHONPATH=scripts python scripts/historical_silver_runner.py \
+            --self-test \
+            --output-dir /tmp/nbavl-player-identity-self-test/silver
+          PYTHONPATH=scripts python scripts/combine_historical_silver.py \
+            --self-test \
+            --output-dir /tmp/nbavl-player-identity-self-test/combine
+          PYTHONPATH=scripts python scripts/match_injury_snapshot_players.py \
+            --self-test \
+            --output-dir /tmp/nbavl-player-identity-self-test/matcher
+
+  live-pilot:
+    if: github.event_name == 'workflow_dispatch'
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install official injury parser dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+      - name: Build 2023-24 Silver with player aliases
+        run: |
+          rm -rf /tmp/nbavl-player-identity-live
+          mkdir -p /tmp/nbavl-player-identity-live
+          PYTHONPATH=scripts python scripts/historical_silver_runner.py \
+            --output-dir /tmp/nbavl-player-identity-live/silver
+      - name: Import official injury report and match player IDs
+        run: |
+          PYTHONPATH=scripts python scripts/import_official_nba_injury_report.py \
+            --report-time "${{ inputs.report_time }}" \
+            --retain-normalized \
+            --output-dir /tmp/nbavl-player-identity-live/injury
+          PYTHONPATH=scripts python scripts/match_injury_snapshot_players.py \
+            --snapshot-csv /tmp/nbavl-player-identity-live/injury/validation/injury-lineup-snapshots-normalized.csv \
+            --silver /tmp/nbavl-player-identity-live/silver/historical-silver.sqlite.gz \
+            --output-dir /tmp/nbavl-player-identity-live/match
+      - name: Validate QA and remove player-name rows
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-player-identity-live')
+          silver = json.loads((root / 'silver/silver-build-report.json').read_text())
+          identity = json.loads((root / 'match/injury-player-identity-report.json').read_text())
+          assert silver['decision']['ready_for_player_identity_matching'] is True, silver
+          assert silver['outputs']['tables']['player_aliases'] >= 300, silver
+          assert identity['quality']['unmatched_game_rows'] == 0, identity
+          assert identity['quality']['ambiguous_player_rows'] == 0, identity
+          assert identity['quality']['player_match_rate'] >= 0.95, identity
+          snapshot = root / 'injury/validation/injury-lineup-snapshots-normalized.csv'
+          snapshot.unlink()
+          assert not snapshot.exists()
+          print(json.dumps({'silver': silver['decision'], 'identity': identity}, indent=2))
+          PY
+      - name: Upload aggregate QA and ID-only mapping
+        uses: actions/upload-artifact@v4
+        with:
+          name: player-identity-layer-v1
+          path: |
+            /tmp/nbavl-player-identity-live/silver/silver-build-report.json
+            /tmp/nbavl-player-identity-live/injury/official-injury-report-import-report.json
+            /tmp/nbavl-player-identity-live/injury/validation/injury-lineup-validation-report.json
+            /tmp/nbavl-player-identity-live/match/injury-player-identity-report.json
+            /tmp/nbavl-player-identity-live/match/injury-player-id-map.csv
+          retention-days: 14
+          if-no-files-found: error

@@ -1,0 +1,197 @@
+name: Validate player value and minutes v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/import_open_player_boxscores.py"
+      - "scripts/match_injury_players_from_boxscores.py"
+      - "scripts/build_point_in_time_player_values.py"
+      - "scripts/import_official_nba_injury_report.py"
+      - "scripts/validate_injury_snapshot_schedule_match.py"
+      - "scripts/player_identity_core.py"
+      - ".github/workflows/validate-player-value-minutes-v1.yml"
+      - "docs/player-value-minutes-v1.md"
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Workflow run containing historical-gold-multiseason"
+        required: true
+        default: "29551715399"
+      report_time:
+        description: "Official injury report timestamp"
+        required: true
+        default: "2023-12-18T08:30:00-05:00"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+      - name: Compile modules
+        run: |
+          python -m py_compile scripts/import_open_player_boxscores.py
+          python -m py_compile scripts/match_injury_players_from_boxscores.py
+          python -m py_compile scripts/build_point_in_time_player_values.py
+      - name: Run deterministic self-tests
+        run: |
+          rm -rf /tmp/nbavl-player-value-self-test
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --self-test \
+            --output-dir /tmp/nbavl-player-value-self-test/source
+          PYTHONPATH=scripts python scripts/match_injury_players_from_boxscores.py \
+            --self-test \
+            --output-dir /tmp/nbavl-player-value-self-test/identity
+          PYTHONPATH=scripts python scripts/build_point_in_time_player_values.py \
+            --self-test \
+            --output-dir /tmp/nbavl-player-value-self-test/value
+
+  live-pilot:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+      - name: Download audited five-season Gold
+        run: |
+          rm -rf /tmp/nbavl-player-value-live
+          mkdir -p /tmp/nbavl-player-value-live/gold
+          gh run download "${{ github.event.inputs.source_run_id || '29551715399' }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name historical-gold-multiseason \
+            --dir /tmp/nbavl-player-value-live/gold
+          GOLD_FILE="$(find /tmp/nbavl-player-value-live/gold -name 'historical-gold-multiseason.sqlite.gz' -print -quit)"
+          test -n "$GOLD_FILE"
+          echo "GOLD_FILE=$GOLD_FILE" >> "$GITHUB_ENV"
+      - name: Import two Gold-validated boxscore seasons
+        run: |
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --season 2022-23 \
+            --gold "$GOLD_FILE" \
+            --output-dir /tmp/nbavl-player-value-live/boxscores-2022
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --season 2023-24 \
+            --gold "$GOLD_FILE" \
+            --output-dir /tmp/nbavl-player-value-live/boxscores-2023
+      - name: Combine temporary boxscore rows
+        run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+          root = Path('/tmp/nbavl-player-value-live')
+          sources = [
+              root / 'boxscores-2022/open-player-boxscores.csv',
+              root / 'boxscores-2023/open-player-boxscores.csv',
+          ]
+          rows = {}
+          fields = None
+          for path in sources:
+              with path.open('r', encoding='utf-8-sig', newline='') as handle:
+                  reader = csv.DictReader(handle)
+                  fields = fields or list(reader.fieldnames or [])
+                  for row in reader:
+                      key = (row['SEASON_YEAR'], row['GAME_ID'], row['PLAYER_ID'])
+                      rows[key] = row
+          output = root / 'combined-player-boxscores.csv'
+          with output.open('w', encoding='utf-8', newline='') as handle:
+              writer = csv.DictWriter(handle, fieldnames=fields)
+              writer.writeheader()
+              writer.writerows(rows[key] for key in sorted(rows))
+          print({'combined_rows': len(rows), 'seasons': sorted({key[0] for key in rows})})
+          PY
+      - name: Import and validate official injury snapshot
+        run: |
+          PYTHONPATH=scripts python scripts/import_official_nba_injury_report.py \
+            --report-time "${{ github.event.inputs.report_time || '2023-12-18T08:30:00-05:00' }}" \
+            --retain-normalized \
+            --output-dir /tmp/nbavl-player-value-live/injury
+          python scripts/validate_injury_snapshot_schedule_match.py \
+            --snapshot-csv /tmp/nbavl-player-value-live/injury/validation/injury-lineup-snapshots-normalized.csv \
+            --gold "$GOLD_FILE" \
+            --output-dir /tmp/nbavl-player-value-live/schedule-match
+      - name: Match player IDs from validated roster
+        run: |
+          PYTHONPATH=scripts python scripts/match_injury_players_from_boxscores.py \
+            --snapshot-csv /tmp/nbavl-player-value-live/injury/validation/injury-lineup-snapshots-normalized.csv \
+            --game-map-csv /tmp/nbavl-player-value-live/schedule-match/injury-snapshot-game-id-map.csv \
+            --boxscore-csv /tmp/nbavl-player-value-live/combined-player-boxscores.csv \
+            --output-dir /tmp/nbavl-player-value-live/player-identity
+      - name: Build strict prior-only player values
+        run: |
+          PYTHONPATH=scripts python scripts/build_point_in_time_player_values.py \
+            --player-logs /tmp/nbavl-player-value-live/combined-player-boxscores.csv \
+            --snapshot-csv /tmp/nbavl-player-value-live/injury/validation/injury-lineup-snapshots-normalized.csv \
+            --player-id-map /tmp/nbavl-player-value-live/player-identity/injury-player-id-map.csv \
+            --output-dir /tmp/nbavl-player-value-live/player-values
+      - name: Validate QA and remove row-level source data
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/nbavl-player-value-live')
+          source22 = json.loads((root / 'boxscores-2022/open-player-boxscore-import-report.json').read_text())
+          source23 = json.loads((root / 'boxscores-2023/open-player-boxscore-import-report.json').read_text())
+          schedule = json.loads((root / 'schedule-match/injury-snapshot-schedule-match-report.json').read_text())
+          identity = json.loads((root / 'player-identity/injury-player-boxscore-identity-report.json').read_text())
+          values = json.loads((root / 'player-values/point-in-time-player-value-report.json').read_text())
+          assert source22['decision']['ready_for_point_in_time_feature_research'] is True, source22
+          assert source23['decision']['ready_for_point_in_time_feature_research'] is True, source23
+          assert schedule['decision']['ready_for_historical_game_id_join'] is True, schedule
+          assert identity['decision']['ready_for_player_id_join'] is True, identity
+          assert identity['quality']['ambiguous_player_rows'] == 0, identity
+          assert identity['quality']['player_match_rate'] >= 0.95, identity
+          assert values['decision']['ready_for_injury_snapshot_feature_join'] is True, values
+          assert values['quality']['strict_prior_date_violations'] == 0, values
+          assert values['quality']['output_contains_player_names'] is False, values
+          assert values['quality']['output_contains_injury_reasons'] is False, values
+          delete_paths = [
+              root / 'boxscores-2022/open-player-boxscores.csv',
+              root / 'boxscores-2023/open-player-boxscores.csv',
+              root / 'combined-player-boxscores.csv',
+              root / 'injury/validation/injury-lineup-snapshots-normalized.csv',
+          ]
+          for path in delete_paths:
+              if path.exists():
+                  path.unlink()
+          assert all(not path.exists() for path in delete_paths)
+          print(json.dumps({
+              'source_2022': source22['decision'],
+              'source_2023': source23['decision'],
+              'schedule': schedule['decision'],
+              'identity': identity,
+              'values': values,
+          }, indent=2))
+          PY
+      - name: Upload aggregate QA and ID-only features
+        uses: actions/upload-artifact@v4
+        with:
+          name: player-value-minutes-v1
+          path: |
+            /tmp/nbavl-player-value-live/boxscores-2022/open-player-boxscore-import-report.json
+            /tmp/nbavl-player-value-live/boxscores-2023/open-player-boxscore-import-report.json
+            /tmp/nbavl-player-value-live/injury/official-injury-report-import-report.json
+            /tmp/nbavl-player-value-live/injury/validation/injury-lineup-validation-report.json
+            /tmp/nbavl-player-value-live/schedule-match/injury-snapshot-schedule-match-report.json
+            /tmp/nbavl-player-value-live/schedule-match/injury-snapshot-game-id-map.csv
+            /tmp/nbavl-player-value-live/player-identity/injury-player-boxscore-identity-report.json
+            /tmp/nbavl-player-value-live/player-identity/injury-player-id-map.csv
+            /tmp/nbavl-player-value-live/player-values/point-in-time-player-value-report.json
+            /tmp/nbavl-player-value-live/player-values/point-in-time-player-values.csv
+          retention-days: 14
+          if-no-files-found: error

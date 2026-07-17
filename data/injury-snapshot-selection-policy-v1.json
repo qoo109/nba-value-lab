@@ -1,0 +1,45 @@
+{
+  "schema_version": "injury-snapshot-selection-policy-v1",
+  "frozen_before_outcome_join": true,
+  "primary_policy": {
+    "name": "latest_feature_ready_at_or_before_t60",
+    "minimum_minutes_before_tip": 60,
+    "require_matchup_snapshot_complete": true,
+    "require_matchup_feature_available": true,
+    "fallback": "no_selection",
+    "tie_breaker": "latest_observed_at"
+  },
+  "diagnostic_policies": [
+    {
+      "name": "latest_feature_ready_pre_tip",
+      "minimum_minutes_before_tip": 0,
+      "require_matchup_snapshot_complete": true,
+      "require_matchup_feature_available": true,
+      "fallback": "no_selection",
+      "tie_breaker": "latest_observed_at"
+    },
+    {
+      "name": "latest_feature_ready_at_or_before_t180",
+      "minimum_minutes_before_tip": 180,
+      "require_matchup_snapshot_complete": true,
+      "require_matchup_feature_available": true,
+      "fallback": "no_selection",
+      "tie_breaker": "latest_observed_at"
+    }
+  ],
+  "sample_size_gates": {
+    "minimum_independent_games": 100,
+    "initial_reliability_independent_games": 300,
+    "ideal_independent_games": 500
+  },
+  "missingness_policy": {
+    "not_yet_submitted_or_missing_team_snapshot": "incomplete_no_selection",
+    "missing_expected_minutes_or_impact": "retain_missingness_no_zero_imputation"
+  },
+  "prohibited_after_outcome_review": [
+    "changing_the_primary_cutoff",
+    "promoting_a_diagnostic_policy",
+    "adding_an_outcome_dependent_fallback",
+    "counting_multiple_snapshots_as_independent_games"
+  ]
+}

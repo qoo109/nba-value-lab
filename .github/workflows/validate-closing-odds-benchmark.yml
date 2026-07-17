@@ -1,0 +1,56 @@
+name: Validate closing odds archive benchmark
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/import_closing_odds_archive.py"
+      - "scripts/evaluate_closing_market_benchmark.py"
+      - "docs/historical-odds-source-evaluation-v1.md"
+      - "data/historical-odds-source-registry.json"
+      - "docs/data-sources-v4.3.md"
+      - ".github/workflows/validate-closing-odds-benchmark.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install archive import dependencies
+        run: python -m pip install --disable-pip-version-check pandas openpyxl xlrd
+      - name: Compile closing benchmark modules
+        run: |
+          python -m py_compile scripts/import_closing_odds_archive.py
+          python -m py_compile scripts/evaluate_closing_market_benchmark.py
+      - name: Test SBR and Kaggle-style archive import
+        run: |
+          rm -rf /tmp/nbavl-closing-import-test
+          python scripts/import_closing_odds_archive.py \
+            --self-test \
+            --output-dir /tmp/nbavl-closing-import-test
+          python -m json.tool /tmp/nbavl-closing-import-test/closing-moneyline-import-report.json >/dev/null
+          test -f /tmp/nbavl-closing-import-test/closing-moneyline-normalized.csv
+      - name: Test closing-market comparison guardrails
+        run: |
+          rm -rf /tmp/nbavl-closing-benchmark-test
+          python scripts/evaluate_closing_market_benchmark.py \
+            --self-test \
+            --output-dir /tmp/nbavl-closing-benchmark-test
+          python -m json.tool /tmp/nbavl-closing-benchmark-test/closing-benchmark-report.json >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/nbavl-closing-benchmark-test/closing-benchmark-report.json').read_text())
+          assert report['guardrails']['roi_computed'] is False
+          assert report['guardrails']['clv_computed'] is False
+          assert report['decision']['ready_for_betting_edge_claim'] is False
+          PY
+      - name: Validate source registry JSON
+        run: python -m json.tool data/historical-odds-source-registry.json >/dev/null

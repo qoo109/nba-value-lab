@@ -1,27 +1,45 @@
 {
   "schema_version": "injury-lineup-source-registry-v1",
-  "updated_at": "2026-07-17T15:10:00+08:00",
+  "updated_at": "2026-07-17T16:10:00+08:00",
   "sources": [
     {
       "source_id": "official_nba_injury_report",
       "name": "NBA Official seasonal injury reports",
       "url": "https://official.nba.com/nba-injury-report-2025-26-season/",
-      "status": "approved_primary_source_manual_download_pilot",
+      "status": "approved_primary_source_manual_parser_pilot",
       "record_types": ["INJURY_STATUS"],
-      "timestamp_quality": "report_publication_time_available",
+      "timestamp_quality": "official_report_publication_time_available",
       "expected_update_pattern": "continual intraday reports",
-      "automation_allowed": "disabled_pending_pdf_parser_and_terms_review",
-      "commit_policy": "source_hash_url_and_normalized_small_outputs_only",
+      "automation_allowed": "manual_workflow_only_pending_multiseason_layout_and_terms_review",
+      "parser": {
+        "engine": "PyMuPDF native word coordinates",
+        "layout_version": "official-landscape-seven-column-2023-v1",
+        "third_party_injury_client_runtime_dependency": false,
+        "third_party_pdf_parser_runtime_dependency": false
+      },
+      "validated_fixture": {
+        "report_time": "2023-12-18T08:30:00-05:00",
+        "player_rows": 118,
+        "not_yet_submitted_team_rows": 10,
+        "conversion_errors": 0,
+        "contract_errors": 0,
+        "contract_warnings": 0
+      },
+      "commit_policy": "aggregate_provenance_and_qa_only_by_default",
       "required_checks": [
         "source_report_time",
         "observed_at",
+        "retrieved_at",
         "commence_time",
         "source_file_sha256",
+        "layout_version",
         "game_team_player_mapping",
         "status_normalization",
-        "conflict_detection"
+        "conflict_detection",
+        "raw_pdf_not_uploaded",
+        "normalized_player_rows_not_uploaded_by_default"
       ],
-      "notes": "Primary injury-status source. Raw PDFs stay outside the public repository."
+      "notes": "Primary injury-status source. Raw PDFs stay outside the public repository. Bulk backfill remains disabled."
     },
     {
       "source_id": "lineup_provider_tbd",

@@ -1,0 +1,43 @@
+{
+  "schema_version": "nba-venue-context-v1",
+  "method": "team_home_venue_proxy_with_major_historical_overrides",
+  "notes": [
+    "Coordinates represent arena or nearby city-center proxies and are intended for relative travel features, not navigation.",
+    "Game-level neutral sites are not fully enumerated; major systematic exceptions are handled by the feature builder and flagged.",
+    "Timezone offsets are computed from IANA zones on each game date."
+  ],
+  "venues": {
+    "ATL": {"name": "Atlanta", "latitude": 33.7573, "longitude": -84.3963, "timezone": "America/New_York", "elevation_m": 320},
+    "BKN": {"name": "Brooklyn", "latitude": 40.6826, "longitude": -73.9754, "timezone": "America/New_York", "elevation_m": 10},
+    "BOS": {"name": "Boston", "latitude": 42.3662, "longitude": -71.0621, "timezone": "America/New_York", "elevation_m": 6},
+    "CHA": {"name": "Charlotte", "latitude": 35.2251, "longitude": -80.8392, "timezone": "America/New_York", "elevation_m": 229},
+    "CHI": {"name": "Chicago", "latitude": 41.8807, "longitude": -87.6742, "timezone": "America/Chicago", "elevation_m": 181},
+    "CLE": {"name": "Cleveland", "latitude": 41.4965, "longitude": -81.6882, "timezone": "America/New_York", "elevation_m": 199},
+    "DAL": {"name": "Dallas", "latitude": 32.7905, "longitude": -96.8103, "timezone": "America/Chicago", "elevation_m": 131},
+    "DEN": {"name": "Denver", "latitude": 39.7487, "longitude": -105.0077, "timezone": "America/Denver", "elevation_m": 1609},
+    "DET": {"name": "Detroit", "latitude": 42.3411, "longitude": -83.0550, "timezone": "America/Detroit", "elevation_m": 183},
+    "GSW": {"name": "San Francisco", "latitude": 37.7680, "longitude": -122.3877, "timezone": "America/Los_Angeles", "elevation_m": 5},
+    "HOU": {"name": "Houston", "latitude": 29.7508, "longitude": -95.3621, "timezone": "America/Chicago", "elevation_m": 15},
+    "IND": {"name": "Indianapolis", "latitude": 39.7640, "longitude": -86.1555, "timezone": "America/Indiana/Indianapolis", "elevation_m": 218},
+    "LAC": {"name": "Los Angeles", "latitude": 34.0430, "longitude": -118.2673, "timezone": "America/Los_Angeles", "elevation_m": 71},
+    "LAL": {"name": "Los Angeles", "latitude": 34.0430, "longitude": -118.2673, "timezone": "America/Los_Angeles", "elevation_m": 71},
+    "MEM": {"name": "Memphis", "latitude": 35.1382, "longitude": -90.0506, "timezone": "America/Chicago", "elevation_m": 85},
+    "MIA": {"name": "Miami", "latitude": 25.7814, "longitude": -80.1870, "timezone": "America/New_York", "elevation_m": 2},
+    "MIL": {"name": "Milwaukee", "latitude": 43.0451, "longitude": -87.9172, "timezone": "America/Chicago", "elevation_m": 188},
+    "MIN": {"name": "Minneapolis", "latitude": 44.9795, "longitude": -93.2760, "timezone": "America/Chicago", "elevation_m": 252},
+    "NOP": {"name": "New Orleans", "latitude": 29.9490, "longitude": -90.0821, "timezone": "America/Chicago", "elevation_m": 1},
+    "NYK": {"name": "New York", "latitude": 40.7505, "longitude": -73.9934, "timezone": "America/New_York", "elevation_m": 10},
+    "OKC": {"name": "Oklahoma City", "latitude": 35.4634, "longitude": -97.5151, "timezone": "America/Chicago", "elevation_m": 366},
+    "ORL": {"name": "Orlando", "latitude": 28.5392, "longitude": -81.3839, "timezone": "America/New_York", "elevation_m": 25},
+    "PHI": {"name": "Philadelphia", "latitude": 39.9012, "longitude": -75.1720, "timezone": "America/New_York", "elevation_m": 12},
+    "PHX": {"name": "Phoenix", "latitude": 33.4457, "longitude": -112.0712, "timezone": "America/Phoenix", "elevation_m": 331},
+    "POR": {"name": "Portland", "latitude": 45.5316, "longitude": -122.6668, "timezone": "America/Los_Angeles", "elevation_m": 15},
+    "SAC": {"name": "Sacramento", "latitude": 38.5802, "longitude": -121.4997, "timezone": "America/Los_Angeles", "elevation_m": 9},
+    "SAS": {"name": "San Antonio", "latitude": 29.4269, "longitude": -98.4375, "timezone": "America/Chicago", "elevation_m": 198},
+    "TOR": {"name": "Toronto", "latitude": 43.6435, "longitude": -79.3791, "timezone": "America/Toronto", "elevation_m": 76},
+    "UTA": {"name": "Salt Lake City", "latitude": 40.7683, "longitude": -111.9011, "timezone": "America/Denver", "elevation_m": 1288},
+    "WAS": {"name": "Washington", "latitude": 38.8981, "longitude": -77.0209, "timezone": "America/New_York", "elevation_m": 7},
+    "ORLANDO_BUBBLE": {"name": "Orlando bubble proxy", "latitude": 28.4150, "longitude": -81.5830, "timezone": "America/New_York", "elevation_m": 30},
+    "TORONTO_TAMPA": {"name": "Toronto Tampa proxy", "latitude": 27.9427, "longitude": -82.4518, "timezone": "America/New_York", "elevation_m": 15}
+  }
+}

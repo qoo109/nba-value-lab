@@ -1,0 +1,44 @@
+{
+  "schema_version": "injury-lineup-source-registry-v1",
+  "updated_at": "2026-07-17T15:10:00+08:00",
+  "sources": [
+    {
+      "source_id": "official_nba_injury_report",
+      "name": "NBA Official seasonal injury reports",
+      "url": "https://official.nba.com/nba-injury-report-2025-26-season/",
+      "status": "approved_primary_source_manual_download_pilot",
+      "record_types": ["INJURY_STATUS"],
+      "timestamp_quality": "report_publication_time_available",
+      "expected_update_pattern": "continual intraday reports",
+      "automation_allowed": "disabled_pending_pdf_parser_and_terms_review",
+      "commit_policy": "source_hash_url_and_normalized_small_outputs_only",
+      "required_checks": [
+        "source_report_time",
+        "observed_at",
+        "commence_time",
+        "source_file_sha256",
+        "game_team_player_mapping",
+        "status_normalization",
+        "conflict_detection"
+      ],
+      "notes": "Primary injury-status source. Raw PDFs stay outside the public repository."
+    },
+    {
+      "source_id": "lineup_provider_tbd",
+      "name": "Pregame lineup snapshot provider",
+      "status": "blocked_until_source_approved",
+      "record_types": ["LINEUP_STATUS"],
+      "timestamp_quality": "required_before_activation",
+      "automation_allowed": false,
+      "commit_policy": "no_data_until_provenance_and_license_review",
+      "required_checks": [
+        "pregame_observation_time",
+        "projected_vs_confirmed_distinction",
+        "five_starter_completeness",
+        "source_provenance",
+        "license_review"
+      ],
+      "notes": "Do not infer pregame starters from postgame box scores."
+    }
+  ]
+}

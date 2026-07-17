@@ -82,24 +82,64 @@ It inherits the upstream controls that exclude:
 - fuzzy player identities;
 - unknown values imputed as zero.
 
-## Activation gate
+## Builder gate and registered pilot gate
 
-The single-report pilot requires:
+The generic builder retains a conservative default requirement of 70% feature-ready matchup coverage.
 
-- at least eight matchups;
-- no duplicate snapshot or game mappings;
+The registered single-report pilot was defined separately because its pre-registered target was **at least seven feature-ready matchups**. The pilot gate preserves the original builder decision in the QA report, then requires:
+
+- at least eight total matchups;
+- at least 80% complete matchup snapshot coverage;
+- at least seven feature-ready matchups;
+- at least 60% feature-ready matchup coverage;
+- no duplicate snapshot, player-value, or game mappings;
 - no unknown statuses or numeric errors;
 - no strict prior-date violations;
-- at least 80% complete matchup snapshot coverage;
-- at least 70% feature-ready matchup coverage.
+- no zero-filling of missing teams or unknown player values.
 
-The resulting decision may enable a **team injury feature experiment**, not model training.
+Both the absolute and relative requirements must pass. This prevents seven matches from being sufficient in a much larger future batch.
+
+## Verified single-report result
+
+The 2023-12-18 08:30 ET report produced:
+
+- games: 11;
+- team rows: 22;
+- teams with snapshot rows: 20;
+- teams with feature-ready values: 17;
+- complete snapshot matchups: 9 / 11, or 81.8182%;
+- feature-ready matchups: 7 / 11, or 63.6364%;
+- identity snapshot rows: 118;
+- player value rows: 117;
+- strict prior-date violations: 0;
+- unknown statuses: 0;
+- numeric errors: 0;
+- team snapshot missing rows: 2;
+- team feature unavailable rows: 5.
+
+Status counts in retained player-value rows were:
 
 ```text
-ready_for_team_injury_feature_experiment: conditional
+AVAILABLE     6
+PROBABLE      5
+QUESTIONABLE 24
+DOUBTFUL      3
+OUT          79
+```
+
+The original generic builder gate remained false at 63.6364%. The registered pilot gate passed because the result met the declared minimum of seven ready matchups, 60% ready coverage, and 80% complete snapshot coverage.
+
+## Activation boundary
+
+The resulting decision enables a **team injury feature experiment**, not model training.
+
+```text
+ready_for_team_injury_feature_experiment: true
 ready_for_model_training: false
 ready_for_betting_edge_claim: false
 ```
+
+The report retains the original builder decision and the separate pilot-gate decision for auditability.
 
 ## Next phase
 

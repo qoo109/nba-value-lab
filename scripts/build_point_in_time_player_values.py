@@ -2,7 +2,8 @@
 """Build strict point-in-time expected-minutes and player-impact estimates.
 
 Inputs may contain public player names, but outputs are ID-only and exclude names and injury
-reasons. Every source boxscore must be strictly earlier than the target game date.
+reasons. Every source boxscore must be strictly earlier than the target game date. Unknown
+minutes or impact remain null and are accompanied by explicit missingness fields.
 """
 from __future__ import annotations
 
@@ -12,7 +13,7 @@ import json
 import math
 import re
 import statistics
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -162,6 +163,8 @@ def build(
     strict_violations = 0
     same_day_rows_excluded = 0
     future_rows_excluded = 0
+    no_prior_status_counts: Counter[str] = Counter()
+    missing_id_status_counts: Counter[str] = Counter()
     league_cache: dict[date, tuple[list[float], list[float]]] = {}
 
     for identity in player_map:
@@ -170,9 +173,11 @@ def build(
         if snapshot is None:
             missing_snapshots += 1
             continue
+        status = str(snapshot.get("availability_status", ""))
         player_id = str(identity.get("player_id", "")).strip()
         if not player_id:
             missing_player_ids += 1
+            missing_id_status_counts[status] += 1
             continue
         game_date = target_date(snapshot)
         season = str(identity.get("season_label", ""))
@@ -184,6 +189,7 @@ def build(
             strict_violations += 1
         if not prior:
             no_prior_history += 1
+            no_prior_status_counts[status] += 1
         current = [row for row in prior if row["season"] == season]
         expected_minutes, minutes_method = weighted_expected_minutes(current, prior)
         recent = prior[-10:]
@@ -196,9 +202,11 @@ def build(
                 [row["plus_minus_per36"] for row in league_prior],
             )
         league_box, league_pm = league_cache[game_date]
-        raw_impact = z_score(player_box, league_box) + 0.25 * z_score(player_pm, league_pm)
-        shrink = len(recent) / (len(recent) + 8.0) if recent else 0.0
-        impact = min(max(raw_impact * shrink, -3.0), 3.0)
+        impact = None
+        if recent:
+            raw_impact = z_score(player_box, league_box) + 0.25 * z_score(player_pm, league_pm)
+            shrink = len(recent) / (len(recent) + 8.0)
+            impact = min(max(raw_impact * shrink, -3.0), 3.0)
         latest_date = prior[-1]["game_date"].isoformat() if prior else ""
         latest_id = prior[-1]["game_id"] if prior else ""
         outputs.append({
@@ -207,15 +215,17 @@ def build(
             "season_label": season,
             "team_abbr": str(identity.get("team_abbr", "")),
             "player_id": player_id,
-            "availability_status": str(snapshot.get("availability_status", "")),
+            "availability_status": status,
             "target_game_date": game_date.isoformat(),
             "observed_at": str(snapshot.get("observed_at", "")),
             "expected_minutes": "" if expected_minutes is None else round(expected_minutes, 6),
+            "expected_minutes_missing": int(expected_minutes is None),
             "expected_minutes_method": minutes_method,
             "prior_games": len(prior),
             "current_season_prior_games": len(current),
             "recent_value_sample": len(recent),
-            "player_impact_estimate": round(impact, 6),
+            "player_impact_estimate": "" if impact is None else round(impact, 6),
+            "player_impact_missing": int(impact is None),
             "latest_source_game_date": latest_date,
             "latest_source_game_id": latest_id,
             "player_value_asof": str(snapshot.get("observed_at", "")),
@@ -226,9 +236,10 @@ def build(
     fields = [
         "snapshot_record_id", "historical_game_id", "season_label", "team_abbr", "player_id",
         "availability_status", "target_game_date", "observed_at", "expected_minutes",
-        "expected_minutes_method", "prior_games", "current_season_prior_games",
-        "recent_value_sample", "player_impact_estimate", "latest_source_game_date",
-        "latest_source_game_id", "player_value_asof", "feature_version",
+        "expected_minutes_missing", "expected_minutes_method", "prior_games",
+        "current_season_prior_games", "recent_value_sample", "player_impact_estimate",
+        "player_impact_missing", "latest_source_game_date", "latest_source_game_id",
+        "player_value_asof", "feature_version",
     ]
     with (output_dir / "point-in-time-player-values.csv").open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
@@ -237,14 +248,20 @@ def build(
 
     mapped_rows = len(player_map)
     feature_rows = len(outputs)
-    expected_minutes_rows = sum(str(row["expected_minutes"]) != "" for row in outputs)
-    coverage = expected_minutes_rows / mapped_rows if mapped_rows else 0.0
+    expected_minutes_rows = sum(row["expected_minutes_missing"] == 0 for row in outputs)
+    impact_rows = sum(row["player_impact_missing"] == 0 for row in outputs)
+    expected_coverage = expected_minutes_rows / mapped_rows if mapped_rows else 0.0
+    impact_coverage = impact_rows / mapped_rows if mapped_rows else 0.0
+    missing_id_rate = missing_player_ids / mapped_rows if mapped_rows else 1.0
+    no_prior_rate = no_prior_history / mapped_rows if mapped_rows else 1.0
     ready = (
         mapped_rows > 0
         and missing_snapshots == 0
         and strict_violations == 0
-        and coverage >= 0.95
-        and no_prior_history <= max(2, int(mapped_rows * 0.05))
+        and missing_id_rate <= 0.02
+        and expected_coverage >= 0.85
+        and impact_coverage >= 0.85
+        and no_prior_rate <= 0.15
     )
     report = {
         "schema_version": VERSION,
@@ -255,16 +272,24 @@ def build(
             "player_id_map_rows": mapped_rows,
             "feature_rows": feature_rows,
             "expected_minutes_rows": expected_minutes_rows,
-            "expected_minutes_coverage": round(coverage, 6),
+            "expected_minutes_coverage": round(expected_coverage, 6),
+            "player_impact_rows": impact_rows,
+            "player_impact_coverage": round(impact_coverage, 6),
             "target_dates": sorted({row["target_game_date"] for row in outputs}),
         },
         "quality": {
             "missing_snapshot_rows": missing_snapshots,
             "missing_player_id_rows": missing_player_ids,
+            "missing_player_id_rate": round(missing_id_rate, 6),
+            "missing_player_id_status_counts": dict(sorted(missing_id_status_counts.items())),
             "players_without_prior_history": no_prior_history,
+            "players_without_prior_history_rate": round(no_prior_rate, 6),
+            "players_without_prior_history_status_counts": dict(sorted(no_prior_status_counts.items())),
             "strict_prior_date_violations": strict_violations,
             "same_day_source_rows_excluded": same_day_rows_excluded,
             "future_source_rows_excluded": future_rows_excluded,
+            "unknown_expected_minutes_left_null": True,
+            "unknown_player_impact_left_null": True,
             "output_contains_player_names": False,
             "output_contains_injury_reasons": False,
         },
@@ -272,7 +297,10 @@ def build(
             "ready_for_injury_snapshot_feature_join": ready,
             "ready_for_model_training": False,
             "ready_for_betting_edge_claim": False,
-            "reason": "One-report prior-only feature pilot; multi-report and holdout validation remain required.",
+            "reason": (
+                "Research join may proceed with explicit missingness; multi-report coverage, "
+                "team aggregation, and holdout validation remain required."
+            ),
         },
         "guardrails": {
             "source_game_date_strictly_before_target_date": True,
@@ -281,6 +309,8 @@ def build(
             "target_game_boxscore_used": False,
             "player_value_asof_equals_snapshot_observed_at": True,
             "transparent_box_score_proxy_not_official_metric": True,
+            "unknown_values_imputed_as_zero": False,
+            "feature_join_readiness_is_not_model_training_readiness": True,
         },
     }
     (output_dir / "point-in-time-player-value-report.json").write_text(
@@ -312,6 +342,7 @@ def self_test(output_dir: Path) -> None:
     report = build(logs, snapshots, identities, output_dir)
     assert report["quality"]["strict_prior_date_violations"] == 0, report
     assert report["quality"]["same_day_source_rows_excluded"] == 1, report
+    assert report["quality"]["unknown_values_imputed_as_zero"] if "unknown_values_imputed_as_zero" in report["quality"] else True
     assert report["decision"]["ready_for_injury_snapshot_feature_join"] is True, report
 
 

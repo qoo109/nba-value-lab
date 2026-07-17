@@ -3,17 +3,16 @@
 
 The Kaggle dataset uses a team-centric schema: each game is normally represented twice,
 once from each team's perspective. This adapter converts those mirrored rows into one
-canonical home-versus-away closing moneyline record, computes no-vig probabilities, joins
-against walk-forward predictions, and deletes game-level odds before artifact upload.
+canonical home-versus-away closing moneyline record, computes no-vig probabilities,
+aligns schedule keys without using outcomes, joins against walk-forward predictions, and
+deletes game-level odds before artifact upload.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-import math
 import os
-import shutil
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -29,7 +28,7 @@ from import_closing_odds_archive import (
     utc_now,
 )
 
-VERSION = "christopher-treasure-closing-adapter-v1"
+VERSION = "christopher-treasure-closing-adapter-v1.1"
 REQUIRED_NORMALIZED_COLUMNS = {
     "date",
     "season",
@@ -39,6 +38,13 @@ REQUIRED_NORMALIZED_COLUMNS = {
     "moneyline",
     "opponentmoneyline",
 }
+SWAP_COLUMN_PAIRS = (
+    ("home_team_abbr", "away_team_abbr"),
+    ("home_moneyline_american", "away_moneyline_american"),
+    ("home_price_decimal", "away_price_decimal"),
+    ("home_implied_probability", "away_implied_probability"),
+    ("fair_home_probability", "fair_away_probability"),
+)
 
 
 def norm_col(value: Any) -> str:
@@ -97,8 +103,7 @@ def normalize_team_centric_archive(
     source_id: str,
 ) -> dict[str, Any]:
     frame = pd.read_csv(source_path)
-    rename = {str(column): norm_col(column) for column in frame.columns}
-    frame = frame.rename(columns=rename)
+    frame = frame.rename(columns={str(column): norm_col(column) for column in frame.columns})
     missing = sorted(REQUIRED_NORMALIZED_COLUMNS - set(frame.columns))
     if missing:
         raise ValueError(f"Christopher Treasure archive missing columns: {missing}")
@@ -225,6 +230,102 @@ def normalize_team_centric_archive(
     }
 
 
+def _key_set(frame: pd.DataFrame) -> set[tuple[str, str, str]]:
+    return set(
+        zip(
+            frame["game_date"].astype(str),
+            frame["home_team_abbr"].astype(str).str.upper().str.strip(),
+            frame["away_team_abbr"].astype(str).str.upper().str.strip(),
+        )
+    )
+
+
+def align_schedule_keys(
+    normalized_path: Path,
+    predictions_path: Path,
+) -> dict[str, Any]:
+    source = pd.read_csv(normalized_path)
+    predictions = pd.read_csv(predictions_path)
+    required = {"game_date", "home_team_abbr", "away_team_abbr"}
+    if not required.issubset(source.columns) or not required.issubset(predictions.columns):
+        raise ValueError("schedule alignment requires game_date, home_team_abbr and away_team_abbr")
+
+    predictions = predictions.copy()
+    predictions["game_date"] = pd.to_datetime(predictions["game_date"], errors="raise").dt.date.astype(str)
+    prediction_keys = _key_set(predictions)
+    candidates: list[dict[str, Any]] = []
+
+    for swapped in (False, True):
+        for offset_days in range(-2, 3):
+            test = source[["game_date", "home_team_abbr", "away_team_abbr"]].copy()
+            test["game_date"] = (
+                pd.to_datetime(test["game_date"], errors="raise")
+                + pd.to_timedelta(offset_days, unit="D")
+            ).dt.date.astype(str)
+            if swapped:
+                home = test["home_team_abbr"].copy()
+                test["home_team_abbr"] = test["away_team_abbr"]
+                test["away_team_abbr"] = home
+            matches = len(_key_set(test) & prediction_keys)
+            candidates.append(
+                {
+                    "swap_home_away": swapped,
+                    "date_offset_days": offset_days,
+                    "matched_games": matches,
+                }
+            )
+
+    candidates.sort(
+        key=lambda item: (
+            -item["matched_games"],
+            item["swap_home_away"],
+            abs(item["date_offset_days"]),
+            item["date_offset_days"],
+        )
+    )
+    selected = candidates[0]
+    second_best = candidates[1]["matched_games"] if len(candidates) > 1 else 0
+    minimum_required = max(100, int(len(predictions) * 0.05))
+    if selected["matched_games"] < minimum_required:
+        raise ValueError(
+            "No safe schedule-key alignment found: "
+            f"best={selected['matched_games']} minimum={minimum_required}"
+        )
+
+    adjusted = source.copy()
+    adjusted["game_date"] = (
+        pd.to_datetime(adjusted["game_date"], errors="raise")
+        + pd.to_timedelta(selected["date_offset_days"], unit="D")
+    ).dt.date.astype(str)
+    if selected["swap_home_away"]:
+        for left, right in SWAP_COLUMN_PAIRS:
+            left_values = adjusted[left].copy()
+            adjusted[left] = adjusted[right]
+            adjusted[right] = left_values
+    if selected["swap_home_away"] or selected["date_offset_days"] != 0:
+        adjustment_flag = (
+            f"schedule_alignment_swap_{str(selected['swap_home_away']).lower()}"
+            f"_offset_{selected['date_offset_days']:+d}d"
+        )
+        adjusted["quality_flags"] = adjusted["quality_flags"].fillna("").map(
+            lambda value: ",".join(filter(None, [str(value), adjustment_flag]))
+        )
+    adjusted.to_csv(normalized_path, index=False)
+
+    return {
+        "method": "schedule_keys_only_no_outcomes_no_probabilities",
+        "prediction_games": int(len(predictions)),
+        "source_games": int(len(source)),
+        "source_date_range_before": [str(source["game_date"].min()), str(source["game_date"].max())],
+        "prediction_date_range": [str(predictions["game_date"].min()), str(predictions["game_date"].max())],
+        "selected": selected,
+        "second_best_matched_games": second_best,
+        "selection_unique": selected["matched_games"] > second_best,
+        "minimum_required_matches": minimum_required,
+        "candidates": candidates,
+    }
+
+
 def run(
     output_dir: Path,
     predictions: Path,
@@ -253,6 +354,10 @@ def run(
             source_path = find_source_file(root)
             normalized_path = output_dir / "selected-import" / "closing-moneyline-normalized.csv"
             import_report = normalize_team_centric_archive(source_path, normalized_path, source_id)
+            alignment = align_schedule_keys(normalized_path, predictions)
+            import_report["schedule_alignment"] = alignment
+            import_report["quality"]["schedule_alignment_uses_outcomes"] = False
+            import_report["quality"]["schedule_alignment_uses_model_probabilities"] = False
             (output_dir / "kaggle-selected-import-report.json").write_text(
                 json.dumps(import_report, indent=2) + "\n", encoding="utf-8"
             )
@@ -266,6 +371,7 @@ def run(
                     "detected_columns": import_report["source"]["detected_columns"],
                     "normalized_games": import_report["coverage"]["normalized_games"],
                     "season_count": import_report["coverage"]["season_count"],
+                    "schedule_alignment": alignment["selected"],
                 },
                 "raw_rows_uploaded": False,
             }
@@ -282,6 +388,7 @@ def run(
                     "matched_games": benchmark_report["coverage"]["matched_games"],
                     "matched_seasons": benchmark_report["coverage"]["matched_seasons"],
                     "ready_for_market_accuracy_comparison": benchmark_report["decision"]["ready_for_market_accuracy_comparison"],
+                    "schedule_alignment": alignment["selected"],
                 }
             )
         except Exception as exc:
@@ -308,10 +415,10 @@ def self_test(output_dir: Path) -> None:
         dataset.mkdir()
         pd.DataFrame(
             [
-                {"date": "2022-10-18", "season": 2023, "team": "Boston", "home/visitor": "H", "opponent": "Philadelphia", "score": 126, "opponentScore": 117, "moneyLine": -140, "opponentMoneyLine": 120, "total": 214.5, "spread": -3, "secondHalfTotal": 108.5},
-                {"date": "2022-10-18", "season": 2023, "team": "Philadelphia", "home/visitor": "V", "opponent": "Boston", "score": 117, "opponentScore": 126, "moneyLine": 120, "opponentMoneyLine": -140, "total": 214.5, "spread": 3, "secondHalfTotal": 108.5},
-                {"date": "2022-10-19", "season": 2023, "team": "Phoenix", "home/visitor": "H", "opponent": "Dallas", "score": 107, "opponentScore": 105, "moneyLine": -130, "opponentMoneyLine": 110, "total": 218.0, "spread": -2, "secondHalfTotal": 109.0},
-                {"date": "2022-10-19", "season": 2023, "team": "Dallas", "home/visitor": "V", "opponent": "Phoenix", "score": 105, "opponentScore": 107, "moneyLine": 110, "opponentMoneyLine": -130, "total": 218.0, "spread": 2, "secondHalfTotal": 109.0},
+                {"date": "2022-10-19", "season": 2023, "team": "Boston", "home/visitor": "V", "opponent": "Philadelphia", "score": 126, "opponentScore": 117, "moneyLine": -140, "opponentMoneyLine": 120, "total": 214.5, "spread": -3, "secondHalfTotal": 108.5},
+                {"date": "2022-10-19", "season": 2023, "team": "Philadelphia", "home/visitor": "H", "opponent": "Boston", "score": 117, "opponentScore": 126, "moneyLine": 120, "opponentMoneyLine": -140, "total": 214.5, "spread": 3, "secondHalfTotal": 108.5},
+                {"date": "2022-10-20", "season": 2023, "team": "Phoenix", "home/visitor": "V", "opponent": "Dallas", "score": 107, "opponentScore": 105, "moneyLine": -130, "opponentMoneyLine": 110, "total": 218.0, "spread": -2, "secondHalfTotal": 109.0},
+                {"date": "2022-10-20", "season": 2023, "team": "Dallas", "home/visitor": "H", "opponent": "Phoenix", "score": 105, "opponentScore": 107, "moneyLine": 110, "opponentMoneyLine": -130, "total": 218.0, "spread": 2, "secondHalfTotal": 109.0},
             ]
         ).to_csv(dataset / "oddsData.csv", index=False)
         predictions = root / "predictions.csv"
@@ -324,6 +431,8 @@ def self_test(output_dir: Path) -> None:
         status = run(output_dir, predictions, "self_test_christopher", dataset_root=dataset)
         assert status["benchmark_complete"] is True, status
         assert status["matched_games"] == 2, status
+        assert status["schedule_alignment"]["swap_home_away"] is True, status
+        assert status["schedule_alignment"]["date_offset_days"] == -1, status
         report = json.loads((output_dir / "kaggle-selected-import-report.json").read_text())
         assert report["coverage"]["normalized_games"] == 2, report
         assert report["quality"]["mirrored_rows_deduplicated"] == 2, report

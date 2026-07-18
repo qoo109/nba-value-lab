@@ -1,0 +1,248 @@
+name: Validate Injury Feature walk-forward holdout v1
+
+on:
+  pull_request:
+    paths:
+      - "data/injury-feature-walk-forward-holdout-v1.json"
+      - "docs/injury-feature-walk-forward-holdout-v1.md"
+      - "scripts/validate_injury_feature_holdout_v1_policy.py"
+      - "scripts/run_injury_feature_holdout_v1.py"
+      - ".github/workflows/validate-injury-feature-holdout-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+    inputs:
+      injury_feature_run_id:
+        description: "Verified run containing the frozen combined 293-game injury panel"
+        required: true
+        default: "29629934161"
+      baseline_oof_run_id:
+        description: "Verified run containing model-walk-forward-v2 OOF predictions"
+        required: true
+        default: "29551715399"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check numpy pandas scipy scikit-learn
+
+      - name: Compile holdout modules
+        run: |
+          python -m py_compile scripts/validate_injury_feature_holdout_v1_policy.py
+          python -m py_compile scripts/run_injury_feature_holdout_v1.py
+
+      - name: Run deterministic self-tests
+        run: |
+          rm -rf /tmp/nbavl-injury-holdout-v1-self-test
+          python scripts/validate_injury_feature_holdout_v1_policy.py \
+            --policy data/injury-feature-walk-forward-holdout-v1.json \
+            --self-test
+          python scripts/run_injury_feature_holdout_v1.py \
+            --self-test \
+            --output-dir /tmp/nbavl-injury-holdout-v1-self-test
+          test -s /tmp/nbavl-injury-holdout-v1-self-test/self-test.json
+
+  live-holdout:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      INJURY_FEATURE_RUN_ID: ${{ github.event.inputs.injury_feature_run_id || '29629934161' }}
+      BASELINE_OOF_RUN_ID: ${{ github.event.inputs.baseline_oof_run_id || '29551715399' }}
+      ROOT: /tmp/nbavl-injury-holdout-v1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check numpy pandas scipy scikit-learn
+
+      - name: Download frozen injury panel and baseline OOF predictions
+        run: |
+          rm -rf "$ROOT"
+          mkdir -p "$ROOT/injury" "$ROOT/baseline" "$ROOT/policy" "$ROOT/result" "$ROOT/provenance"
+
+          gh run download "$INJURY_FEATURE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name injury-backfill-wave3-features \
+            --dir "$ROOT/injury"
+
+          gh run download "$BASELINE_OOF_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name model-walk-forward-v2 \
+            --dir "$ROOT/baseline"
+
+          INJURY_PANEL="$(find "$ROOT/injury" -path '*/combined/combined-selected-matchup-injury-burden.csv' -print -quit)"
+          INJURY_REPORT="$(find "$ROOT/injury" -path '*/combined/combined-selected-injury-waves-report.json' -print -quit)"
+          BASELINE_PREDICTIONS="$(find "$ROOT/baseline" -name 'walk-forward-predictions.csv' -print -quit)"
+          BASELINE_REPORT="$(find "$ROOT/baseline" -name 'walk-forward-report.json' -print -quit)"
+
+          test -n "$INJURY_PANEL"
+          test -n "$INJURY_REPORT"
+          test -n "$BASELINE_PREDICTIONS"
+          test -n "$BASELINE_REPORT"
+
+          echo "INJURY_PANEL=$INJURY_PANEL" >> "$GITHUB_ENV"
+          echo "INJURY_REPORT=$INJURY_REPORT" >> "$GITHUB_ENV"
+          echo "BASELINE_PREDICTIONS=$BASELINE_PREDICTIONS" >> "$GITHUB_ENV"
+          echo "BASELINE_REPORT=$BASELINE_REPORT" >> "$GITHUB_ENV"
+
+          cp "$INJURY_REPORT" "$ROOT/provenance/combined-selected-injury-waves-report.json"
+          cp "$BASELINE_REPORT" "$ROOT/provenance/walk-forward-report.json"
+
+      - name: Validate merged predeclaration before execution
+        run: |
+          python scripts/validate_injury_feature_holdout_v1_policy.py \
+            --policy data/injury-feature-walk-forward-holdout-v1.json \
+            --output "$ROOT/policy/injury-feature-holdout-v1-policy-validation.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+          report = json.loads(
+              (root / 'policy/injury-feature-holdout-v1-policy-validation.json').read_text()
+          )
+          assert report['quality']['failed_checks'] == [], report
+          assert report['quality']['holdout_metrics_calculated'] is False, report
+          assert report['quality']['candidate_fit_performed'] is False, report
+          assert report['quality']['game_outcomes_read'] is False, report
+          assert report['quality']['market_odds_read'] is False, report
+          assert report['decision']['ready_for_injury_feature_holdout_v1_implementation'] is True, report
+          assert report['decision']['ready_for_injury_feature_holdout_v1_execution'] is False, report
+          PY
+
+      - name: Execute exact frozen two-fold holdout
+        id: holdout
+        run: |
+          set +e
+          python scripts/run_injury_feature_holdout_v1.py \
+            --injury-panel "$INJURY_PANEL" \
+            --baseline-predictions "$BASELINE_PREDICTIONS" \
+            --policy data/injury-feature-walk-forward-holdout-v1.json \
+            --output-dir "$ROOT/result"
+          HOLDOUT_EXIT=$?
+          set -e
+
+          test "$HOLDOUT_EXIT" -eq 0 -o "$HOLDOUT_EXIT" -eq 2
+          test -s "$ROOT/result/injury-feature-holdout-v1-report.json"
+          echo "holdout_exit=$HOLDOUT_EXIT" >> "$GITHUB_OUTPUT"
+
+      - name: Remove game-level and model temporary files
+        if: always()
+        run: |
+          rm -f "$ROOT/result/injury-feature-holdout-v1-game-rows.csv"
+          find "$ROOT" -name '*.joblib' -delete 2>/dev/null || true
+          find "$ROOT" -name 'walk-forward-predictions.csv' -delete 2>/dev/null || true
+          find "$ROOT" -name 'combined-selected-matchup-injury-burden.csv' -delete 2>/dev/null || true
+
+      - name: Verify aggregate-only Artifact boundary
+        if: always()
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+          forbidden = {
+              'injury-feature-holdout-v1-game-rows.csv',
+              'walk-forward-predictions.csv',
+              'combined-selected-matchup-injury-burden.csv',
+              'official-player-participation-labels.csv',
+              'injury-player-id-map.csv',
+              'point-in-time-player-values.csv',
+              'overlap-player-injury-panel.csv',
+          }
+          found = sorted(
+              str(path)
+              for path in root.rglob('*')
+              if path.is_file() and (path.name in forbidden or path.suffix == '.joblib')
+          )
+          assert not found, found
+          PY
+
+      - name: Enforce formal decision and permanent non-activation
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+          report = json.loads(
+              (root / 'result/injury-feature-holdout-v1-report.json').read_text()
+          )
+          state = report['decision_state']
+          assert state in {
+              'STRUCTURAL_BLOCKED',
+              'VALID_NEGATIVE_RESULT',
+              'HOLDOUT_RESEARCH_PASS',
+          }, report
+
+          decision = report['decision']
+          quality = report['quality']
+          assert decision['ready_for_timestamped_odds_execution'] is False, report
+          assert decision['ready_for_production_model_training'] is False, report
+          assert decision['ready_for_probability_adjustment'] is False, report
+          assert decision['ready_for_betting_edge_claim'] is False, report
+          assert decision['formal_stake'] == 0, report
+          assert quality['test_rows_used_for_training'] == 0, report
+          assert quality['strict_point_in_time_violations'] == 0, report
+          assert quality['target_game_labels_used_as_features'] is False, report
+          assert quality['target_game_minutes_used_as_features'] is False, report
+          assert quality['market_odds_used'] is False, report
+          assert quality['random_shuffle_used'] is False, report
+          assert quality['missing_injury_values_imputed_as_zero'] is False, report
+          assert quality['post_result_feature_selection_performed'] is False, report
+          assert quality['hyperparameter_search_performed'] is False, report
+
+          if state == 'STRUCTURAL_BLOCKED':
+              assert decision['structurally_valid_holdout_result'] is False, report
+              assert decision['ready_for_timestamped_odds_predeclaration'] is False, report
+              assert decision['injury_candidate_research_ready'] is False, report
+          elif state == 'VALID_NEGATIVE_RESULT':
+              assert decision['structurally_valid_holdout_result'] is True, report
+              assert decision['ready_for_timestamped_odds_predeclaration'] is True, report
+              assert decision['injury_candidate_research_ready'] is False, report
+              assert decision['market_research_model_path'] == 'frozen_baseline_only', report
+          else:
+              assert decision['structurally_valid_holdout_result'] is True, report
+              assert decision['ready_for_timestamped_odds_predeclaration'] is True, report
+              assert decision['injury_candidate_research_ready'] is True, report
+              assert decision['market_research_model_path'] == 'baseline_and_injury_candidate_compared_separately', report
+          PY
+
+      - name: Upload aggregate Holdout artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: injury-feature-walk-forward-holdout-v1
+          path: |
+            /tmp/nbavl-injury-holdout-v1/policy/injury-feature-holdout-v1-policy-validation.json
+            /tmp/nbavl-injury-holdout-v1/provenance/combined-selected-injury-waves-report.json
+            /tmp/nbavl-injury-holdout-v1/provenance/walk-forward-report.json
+            /tmp/nbavl-injury-holdout-v1/result/injury-feature-holdout-v1-report.json
+            /tmp/nbavl-injury-holdout-v1/result/injury-feature-holdout-v1-folds.csv
+            /tmp/nbavl-injury-holdout-v1/result/injury-feature-holdout-v1-subgroups.csv
+            /tmp/nbavl-injury-holdout-v1/result/injury-feature-holdout-v1-bootstrap.csv
+          retention-days: 14
+          if-no-files-found: error

@@ -81,6 +81,7 @@ jobs:
           from pathlib import Path
           root=Path(os.environ['ROOT'])/'result'
           report=json.loads((root/'timestamped-odds-pilot-manifest-v1.json').read_text())
+          print(json.dumps(report,indent=2))
           manifest=list(csv.DictReader((root/'timestamped-odds-pilot-request-manifest-v1.csv').open()))
           schedule=list(csv.DictReader((root/'timestamped-odds-pilot-exact-schedule-v1.csv').open()))
           assert report['formal_state']=='PILOT_MANIFEST_READY', report
@@ -100,8 +101,10 @@ jobs:
           assert not any(forbidden & set(row) for row in manifest), manifest[0]
           PY
       - name: Remove downloaded Gold before Artifact upload
+        if: always()
         run: rm -rf "$ROOT/gold"
       - name: Upload no-price pilot manifest artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: timestamped-odds-pilot-manifest-v1

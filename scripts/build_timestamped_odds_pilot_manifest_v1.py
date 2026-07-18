@@ -48,7 +48,8 @@ def gold_rows(path:Path,sample:list[dict[str,Any]])->tuple[list[dict[str,str]],d
   ids=[str(x['game_id']) for x in sample]; q=','.join('?' for _ in ids)
   rows=con.execute(f'SELECT game_id,game_date,home_team_abbr,away_team_abbr FROM gold_matchup_features WHERE game_id IN ({q})',ids).fetchall()
  finally:
-  con.close(); tmp.unlink(missing_ok=True) if tmp else None
+  con.close()
+  if tmp: tmp.unlink(missing_ok=True)
  by={str(r[0]):{'historical_game_id':str(r[0]),'game_date':str(r[1]),'home_team_abbr':str(r[2]),'away_team_abbr':str(r[3])} for r in rows}
  missing=[]; mismatch=[]; out=[]
  for s in sample:
@@ -85,10 +86,21 @@ def run(policy_path:Path,gold_path:Path,out:Path,fetcher:Callable=fetch)->dict[s
  return report
 def selftest(policy:Path,out:Path):
  p=json.loads(policy.read_text()); sample=p['qualification_pilot']['sample']; sched=[]
- for n,s in enumerate(sample): sched.append({'historical_game_id':str(s['game_id']),'game_date':s['game_date'],'home_team_abbr':s['home'],'away_team_abbr':s['away'],'scheduled_tipoff_utc':f"{s['game_date']}T{(n%4+19):02d}:00:00Z"})
- rows,rep=build_request_manifest(p,sched); assert len(rows)==180 and rep['coverage']['estimated_quota_credits']==1800 and rep['decision']['manifest_structurally_ready']; assert not any(r['snapshot_label'].lower().startswith('opening') for r in rows); out.mkdir(parents=True,exist_ok=True); (out/'self-test.json').write_text(json.dumps({'success':True,'rows':len(rows),'credits':1800},indent=2)+'\n')
+ for s in sample: sched.append({'historical_game_id':str(s['game_id']),'game_date':s['game_date'],'home_team_abbr':s['home'],'away_team_abbr':s['away'],'scheduled_tipoff_utc':f"{s['game_date']}T20:00:00Z"})
+ rows,rep=build_request_manifest(p,sched)
+ assert len(rows)==180, rep
+ assert rep['coverage']['estimated_quota_credits']==1800, rep
+ assert rep['decision']['manifest_structurally_ready'], rep
+ assert not any(r['snapshot_label'].lower().startswith('opening') for r in rows)
+ out.mkdir(parents=True,exist_ok=True); (out/'self-test.json').write_text(json.dumps({'success':True,'rows':len(rows),'credits':1800,'manifest_report':rep},indent=2)+'\n')
 def main():
  a=argparse.ArgumentParser(); a.add_argument('--policy',type=Path,required=True); a.add_argument('--gold',type=Path); a.add_argument('--output-dir',type=Path,required=True); a.add_argument('--self-test',action='store_true'); x=a.parse_args()
- if x.self_test:selftest(x.policy,x.output_dir); print('pilot manifest self-test passed'); return
- if not x.gold:a.error('--gold required'); r=run(x.policy,x.gold,x.output_dir); print(json.dumps({'formal_state':r['formal_state'],'coverage':r['coverage']},indent=2))
+ if x.self_test:
+  selftest(x.policy,x.output_dir)
+  print('pilot manifest self-test passed')
+  return
+ if not x.gold:
+  a.error('--gold required')
+ r=run(x.policy,x.gold,x.output_dir)
+ print(json.dumps({'formal_state':r['formal_state'],'coverage':r['coverage']},indent=2))
 if __name__=='__main__':main()

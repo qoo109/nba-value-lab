@@ -1,9 +1,10 @@
 # NBA Value Lab — Project Status
 
 更新日期：2026-07-18  
-目前定位：**Research Candidate／Pre-Market-Backtest**
+目前定位：**Research Candidate／Pre-Market-Backtest**  
+正式 Stake：**0**
 
-本文件是研究管線的正式進度基準。`nba_value_lab_handoff_2026-07-17.md` 是唯一主線；後續 handoff 只更新進度與阻塞，不得取代或重排。
+本文件是研究管線的正式狀態基準。判定順序：最新 `main`／合併 PR／Actions／Artifact QA，高於舊 handoff、聊天紀錄與設計規格。
 
 ## 固定主線
 
@@ -21,32 +22,32 @@
 目前節點：
 
 ```text
-Step 3 — Expected Minutes Accuracy Audit v3 predeclaration
+Step 4 — Injury Feature Walk-forward Holdout design predeclaration
 ```
 
-尚未進入 Injury Holdout、Timestamped Odds 或 Market Backtest。
+Expected Minutes Accuracy Audit v3 已正式通過。現在只解鎖 **Holdout 設計的預先宣告**；尚未允許 Holdout execution、Timestamped Odds、Market Backtest、模型啟用或投注。
 
 ## 核心狀態
 
 | 模組 | 狀態 | 正式結論 |
 |---|---|---|
 | Historical Gold | Completed | 5,824 matchup rows；strict point-in-time 與 season reset 通過。 |
-| Logistic + Elo Walk-forward v2 | Completed | 3,688 場 OOF；小幅優於 Elo。 |
-| Closing Market Benchmark | Model lost | 1,894 場；模型輸給 Closing Market。 |
+| Logistic + Elo Walk-forward v2 | Completed | 3,688 場 OOF；Log Loss／Brier 小幅且跨 Fold 一致優於 Elo。 |
+| Calibration Gate | Completed | Platt／Isotonic 未穩定改善，保留 Raw Logistic＋Elo。 |
+| Closing Market Benchmark | Model lost | 1,894 場；模型明顯輸給 Closing Market。 |
 | Market Residual Analysis v1 | Negative Result | 100% Closing Market、0% 模型殘差。 |
 | Rest／Travel Context v1 | Negative Result | 2023–24 untouched holdout 未通過。 |
 | Official Injury Importer | Completed | PDF、publication time、SHA-256、跨頁與時間 QA 已建立。 |
-| Player Participation Labels v1 | Research Ready | frozen 176-game panel：99.8909% join；UNKNOWN 2.2901%。 |
-| Expected Minutes Audit v2 | Structural Blocked | 所有 numerical gates 通過，但 4 個 preserved sample gates 未達。 |
 | Wave 1 Features | Research Ready | frozen T-60 selected 91 場。 |
 | Wave 2 Features | Research Ready | frozen T-60 selected 85 場。 |
-| Wave 3 Acquisition | Research Ready | 45 player、44 team、44 ready overlap、15 dates。 |
-| Wave 3 Features | Research Ready | identity 99.5545%；Expected Minutes／Impact 96.573%；T-60 selected 117 場。 |
-| Combined Wave 1＋2＋3 | Research Ready / 293 games | 0 跨 Wave 重複、0 identity／policy conflict。 |
-| Expanded Participation Census v1 | Eligible for Audit v3 predeclaration | 226 evaluable games；516 PLAYED；209 bench；502 long-history；所有 preserved sample gates 通過。 |
-| Expected Minutes Accuracy Audit v3 | Next / execution blocked | 只能另開 PR 預先宣告；尚未允許執行。 |
-| Injury Holdout | Blocked | 必須先通過 expanded Accuracy Audit。 |
+| Wave 3 Features | Research Ready | frozen T-60 selected 117 場。 |
+| Combined Wave 1＋2＋3 | Research Ready / 293 games | 0 跨 Wave 重複、0 identity／selection-policy conflict。 |
+| Expanded Participation Census v1 | Completed / Eligible | 226 evaluable games；516 conditional PLAYED；209 bench；502 long-history。 |
+| Expected Minutes Accuracy Audit v2 | Structural Blocked | 數值門檻通過，但舊 176 場樣本門檻不足。 |
+| Expected Minutes Accuracy Audit v3 | **ACCURACY_PASS** | 所有預先宣告的結構、固定輸入、樣本與數值門檻通過。 |
+| Injury Feature Walk-forward Holdout | Design predeclaration unlocked | 必須先獨立預先宣告，尚未執行。 |
 | Timestamped Odds | Blocked | 依主線排在 Injury Holdout 之後。 |
+| Market Backtest | Blocked | 尚無可執行 point-in-time odds join。 |
 | Betting Decision Layer | Blocked | 正式 stake = 0。 |
 
 ## 市場基準
@@ -57,247 +58,103 @@ Step 3 — Expected Minutes Accuracy Audit v3 predeclaration
 | Brier | 0.2250 | **0.2139** |
 | Accuracy | 63.62% | **66.37%** |
 
-模型目前能小幅擊敗 Elo，但沒有證據顯示能擊敗或改善 NBA Closing Market。
+模型能小幅改善 Elo 的機率品質，但目前沒有證據顯示能擊敗或改善 NBA Closing Market。
 
-## Injury 樣本
+## Historical Model
+
+### Five-season Walk-forward v2
+
+```text
+OOF games: 3,688
+Logistic + Elo Log Loss: 0.631306
+Elo Log Loss: 0.634301
+Logistic + Elo Brier: 0.220567
+Elo Brier: 0.221949
+Logistic + Elo Accuracy: 63.856%
+Elo Accuracy: 64.073%
+Logistic + Elo AUC: 0.687099
+Elo AUC: 0.684454
+```
+
+這是機率預測的小幅、一致增益，不是獲利證據。
+
+## Injury／Expected Minutes population
 
 ### Wave 1
 
 ```text
-36 candidate reports
-31 ready overlap reports
-2,657 filtered player rows
-2,634 identity matched（99.1344%）
-2,465 Expected Minutes／Impact rows
+ready overlap reports: 31
+filtered player rows: 2,657
+identity matched: 2,634（99.1344%）
+Expected Minutes／Impact rows: 2,465
 frozen T-60 selected games: 91
 ```
 
 ### Wave 2
 
 ```text
-36 candidate reports
-31 ready overlap reports
-2,493 filtered player rows
-2,468 identity matched（98.9972%）
-2,281 Expected Minutes／Impact rows
+ready overlap reports: 31
+filtered player rows: 2,493
+identity matched: 2,468（98.9972%）
+Expected Minutes／Impact rows: 2,281
 frozen T-60 selected games: 85
 ```
 
 ### Wave 3
 
 ```text
-45 candidate reports
-44 ready overlap reports
-2,918 filtered player rows
-2,905 identity matched（99.5545%）
-2,818 Expected Minutes／Impact rows（96.5730%）
+ready overlap reports: 44
+filtered player rows: 2,918
+identity matched: 2,905（99.5545%）
+Expected Minutes／Impact rows: 2,818（96.5730%）
 strict-prior violations: 0
 same-day rows excluded: 513
 future rows excluded: 25,940
 frozen T-60 selected games: 117
 ```
 
-Gold-domain team correction：
-
-```text
-input team games: 223
-Gold-matched team games: 221
-excluded team-only games: 2
-excluded team-only rows: 12
-unmatched player-backed games: 0
-excluded player-backed games: 0
-```
-
-固定排除的 team-only contexts：
+Gold-domain correction only excluded two team-only contexts outside Historical Gold and without player rows:
 
 ```text
 2024-01-19 DAL@GSW
 2024-04-12 LAL@MEM
+excluded rows: 12
+unmatched player-backed games: 0
+excluded player-backed games: 0
 ```
-
-這兩場不在 Historical Gold，且不在 player map；不得建立特徵。任何 player-backed unmatched game 仍是 hard failure。
 
 ### Combined Wave 1＋2＋3
 
 ```text
-Wave 1 selected: 91
-Wave 2 selected: 85
-Wave 3 selected: 117
-raw selected rows: 293
-cross-wave duplicate games: 0
+Wave 1: 91
+Wave 2: 85
+Wave 3: 117
 combined independent games: 293
+cross-wave duplicate games: 0
 game identity conflicts: 0
 selection policy conflicts: 0
 duplicate output games: 0
 ```
 
-Sample status：
-
-```text
-minimum Accuracy Audit game gate 100: met
-initial reliability gate 300: not met
-ideal gate 500: not met
-```
-
-293 場落在 Wave 3 前規劃的 280–300 範圍內，但不可把 293 寫成 300+ reliability pass。
-
-## Expected Minutes Accuracy Audit v2
-
-Predeclared policy commit：
-
-```text
-4591c1d682f638cc7186a73f4707c01eea7e9b15
-```
-
-正式狀態：
-
-```text
-STRUCTURAL_BLOCKED
-```
-
-Failed preserved sample gates：
-
-```text
-evaluable games: 135 / 150
-conditional PLAYED rows: 313 / 500
-bench rows: 127 / 200
-10+ prior-game rows: 305 / 400
-```
-
-Descriptive metrics：
-
-```text
-MAE: 5.025591
-RMSE: 6.631056
-median AE: 4.064807
-bias: +0.819810
-starter MAE: 4.756906
-bench MAE: 5.419096
-10+ history MAE: 5.033709
-```
-
-這些數字仍是 descriptive only；不可寫成 Audit Pass。
-
-## Wave 3 Acquisition
-
-Predeclared calendar：
-
-```text
-2024-01-04 → 2024-04-11
-15 consecutive Thursdays
-08:30／13:30／17:30 ET
-45 candidate reports
-cadence_days: 7
-```
-
-Verified acquisition workflow：
-
-```text
-29629052936
-```
-
-Official acquisition QA：
-
-```text
-player successful reports: 45
-team successful reports: 44
-ready overlap reports: 44
-ready overlap dates: 15
-normalized player rows: 3,008
-team submission rows: 1,306
-submission conflicts: 0
-```
-
-固定排除：
-
-```text
-2024-01-11 17:30 ET
-```
-
-原因：player PDF parsed，但 `single_report_ready=false`；team pre-tip QA failed。不得替換該 timestamp。
-
-## Wave 3 Feature Result
-
-Predeclared design commit：
-
-```text
-e60e0bf342f60948e5e7a7fb1fc1830e5e9b1440
-```
-
-Verified workflow：
-
-```text
-29629748942
-```
-
-Artifact：
-
-```text
-injury-backfill-wave3-features
-artifact id: 8425081360
-digest: sha256:5f600148ce07f2388173b2151ba31e5ec822a31e1774377e15fda40a0d393d6e
-```
-
-Frozen T-60 selection：
-
-```text
-available independent games: 221
-selected games: 117
-games without primary selection: 104
-selection rate: 52.9412%
-feature unavailable: 4
-incomplete snapshot: 100
-duplicate selected games: 0
-```
-
-Formal decision：
-
-```text
-Wave 3 selected panel: Research Ready
-combined Wave 1/2/3 panel: Research Ready
-ready_for_expected_minutes_accuracy_audit = true
-ready_for_injury_feature_walk_forward_holdout = false
-ready_for_model_training = false
-ready_for_probability_adjustment = false
-ready_for_betting_edge_claim = false
-```
-
-`ready_for_expected_minutes_accuracy_audit` 只表示 game-level minimum 已達；不代表 player-level preserved sample gates 已達，也不代表可以跳過新的 predeclaration。
+293 場達到 Accuracy Audit 的研究啟動需求，但不可寫成 300+ reliability pass。
 
 ## Expanded Participation Census v1
 
-Predeclaration commit：
-
 ```text
-8d5d3e56a8d4fe7e54070860695715b3f71f0f05
+Predeclaration commit: 8d5d3e56a8d4fe7e54070860695715b3f71f0f05
+Workflow run: 29632917590
+Artifact: expanded-participation-census-v1
+Artifact id: 8426181763
+Digest: sha256:2acdf9c62fb16c19f649fdeffce1fa79261adfba3ee186cf707c77631d5d7ba0
+Formal state: CENSUS_READY_AUDIT_V3_ELIGIBLE
 ```
 
-Verified workflow：
-
-```text
-29632917590
-```
-
-Artifact：
-
-```text
-expanded-participation-census-v1
-artifact id: 8426181763
-digest: sha256:2acdf9c62fb16c19f649fdeffce1fa79261adfba3ee186cf707c77631d5d7ba0
-```
-
-正式狀態：
-
-```text
-CENSUS_READY_AUDIT_V3_ELIGIBLE
-```
-
-Official participation and join QA：
+Official source and join QA:
 
 ```text
 combined selected games: 293
 successful official source games: 293
-source missing games: 0
+source-missing games: 0
 official player rows: 10,309
 selected player snapshot rows: 3,045
 identity matched: 3,037 / 3,045 = 99.7373%
@@ -306,81 +163,169 @@ UNKNOWN: 103 / 3,037 = 3.3915%
 strict-prior violations: 0
 ambiguous identities: 0
 fuzzy identity: false
-team mismatches after verified transition handling: 0
+unrecognized team mismatches: 0
 ```
 
-Preserved sample gates：
+Preserved sample gates:
 
 ```text
 evaluable games: 226 / 150 — pass
 conditional PLAYED rows: 516 / 500 — pass
-starter PLAYED rows: 307
-bench PLAYED rows: 209 / 200 — pass
-10+ prior-game PLAYED rows: 502 / 400 — pass
+starter rows: 307
+bench rows: 209 / 200 — pass
+10+ prior-game rows: 502 / 400 — pass
+complete team-game groups: 450 / 100 — pass
 ```
 
-Same-day roster transition repair：
+固定的同日 roster transition：
 
 ```text
 historical game: 22300733
 matchup: GSW@IND
 snapshot date: 2024-02-08
-recognized transition rows: 1
+recognized rows: 1
 raw official labels modified: false
-evaluation handling: exclude opponent-team official row from target-team evaluation join
-unrecognized team mismatches allowed: false
+counted as PLAYED: false
+counted as DNP: false
+imputed as zero: false
+all other team mismatches: hard failure
 ```
 
-此列是同日 GSW→IND roster transition。它沒有被計入 PLAYED、DNP 或 0 minutes；所有其他 team mismatch 仍是 hard failure。修正沒有降低任何 sample 或 numerical gate。
+## Expected Minutes Accuracy Audit v2
 
-Privacy and non-activation：
+正式狀態：
 
 ```text
+STRUCTURAL_BLOCKED
+```
+
+舊 176 場 frozen population 未達四個 preserved sample gates：
+
+```text
+evaluable games: 135 / 150
+conditional PLAYED rows: 313 / 500
+bench rows: 127 / 200
+10+ prior-game rows: 305 / 400
+```
+
+當時數值只能描述，不得重分類為 pass。
+
+## Expected Minutes Accuracy Audit v3
+
+Evidence lock：
+
+```text
+Predeclaration PR: #53
+Policy commit: 7f398b9b776a3be2478eed4ad2afc80d4e752e7e
+Predeclaration merge: 1f446ff5c503d852a94ccb29e1a519ba7149908a
+Execution PR: #54
+Verified workflow: 29634963247
+Artifact: expected-minutes-accuracy-audit-v3
+Artifact id: 8426868417
+Digest: sha256:d550849409d00555d16c83fbfd85eacec65678d50ca651511e1e9d4394a4d66a
+Formal state: ACCURACY_PASS
+```
+
+Primary estimand：
+
+```text
+conditional role minutes given official PLAYED label
+prediction: prior-only Expected Minutes
+label: official target-game actual minutes
+```
+
+Primary results：
+
+| Gate | Result | Threshold | Pass |
+|---|---:|---:|:---:|
+| Overall MAE | 5.120902 | <= 6.5 | Yes |
+| Overall RMSE | 6.693908 | <= 9.0 | Yes |
+| Median AE | 4.093886 | <= 5.5 | Yes |
+| Absolute bias | 0.668968 | <= 2.0 | Yes |
+| Improvement vs last prior game | 1.201968 | >= 0.25 | Yes |
+| Improvement vs recent-10 mean | 0.093054 | >= 0.0 | Yes |
+| Starter MAE | 4.663676 | <= 6.5 | Yes |
+| Bench MAE | 5.792521 | <= 7.5 | Yes |
+| 10+ history MAE | 5.092724 | <= 6.25 | Yes |
+| Complete-team aggregate MAE | 7.012663 | <= 18.0 | Yes |
+| Complete-team aggregate absolute bias | 1.387791 | <= 7.0 | Yes |
+| Worst monitored subgroup absolute bias | 2.642521 | <= 4.0 | Yes |
+
+Privacy and leakage QA：
+
+```text
+all structural gates passed: true
+all frozen-input integrity gates passed: true
+all primary accuracy gates passed: true
+structural blockers: 0
+accuracy blockers: 0
 temporary sensitive files deleted: 131
 forbidden player-level files retained: 0
-accuracy metrics calculated: false
-ready_for_expected_minutes_accuracy_audit_v3_predeclaration: true
-ready_for_expected_minutes_accuracy_audit_v3_execution: false
-ready_for_injury_feature_walk_forward_holdout: false
-ready_for_model_training: false
-ready_for_probability_adjustment: false
-ready_for_betting_edge_claim: false
-formal stake: 0
+target-game labels used in prediction: false
+missing actual imputed as zero: false
+missing Expected Minutes imputed as zero: false
+raw official labels modified: false
 ```
+
+Formal permissions：
+
+```text
+ready_for_injury_feature_walk_forward_holdout_design_predeclaration = true
+ready_for_injury_feature_walk_forward_holdout_execution = false
+ready_for_model_training = false
+ready_for_probability_adjustment = false
+ready_for_betting_edge_claim = false
+formal_stake = 0
+```
+
+Audit v3 通過只證明目前 prior-only Expected Minutes proxy 達到預先宣告的準確度門檻；它不證明 injury features 能改善賽前勝率，也不證明投注價值。
 
 ## 下一個精確任務
 
 ```text
-1. 另開 Expected Minutes Accuracy Audit v3 predeclaration PR
-2. 凍結 293-game population 與 official participation census inputs
-3. 保留 v1／v2 所有 sample 與 numerical gates，不得降低
-4. 凍結 primary estimand、subgroups、baselines、promotion／negative-result path
-5. predeclaration 合併後，才可另行執行 Audit v3
+Predeclare Injury Feature Walk-forward Holdout
+→ freeze Baseline and Candidate models
+→ freeze chronological folds and untouched holdout
+→ freeze injury feature list and missingness handling
+→ freeze Log Loss／Brier／AUC／calibration／margin metrics
+→ freeze promotion, valid-negative-result and structural-block paths
+→ merge predeclaration before any holdout result is calculated
 ```
 
-目前只解鎖 **Accuracy Audit v3 的預先宣告**，尚未解鎖 Audit v3 execution、Injury Holdout、模型訓練或任何投注使用。
+## 已知阻塞
 
-## 永久邊界
+- Injury Holdout 尚未預先宣告或執行。
+- Timestamped Odds 的真實 bookmaker-level `observed_at` 資料仍缺失。
+- Point-in-time Odds Join、Executable Market Backtest、CLV／EV／ROI／Drawdown 仍未解鎖。
+- 模型目前仍輸給 Closing Market。
 
-- missing player row ≠ DNP／0 minutes。
-- `SOURCE_MISSING`／`UNKNOWN` 不得補成 0。
-- NYS、unknown、synthetic missing side 不視為健康。
-- 只有明確 `SUBMITTED_NO_INJURIES` 才可建立 zero burden。
-- 不使用 fuzzy identity 或 fuzzy schedule matching。
-- multiple snapshots 不可冒充 multiple independent games。
-- 不得降低 v1／v2 sample 或 numerical gates。
-- Expanded Accuracy Audit 未通過前，不進 Injury Holdout。
-- Injury Holdout 未通過前，不執行 Timestamped Odds。
-- 未完成 timestamped odds join 前，不宣稱 CLV、EV、ROI 或 executable edge。
-- CI 綠燈只代表流程完成；必須讀 Artifact QA。
-- 正式投注額維持 0。
+## Do Not Do
+
+- 不得在 Holdout 預先宣告前查看或選擇正式 Holdout 結果。
+- 不降低既有 sample、numerical、join 或 leakage gates。
+- 不使用 fuzzy identity、nearest-name guessing 或 fuzzy schedule matching。
+- 不把 target-game participation／minutes 放入賽前特徵。
+- 不把 missing、NYS、UNKNOWN、SOURCE_MISSING 補成健康、DNP 或 0。
+- 不把多個 publication snapshots 當成多場獨立比賽。
+- 不重做 Rest／Travel v1，除非取得實質不同的行程／負荷資料。
+- 不強制 Platt／Isotonic；Raw 已由 calibration gate 選中。
+- 不把 Closing benchmark 當成 executable market backtest。
+- 不重做 odds schema／source registry；真正缺的是 timestamped odds data。
+- Injury Holdout 未通過前，不執行 Timestamped Odds 主線。
+- 未完成 timestamped odds join 前，不宣稱 CLV、EV、ROI、Drawdown 或 betting edge。
+- CI 綠燈只代表流程執行成功，必須讀 Artifact QA。
+- 正式 Stake 維持 0。
 
 ## 重要 PR
 
-- PR #28 — Closing benchmark
+- PR #28 — Closing Market Benchmark
 - PR #29 — Market Residual v1
-- PR #30 — Rest／Travel negative result
-- PR #40 — Multi-report Injury Feature Backfill
+- PR #30 — Rest／Travel Negative Result
+- PR #35 — Player Value／Expected Minutes v1
+- PR #36 — Team Injury Burden v1
+- PR #37 — Multi-report Injury Panel
+- PR #38 — Injury Residual Audit
+- PR #40 — Frozen T-60 Backfill
 - PR #41 — Team Submission Status
 - PR #42／#43 — Wave 1
 - PR #44／#45 — Wave 2
@@ -390,3 +335,5 @@ formal stake: 0
 - PR #50 — Wave 3 Acquisition
 - PR #51 — Wave 3 Features
 - PR #52 — Expanded Participation Census v1
+- PR #53 — Accuracy Audit v3 Predeclaration
+- PR #54 — Accuracy Audit v3 Execution

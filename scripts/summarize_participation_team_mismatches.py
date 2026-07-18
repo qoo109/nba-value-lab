@@ -144,11 +144,20 @@ def main() -> None:
         self_test(args.output_dir)
         print("participation team mismatch summary self-test passed")
         return
-    if args.audit_rows is None or args.official_labels is None:
-        parser.error("--audit-rows and --official-labels are required")
+    if args.audit_rows is None:
+        parser.error("--audit-rows is required")
+    official_labels = args.official_labels
+    if official_labels is None:
+        official_labels = (
+            args.audit_rows.parent.parent
+            / "official-labels"
+            / "official-player-participation-labels.csv"
+        )
+    if not official_labels.is_file():
+        parser.error(f"official labels file not found: {official_labels}")
     report = summarize(
         read_csv(args.audit_rows),
-        read_csv(args.official_labels),
+        read_csv(official_labels),
         args.output_dir,
     )
     print(json.dumps(report, indent=2))

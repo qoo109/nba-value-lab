@@ -1,0 +1,159 @@
+{
+  "schema_version": "no-cost-timestamped-odds-metadata-census-v1",
+  "facts_checked_at": "2026-07-18",
+  "policy_source": {
+    "pr": 66,
+    "merge_sha": "4006ffdd01e57b6bf8bdd2e14e11bb1e2672c6e3",
+    "path": "data/no-cost-timestamped-odds-source-qualification-v1.json"
+  },
+  "formal_state": "NO_COST_METADATA_BLOCKED",
+  "summary": {
+    "candidate_count": 8,
+    "metadata_gate_pass_count": 0,
+    "qualified_for_frozen_pilot_count": 0,
+    "quote_downloads": 0,
+    "paid_calls": 0,
+    "accounts_created": 0,
+    "api_keys_read": 0,
+    "market_metrics_calculated": false,
+    "formal_stake": 0
+  },
+  "candidates": [
+    {
+      "source_id": "kaggle_christophertreasure_nba_odds",
+      "decision": "BLOCKED_TIMESTAMP_SEMANTICS",
+      "evidence": [
+        "data/historical-odds-source-registry.json",
+        "existing closing benchmark workflow evidence"
+      ],
+      "facts": {
+        "existing_project_use": "closing benchmark",
+        "bookmaker_level_snapshot_history": false,
+        "reliable_observed_at": false,
+        "opening_or_intermediate_snapshot_semantics": "not established"
+      },
+      "allowed_use": "closing forecast benchmark only"
+    },
+    {
+      "source_id": "kaggle_ehallmar_nba_historical_betting",
+      "decision": "BLOCKED_LICENSE_AND_PROVENANCE",
+      "evidence": [
+        "https://www.kaggle.com/datasets/ehallmar/nba-historical-stats-and-betting-data"
+      ],
+      "facts": {
+        "kaggle_license": "Unknown",
+        "dataset_description": "No description available",
+        "original_source_provenance": "not established",
+        "timestamp_semantics": "not established"
+      },
+      "allowed_use": "metadata reference only"
+    },
+    {
+      "source_id": "kaggle_erichqiu_nba_odds_scores",
+      "decision": "BLOCKED_ORIGINAL_SOURCE_PROVENANCE",
+      "evidence": [
+        "https://www.kaggle.com/datasets/erichqiu/nba-odds-and-scores"
+      ],
+      "facts": {
+        "kaggle_license": "CC0: Public Domain",
+        "description_provenance": "scraped from various sources",
+        "original_sources_named": false,
+        "bookmaker_definition": "not established",
+        "timestamp_semantics": "not established"
+      },
+      "allowed_use": "manual metadata/schema research only"
+    },
+    {
+      "source_id": "kaggle_cviaxmiwnptr_nba_betting_data",
+      "decision": "BLOCKED_TIMESTAMP_AND_BOOKMAKER_SCHEMA",
+      "evidence": [
+        "https://www.kaggle.com/datasets/cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024"
+      ],
+      "facts": {
+        "kaggle_license": "CC0: Public Domain",
+        "described_sources": ["Sportsbook Reviews Online", "ESPN"],
+        "game_level_moneyline_columns": true,
+        "explicit_bookmaker_key": false,
+        "explicit_observed_at": false,
+        "multiple_pre_tip_snapshots": false,
+        "post_2023_moneyline_coverage": "described as absent"
+      },
+      "allowed_use": "single-row game odds cross-check only; not executable PIT"
+    },
+    {
+      "source_id": "sportsbookreviewsonline_nba_archive_legacy",
+      "decision": "BLOCKED_UNAVAILABLE",
+      "evidence": [
+        "https://sportsbookreviewsonline.com/scoresoddsarchives/nba/nbaoddsarchives.htm",
+        "https://www.sportsbookreviewsonline.com/scoresoddsarchives/nba/nbaoddsarchives.htm"
+      ],
+      "facts": {
+        "direct_url_status": 404,
+        "mirror_import_authorized": false,
+        "timestamp_semantics": "not reviewable from unavailable source"
+      },
+      "allowed_use": "legacy provenance note only"
+    },
+    {
+      "source_id": "oddsportal_nba_results",
+      "decision": "BLOCKED_AUTOMATION_TERMS",
+      "evidence": [
+        "data/historical-odds-source-registry.json",
+        "https://www.oddsportal.com/terms/"
+      ],
+      "facts": {
+        "automation_allowed_by_project_registry": false,
+        "scraping_allowed": false,
+        "database_import_allowed": false
+      },
+      "allowed_use": "manual spot checks only"
+    },
+    {
+      "source_id": "public_github_odds_collectors",
+      "decision": "BLOCKED_NO_REUSABLE_DATA_ASSET",
+      "evidence": [
+        "GitHub code search for NBA historical odds timestamp/bookmaker collectors"
+      ],
+      "facts": {
+        "collector_code_found": true,
+        "public_historical_quote_dataset_with_rights_found": false,
+        "client_code_establishes_data_rights": false
+      },
+      "allowed_use": "code-pattern research only"
+    },
+    {
+      "source_id": "user_supplied_timestamped_odds",
+      "decision": "BLOCKED_NOT_PROVIDED",
+      "evidence": [],
+      "facts": {
+        "file_provided": false,
+        "rights_statement_provided": false,
+        "schema_available": false
+      },
+      "allowed_use": "none"
+    }
+  ],
+  "gate_failures": {
+    "license_or_permission_explicit": ["kaggle_ehallmar_nba_historical_betting"],
+    "source_provenance_explicit": ["kaggle_ehallmar_nba_historical_betting", "kaggle_erichqiu_nba_odds_scores"],
+    "automated_use_allowed": ["oddsportal_nba_results"],
+    "source_available": ["sportsbookreviewsonline_nba_archive_legacy", "user_supplied_timestamped_odds"],
+    "bookmaker_definition_explicit": ["kaggle_christophertreasure_nba_odds", "kaggle_erichqiu_nba_odds_scores", "kaggle_cviaxmiwnptr_nba_betting_data"],
+    "timestamp_semantics_explicit": ["kaggle_christophertreasure_nba_odds", "kaggle_ehallmar_nba_historical_betting", "kaggle_erichqiu_nba_odds_scores", "kaggle_cviaxmiwnptr_nba_betting_data"],
+    "reusable_historical_data_asset": ["public_github_odds_collectors"]
+  },
+  "activation_boundary": {
+    "ready_for_frozen_source_health_pilot": false,
+    "ready_for_production_backfill": false,
+    "ready_for_point_in_time_odds_join": false,
+    "ready_for_market_backtest": false,
+    "ready_for_clv_ev_roi_drawdown": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_allowed_actions": [
+    "accept a user-supplied file only with an explicit rights/provenance statement and the same frozen gates",
+    "re-run metadata census only when a materially new lawful no-cost source appears",
+    "continue non-market model research without claiming betting value"
+  ]
+}

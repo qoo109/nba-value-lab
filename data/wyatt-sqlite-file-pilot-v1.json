@@ -1,0 +1,84 @@
+{
+  "schema_version": "wyatt-sqlite-file-pilot-v1",
+  "created_at": "2026-07-18T00:00:00Z",
+  "formal_state": "INPUT_FILE_REQUIRED",
+  "source_id": "kaggle_wyattowalsh_basketball",
+  "source_role": "secondary_historical_crosscheck_only",
+  "pilot_season": "2023-24",
+  "input_contract": {
+    "accepted_extensions": [".sqlite", ".sqlite3", ".db"],
+    "minimum_size_bytes": 1048576,
+    "maximum_size_bytes": 2147483648,
+    "sqlite_header_required": true,
+    "read_only_open_required": true,
+    "integrity_check_required": true,
+    "source_filename_recorded": true,
+    "source_size_recorded": true,
+    "sha256_recorded": true,
+    "raw_file_committed": false,
+    "raw_file_uploaded_as_artifact": false
+  },
+  "schema_census": {
+    "table_inventory_required": true,
+    "column_inventory_required": true,
+    "row_count_required": true,
+    "primary_key_inventory_required": true,
+    "index_inventory_required": true,
+    "foreign_key_inventory_required": true,
+    "null_key_count_required": true,
+    "duplicate_count_required": true,
+    "date_range_required": true,
+    "season_coverage_required": true,
+    "game_id_semantics_required": true,
+    "team_id_semantics_required": true,
+    "pbp_event_order_semantics_required": true
+  },
+  "reference_contract": {
+    "reference_source": "existing_verified_historical_gold_and_silver",
+    "minimum_reference_games": 1000,
+    "matching": "deterministic_only",
+    "allowed_match_keys": [
+      "official_game_id",
+      "game_date+home_team+away_team+final_score"
+    ],
+    "fuzzy_matching": false,
+    "future_information_leakage": false
+  },
+  "qualification_gates": {
+    "game_identity_match_rate_minimum": 0.98,
+    "final_score_match_rate_minimum": 0.98,
+    "team_boxscore_coverage_minimum": 0.98,
+    "player_boxscore_coverage_minimum": 0.95,
+    "pbp_game_coverage_minimum_when_claimed": 0.95,
+    "exact_duplicate_game_count_maximum": 0,
+    "integrity_check_must_equal": "ok"
+  },
+  "allowed_outputs": [
+    "aggregate_schema_report.json",
+    "aggregate_coverage_report.json",
+    "privacy_safe_schema_sample.json"
+  ],
+  "forbidden_outputs": [
+    "full_sqlite_database",
+    "raw_play_by_play_rows",
+    "raw_player_rows",
+    "public_republication_of_source_data"
+  ],
+  "formal_outcomes": [
+    "INPUT_FILE_REQUIRED",
+    "STRUCTURAL_BLOCKED",
+    "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+    "SECONDARY_SOURCE_REJECTED"
+  ],
+  "boundaries": {
+    "input_file_present_in_this_pr": false,
+    "database_opened_in_this_pr": false,
+    "raw_rows_in_artifact": 0,
+    "existing_silver_replacement": false,
+    "existing_gold_replacement": false,
+    "model_retraining": false,
+    "model_metrics": false,
+    "market_metrics": false,
+    "formal_stake": 0
+  }
+}

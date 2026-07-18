@@ -1,0 +1,64 @@
+name: Validate Wyatt SQLite file pilot v1
+
+on:
+  pull_request:
+    paths:
+      - "data/wyatt-sqlite-file-pilot-v1.json"
+      - "docs/wyatt-sqlite-file-pilot-v1.md"
+      - "scripts/validate_wyatt_sqlite_file_pilot_v1.py"
+      - ".github/workflows/validate-wyatt-sqlite-file-pilot-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-only:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_wyatt_sqlite_file_pilot_v1.py
+
+      - name: Run deterministic self-test
+        run: python scripts/validate_wyatt_sqlite_file_pilot_v1.py --self-test
+
+      - name: Validate frozen policy
+        run: |
+          mkdir -p out
+          python scripts/validate_wyatt_sqlite_file_pilot_v1.py \
+            --policy data/wyatt-sqlite-file-pilot-v1.json \
+            --output-report out/wyatt-sqlite-file-pilot-v1-policy-report.json
+
+      - name: Enforce input-required boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("out/wyatt-sqlite-file-pilot-v1-policy-report.json").read_text())
+          assert report["formal_state"] == "INPUT_FILE_REQUIRED"
+          assert report["input_file_present"] is False
+          assert report["database_opened"] is False
+          assert report["raw_rows_in_artifact"] == 0
+          assert report["existing_silver_replacement"] is False
+          assert report["existing_gold_replacement"] is False
+          assert report["model_metrics"] is False
+          assert report["market_metrics"] is False
+          assert report["formal_stake"] == 0
+          PY
+
+      - name: Upload aggregate policy artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wyatt-sqlite-file-pilot-v1-policy
+          path: out/wyatt-sqlite-file-pilot-v1-policy-report.json
+          retention-days: 14
+          if-no-files-found: error

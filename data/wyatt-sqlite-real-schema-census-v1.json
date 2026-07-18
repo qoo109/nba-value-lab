@@ -1,0 +1,230 @@
+{
+  "boundaries": {
+    "existing_gold_replacement": false,
+    "existing_silver_replacement": false,
+    "formal_stake": 0,
+    "input_modified": false,
+    "market_metrics": false,
+    "model_metrics": false
+  },
+  "database": {
+    "freelist_count": 7,
+    "integrity_check": [
+      "ok"
+    ],
+    "page_count": 573630,
+    "page_size": 4096,
+    "table_count": 16,
+    "tables_with_primary_key": 0,
+    "total_foreign_keys": 0,
+    "total_indexes": 0,
+    "total_table_rows": 14060690,
+    "view_count": 0
+  },
+  "focused_metrics": {
+    "game": {
+      "distinct_game_ids": 65642,
+      "duplicate_game_id_groups": 56,
+      "latest_regular_season": "2022-23",
+      "latest_regular_season_games": 1230,
+      "pilot_2023_24_distinct_games": 0,
+      "pilot_2023_24_rows": 0,
+      "rows": 65698
+    },
+    "game_summary": {
+      "distinct_game_ids": 58021,
+      "max_date": "2023-06-12 00:00:00",
+      "min_date": "1946-11-01 00:00:00",
+      "rows": 58110
+    },
+    "line_score": {
+      "distinct_game_ids": 58013,
+      "max_date": "2023-06-12 00:00:00",
+      "min_date": "1946-11-01 00:00:00",
+      "rows": 58053
+    },
+    "play_by_play": {
+      "distinct_game_ids": 29818,
+      "duplicate_game_event_groups": 7360,
+      "null_eventnum_rows": 0,
+      "null_game_id_rows": 0,
+      "rows": 13592899
+    }
+  },
+  "formal_state": "STRUCTURAL_BLOCKED",
+  "input": {
+    "archive_filename": "nba.sqlite.zip",
+    "archive_sha256": "72cb105c6e3c2b7d106b62d3af8b9dbc4d431d3edcf881552450d68ae8214c2c",
+    "archive_size_bytes": 434150473,
+    "database_filename": "nba.sqlite",
+    "database_sha256": "65b6412234d2d8817678d04f7cd2548aec82fec02b6c5b86679cade7572c21c7",
+    "database_size_bytes": 2349588480,
+    "opened_read_only": true,
+    "sqlite_header_ok": true
+  },
+  "metadata_comparison": {
+    "actual_game_date_max": "2023-06-12 00:00:00",
+    "actual_game_date_min": "1946-11-01 00:00:00",
+    "actual_table_count": 16,
+    "dataset_id": "wyattowalsh/basketball",
+    "metadata_claim_matches_file": false,
+    "run_summary_totals": {
+      "failed": 0,
+      "rows_extracted": 0,
+      "skipped": 0,
+      "succeeded": 0
+    },
+    "table_count_difference": 219,
+    "uploaded_metadata_claimed_coverage": "1946-present/current season",
+    "uploaded_metadata_claimed_table_count": 235,
+    "uploaded_metadata_title": "NBA Basketball Database"
+  },
+  "raw_database_emitted": false,
+  "raw_rows_emitted": 0,
+  "report_schema_version": "wyatt-sqlite-real-schema-census-v1",
+  "role_candidates": {
+    "game_identity": [
+      "game",
+      "game_summary",
+      "line_score"
+    ],
+    "play_by_play": [
+      "play_by_play"
+    ],
+    "player_boxscore": [],
+    "team_boxscore": [
+      "game"
+    ]
+  },
+  "source_id": "kaggle_wyattowalsh_basketball",
+  "table_inventory": [
+    {
+      "columns": ["person_id","first_name","last_name","display_first_last","display_last_comma_first","display_fi_last","player_slug","birthdate","school","country","last_affiliation","height","weight","season_exp","jersey","position","rosterstatus","games_played_current_season_flag","team_id","team_name","team_abbreviation","team_code","team_city","playercode","from_year","to_year","dleague_flag","nba_flag","games_played_flag","draft_year","draft_round","draft_number","greatest_75_flag"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "common_player_info",
+      "primary_key_columns": [],
+      "row_count": 3632
+    },
+    {
+      "columns": ["season","player_id","first_name","last_name","player_name","position","height_wo_shoes","height_wo_shoes_ft_in","height_w_shoes","height_w_shoes_ft_in","weight","wingspan","wingspan_ft_in","standing_reach","standing_reach_ft_in","body_fat_pct","hand_length","hand_width","standing_vertical_leap","max_vertical_leap","lane_agility_time","modified_lane_agility_time","three_quarter_sprint","bench_press","spot_fifteen_corner_left","spot_fifteen_break_left","spot_fifteen_top_key","spot_fifteen_break_right","spot_fifteen_corner_right","spot_college_corner_left","spot_college_break_left","spot_college_top_key","spot_college_break_right","spot_college_corner_right","spot_nba_corner_left","spot_nba_break_left","spot_nba_top_key","spot_nba_break_right","spot_nba_corner_right","off_drib_fifteen_break_left","off_drib_fifteen_top_key","off_drib_fifteen_break_right","off_drib_college_break_left","off_drib_college_top_key","off_drib_college_break_right","on_move_fifteen","on_move_college"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "draft_combine_stats",
+      "primary_key_columns": [],
+      "row_count": 1633
+    },
+    {
+      "columns": ["person_id","player_name","season","round_number","round_pick","overall_pick","draft_type","team_id","team_city","team_name","team_abbreviation","organization","organization_type","player_profile_flag"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "draft_history",
+      "primary_key_columns": [],
+      "row_count": 8257
+    },
+    {
+      "columns": ["season_id","team_id_home","team_abbreviation_home","team_name_home","game_id","game_date","matchup_home","wl_home","min","fgm_home","fga_home","fg_pct_home","fg3m_home","fg3a_home","fg3_pct_home","ftm_home","fta_home","ft_pct_home","oreb_home","dreb_home","reb_home","ast_home","stl_home","blk_home","tov_home","pf_home","pts_home","plus_minus_home","video_available_home","team_id_away","team_abbreviation_away","team_name_away","matchup_away","wl_away","fgm_away","fga_away","fg_pct_away","fg3m_away","fg3a_away","fg3_pct_away","ftm_away","fta_away","ft_pct_away","oreb_away","dreb_away","reb_away","ast_away","stl_away","blk_away","tov_away","pf_away","pts_away","plus_minus_away","video_available_away","season_type"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "game",
+      "primary_key_columns": [],
+      "row_count": 65698
+    },
+    {
+      "columns": ["game_id","game_date","attendance","game_time"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "game_info",
+      "primary_key_columns": [],
+      "row_count": 58053
+    },
+    {
+      "columns": ["game_date_est","game_sequence","game_id","game_status_id","game_status_text","gamecode","home_team_id","visitor_team_id","season","live_period","live_pc_time","natl_tv_broadcaster_abbreviation","live_period_time_bcast","wh_status"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "game_summary",
+      "primary_key_columns": [],
+      "row_count": 58110
+    },
+    {
+      "columns": ["game_id","player_id","first_name","last_name","jersey_num","team_id","team_city","team_name","team_abbreviation"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "inactive_players",
+      "primary_key_columns": [],
+      "row_count": 110191
+    },
+    {
+      "columns": ["game_date_est","game_sequence","game_id","team_id_home","team_abbreviation_home","team_city_name_home","team_nickname_home","team_wins_losses_home","pts_qtr1_home","pts_qtr2_home","pts_qtr3_home","pts_qtr4_home","pts_ot1_home","pts_ot2_home","pts_ot3_home","pts_ot4_home","pts_ot5_home","pts_ot6_home","pts_ot7_home","pts_ot8_home","pts_ot9_home","pts_ot10_home","pts_home","team_id_away","team_abbreviation_away","team_city_name_away","team_nickname_away","team_wins_losses_away","pts_qtr1_away","pts_qtr2_away","pts_qtr3_away","pts_qtr4_away","pts_ot1_away","pts_ot2_away","pts_ot3_away","pts_ot4_away","pts_ot5_away","pts_ot6_away","pts_ot7_away","pts_ot8_away","pts_ot9_away","pts_ot10_away","pts_away"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "line_score",
+      "primary_key_columns": [],
+      "row_count": 58053
+    },
+    {
+      "columns": ["game_id","official_id","first_name","last_name","jersey_num"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "officials",
+      "primary_key_columns": [],
+      "row_count": 70971
+    },
+    {
+      "columns": ["game_id","league_id","team_id_home","team_abbreviation_home","team_city_home","pts_paint_home","pts_2nd_chance_home","pts_fb_home","largest_lead_home","lead_changes","times_tied","team_turnovers_home","total_turnovers_home","team_rebounds_home","pts_off_to_home","team_id_away","team_abbreviation_away","team_city_away","pts_paint_away","pts_2nd_chance_away","pts_fb_away","largest_lead_away","team_turnovers_away","total_turnovers_away","team_rebounds_away","pts_off_to_away"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "other_stats",
+      "primary_key_columns": [],
+      "row_count": 28271
+    },
+    {
+      "columns": ["game_id","eventnum","eventmsgtype","eventmsgactiontype","period","wctimestring","pctimestring","homedescription","neutraldescription","visitordescription","score","scoremargin","person1type","player1_id","player1_name","player1_team_id","player1_team_city","player1_team_nickname","player1_team_abbreviation","person2type","player2_id","player2_name","player2_team_id","player2_team_city","player2_team_nickname","player2_team_abbreviation","person3type","player3_id","player3_name","player3_team_id","player3_team_city","player3_team_nickname","player3_team_abbreviation","video_available_flag"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "play_by_play",
+      "primary_key_columns": [],
+      "row_count": 13592899
+    },
+    {
+      "columns": ["id","full_name","first_name","last_name","is_active"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "player",
+      "primary_key_columns": [],
+      "row_count": 4815
+    },
+    {
+      "columns": ["id","full_name","abbreviation","nickname","city","state","year_founded"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "team",
+      "primary_key_columns": [],
+      "row_count": 30
+    },
+    {
+      "columns": ["team_id","abbreviation","nickname","yearfounded","city","arena","arenacapacity","owner","generalmanager","headcoach","dleagueaffiliation","facebook","instagram","twitter"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "team_details",
+      "primary_key_columns": [],
+      "row_count": 27
+    },
+    {
+      "columns": ["team_id","city","nickname","year_founded","year_active_till"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "team_history",
+      "primary_key_columns": [],
+      "row_count": 50
+    },
+    {
+      "columns": ["team_id","season_year","team_city","team_name","team_abbreviation","team_conference","team_division","team_code","team_slug","w","l","pct","conf_rank","div_rank","min_year","max_year","league_id","season_id","pts_rank","pts_pg","reb_rank","reb_pg","ast_rank","ast_pg","opp_pts_rank","opp_pts_pg"],
+      "foreign_key_count": 0,
+      "index_count": 0,
+      "name": "team_info_common",
+      "primary_key_columns": [],
+      "row_count": 0
+    }
+  ]
+}

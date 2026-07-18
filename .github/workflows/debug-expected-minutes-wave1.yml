@@ -1,0 +1,75 @@
+name: Debug Expected Minutes Wave 1 rebuild
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/debug-expected-minutes-wave1.yml"
+      - "data/multi-report-injury-backfill-wave1-times.json"
+      - "scripts/build_multi_report_injury_panel.py"
+      - "scripts/build_multi_report_team_submission_panel.py"
+      - "scripts/audit_ready_injury_report_overlap.py"
+      - "scripts/filter_injury_panels_to_acquisition_overlap.py"
+
+permissions:
+  contents: read
+
+jobs:
+  wave1-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ROOT: /tmp/nbavl-wave1-debug
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+      - name: Build Wave 1 player panel
+        run: |
+          rm -rf "$ROOT"
+          PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
+            --report-times data/multi-report-injury-backfill-wave1-times.json \
+            --output-dir "$ROOT/player"
+      - name: Build Wave 1 team submission panel
+        run: |
+          PYTHONPATH=scripts python scripts/build_multi_report_team_submission_panel.py \
+            --report-times data/multi-report-injury-backfill-wave1-times.json \
+            --output-dir "$ROOT/team"
+      - name: Audit Wave 1 single-report-ready overlap
+        run: |
+          python scripts/audit_ready_injury_report_overlap.py \
+            --player-source-index "$ROOT/player/multi-report-source-index.csv" \
+            --team-source-index "$ROOT/team/multi-report-team-submission-source-index.csv" \
+            --output-dir "$ROOT/ready"
+      - name: Filter Wave 1 panels to ready overlap
+        run: |
+          python scripts/filter_injury_panels_to_acquisition_overlap.py \
+            --player-panel "$ROOT/player/multi-report-injury-panel-normalized.csv" \
+            --player-source-index "$ROOT/ready/ready-player-source-index.csv" \
+            --team-panel "$ROOT/team/multi-report-team-submission-panel.csv" \
+            --team-source-index "$ROOT/team/multi-report-team-submission-source-index.csv" \
+            --output-dir "$ROOT/overlap"
+      - name: Remove player-level rows
+        if: always()
+        run: |
+          rm -f "$ROOT/player/multi-report-injury-panel-normalized.csv"
+          rm -f "$ROOT/overlap/overlap-player-injury-panel.csv"
+          find "$ROOT" -name 'injury-lineup-snapshots-normalized.csv' -delete 2>/dev/null || true
+          find "$ROOT" -name '*.pdf' -delete 2>/dev/null || true
+      - name: Upload aggregate Wave 1 diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expected-minutes-wave1-debug
+          path: |
+            /tmp/nbavl-wave1-debug/player/multi-report-injury-panel-report.json
+            /tmp/nbavl-wave1-debug/player/multi-report-source-index.csv
+            /tmp/nbavl-wave1-debug/team/multi-report-team-submission-report.json
+            /tmp/nbavl-wave1-debug/team/multi-report-team-submission-source-index.csv
+            /tmp/nbavl-wave1-debug/ready/ready-overlap-audit.json
+            /tmp/nbavl-wave1-debug/ready/ready-player-source-index.csv
+            /tmp/nbavl-wave1-debug/overlap/acquisition-overlap-filter-report.json
+          retention-days: 7
+          if-no-files-found: warn

@@ -1,0 +1,78 @@
+name: Validate Real Timestamped Odds acquisition v1 policy
+
+on:
+  pull_request:
+    paths:
+      - "data/real-timestamped-odds-acquisition-policy-v1.json"
+      - "docs/real-timestamped-odds-acquisition-v1.md"
+      - "scripts/validate_real_timestamped_odds_acquisition_v1_policy.py"
+      - "data/historical-odds-source-registry.json"
+      - "docs/point-in-time-odds-layer-v1.md"
+      - ".github/workflows/validate-real-timestamped-odds-acquisition-v1-policy.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile policy validator
+        run: |
+          python -m py_compile scripts/validate_real_timestamped_odds_acquisition_v1_policy.py
+
+      - name: Run deterministic policy self-tests
+        run: |
+          python scripts/validate_real_timestamped_odds_acquisition_v1_policy.py \
+            --policy data/real-timestamped-odds-acquisition-policy-v1.json \
+            --output-dir /tmp/nbavl-odds-policy-validation \
+            --self-test
+
+      - name: Enforce policy-only boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT=/tmp/nbavl-odds-policy-validation/real-timestamped-odds-acquisition-policy-validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("/tmp/nbavl-odds-policy-validation/real-timestamped-odds-acquisition-policy-validation.json").read_text())
+          assert report["decision"] == "POLICY_VALID", report
+          boundary = report["execution_boundary"]
+          assert boundary == {
+              "network_requests_performed": False,
+              "api_secret_read": False,
+              "raw_odds_read": False,
+              "coverage_measured": False,
+              "market_performance_calculated": False,
+              "full_backfill_authorized": False,
+              "ready_for_betting_edge_claim": False,
+              "formal_stake": 0,
+          }, boundary
+          assert report["errors"] == [], report
+          print(f"policy validation passed: {report['checks_passed']}/{report['checks_run']}")
+          PY
+
+          ! grep -R --line-number --exclude='*.md' --exclude='*.json' \
+            -E 'apiKey=|api_key=|THE_ODDS_API_KEY[[:space:]]*=' \
+            data scripts .github/workflows/validate-real-timestamped-odds-acquisition-v1-policy.yml
+
+      - name: Upload aggregate policy validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-timestamped-odds-acquisition-v1-policy-validation
+          path: /tmp/nbavl-odds-policy-validation/real-timestamped-odds-acquisition-policy-validation.json
+          if-no-files-found: error
+          retention-days: 14

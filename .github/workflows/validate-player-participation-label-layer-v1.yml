@@ -1,0 +1,337 @@
+name: Validate player participation label layer v1
+
+on:
+  pull_request:
+    paths:
+      - "data/player-participation-label-policy-v1.json"
+      - "data/multi-report-injury-backfill-wave1-times.json"
+      - "data/multi-report-injury-backfill-wave2-times.json"
+      - "scripts/import_official_nba_participation_labels.py"
+      - "scripts/audit_player_participation_labels.py"
+      - ".github/workflows/validate-player-participation-label-layer-v1.yml"
+      - "docs/player-participation-label-layer-v1.md"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+    inputs:
+      gold_source_run_id:
+        description: "Workflow run containing historical-gold-multiseason"
+        required: true
+        default: "29551715399"
+      combined_feature_run_id:
+        description: "Verified run containing the combined 176-game selected panel"
+        required: true
+        default: "29624731777"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile participation modules
+        run: |
+          python -m py_compile scripts/import_official_nba_participation_labels.py
+          python -m py_compile scripts/audit_player_participation_labels.py
+      - name: Run deterministic participation self-tests
+        run: |
+          rm -rf /tmp/nbavl-participation-self-test
+          python scripts/import_official_nba_participation_labels.py \
+            --self-test \
+            --output-dir /tmp/nbavl-participation-self-test/import
+          python scripts/audit_player_participation_labels.py \
+            --self-test \
+            --output-dir /tmp/nbavl-participation-self-test/audit
+          python -m json.tool \
+            /tmp/nbavl-participation-self-test/audit/player-participation-label-audit.json \
+            >/dev/null
+
+  live-label-audit:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GOLD_SOURCE_RUN_ID: ${{ github.event.inputs.gold_source_run_id || '29551715399' }}
+      COMBINED_FEATURE_RUN_ID: ${{ github.event.inputs.combined_feature_run_id || '29624731777' }}
+      ROOT: /tmp/nbavl-participation-labels
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+
+      - name: Download audited Gold and combined selected panel
+        run: |
+          rm -rf "$ROOT"
+          mkdir -p "$ROOT/gold" "$ROOT/combined-source"
+          gh run download "$GOLD_SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name historical-gold-multiseason \
+            --dir "$ROOT/gold"
+          GOLD_FILE="$(find "$ROOT/gold" -name 'historical-gold-multiseason.sqlite.gz' -print -quit)"
+          test -n "$GOLD_FILE"
+          echo "GOLD_FILE=$GOLD_FILE" >> "$GITHUB_ENV"
+
+          gh run download "$COMBINED_FEATURE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name injury-backfill-wave2-features \
+            --dir "$ROOT/combined-source"
+          python - <<'PY'
+          import csv
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["ROOT"]) / "combined-source/combined"
+          report = json.loads(
+              (root / "combined-selected-injury-waves-report.json").read_text()
+          )
+          rows = list(
+              csv.DictReader(
+                  (root / "combined-selected-matchup-injury-burden.csv").open()
+              )
+          )
+          assert report["decision"]["ready_for_expected_minutes_accuracy_audit"] is True, report
+          assert report["coverage"]["combined_independent_games"] == 176, report
+          assert len(rows) == 176
+          assert len({row["historical_game_id"] for row in rows}) == 176
+          assert {row["source_wave"] for row in rows} == {"wave1", "wave2"}
+          PY
+
+      - name: Rebuild frozen Wave 1 player sources
+        run: |
+          mkdir -p "$ROOT/wave1"
+          set +e
+          PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
+            --report-times data/multi-report-injury-backfill-wave1-times.json \
+            --output-dir "$ROOT/wave1/player"
+          PLAYER_EXIT=$?
+          set -e
+          python scripts/validate_expected_minutes_audit_source_rebuild.py \
+            --wave wave1 \
+            --report "$ROOT/wave1/player/multi-report-injury-panel-report.json" \
+            --source-index "$ROOT/wave1/player/multi-report-source-index.csv" \
+            --importer-exit "$PLAYER_EXIT"
+          PYTHONPATH=scripts python scripts/build_multi_report_team_submission_panel.py \
+            --report-times data/multi-report-injury-backfill-wave1-times.json \
+            --output-dir "$ROOT/wave1/team"
+          python scripts/audit_ready_injury_report_overlap.py \
+            --player-source-index "$ROOT/wave1/player/multi-report-source-index.csv" \
+            --team-source-index "$ROOT/wave1/team/multi-report-team-submission-source-index.csv" \
+            --output-dir "$ROOT/wave1/ready"
+          python scripts/filter_injury_panels_to_acquisition_overlap.py \
+            --player-panel "$ROOT/wave1/player/multi-report-injury-panel-normalized.csv" \
+            --player-source-index "$ROOT/wave1/ready/ready-player-source-index.csv" \
+            --team-panel "$ROOT/wave1/team/multi-report-team-submission-panel.csv" \
+            --team-source-index "$ROOT/wave1/team/multi-report-team-submission-source-index.csv" \
+            --output-dir "$ROOT/wave1/overlap"
+
+      - name: Rebuild frozen Wave 2 player sources
+        run: |
+          mkdir -p "$ROOT/wave2"
+          set +e
+          PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
+            --report-times data/multi-report-injury-backfill-wave2-times.json \
+            --output-dir "$ROOT/wave2/player"
+          PLAYER_EXIT=$?
+          set -e
+          python scripts/validate_expected_minutes_audit_source_rebuild.py \
+            --wave wave2 \
+            --report "$ROOT/wave2/player/multi-report-injury-panel-report.json" \
+            --source-index "$ROOT/wave2/player/multi-report-source-index.csv" \
+            --importer-exit "$PLAYER_EXIT"
+          PYTHONPATH=scripts python scripts/build_multi_report_team_submission_panel.py \
+            --report-times data/multi-report-injury-backfill-wave2-times.json \
+            --output-dir "$ROOT/wave2/team"
+          python scripts/audit_ready_injury_report_overlap.py \
+            --player-source-index "$ROOT/wave2/player/multi-report-source-index.csv" \
+            --team-source-index "$ROOT/wave2/team/multi-report-team-submission-source-index.csv" \
+            --output-dir "$ROOT/wave2/ready"
+          python scripts/filter_injury_panels_to_acquisition_overlap.py \
+            --player-panel "$ROOT/wave2/player/multi-report-injury-panel-normalized.csv" \
+            --player-source-index "$ROOT/wave2/ready/ready-player-source-index.csv" \
+            --team-panel "$ROOT/wave2/team/multi-report-team-submission-panel.csv" \
+            --team-source-index "$ROOT/wave2/team/multi-report-team-submission-source-index.csv" \
+            --output-dir "$ROOT/wave2/overlap"
+
+      - name: Match ready snapshots to Historical Gold
+        run: |
+          for WAVE in wave1 wave2; do
+            python scripts/validate_injury_snapshot_schedule_match.py \
+              --snapshot-csv "$ROOT/$WAVE/overlap/overlap-player-injury-panel.csv" \
+              --gold "$GOLD_FILE" \
+              --output-dir "$ROOT/$WAVE/schedule"
+          done
+
+      - name: Import and combine identity-reference boxscores
+        run: |
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --season 2022-23 \
+            --gold "$GOLD_FILE" \
+            --output-dir "$ROOT/boxscores-2022"
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --season 2023-24 \
+            --gold "$GOLD_FILE" \
+            --output-dir "$ROOT/boxscores-2023"
+          python - <<'PY'
+          import csv
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["ROOT"])
+          rows = {}
+          fields = None
+          for path in [
+              root / "boxscores-2022/open-player-boxscores.csv",
+              root / "boxscores-2023/open-player-boxscores.csv",
+          ]:
+              with path.open("r", encoding="utf-8-sig", newline="") as handle:
+                  reader = csv.DictReader(handle)
+                  fields = fields or list(reader.fieldnames or [])
+                  for row in reader:
+                      rows[(row["SEASON_YEAR"], row["GAME_ID"], row["PLAYER_ID"])] = row
+          with (root / "combined-player-boxscores.csv").open(
+              "w", encoding="utf-8", newline=""
+          ) as handle:
+              writer = csv.DictWriter(handle, fieldnames=fields)
+              writer.writeheader()
+              writer.writerows(rows[key] for key in sorted(rows))
+          print({"combined_rows": len(rows)})
+          PY
+
+      - name: Rebuild deterministic player identities
+        run: |
+          for WAVE in wave1 wave2; do
+            PYTHONPATH=scripts python scripts/match_injury_players_from_boxscores.py \
+              --snapshot-csv "$ROOT/$WAVE/overlap/overlap-player-injury-panel.csv" \
+              --game-map-csv "$ROOT/$WAVE/schedule/injury-snapshot-game-id-map.csv" \
+              --boxscore-csv "$ROOT/combined-player-boxscores.csv" \
+              --output-dir "$ROOT/$WAVE/identity"
+          done
+
+      - name: Import official final-game participation labels
+        id: official_labels
+        continue-on-error: true
+        run: |
+          python scripts/import_official_nba_participation_labels.py \
+            --selected-games "$ROOT/combined-source/combined/combined-selected-matchup-injury-burden.csv" \
+            --output-dir "$ROOT/official-labels"
+
+      - name: Audit official labels on frozen selected snapshots
+        id: participation_audit
+        if: always()
+        continue-on-error: true
+        run: |
+          test -s "$ROOT/official-labels/official-player-participation-labels.csv"
+          test -s "$ROOT/official-labels/official-player-participation-source-index.csv"
+          test -s "$ROOT/official-labels/official-player-participation-import-report.json"
+          python scripts/audit_player_participation_labels.py \
+            --combined-selected "$ROOT/combined-source/combined/combined-selected-matchup-injury-burden.csv" \
+            --wave wave1 "$ROOT/wave1/overlap/overlap-player-injury-panel.csv" "$ROOT/wave1/identity/injury-player-id-map.csv" \
+            --wave wave2 "$ROOT/wave2/overlap/overlap-player-injury-panel.csv" "$ROOT/wave2/identity/injury-player-id-map.csv" \
+            --labels "$ROOT/official-labels/official-player-participation-labels.csv" \
+            --source-index "$ROOT/official-labels/official-player-participation-source-index.csv" \
+            --import-report "$ROOT/official-labels/official-player-participation-import-report.json" \
+            --policy data/player-participation-label-policy-v1.json \
+            --output-dir "$ROOT/participation-audit"
+
+      - name: Remove player-level and free-text data
+        if: always()
+        run: |
+          rm -f "$ROOT/combined-player-boxscores.csv"
+          rm -f "$ROOT/boxscores-2022/open-player-boxscores.csv"
+          rm -f "$ROOT/boxscores-2023/open-player-boxscores.csv"
+          rm -f "$ROOT/wave1/overlap/overlap-player-injury-panel.csv"
+          rm -f "$ROOT/wave2/overlap/overlap-player-injury-panel.csv"
+          rm -f "$ROOT/wave1/player/multi-report-injury-panel-normalized.csv"
+          rm -f "$ROOT/wave2/player/multi-report-injury-panel-normalized.csv"
+          rm -f "$ROOT/wave1/identity/injury-player-id-map.csv"
+          rm -f "$ROOT/wave2/identity/injury-player-id-map.csv"
+          rm -f "$ROOT/official-labels/official-player-participation-labels.csv"
+          rm -f "$ROOT/participation-audit/player-participation-label-audit-rows.csv"
+          find "$ROOT" -name 'injury-lineup-snapshots-normalized.csv' -delete 2>/dev/null || true
+          find "$ROOT" -name '*.pdf' -delete 2>/dev/null || true
+          find "$ROOT" -name '*.json.raw' -delete 2>/dev/null || true
+
+      - name: Verify privacy boundary
+        if: always()
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["ROOT"])
+          forbidden = {
+              "combined-player-boxscores.csv",
+              "open-player-boxscores.csv",
+              "overlap-player-injury-panel.csv",
+              "multi-report-injury-panel-normalized.csv",
+              "injury-lineup-snapshots-normalized.csv",
+              "injury-player-id-map.csv",
+              "official-player-participation-labels.csv",
+              "player-participation-label-audit-rows.csv",
+          }
+          found = sorted(
+              str(path)
+              for path in root.rglob("*")
+              if path.is_file() and path.name in forbidden
+          )
+          assert not found, found
+          PY
+
+      - name: Upload aggregate participation artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: player-participation-label-layer-v1
+          path: |
+            /tmp/nbavl-participation-labels/combined-source/combined/combined-selected-injury-waves-report.json
+            /tmp/nbavl-participation-labels/wave1/player/multi-report-injury-panel-report.json
+            /tmp/nbavl-participation-labels/wave2/player/multi-report-injury-panel-report.json
+            /tmp/nbavl-participation-labels/wave1/identity/injury-player-boxscore-identity-report.json
+            /tmp/nbavl-participation-labels/wave2/identity/injury-player-boxscore-identity-report.json
+            /tmp/nbavl-participation-labels/official-labels/official-player-participation-source-index.csv
+            /tmp/nbavl-participation-labels/official-labels/official-player-participation-import-report.json
+            /tmp/nbavl-participation-labels/participation-audit/player-participation-label-audit.json
+            /tmp/nbavl-participation-labels/participation-audit/player-participation-label-summary.csv
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Enforce participation and non-activation boundaries
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["ROOT"])
+          importer = json.loads(
+              (root / "official-labels/official-player-participation-import-report.json").read_text()
+          )
+          audit = json.loads(
+              (root / "participation-audit/player-participation-label-audit.json").read_text()
+          )
+          assert importer["decision"]["ready_for_player_participation_join"] is True, importer
+          assert audit["decision"]["ready_for_expected_minutes_accuracy_audit_v2_inputs"] is True, audit
+          assert audit["decision"]["ready_for_expected_minutes_accuracy_audit_v2"] is False
+          assert audit["decision"]["ready_for_injury_feature_walk_forward_holdout_design"] is False
+          assert audit["decision"]["ready_for_injury_feature_walk_forward_holdout"] is False
+          assert audit["decision"]["ready_for_model_training"] is False
+          assert audit["decision"]["ready_for_probability_adjustment"] is False
+          assert audit["decision"]["ready_for_betting_edge_claim"] is False
+          print(json.dumps({
+              "importer": importer["coverage"],
+              "audit": audit["coverage"],
+              "gates": audit["quality"]["structural_gate_results"],
+          }, indent=2))
+          PY

@@ -21,7 +21,7 @@
 目前節點：
 
 ```text
-Steps 1–3 — Wave 3 feature backfill and expanded-sample construction
+Step 3 — Expanded participation-label census before Accuracy Audit v3 design
 ```
 
 尚未進入 Injury Holdout、Timestamped Odds 或 Market Backtest。
@@ -36,15 +36,15 @@ Steps 1–3 — Wave 3 feature backfill and expanded-sample construction
 | Market Residual Analysis v1 | Negative Result | 100% Closing Market、0% 模型殘差。 |
 | Rest／Travel Context v1 | Negative Result | 2023–24 untouched holdout 未通過。 |
 | Official Injury Importer | Completed | PDF、publication time、SHA-256、跨頁與時間 QA 已建立。 |
-| Player Identity Waves 1–2 | Completed | 99% 左右；0 ambiguous、0 fuzzy。 |
-| Player Participation Labels v1 | Research Ready | 176／176 官方來源；99.8909% join；UNKNOWN 2.2901%。 |
+| Player Participation Labels v1 | Research Ready | frozen 176-game panel：99.8909% join；UNKNOWN 2.2901%。 |
 | Expected Minutes Audit v2 | Structural Blocked | 所有 numerical gates 通過，但 4 個 preserved sample gates 未達。 |
 | Wave 1 Features | Research Ready | frozen T-60 selected 91 場。 |
 | Wave 2 Features | Research Ready | frozen T-60 selected 85 場。 |
-| Combined Wave 1＋2 | Research Ready / 176 games | 0 跨 Wave 重複；Audit v1／v2 frozen population。 |
 | Wave 3 Acquisition | Research Ready | 45 player、44 team、44 ready overlap、15 dates。 |
-| Wave 3 Features | Next | 尚未執行 identity、values、T-60 selection 與跨 Wave 去重。 |
-| Expanded Accuracy Audit | Blocked | 等 Wave 3 features 與 combined sample 完成後另行預先宣告。 |
+| Wave 3 Features | Research Ready | identity 99.5545%；Expected Minutes／Impact 96.573%；T-60 selected 117 場。 |
+| Combined Wave 1＋2＋3 | Research Ready / 293 games | 0 跨 Wave 重複、0 identity／policy conflict。 |
+| Expanded Participation Census | Next | 必須先量測 293-game panel 的 PLAYED／bench／10+ history 等樣本。 |
+| Expected Minutes Accuracy Audit v3 | Blocked | 等 expanded participation counts 固定後才可預先宣告。 |
 | Injury Holdout | Blocked | 必須先通過 expanded Accuracy Audit。 |
 | Timestamped Odds | Blocked | 依主線排在 Injury Holdout 之後。 |
 | Betting Decision Layer | Blocked | 正式 stake = 0。 |
@@ -83,14 +83,63 @@ frozen T-60 selected games: 91
 frozen T-60 selected games: 85
 ```
 
-### Combined Wave 1＋2
+### Wave 3
 
 ```text
-selected games: 176
-cross-wave duplicates: 0
-identity conflicts: 0
-policy conflicts: 0
+45 candidate reports
+44 ready overlap reports
+2,918 filtered player rows
+2,905 identity matched（99.5545%）
+2,818 Expected Minutes／Impact rows（96.5730%）
+strict-prior violations: 0
+same-day rows excluded: 513
+future rows excluded: 25,940
+frozen T-60 selected games: 117
 ```
+
+Gold-domain team correction：
+
+```text
+input team games: 223
+Gold-matched team games: 221
+excluded team-only games: 2
+excluded team-only rows: 12
+unmatched player-backed games: 0
+excluded player-backed games: 0
+```
+
+固定排除的 team-only contexts：
+
+```text
+2024-01-19 DAL@GSW
+2024-04-12 LAL@MEM
+```
+
+這兩場不在 Historical Gold，且不在 player map；不得建立特徵。任何 player-backed unmatched game 仍是 hard failure。
+
+### Combined Wave 1＋2＋3
+
+```text
+Wave 1 selected: 91
+Wave 2 selected: 85
+Wave 3 selected: 117
+raw selected rows: 293
+cross-wave duplicate games: 0
+combined independent games: 293
+game identity conflicts: 0
+selection policy conflicts: 0
+duplicate output games: 0
+```
+
+Sample status：
+
+```text
+minimum Accuracy Audit game gate 100: met
+initial reliability gate 300: not met
+ideal gate 500: not met
+```
+
+293 場落在 Wave 3 前規劃的 280–300 範圍內，但不可把 293 寫成 300+ reliability pass。
 
 ## Expected Minutes Accuracy Audit v2
 
@@ -141,48 +190,22 @@ Predeclared calendar：
 cadence_days: 7
 ```
 
-Predeclaration commits：
+Verified acquisition workflow：
 
 ```text
-061f5af060890666d9fc7ca9de865fe129ce3a51
-cda6ab1a70d3ac4a19893782c3bf180a7af2d56e
+29629052936
 ```
 
-Verified workflow：
+Official acquisition QA：
 
 ```text
-29628847808
-```
-
-Artifact：
-
-```text
-injury-backfill-wave3-acquisition
-artifact id: 8424782891
-digest: sha256:4c974008f9f5055a78e1b57649feca0dcc189a262050abec5439035360db61af
-```
-
-Official QA：
-
-```text
-requested reports: 45
 player successful reports: 45
 team successful reports: 44
 ready overlap reports: 44
 ready overlap dates: 15
 normalized player rows: 3,008
-player unique games: 167
 team submission rows: 1,306
-team unique games: 223
 submission conflicts: 0
-```
-
-Team submission states：
-
-```text
-NOT_YET_SUBMITTED: 725
-SUBMITTED_WITH_PLAYER_ROWS: 572
-UNKNOWN_NO_PLAYER_ROWS: 9
 ```
 
 固定排除：
@@ -193,32 +216,68 @@ UNKNOWN_NO_PLAYER_ROWS: 9
 
 原因：player PDF parsed，但 `single_report_ready=false`；team pre-tip QA failed。不得替換該 timestamp。
 
+## Wave 3 Feature Result
+
+Predeclared design commit：
+
+```text
+e60e0bf342f60948e5e7a7fb1fc1830e5e9b1440
+```
+
+Verified workflow：
+
+```text
+29629748942
+```
+
+Artifact：
+
+```text
+injury-backfill-wave3-features
+artifact id: 8425081360
+digest: sha256:5f600148ce07f2388173b2151ba31e5ec822a31e1774377e15fda40a0d393d6e
+```
+
+Frozen T-60 selection：
+
+```text
+available independent games: 221
+selected games: 117
+games without primary selection: 104
+selection rate: 52.9412%
+feature unavailable: 4
+incomplete snapshot: 100
+duplicate selected games: 0
+```
+
 Formal decision：
 
 ```text
-ready_for_feature_backfill = true
+Wave 3 selected panel: Research Ready
+combined Wave 1/2/3 panel: Research Ready
+ready_for_expected_minutes_accuracy_audit = true
+ready_for_injury_feature_walk_forward_holdout = false
 ready_for_model_training = false
 ready_for_probability_adjustment = false
 ready_for_betting_edge_claim = false
 ```
 
-Wave 1／2 acquisition regressions 均通過。舊 registry 沒有 `cadence_days` 時仍使用 backward-compatible 14-day default。
+`ready_for_expected_minutes_accuracy_audit` 只表示 game-level minimum 已達；不代表 player-level preserved sample gates 已達，也不代表可以跳過新的 predeclaration。
 
 ## 下一個精確任務
 
 ```text
-1. Filter Wave 3 panels to 44 ready overlaps
-2. Gold schedule matching
-3. Deterministic player identity
-4. Prior-only Expected Minutes／Impact
-5. Team submission reconciliation
-6. Long and matchup injury burden
-7. Frozen latest feature-ready at or before T-60
-8. Deduplicate against Waves 1／2 by historical_game_id
-9. Measure combined selected games and official participation-label sample counts
+1. Rebuild selected player snapshots for Waves 1, 2, and 3
+2. Join NBA Official LiveData participation labels to the combined 293-game panel
+3. Freeze source, identity, join, UNKNOWN, duplicate, team, and privacy QA
+4. Measure evaluable games
+5. Measure conditional PLAYED rows
+6. Measure starter and bench rows
+7. Measure 10+ prior-game rows
+8. Decide whether expanded Accuracy Audit v3 can be predeclared
 ```
 
-只有 expanded sample 確認足夠後，才可另外預先宣告 Expected Minutes Accuracy Audit v3。
+這一步只是 expanded participation census，不計算或查看新的 accuracy metrics。
 
 ## 永久邊界
 
@@ -226,7 +285,7 @@ Wave 1／2 acquisition regressions 均通過。舊 registry 沒有 `cadence_days
 - `SOURCE_MISSING`／`UNKNOWN` 不得補成 0。
 - NYS、unknown、synthetic missing side 不視為健康。
 - 只有明確 `SUBMITTED_NO_INJURIES` 才可建立 zero burden。
-- 不使用 fuzzy identity。
+- 不使用 fuzzy identity 或 fuzzy schedule matching。
 - multiple snapshots 不可冒充 multiple independent games。
 - 不得降低 v1／v2 sample 或 numerical gates。
 - Expanded Accuracy Audit 未通過前，不進 Injury Holdout。
@@ -248,3 +307,4 @@ Wave 1／2 acquisition regressions 均通過。舊 registry 沒有 `cadence_days
 - PR #48 — Participation Labels
 - PR #49 — Accuracy Audit v2
 - PR #50 — Wave 3 Acquisition
+- PR #51 — Wave 3 Features

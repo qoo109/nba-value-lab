@@ -26,8 +26,35 @@
     "duplicate_participation_audit_rows": 0,
     "duplicate_census_rows": 0,
     "team_mismatches": 0,
+    "recognized_roster_transition_rows": 1,
     "maximum_forbidden_player_level_files_retained": 0
   },
+  "recognized_roster_transitions": [
+    {
+      "transition_id": "2024-02-08-gsw-ind-same-day-trade-v1",
+      "historical_game_id": "22300733",
+      "game_date": "2024-02-08",
+      "expected_team_abbr": "GSW",
+      "official_team_abbr": "IND",
+      "player_token_sha256": "91ef9fa74019686d2c927f2436029dc25dc3fb8c9e1f88e19c8dc86ac71cbdf3",
+      "required_participation_label": "INACTIVE_OR_NOT_DRESSED",
+      "required_actual_played": 0,
+      "expected_rows": 1,
+      "handling": "exclude_official_opponent_team_row_from_target_team_evaluation_join",
+      "evidence": [
+        {
+          "provider": "NBA.com News Services",
+          "url": "https://www.nba.com/news/pacers-warriors-trade-cory-joseph",
+          "claim": "Golden State traded the player to Indiana on 2024-02-08."
+        },
+        {
+          "provider": "Indiana Pacers",
+          "url": "https://www.nba.com/pacers/news/pacers-waive-cory-joseph-sign-james-johnson",
+          "claim": "Indiana waived the player later on 2024-02-08."
+        }
+      ]
+    }
+  ],
   "sample_thresholds": {
     "minimum_evaluable_games": 150,
     "minimum_conditional_played_rows": 500,
@@ -42,6 +69,7 @@
     "selected_player_snapshot_rows",
     "identity_matched_rows",
     "participation_label_joined_rows",
+    "recognized_roster_transition_rows",
     "unknown_rows",
     "unknown_rate",
     "evaluable_games",
@@ -55,6 +83,7 @@
     "combined-player-boxscores.csv",
     "open-player-boxscores.csv",
     "official-player-participation-labels.csv",
+    "evaluation-player-participation-labels.csv",
     "player-participation-label-audit-rows.csv",
     "expected-minutes-accuracy-v2-rows.csv",
     "overlap-player-injury-panel.csv",

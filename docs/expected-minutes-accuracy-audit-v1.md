@@ -162,13 +162,110 @@ Before Artifact upload it deletes:
 
 The retained Artifact contains only aggregate reports and subgroup summaries.
 
+## Official v1 result
+
+Verified workflow run:
+
+```text
+29624112057
+```
+
+The fixed Wave 1 and Wave 2 source patterns, Gold joins, identity layer, prior-only values, privacy deletion, and deidentified dataset build completed successfully.
+
+### Dataset coverage
+
+```text
+combined independent games: 176
+selected player snapshot rows: 1,840
+identity matched rows: 1,834
+identity match rate: 99.6739%
+Expected Minutes rows: 1,788
+Expected Minutes coverage: 97.1739%
+target-game boxscore join rows: 481
+boxscore join rate among matched IDs: 26.2268%
+actual played rows: 314
+explicit DNP rows: 167
+missing target-game boxscore rows: 1,359
+```
+
+No player name, injury reason, identity map, player-value row, raw boxscore row, or deidentified player-level accuracy row was retained in the final Artifact.
+
+### Structural gates that passed
+
+- exactly 176 selected independent games;
+- at least 1,500 player snapshot rows;
+- identity match rate;
+- Expected Minutes coverage;
+- starter sample minimum;
+- strict prior-date rule;
+- duplicate selected-game rule;
+- duplicate accuracy-row rule;
+- target-game labels not used in prediction;
+- missing actual minutes not imputed as zero;
+- missing Expected Minutes not imputed as zero.
+
+### Structural coverage blockers
+
+The following predeclared gates did not pass:
+
+```text
+minimum evaluable games: 135 / 150
+actual boxscore join rate: 26.2268% / 90%
+conditional role rows: 313 / 500
+actual bench rows: 127 / 200
+long-history rows: 305 / 400
+complete team-game groups: 5 / 100
+```
+
+The current open player boxscore archive contains many played and explicit DNP rows, but it does not provide complete target-game participation labels for all players listed in the selected official injury snapshots. A missing target-game row cannot safely be converted to DNP or zero minutes.
+
+### Descriptive accuracy only
+
+Among the 313 rows with a matched target-game appearance label, all numerical accuracy thresholds were within the frozen limits:
+
+```text
+overall MAE: 5.0258 minutes
+overall RMSE: 6.6313 minutes
+median absolute error: 4.0650 minutes
+bias: +0.8198 minutes
+starter MAE: 4.7569 minutes
+bench MAE: 5.4196 minutes
+10+ prior-game MAE: 5.0339 minutes
+MAE improvement vs last prior game: +1.6768 minutes
+MAE improvement vs recent-10 mean: +0.0528 minutes
+```
+
+These values are **descriptive only**. They may not be promoted into a formal Expected Minutes pass because the structural coverage population is incomplete.
+
+### Decision
+
+```text
+status: AUDIT_EXECUTED_STRUCTURAL_BLOCKED
+Expected Minutes Accuracy Audit passed: false
+ready for Injury Feature Walk-forward Holdout design: false
+ready for Injury Feature Walk-forward Holdout: false
+ready for model training: false
+ready for probability adjustment: false
+ready for betting-edge claim: false
+```
+
+The next requirement is a complete, point-in-time-compatible player participation label layer that distinguishes:
+
+- played;
+- explicit DNP;
+- inactive／not dressed;
+- missing source coverage.
+
+The v1 gates are not loosened after observing the result.
+
 ## Decision boundary
 
-The audit can produce one of three outcomes:
+The audit can produce four outcomes:
 
-1. **Structural failure** — data or point-in-time rules failed; audit result is invalid.
-2. **Valid negative result** — structural gates passed but one or more accuracy gates failed; Expected Minutes remains a research proxy.
-3. **Accuracy pass** — all structural and primary accuracy gates passed; a separate Injury Feature Walk-forward Holdout design may proceed.
+1. **Pipeline or safety failure** — point-in-time, duplicate, privacy, identity, or source integrity failed; result is invalid.
+2. **Structural coverage block** — safety rules passed, but the evaluable label population did not meet the frozen minimums; descriptive metrics are retained but cannot promote the proxy. This is the official v1 outcome.
+3. **Valid negative result** — all structural gates passed but one or more accuracy gates failed; Expected Minutes remains a research proxy.
+4. **Accuracy pass** — all structural and primary accuracy gates passed; a separate Injury Feature Walk-forward Holdout design may proceed.
 
 Even an accuracy pass does not directly enable:
 

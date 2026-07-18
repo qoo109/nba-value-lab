@@ -1,0 +1,194 @@
+name: Validate Timestamped Odds qualification adapter v1
+
+on:
+  pull_request:
+    paths:
+      - "data/timestamped-odds-acquisition-v1.json"
+      - "docs/timestamped-odds-adapter-v1.md"
+      - "scripts/qualify_timestamped_odds_v1.py"
+      - "scripts/run_timestamped_odds_qualification_v1.py"
+      - "scripts/validate_timestamped_odds_acquisition_v1_policy.py"
+      - "scripts/import_closing_odds_archive.py"
+      - ".github/workflows/validate-timestamped-odds-adapter-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-adapter-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ROOT: /tmp/nbavl-timestamped-odds-adapter-v1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install offline parser dependency
+        run: python -m pip install --disable-pip-version-check pandas
+
+      - name: Compile policy and adapter modules
+        run: |
+          python -m py_compile scripts/validate_timestamped_odds_acquisition_v1_policy.py
+          python -m py_compile scripts/import_closing_odds_archive.py
+          python -m py_compile scripts/qualify_timestamped_odds_v1.py
+          python -m py_compile scripts/run_timestamped_odds_qualification_v1.py
+
+      - name: Validate merged acquisition policy
+        run: |
+          rm -rf "$ROOT"
+          mkdir -p "$ROOT/policy" "$ROOT/base-self-test" "$ROOT/hardening" "$ROOT/access"
+          python scripts/validate_timestamped_odds_acquisition_v1_policy.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --output "$ROOT/policy/timestamped-odds-acquisition-v1-policy-validation.json"
+
+      - name: Run base deterministic offline adapter self-tests
+        env:
+          PYTHONPATH: scripts
+        run: |
+          python scripts/qualify_timestamped_odds_v1.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --output-dir "$ROOT/base-self-test" \
+            --self-test
+          test -s "$ROOT/base-self-test/synthetic-adapter-self-test.json"
+
+      - name: Run hardened identity quota and bookmaker self-tests
+        env:
+          PYTHONPATH: scripts
+        run: |
+          python scripts/run_timestamped_odds_qualification_v1.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --output-dir "$ROOT/hardening" \
+            --self-test
+          test -s "$ROOT/hardening/timestamped-odds-adapter-v1-hardening-report.json"
+
+      - name: Emit formal access-not-provided result
+        env:
+          PYTHONPATH: scripts
+        run: |
+          python scripts/qualify_timestamped_odds_v1.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --output-dir "$ROOT/access" \
+            --access-not-provided
+          test -s "$ROOT/access/timestamped-odds-qualification-v1-report.json"
+
+      - name: Enforce no-secret no-paid-call boundary
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+          policy_report = json.loads(
+              (root / 'policy/timestamped-odds-acquisition-v1-policy-validation.json').read_text()
+          )
+          base_test = json.loads(
+              (root / 'base-self-test/synthetic-adapter-self-test.json').read_text()
+          )
+          hardening = json.loads(
+              (root / 'hardening/timestamped-odds-adapter-v1-hardening-report.json').read_text()
+          )
+          access = json.loads(
+              (root / 'access/timestamped-odds-qualification-v1-report.json').read_text()
+          )
+
+          assert policy_report['quality']['failed_checks'] == [], policy_report
+          assert policy_report['quality']['paid_endpoint_called'] is False, policy_report
+          assert policy_report['quality']['api_key_read'] is False, policy_report
+          assert policy_report['quality']['quotes_downloaded'] is False, policy_report
+          assert policy_report['quality']['market_metrics_calculated'] is False, policy_report
+          assert policy_report['quality']['subscription_or_purchase_created'] is False, policy_report
+
+          assert base_test['future_snapshot_rejected'] is True, base_test
+          assert base_test['ambiguous_event_rejected'] is True, base_test
+          assert base_test['valid_quote_count'] == 1, base_test
+
+          checks = hardening['checks']
+          boundary = hardening['execution_boundary']
+          assert checks['manifest_rows'] == 180, hardening
+          assert checks['manifest_quota_ceiling'] == 1800, hardening
+          assert checks['opening_labels_created'] == 0, hardening
+          assert checks['strict_event_and_tipoff_match'] is True, hardening
+          assert checks['wrong_tipoff_rejected'] is True, hardening
+          assert checks['future_snapshot_rejected'] is True, hardening
+          assert checks['bookmaker_update_after_snapshot_rejected'] is True, hardening
+          assert checks['coverage_only_tie_break'] == 'synthetic_a', hardening
+          assert checks['nonselected_abnormal_book_does_not_block'] is True, hardening
+          assert checks['global_pit_violation_blocks'] is True, hardening
+          assert checks['quota_headers_enforced'] is True, hardening
+          assert boundary == {
+              'network_requests_made': 0,
+              'api_key_read': False,
+              'paid_endpoint_called': False,
+              'real_quotes_downloaded': 0,
+              'subscription_or_purchase_created': False,
+              'market_metrics_calculated': False,
+              'quote_level_rows_retained': 0,
+              'ready_for_paid_qualification_execution': False,
+              'ready_for_production_backfill': False,
+              'ready_for_market_backtest': False,
+              'ready_for_betting_edge_claim': False,
+              'formal_stake': 0,
+          }, boundary
+
+          assert access['decision_state'] == 'ACCESS_NOT_PROVIDED', access
+          assert access['coverage']['network_requests_made'] == 0, access
+          assert access['coverage']['quotes_downloaded'] == 0, access
+          assert access['quality']['explicit_paid_access_acknowledgement'] is False, access
+          assert access['quality']['api_key_read'] is False, access
+          assert access['quality']['paid_endpoint_called'] is False, access
+          assert access['quality']['subscription_or_purchase_created'] is False, access
+          assert access['quality']['market_metrics_calculated'] is False, access
+          assert access['quality']['raw_or_quote_level_files_retained'] == 0, access
+
+          assert 'THE_ODDS_API_KEY' not in os.environ, 'The paid API secret must not be exposed to this workflow'
+
+          decision = access['decision']
+          assert decision['ready_for_production_manifest'] is False, access
+          assert decision['ready_for_production_backfill'] is False, access
+          assert decision['ready_for_market_backtest'] is False, access
+          assert decision['ready_for_clv_ev_roi'] is False, access
+          assert decision['ready_for_betting_edge_claim'] is False, access
+          assert decision['formal_stake'] == 0, access
+          PY
+
+      - name: Verify aggregate-only Artifact boundary
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+          forbidden_names = {
+              'timestamped-odds-request-manifest.csv',
+              'normalized-quotes.csv',
+              'raw-response.json',
+              'quote-rows.csv',
+          }
+          forbidden_suffixes = {'.key', '.secret'}
+          found = sorted(
+              str(path)
+              for path in root.rglob('*')
+              if path.is_file()
+              and (path.name in forbidden_names or path.suffix in forbidden_suffixes)
+          )
+          assert not found, found
+          PY
+
+      - name: Upload offline aggregate validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: timestamped-odds-adapter-v1-offline-validation
+          path: |
+            /tmp/nbavl-timestamped-odds-adapter-v1/policy/timestamped-odds-acquisition-v1-policy-validation.json
+            /tmp/nbavl-timestamped-odds-adapter-v1/base-self-test/synthetic-adapter-self-test.json
+            /tmp/nbavl-timestamped-odds-adapter-v1/hardening/timestamped-odds-adapter-v1-hardening-report.json
+            /tmp/nbavl-timestamped-odds-adapter-v1/access/timestamped-odds-qualification-v1-report.json
+          retention-days: 14
+          if-no-files-found: error

@@ -1,0 +1,90 @@
+name: Validate Wyatt SQLite size ceiling amendment v1
+
+on:
+  pull_request:
+    paths:
+      - "data/wyatt-sqlite-file-pilot-v1.json"
+      - "scripts/run_wyatt_sqlite_census_v1_policy_bound.py"
+      - ".github/workflows/validate-wyatt-sqlite-size-ceiling-amendment-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-amendment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile runners
+        run: |
+          python -m py_compile scripts/run_wyatt_sqlite_census_v1.py
+          python -m py_compile scripts/run_wyatt_sqlite_census_v1_policy_bound.py
+
+      - name: Validate amended policy
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          policy = json.loads(Path("data/wyatt-sqlite-file-pilot-v1.json").read_text())
+          contract = policy["input_contract"]
+          amendment = contract["size_ceiling_amendment"]
+
+          assert contract["minimum_size_bytes"] == 1_048_576
+          assert contract["maximum_size_bytes"] == 3_221_225_472
+          assert contract["maximum_size_basis"] == "operational_safety_ceiling_only_not_a_research_promotion_gate"
+          assert amendment["observed_member_name"] == "nba.sqlite"
+          assert amendment["observed_member_size_bytes"] == 2_349_588_480
+          assert amendment["observed_member_size_bytes"] < contract["maximum_size_bytes"]
+          assert amendment["content_inspected_before_amendment"] is False
+
+          gates = policy["qualification_gates"]
+          assert gates["game_identity_match_rate_minimum"] == 0.98
+          assert gates["final_score_match_rate_minimum"] == 0.98
+          assert gates["team_boxscore_coverage_minimum"] == 0.98
+          assert gates["player_boxscore_coverage_minimum"] == 0.95
+          assert gates["pbp_game_coverage_minimum_when_claimed"] == 0.95
+          assert gates["exact_duplicate_game_count_maximum"] == 0
+          assert gates["integrity_check_must_equal"] == "ok"
+          PY
+
+      - name: Run policy-bound synthetic census
+        run: |
+          python scripts/run_wyatt_sqlite_census_v1_policy_bound.py \
+            --self-test \
+            --output-dir out/synthetic
+
+      - name: Enforce no-real-input boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("out/synthetic/aggregate_schema_report.json").read_text())
+          assert report["report_type"] == "synthetic_self_test"
+          assert report["qualification_evaluated"] is False
+          assert report["cross_source_audit_executed"] is False
+          assert report["aggregate"]["raw_rows_emitted"] == 0
+          assert report["aggregate"]["raw_database_emitted"] is False
+          assert report["boundaries"]["existing_silver_replacement"] is False
+          assert report["boundaries"]["existing_gold_replacement"] is False
+          assert report["boundaries"]["formal_stake"] == 0
+          PY
+
+      - name: Upload aggregate policy artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wyatt-sqlite-size-ceiling-amendment-v1
+          path: |
+            data/wyatt-sqlite-file-pilot-v1.json
+            out/synthetic/aggregate_schema_report.json
+          retention-days: 14
+          if-no-files-found: error

@@ -1,0 +1,127 @@
+{
+  "schema_version": "historical-secondary-source-qualification-v1",
+  "created_at": "2026-07-18T00:00:00Z",
+  "formal_state": "PREDECLARED_METADATA_ONLY",
+  "purpose": "Qualify two secondary historical NBA sources without replacing the verified shufinskiy Silver/Gold path.",
+  "reference": {
+    "primary_source": "shufinskiy/nba_data",
+    "pilot_season": "2023-24",
+    "matching": "deterministic_only",
+    "fuzzy_matching": false
+  },
+  "candidates": [
+    {
+      "source_id": "kaggle_eoinamoore_historical_nba",
+      "provider": "Eoin A Moore",
+      "dataset_url": "https://www.kaggle.com/datasets/eoinamoore/historical-nba-data-and-player-box-scores",
+      "declared_license": "CC0: Public Domain",
+      "observed_on": "2026-07-18",
+      "roles": [
+        "game_identity_crosscheck",
+        "team_boxscore_crosscheck",
+        "player_boxscore_crosscheck",
+        "optional_advanced_stats_crosscheck",
+        "optional_pbp_crosscheck"
+      ],
+      "currently_listed_files": [
+        "PlayerStatistics.csv",
+        "TeamStatistics.csv",
+        "Games.csv",
+        "LeagueSchedule24_25.csv",
+        "Players.csv",
+        "TeamHistories.csv"
+      ],
+      "not_presumed_available": [
+        "TeamStatisticsExtended.csv",
+        "PlayerStatisticsExtended.csv",
+        "PlaybyPlay.parquet"
+      ],
+      "risk": "backend rebuild in progress; advanced and play-by-play claims require file-level verification"
+    },
+    {
+      "source_id": "kaggle_wyattowalsh_basketball",
+      "provider": "Wyatt Walsh",
+      "dataset_url": "https://www.kaggle.com/datasets/wyattowalsh/basketball",
+      "declared_license": "CC BY-SA 4.0",
+      "observed_on": "2026-07-18",
+      "roles": [
+        "game_identity_crosscheck",
+        "team_boxscore_crosscheck",
+        "player_boxscore_crosscheck",
+        "pbp_coverage_crosscheck",
+        "sqlite_schema_reference"
+      ],
+      "currently_claimed_assets": [
+        "SQLite database",
+        "65000+ games",
+        "13000000+ play-by-play rows"
+      ],
+      "risk": "page claims daily updates while visible dataset metadata is materially older; freshness must be measured from content"
+    }
+  ],
+  "metadata_gates": {
+    "candidate_count": 2,
+    "dataset_page_required": true,
+    "license_label_required": true,
+    "provider_required": true,
+    "file_or_asset_inventory_required": true,
+    "claims_are_not_verified_schema": true
+  },
+  "future_download_pilot_gates": {
+    "separate_pr_required": true,
+    "source_url_required": true,
+    "retrieved_at_required": true,
+    "content_length_required": true,
+    "sha256_required": true,
+    "safe_extract_required": true,
+    "commit_raw_archives": false,
+    "commit_extracted_raw_data": false,
+    "commit_full_database": false,
+    "temporary_full_data_only": true,
+    "aggregate_reports_only": true
+  },
+  "schema_gates": {
+    "exact_file_inventory_required": true,
+    "table_or_column_inventory_required": true,
+    "row_counts_required": true,
+    "duplicate_counts_required": true,
+    "null_key_counts_required": true,
+    "date_range_required": true,
+    "season_coverage_required": true,
+    "game_id_semantics_required": true,
+    "team_id_semantics_required": true,
+    "pbp_event_order_semantics_required_when_claimed": true,
+    "advanced_metric_definition_required_when_claimed": true
+  },
+  "cross_source_gates": {
+    "pilot_season": "2023-24",
+    "minimum_reference_games": 1000,
+    "game_identity_match_rate_minimum": 0.98,
+    "final_score_match_rate_minimum": 0.98,
+    "team_boxscore_coverage_minimum": 0.98,
+    "player_boxscore_coverage_minimum": 0.95,
+    "pbp_game_coverage_minimum_when_claimed": 0.95,
+    "exact_duplicate_game_count_maximum": 0,
+    "future_information_leakage": false,
+    "replace_verified_silver": false
+  },
+  "formal_outcomes": [
+    "METADATA_BLOCKED",
+    "METADATA_READY_DOWNLOAD_NOT_AUTHORIZED",
+    "DOWNLOAD_PILOT_ELIGIBLE",
+    "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+    "SECONDARY_SOURCE_REJECTED"
+  ],
+  "boundaries": {
+    "downloads_in_this_pr": 0,
+    "external_data_calls_in_this_pr": 0,
+    "secrets_read_in_this_pr": 0,
+    "raw_rows_in_artifact": 0,
+    "model_retraining": false,
+    "model_metrics": false,
+    "market_metrics": false,
+    "existing_silver_replacement": false,
+    "existing_gold_replacement": false,
+    "formal_stake": 0
+  }
+}

@@ -6,23 +6,27 @@ Roadmap：Step 5
 
 ## Scope
 
-本模組實作 PR #57 已合併的取得契約，但不執行付費 API：
+本模組實作 PR #57 已合併的取得契約，但不執行付費 API。
 
 ```text
 scripts/qualify_timestamped_odds_v1.py
+scripts/run_timestamped_odds_qualification_v1.py
 ```
+
+`qualify_timestamped_odds_v1.py` 提供基礎 manifest／payload utility；`run_timestamped_odds_qualification_v1.py` 是正式 hardened validation runner。
 
 目前能力：
 
-1. 依 frozen 30-game sample 與外部 schedule 建立無價格 request manifest。
+1. 依 frozen 30-game sample 與 exact schedule rows 建立無價格 request manifest。
 2. 解析已提供的 The Odds API Historical v4 response payload。
-3. 使用 deterministic exact NBA team alias 對齊事件。
-4. 驗證 provider snapshot `<= requested_at` 與最大 lag。
-5. 分開保存 provider snapshot、bookmaker last_update 與 fetched_at。
-6. 只解析同 bookmaker、同 snapshot 的 two-way h2h 價格。
-7. 驗證 decimal price、two-way overround、duplicate key、future snapshot 與 tip-off identity。
-8. 依 coverage-only 規則彙總 bookmaker qualification。
-9. 在沒有付費核准與 secret 時輸出 `ACCESS_NOT_PROVIDED`。
+3. 使用 deterministic NBA aliases，要求 home、away、scheduled tip-off 三者完全一致。
+4. 驗證 provider snapshot `<= requested_at` 與 frozen maximum lag。
+5. 驗證 bookmaker `last_update <= provider_snapshot < tipoff`。
+6. 分開保存 provider snapshot、bookmaker last-update 與 fetched-at。
+7. 只解析同 bookmaker、同 snapshot、唯一 h2h market 的兩側價格。
+8. 驗證 decimal price、two-way overround、duplicate keys、quota provenance 與 PIT。
+9. 按 coverage-only 規則彙總 bookmaker qualification。
+10. 在沒有付費核准與 secret 時輸出 `ACCESS_NOT_PROVIDED`。
 
 ## Explicit non-capabilities
 
@@ -30,11 +34,34 @@ scripts/qualify_timestamped_odds_v1.py
 
 - 讀取 `THE_ODDS_API_KEY`
 - 呼叫 The Odds API
-- 建立帳號或訂閱
-- 產生任何 API quota 或費用
+- 建立帳號、訂閱或購買 credits
+- 產生 API quota 或費用
 - 下載真實 quote
-- 計算 model edge、EV、ROI、CLV 或 Drawdown
+- 計算 model edge、EV、ROI、CLV、Drawdown 或 model-vs-market score
 - 寫入 public quote-level Artifact
+
+## Frozen policy
+
+正式 Source of Truth：
+
+```text
+data/timestamped-odds-acquisition-v1.json
+PR #57
+merge: 926fd8355602935f51a5fe38f82ba2fa37c825fb
+```
+
+本 PR 不修改：
+
+```text
+source
+30-game sample
+market / region
+snapshot labels
+1,800-credit ceiling
+bookmaker ranking
+decision states
+storage boundary
+```
 
 ## Request manifest
 
@@ -59,7 +86,7 @@ T-5m
 Closing = tip-off minus one second
 ```
 
-輸出只包含 request metadata，不包含 bookmaker 或價格。
+Opening 不屬於 v1，也不得從 T-minus 或 provider first-seen 推定。
 
 Manifest 必須：
 
@@ -70,11 +97,15 @@ exactly 180 request rows
 0 missing schedule games
 0 game-date/team identity mismatch
 estimated quota <= 1,800 credits
+0 price fields
+0 API key
 ```
+
+Manifest 本身不等於 paid execution authorization。
 
 ## Historical payload parser
 
-預期 payload 結構符合 Historical v4：
+預期 Historical v4 payload：
 
 ```text
 timestamp
@@ -93,95 +124,130 @@ data[]
       outcomes[]
 ```
 
-Parser 的 team mapping 重用既有 `import_closing_odds_archive.py` deterministic aliases；不使用 fuzzy matching。
+### Strict event identity
 
-事件只有在下列條件成立時才匹配：
+事件必須同時符合：
 
 ```text
-exact home team
-exact away team
+exact normalized home team
+exact normalized away team
+exact scheduled_tipoff_utc
 exactly one matching event
+nonblank provider event id
 ```
 
-多個相同 matchup event 會被視為 ambiguous 並拒絕，不靠最近時間猜測。
+以下狀態全部拒絕：
+
+- 相同隊伍但不同 tip-off
+- 主客顛倒
+- 多個完全相同候選事件
+- 無法辨識的 target identity
+- fuzzy／nearest-time／nearest-date 配對
+
+不能因 provider event 看起來「最接近」就手動選擇。
 
 ## Point-in-time checks
 
 ```text
 provider_snapshot_at <= requested_at < scheduled_tipoff
+bookmaker_last_update <= provider_snapshot_at
+bookmaker_last_update < scheduled_tipoff
 ```
 
-最大接受 lag：
+最大 provider lag：
 
 ```text
 requested_at before 2022-09-01: 15 minutes
 requested_at from 2022-09-01: 10 minutes
 ```
 
-Future snapshot 永遠拒絕。`fetched_at` 不得代替 `observed_at`。
+Future snapshot 永遠拒絕。`fetched_at` 不得替代 `observed_at`。
 
 ## Quote normalization
 
-每個 bookmaker 只接受唯一一個 `h2h` market，且 outcomes 必須正好是該場 home/away 兩隊。
+每個 bookmaker 只接受：
 
-Temporary normalized row 包含：
+- nonblank stable key;
+- unique bookmaker block per event;
+- valid pre-snapshot `last_update`;
+- exactly one `h2h` market;
+- exactly home and away outcomes;
+- no duplicate or unknown outcome;
+- finite decimal prices;
+- frozen price and overround ranges.
 
-```text
-request_id
-source_event_id
-historical_game_id
-snapshot_label
-requested_at_utc
-provider_snapshot_at_utc
-scheduled_tipoff_utc
-bookmaker_key
-bookmaker_last_update_utc
-market_key
-home_team_abbr
-away_team_abbr
-home_price_decimal
-away_price_decimal
-two_way_overround
-```
-
-這些 quote rows 只允許存在於受限 temporary workflow storage，正式 Artifact 前必須刪除。
-
-## Synthetic tests
-
-Self-test 固定驗證：
-
-- 正常 Lakers @ Nuggets payload 可以精確解析。
-- 兩側價格由同 bookmaker／同 h2h market 取得。
-- overround 計算正確。
-- provider future snapshot 被拒絕。
-- 同 matchup 出現兩個 event 時拒絕 ambiguous match。
-- `ACCESS_NOT_PROVIDED` 狀態為 0 network、0 key、0 paid call、0 purchase。
-
-Synthetic payload 不含任何真實 provider quote，亦不觸發網路。
+Temporary normalized rows只允許存在於受限 temporary storage，正式 Artifact 前必須刪除。
 
 ## Qualification aggregation
 
-Paid pilot 日後執行時，adapter 可彙總：
+Source-level structural blockers：
 
-- request success
-- mapped games and per-season counts
-- snapshot lag / PIT errors
-- bookmaker coverage
-- T-60 + Closing completeness
-- all-target-snapshot coverage
-- quote validity and overround
-- duplicates and team errors
+- manifest／source-index 不完整或重複;
+- HTTP success 未達 100%;
+- unresolved 401／403／429;
+- mapping 或 per-season mapping 未達 gate;
+- future snapshot／PIT／tip-off／team／ambiguous／fuzzy error;
+- duplicate quote key;
+- inferred Opening;
+- missing request hash or quota header;
+- total quota above 1,800.
 
-Primary bookmaker 只依 coverage ranking：
+Bookmaker qualification仍完全依 frozen coverage ranking：
 
 ```text
-complete T-60 + Closing count desc
+complete T-1h + Closing count desc
 all-target coverage desc
 minimum per-season complete count desc
 bookmaker key asc
 ```
 
-不讀模型預測，不以 ROI、edge 或價格高低選 bookmaker。
+Abnormal quote gate 只套用於 candidate selected bookmaker。非候選 bookmaker 的異常不會把另一個完整、合法、符合 coverage gate 的 bookmaker 一起判為 source-level blocked。
+
+ROI、model edge、價格高低或賽果不得參與排序。
+
+## Synthetic validation
+
+兩層 self-tests 固定驗證：
+
+```text
+180 no-price manifest rows
+estimated quota = 1,800
+Opening labels = 0
+valid Lakers @ Nuggets parse
+exact scheduled tip-off identity
+wrong tip-off rejected
+future provider snapshot rejected
+ambiguous event rejected
+bookmaker update after provider snapshot rejected
+same-book two-sided h2h retained
+coverage-only stable-key tie-break
+nonselected abnormal bookmaker does not block a qualified bookmaker
+global PIT violation blocks qualification
+quota headers required
+```
+
+Synthetic price 只在 process memory 中測試 parser，公開 Artifact 不保存 quote rows 或價格。
+
+## Aggregate-only Artifact
+
+允許上傳：
+
+- policy validation report;
+- base synthetic self-test summary;
+- hardened self-test summary;
+- `ACCESS_NOT_PROVIDED` report.
+
+禁止上傳：
+
+```text
+API key
+raw provider response
+request manifest CSV
+normalized quote rows
+real or synthetic prices
+downloadable odds archive
+market performance metrics
+```
 
 ## Current formal state
 
@@ -190,9 +256,11 @@ ACCESS_NOT_PROVIDED
 network requests made = 0
 API key read = false
 paid endpoint called = false
-quotes downloaded = 0
+real quotes downloaded = 0
 subscription or purchase created = false
 market metrics calculated = false
+quote-level rows retained = 0
+ready_for_paid_qualification_execution = false
 ready_for_production_manifest = false
 ready_for_production_backfill = false
 ready_for_market_backtest = false
@@ -204,8 +272,11 @@ formal_stake = 0
 ## Next exact task after merge
 
 ```text
-build the exact 30-game schedule manifest from Historical Gold without paid calls
-→ calculate and freeze exact request timestamps and 1,800-credit ceiling
+obtain authoritative exact scheduled tipoffs for the frozen 30 games without paid odds calls
+→ build and freeze the 180-row no-price request manifest
+→ verify exact quota ceiling = 1,800 credits
+→ read structural manifest QA
 → stop before network execution
-→ request explicit user approval and THE_ODDS_API_KEY only when pilot is ready
 ```
+
+只有使用者另行明確核准付費 access，並以 private secret 連接 `THE_ODDS_API_KEY` 後，才可執行 frozen qualification pilot。

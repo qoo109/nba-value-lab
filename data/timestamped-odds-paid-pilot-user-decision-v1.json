@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "recorded_date": "2026-07-18",
+  "decision": "NOT_APPROVED",
+  "decision_scope": {
+    "provider": "The Odds API Historical v4",
+    "listed_plan": "START 20K",
+    "listed_base_price_usd_per_month": 30,
+    "recurring_billing_acknowledged": false,
+    "maximum_frozen_pilot_credits": 1800,
+    "frozen_games": 30,
+    "frozen_requests": 180
+  },
+  "formal_consequences": {
+    "paid_access_authorized": false,
+    "account_creation_authorized": false,
+    "subscription_or_purchase_authorized": false,
+    "api_key_connection_authorized": false,
+    "paid_endpoint_execution_authorized": false,
+    "production_backfill_authorized": false,
+    "market_backtest_unlocked": false,
+    "clv_ev_roi_drawdown_unlocked": false,
+    "betting_edge_claim_authorized": false,
+    "formal_stake": 0
+  },
+  "next_allowed_scope": {
+    "free_or_existing_source_research_only": true,
+    "legal_and_terms_review_required": true,
+    "access_control_bypass_forbidden": true,
+    "restricted_scraping_forbidden": true,
+    "closing_only_data_may_not_impersonate_point_in_time_quotes": true
+  },
+  "supersedes_approval_state": "AWAITING_EXPLICIT_USER_APPROVAL",
+  "formal_state": "PAID_PILOT_NOT_APPROVED"
+}

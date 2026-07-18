@@ -8,7 +8,17 @@
   "input_contract": {
     "accepted_extensions": [".sqlite", ".sqlite3", ".db"],
     "minimum_size_bytes": 1048576,
-    "maximum_size_bytes": 2147483648,
+    "maximum_size_bytes": 3221225472,
+    "maximum_size_basis": "operational_safety_ceiling_only_not_a_research_promotion_gate",
+    "size_ceiling_amendment": {
+      "observed_archive_name": "nba.sqlite.zip",
+      "observed_archive_size_bytes": 434150473,
+      "observed_member_name": "nba.sqlite",
+      "observed_member_size_bytes": 2349588480,
+      "observed_archive_sha256": "72cb105c6e3c2b7d106b62d3af8b9dbc4d431d3edcf881552450d68ae8214c2c",
+      "content_inspected_before_amendment": false,
+      "reason": "the legitimate published SQLite bundle exceeds the prior 2 GiB operational ceiling by about 9.4 percent; all scientific and integrity gates remain unchanged"
+    },
     "sqlite_header_required": true,
     "read_only_open_required": true,
     "integrity_check_required": true,

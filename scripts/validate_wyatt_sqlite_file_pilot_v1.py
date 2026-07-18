@@ -39,7 +39,20 @@ def validate(policy: dict[str, Any]) -> dict[str, Any]:
     input_contract = policy.get("input_contract", {})
     require(set(input_contract.get("accepted_extensions", [])) == {".sqlite", ".sqlite3", ".db"}, "extensions", passed)
     require(input_contract.get("minimum_size_bytes") == 1048576, "minimum_size", passed)
-    require(input_contract.get("maximum_size_bytes") == 2147483648, "maximum_size", passed)
+    require(input_contract.get("maximum_size_bytes") == 3221225472, "maximum_size", passed)
+    require(
+        input_contract.get("maximum_size_basis") == "operational_safety_ceiling_only_not_a_research_promotion_gate",
+        "maximum_size_basis",
+        passed,
+    )
+    amendment = input_contract.get("size_ceiling_amendment", {})
+    require(amendment.get("observed_archive_name") == "nba.sqlite.zip", "amendment_archive_name", passed)
+    require(amendment.get("observed_archive_size_bytes") == 434150473, "amendment_archive_size", passed)
+    require(amendment.get("observed_member_name") == "nba.sqlite", "amendment_member_name", passed)
+    require(amendment.get("observed_member_size_bytes") == 2349588480, "amendment_member_size", passed)
+    require(amendment.get("observed_member_size_bytes") < input_contract.get("maximum_size_bytes"), "amendment_within_ceiling", passed)
+    require(amendment.get("content_inspected_before_amendment") is False, "amendment_preinspection", passed)
+
     for key in (
         "sqlite_header_required",
         "read_only_open_required",
@@ -115,6 +128,8 @@ def validate(policy: dict[str, Any]) -> dict[str, Any]:
         "checks_failed": 0,
         "source_id": policy["source_id"],
         "pilot_season": "2023-24",
+        "maximum_size_bytes": input_contract["maximum_size_bytes"],
+        "observed_member_size_bytes": amendment["observed_member_size_bytes"],
         "input_file_present": False,
         "database_opened": False,
         "raw_rows_in_artifact": 0,

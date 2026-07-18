@@ -1,0 +1,89 @@
+name: Probe official participation source v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/run_official_nba_participation_import.py"
+      - ".github/workflows/probe-official-participation-source-v1.yml"
+  workflow_dispatch:
+    inputs:
+      combined_feature_run_id:
+        description: "Verified run containing the combined 176-game selected panel"
+        required: true
+        default: "29624731777"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  official-source-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      COMBINED_FEATURE_RUN_ID: ${{ github.event.inputs.combined_feature_run_id || '29624731777' }}
+      ROOT: /tmp/nbavl-participation-source-probe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile source importer
+        run: |
+          python -m py_compile scripts/import_official_nba_participation_labels.py
+          python -m py_compile scripts/run_official_nba_participation_import.py
+      - name: Download frozen 176-game selected panel
+        run: |
+          rm -rf "$ROOT"
+          mkdir -p "$ROOT/combined-source"
+          gh run download "$COMBINED_FEATURE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name injury-backfill-wave2-features \
+            --dir "$ROOT/combined-source"
+          test -s "$ROOT/combined-source/combined/combined-selected-matchup-injury-burden.csv"
+      - name: Fetch official final-game sources with browser headers
+        id: source_import
+        continue-on-error: true
+        run: |
+          PYTHONPATH=scripts python scripts/run_official_nba_participation_import.py \
+            --selected-games "$ROOT/combined-source/combined/combined-selected-matchup-injury-burden.csv" \
+            --output-dir "$ROOT/official-labels" \
+            --max-workers 6
+      - name: Delete temporary player labels
+        if: always()
+        run: rm -f "$ROOT/official-labels/official-player-participation-labels.csv"
+      - name: Upload aggregate source probe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-participation-source-probe-v1
+          path: |
+            /tmp/nbavl-participation-source-probe/official-labels/official-player-participation-source-index.csv
+            /tmp/nbavl-participation-source-probe/official-labels/official-player-participation-import-report.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Enforce official source coverage
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          report = json.loads(
+              (
+                  Path(os.environ["ROOT"])
+                  / "official-labels/official-player-participation-import-report.json"
+              ).read_text()
+          )
+          assert report["coverage"]["requested_selected_games"] == 176, report
+          assert report["coverage"]["successful_official_games"] == 176, report
+          assert report["coverage"]["official_game_source_coverage"] == 1.0, report
+          assert report["decision"]["ready_for_player_participation_join"] is True, report
+          assert report["decision"]["ready_for_expected_minutes_accuracy_audit_v2"] is False
+          assert report["decision"]["ready_for_injury_feature_walk_forward_holdout"] is False
+          assert report["decision"]["ready_for_model_training"] is False
+          assert report["decision"]["ready_for_betting_edge_claim"] is False
+          print(json.dumps(report["coverage"], indent=2))
+          PY

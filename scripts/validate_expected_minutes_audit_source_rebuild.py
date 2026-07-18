@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Validate that an Expected Minutes audit source rebuild matches the frozen acquisition wave.
+"""Validate that an Expected Minutes audit source rebuild matches a frozen acquisition wave.
 
 The multi-report player importer intentionally exits non-zero when any successfully parsed report
-fails its single-report readiness gate. That is expected for the frozen Wave 1 and Wave 2 samples.
-This validator permits the pipeline to continue only when the exact predeclared success, readiness,
-and fixed-failure pattern is reproduced.
+fails its single-report readiness gate. This validator permits the pipeline to continue only when
+the exact predeclared success, readiness, and fixed-failure pattern is reproduced.
 """
 from __future__ import annotations
 
@@ -47,6 +46,17 @@ EXPECTED: dict[str, dict[str, Any]] = {
             "2023-12-25T17:30:00-05:00",
         },
     },
+    "wave3": {
+        "requested": 45,
+        "successful": 45,
+        "failed": 0,
+        "ready_true": 44,
+        "ready_false": 1,
+        "failed_times": set(),
+        "not_ready_times": {
+            "2024-01-11T17:30:00-05:00",
+        },
+    },
 }
 
 
@@ -70,8 +80,9 @@ def validate(wave: str, report_path: Path, index_path: Path, importer_exit: int)
     ready_false = {row["requested_report_time"] for row in rows if not as_bool(row.get("ready"))}
     failed_times = {str(row.get("requested_report_time", "")) for row in failed_examples}
 
+    expected_exit = 2 if expected["ready_false"] or expected["failed"] else 0
     checks = {
-        "importer_exit_is_expected_gate_exit": importer_exit == 2,
+        "importer_exit_is_expected_gate_exit": importer_exit == expected_exit,
         "requested_reports": int(coverage.get("requested_reports", -1)) == expected["requested"],
         "successful_reports": int(coverage.get("successful_reports", -1)) == expected["successful"],
         "failed_reports": int(coverage.get("failed_reports", -1)) == expected["failed"],
@@ -106,8 +117,9 @@ def validate(wave: str, report_path: Path, index_path: Path, importer_exit: int)
 def self_test() -> None:
     assert EXPECTED["wave1"]["ready_true"] == 31
     assert EXPECTED["wave2"]["ready_true"] == 31
-    assert EXPECTED["wave1"]["failed_times"].isdisjoint(EXPECTED["wave1"]["not_ready_times"])
-    assert EXPECTED["wave2"]["failed_times"].isdisjoint(EXPECTED["wave2"]["not_ready_times"])
+    assert EXPECTED["wave3"]["ready_true"] == 44
+    for expected in EXPECTED.values():
+        assert expected["failed_times"].isdisjoint(expected["not_ready_times"])
 
 
 def main() -> None:

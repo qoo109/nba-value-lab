@@ -21,7 +21,7 @@
 目前節點：
 
 ```text
-Step 3 — Expanded participation-label census before Accuracy Audit v3 design
+Step 3 — Expected Minutes Accuracy Audit v3 predeclaration
 ```
 
 尚未進入 Injury Holdout、Timestamped Odds 或 Market Backtest。
@@ -43,8 +43,8 @@ Step 3 — Expanded participation-label census before Accuracy Audit v3 design
 | Wave 3 Acquisition | Research Ready | 45 player、44 team、44 ready overlap、15 dates。 |
 | Wave 3 Features | Research Ready | identity 99.5545%；Expected Minutes／Impact 96.573%；T-60 selected 117 場。 |
 | Combined Wave 1＋2＋3 | Research Ready / 293 games | 0 跨 Wave 重複、0 identity／policy conflict。 |
-| Expanded Participation Census | Next | 必須先量測 293-game panel 的 PLAYED／bench／10+ history 等樣本。 |
-| Expected Minutes Accuracy Audit v3 | Blocked | 等 expanded participation counts 固定後才可預先宣告。 |
+| Expanded Participation Census v1 | Eligible for Audit v3 predeclaration | 226 evaluable games；516 PLAYED；209 bench；502 long-history；所有 preserved sample gates 通過。 |
+| Expected Minutes Accuracy Audit v3 | Next / execution blocked | 只能另開 PR 預先宣告；尚未允許執行。 |
 | Injury Holdout | Blocked | 必須先通過 expanded Accuracy Audit。 |
 | Timestamped Odds | Blocked | 依主線排在 Injury Holdout 之後。 |
 | Betting Decision Layer | Blocked | 正式 stake = 0。 |
@@ -264,20 +264,101 @@ ready_for_betting_edge_claim = false
 
 `ready_for_expected_minutes_accuracy_audit` 只表示 game-level minimum 已達；不代表 player-level preserved sample gates 已達，也不代表可以跳過新的 predeclaration。
 
+## Expanded Participation Census v1
+
+Predeclaration commit：
+
+```text
+8d5d3e56a8d4fe7e54070860695715b3f71f0f05
+```
+
+Verified workflow：
+
+```text
+29632917590
+```
+
+Artifact：
+
+```text
+expanded-participation-census-v1
+artifact id: 8426181763
+digest: sha256:2acdf9c62fb16c19f649fdeffce1fa79261adfba3ee186cf707c77631d5d7ba0
+```
+
+正式狀態：
+
+```text
+CENSUS_READY_AUDIT_V3_ELIGIBLE
+```
+
+Official participation and join QA：
+
+```text
+combined selected games: 293
+successful official source games: 293
+source missing games: 0
+official player rows: 10,309
+selected player snapshot rows: 3,045
+identity matched: 3,037 / 3,045 = 99.7373%
+participation joins: 3,022 / 3,037 = 99.5061%
+UNKNOWN: 103 / 3,037 = 3.3915%
+strict-prior violations: 0
+ambiguous identities: 0
+fuzzy identity: false
+team mismatches after verified transition handling: 0
+```
+
+Preserved sample gates：
+
+```text
+evaluable games: 226 / 150 — pass
+conditional PLAYED rows: 516 / 500 — pass
+starter PLAYED rows: 307
+bench PLAYED rows: 209 / 200 — pass
+10+ prior-game PLAYED rows: 502 / 400 — pass
+```
+
+Same-day roster transition repair：
+
+```text
+historical game: 22300733
+matchup: GSW@IND
+snapshot date: 2024-02-08
+recognized transition rows: 1
+raw official labels modified: false
+evaluation handling: exclude opponent-team official row from target-team evaluation join
+unrecognized team mismatches allowed: false
+```
+
+此列是同日 GSW→IND roster transition。它沒有被計入 PLAYED、DNP 或 0 minutes；所有其他 team mismatch 仍是 hard failure。修正沒有降低任何 sample 或 numerical gate。
+
+Privacy and non-activation：
+
+```text
+temporary sensitive files deleted: 131
+forbidden player-level files retained: 0
+accuracy metrics calculated: false
+ready_for_expected_minutes_accuracy_audit_v3_predeclaration: true
+ready_for_expected_minutes_accuracy_audit_v3_execution: false
+ready_for_injury_feature_walk_forward_holdout: false
+ready_for_model_training: false
+ready_for_probability_adjustment: false
+ready_for_betting_edge_claim: false
+formal stake: 0
+```
+
 ## 下一個精確任務
 
 ```text
-1. Rebuild selected player snapshots for Waves 1, 2, and 3
-2. Join NBA Official LiveData participation labels to the combined 293-game panel
-3. Freeze source, identity, join, UNKNOWN, duplicate, team, and privacy QA
-4. Measure evaluable games
-5. Measure conditional PLAYED rows
-6. Measure starter and bench rows
-7. Measure 10+ prior-game rows
-8. Decide whether expanded Accuracy Audit v3 can be predeclared
+1. 另開 Expected Minutes Accuracy Audit v3 predeclaration PR
+2. 凍結 293-game population 與 official participation census inputs
+3. 保留 v1／v2 所有 sample 與 numerical gates，不得降低
+4. 凍結 primary estimand、subgroups、baselines、promotion／negative-result path
+5. predeclaration 合併後，才可另行執行 Audit v3
 ```
 
-這一步只是 expanded participation census，不計算或查看新的 accuracy metrics。
+目前只解鎖 **Accuracy Audit v3 的預先宣告**，尚未解鎖 Audit v3 execution、Injury Holdout、模型訓練或任何投注使用。
 
 ## 永久邊界
 
@@ -308,3 +389,4 @@ ready_for_betting_edge_claim = false
 - PR #49 — Accuracy Audit v2
 - PR #50 — Wave 3 Acquisition
 - PR #51 — Wave 3 Features
+- PR #52 — Expanded Participation Census v1

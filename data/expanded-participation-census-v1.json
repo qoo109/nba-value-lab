@@ -1,0 +1,117 @@
+{
+  "schema_version": "expanded-participation-census-v1",
+  "frozen_population": {
+    "base_merge_commit": "5eb62f969bc3df4ea2b89946c0e75cdadc45e66d",
+    "combined_selected_independent_games": 293,
+    "wave_selected_games": {
+      "wave1": 91,
+      "wave2": 85,
+      "wave3": 117
+    },
+    "selection_policy": "latest feature-ready snapshot at or before T-60m",
+    "fallback_allowed": false
+  },
+  "structural_gates": {
+    "required_combined_selected_games": 293,
+    "minimum_official_game_source_coverage": 1.0,
+    "minimum_identity_match_rate": 0.95,
+    "minimum_participation_label_join_rate_for_matched_players": 0.99,
+    "maximum_unknown_rate_for_matched_players": 0.05,
+    "maximum_source_missing_games": 0,
+    "maximum_strict_prior_date_violations": 0,
+    "maximum_ambiguous_identity_rows": 0,
+    "fuzzy_identity_used": false,
+    "duplicate_selected_games": 0,
+    "duplicate_official_game_player_rows": 0,
+    "duplicate_participation_audit_rows": 0,
+    "duplicate_census_rows": 0,
+    "team_mismatches": 0,
+    "recognized_roster_transition_rows": 1,
+    "maximum_forbidden_player_level_files_retained": 0
+  },
+  "recognized_roster_transitions": [
+    {
+      "transition_id": "2024-02-08-gsw-ind-same-day-trade-v1",
+      "historical_game_id": "22300733",
+      "game_date": "2024-02-08",
+      "expected_team_abbr": "GSW",
+      "official_team_abbr": "IND",
+      "player_token_sha256": "91ef9fa74019686d2c927f2436029dc25dc3fb8c9e1f88e19c8dc86ac71cbdf3",
+      "required_participation_label": "INACTIVE_OR_NOT_DRESSED",
+      "required_actual_played": 0,
+      "expected_rows": 1,
+      "handling": "exclude_official_opponent_team_row_from_target_team_evaluation_join",
+      "evidence": [
+        {
+          "provider": "NBA.com News Services",
+          "url": "https://www.nba.com/news/pacers-warriors-trade-cory-joseph",
+          "claim": "Golden State traded the player to Indiana on 2024-02-08."
+        },
+        {
+          "provider": "Indiana Pacers",
+          "url": "https://www.nba.com/pacers/news/pacers-waive-cory-joseph-sign-james-johnson",
+          "claim": "Indiana waived the player later on 2024-02-08."
+        }
+      ]
+    }
+  ],
+  "sample_thresholds": {
+    "minimum_evaluable_games": 150,
+    "minimum_conditional_played_rows": 500,
+    "minimum_bench_played_rows": 200,
+    "minimum_ten_plus_prior_game_played_rows": 400
+  },
+  "retained_counts": [
+    "combined_selected_games",
+    "successful_official_source_games",
+    "source_missing_games",
+    "official_player_rows",
+    "selected_player_snapshot_rows",
+    "identity_matched_rows",
+    "participation_label_joined_rows",
+    "recognized_roster_transition_rows",
+    "unknown_rows",
+    "unknown_rate",
+    "evaluable_games",
+    "conditional_played_rows",
+    "starter_played_rows",
+    "bench_played_rows",
+    "ten_plus_prior_game_played_rows",
+    "complete_team_game_groups"
+  ],
+  "forbidden_player_level_filenames": [
+    "combined-player-boxscores.csv",
+    "open-player-boxscores.csv",
+    "official-player-participation-labels.csv",
+    "evaluation-player-participation-labels.csv",
+    "player-participation-label-audit-rows.csv",
+    "expected-minutes-accuracy-v2-rows.csv",
+    "overlap-player-injury-panel.csv",
+    "multi-report-injury-panel-normalized.csv",
+    "injury-lineup-snapshots-normalized.csv",
+    "injury-player-id-map.csv",
+    "point-in-time-player-values.csv"
+  ],
+  "forbidden_metrics": [
+    "mae",
+    "rmse",
+    "median_absolute_error",
+    "bias",
+    "baseline_improvement",
+    "brier",
+    "log_loss"
+  ],
+  "decision_states": [
+    "STRUCTURAL_BLOCKED",
+    "CENSUS_READY_AUDIT_V3_NOT_ELIGIBLE",
+    "CENSUS_READY_AUDIT_V3_ELIGIBLE"
+  ],
+  "non_activation": {
+    "ready_for_expected_minutes_accuracy_audit_v3_execution": false,
+    "ready_for_injury_feature_walk_forward_holdout": false,
+    "ready_for_model_training": false,
+    "ready_for_probability_adjustment": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  }
+}

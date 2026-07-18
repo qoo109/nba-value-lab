@@ -1,0 +1,261 @@
+{
+  "schema_version": "injury-feature-walk-forward-holdout-policy-v1",
+  "roadmap_parent": "step-4-injury-feature-walk-forward-holdout",
+  "predeclaration": {
+    "policy_committed_before_holdout_implementation": true,
+    "policy_committed_before_candidate_fit": true,
+    "policy_committed_before_holdout_metrics": true,
+    "post_result_threshold_edits_allowed": false,
+    "outcome_based_feature_selection_allowed": false,
+    "hyperparameter_search_allowed": false
+  },
+  "upstream_evidence": {
+    "base_main_commit": "28866b168fc6194bea05353b01b120e649adcfd5",
+    "expected_minutes_audit_v3": {
+      "source_pr": 54,
+      "source_merge_commit": "28866b168fc6194bea05353b01b120e649adcfd5",
+      "official_result_run": 29634963247,
+      "official_artifact_name": "expected-minutes-accuracy-audit-v3",
+      "official_artifact_id": 8426868417,
+      "official_artifact_digest": "sha256:d550849409d00555d16c83fbfd85eacec65678d50ca651511e1e9d4394a4d66a",
+      "latest_head_validation_run": 29635392094,
+      "latest_head_artifact_id": 8427003917,
+      "latest_head_artifact_digest": "sha256:ea3f6fb2c993f567930a78c74e528c35f4fe543d01a9586934e5d42c695dc8f9",
+      "formal_state": "ACCURACY_PASS"
+    },
+    "injury_panel": {
+      "source_pr": 51,
+      "official_result_run": 29629748942,
+      "official_artifact_name": "injury-backfill-wave3-features",
+      "official_artifact_id": 8425081360,
+      "official_artifact_digest": "sha256:5f600148ce07f2388173b2151ba31e5ec822a31e1774377e15fda40a0d393d6e",
+      "latest_validation_run": 29629934161,
+      "latest_validation_artifact_id": 8425152001,
+      "latest_validation_artifact_digest": "sha256:25324f64ef723bb2d10ad5c5e717d22b318763999a8dea6165e9b92b5ba397f2"
+    },
+    "baseline_oof": {
+      "source_run": 29551715399,
+      "artifact_name": "model-walk-forward-v2",
+      "artifact_id": 8396002523,
+      "artifact_digest": "sha256:6063adac9851b47d339a93e35935115008b736a16925548d36a8c54a0353b41b",
+      "model_version": "walk-forward-v2"
+    }
+  },
+  "frozen_population": {
+    "combined_selected_independent_games": 293,
+    "game_date_start": "2023-10-30",
+    "game_date_end": "2024-04-12",
+    "season_label": "2023-24",
+    "wave_selected_games": {
+      "wave1": 91,
+      "wave2": 85,
+      "wave3": 117
+    },
+    "selection_policy": "latest_feature_ready_at_or_before_t60",
+    "minimum_minutes_before_tip": 60,
+    "fallback_allowed": false,
+    "deduplication_key": "historical_game_id",
+    "baseline_oof_join_required": 293,
+    "game_identity_mismatches_allowed": 0,
+    "matchup_snapshot_complete_required": true,
+    "matchup_feature_available_required": true
+  },
+  "chronological_folds": [
+    {
+      "fold_id": "development_forward_1",
+      "train_start": "2023-10-30",
+      "train_end": "2024-01-31",
+      "expected_train_games": 124,
+      "test_start": "2024-02-01",
+      "test_end": "2024-02-29",
+      "expected_test_games": 65,
+      "role": "development_forward_check"
+    },
+    {
+      "fold_id": "final_untouched_holdout",
+      "train_start": "2023-10-30",
+      "train_end": "2024-02-29",
+      "expected_train_games": 189,
+      "test_start": "2024-03-01",
+      "test_end": "2024-04-12",
+      "expected_test_games": 104,
+      "role": "primary_final_holdout"
+    }
+  ],
+  "combined_forward_test_games": 169,
+  "baseline": {
+    "probability_field": "predicted_home_win_probability",
+    "margin_field": "predicted_home_margin",
+    "source": "frozen 2023-24 out-of-fold predictions from walk-forward-v2",
+    "raw_probability_selected_by_prior_calibration_gate": true,
+    "recalibration_inside_holdout": false,
+    "market_odds_used": false
+  },
+  "primary_candidate": {
+    "name": "bounded_injury_logit_offset_v1",
+    "formula": "logit(p_candidate) = logit(p_baseline) + beta_1*z(weighted_unavailable_minutes_diff) + beta_2*z(weighted_positive_impact_diff)",
+    "features": [
+      "weighted_unavailable_minutes_home_minus_away",
+      "weighted_absence_impact_positive_home_minus_away"
+    ],
+    "expected_direction": "positive feature value means more home-team burden; every fitted coefficient must be non-positive",
+    "preprocessing": {
+      "standardization": "training-fold mean and population standard deviation only",
+      "zero_variance_feature": "STRUCTURAL_BLOCKED",
+      "test_fold_statistics_used": false,
+      "missing_feature_imputation": false,
+      "probability_clip": [0.000001, 0.999999]
+    },
+    "fit": {
+      "objective": "mean binary log loss plus 0.5 * l2_alpha * sum(beta^2)",
+      "l2_alpha": 0.05,
+      "intercept": false,
+      "baseline_logit_coefficient": 1.0,
+      "coefficient_bounds": [-0.5, 0.0],
+      "optimizer": "L-BFGS-B",
+      "initial_coefficients": [0.0, 0.0],
+      "maximum_iterations": 2000,
+      "tolerance": 1e-09,
+      "random_seed": 20260718,
+      "hyperparameter_tuning": false
+    }
+  },
+  "secondary_margin_candidate": {
+    "name": "bounded_injury_margin_residual_v1",
+    "promotion_gate": false,
+    "formula": "margin_candidate = frozen_baseline_margin + gamma_1*z(weighted_unavailable_minutes_diff) + gamma_2*z(weighted_positive_impact_diff)",
+    "features": [
+      "weighted_unavailable_minutes_home_minus_away",
+      "weighted_absence_impact_positive_home_minus_away"
+    ],
+    "objective": "mean squared error plus 0.5 * l2_alpha * sum(gamma^2)",
+    "l2_alpha": 0.05,
+    "intercept": false,
+    "coefficient_bounds": [-6.0, 0.0],
+    "optimizer": "L-BFGS-B"
+  },
+  "structural_gates": {
+    "required_population_games": 293,
+    "required_baseline_join_games": 293,
+    "required_unique_game_ids": 293,
+    "required_combined_forward_test_games": 169,
+    "required_final_holdout_games": 104,
+    "duplicate_injury_games": 0,
+    "duplicate_baseline_games": 0,
+    "game_identity_mismatches": 0,
+    "fold_overlap_games": 0,
+    "test_rows_used_for_training": 0,
+    "feature_rows_with_missing_values": 0,
+    "snapshot_rows_before_t60_violations": 0,
+    "strict_point_in_time_violations": 0,
+    "target_game_labels_used_as_features": false,
+    "market_odds_used": false,
+    "random_shuffle_used": false,
+    "fuzzy_identity_used": false,
+    "fuzzy_schedule_matching_used": false
+  },
+  "primary_metrics": [
+    "log_loss",
+    "brier_score"
+  ],
+  "secondary_metrics": [
+    "roc_auc",
+    "accuracy",
+    "calibration_intercept",
+    "calibration_slope",
+    "expected_calibration_error_10_equal_frequency_bins",
+    "average_absolute_probability_shift",
+    "maximum_absolute_probability_shift",
+    "margin_mae",
+    "margin_rmse"
+  ],
+  "paired_bootstrap": {
+    "unit": "historical_game_id",
+    "replicates": 10000,
+    "seed": 20260718,
+    "reported_intervals": [0.8, 0.95],
+    "metrics": [
+      "baseline_minus_candidate_log_loss",
+      "baseline_minus_candidate_brier_score"
+    ]
+  },
+  "monitored_subgroups": {
+    "minimum_rows_for_safety_gate": 30,
+    "dimensions": [
+      "source_wave",
+      "test_fold",
+      "minimum_expected_minutes_coverage_band",
+      "minutes_before_tip_band",
+      "training_fold_absolute_weighted_unavailable_minutes_quartile"
+    ],
+    "coverage_bands": [
+      "0.75_to_below_0.90",
+      "0.90_to_below_1.00",
+      "1.00"
+    ],
+    "minutes_before_tip_bands": [
+      "60_to_below_120",
+      "120_to_below_240",
+      "240_plus"
+    ],
+    "quartile_thresholds_learned_from_training_only": true
+  },
+  "promotion_gates": {
+    "minimum_combined_forward_log_loss_gain": 0.002,
+    "minimum_final_holdout_log_loss_gain": 0.0,
+    "minimum_development_fold_log_loss_gain": -0.005,
+    "minimum_combined_forward_brier_gain": 0.0005,
+    "minimum_final_holdout_brier_gain": -0.001,
+    "minimum_combined_bootstrap_probability_log_loss_gain_positive": 0.7,
+    "minimum_final_holdout_bootstrap_probability_log_loss_gain_positive": 0.55,
+    "maximum_average_absolute_probability_shift": 0.05,
+    "maximum_single_game_absolute_probability_shift": 0.2,
+    "maximum_monitored_subgroup_log_loss_degradation": 0.03,
+    "required_primary_candidate_coefficients_non_positive": true
+  },
+  "decision_states": [
+    "STRUCTURAL_BLOCKED",
+    "VALID_NEGATIVE_RESULT",
+    "HOLDOUT_RESEARCH_PASS"
+  ],
+  "decision_rules": {
+    "STRUCTURAL_BLOCKED": "one or more frozen-population, point-in-time, fold, join, missingness or implementation-integrity gates fail; performance values are descriptive only",
+    "VALID_NEGATIVE_RESULT": "all structural gates pass but one or more promotion gates fail; reject the injury candidate and preserve the frozen baseline-only path",
+    "HOLDOUT_RESEARCH_PASS": "all structural and promotion gates pass; the injury candidate becomes research-ready for later market comparison but is not activated"
+  },
+  "post_decision_permissions": {
+    "STRUCTURAL_BLOCKED": {
+      "ready_for_timestamped_odds_predeclaration": false,
+      "injury_candidate_research_ready": false
+    },
+    "VALID_NEGATIVE_RESULT": {
+      "ready_for_timestamped_odds_predeclaration": true,
+      "injury_candidate_research_ready": false,
+      "market_research_model_path": "frozen baseline only"
+    },
+    "HOLDOUT_RESEARCH_PASS": {
+      "ready_for_timestamped_odds_predeclaration": true,
+      "injury_candidate_research_ready": true,
+      "market_research_model_path": "baseline and injury candidate compared separately"
+    },
+    "ready_for_timestamped_odds_execution": false,
+    "ready_for_production_model_training": false,
+    "ready_for_probability_adjustment": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "guardrails": {
+    "closing_market_used_for_feature_selection": false,
+    "odds_used_for_training": false,
+    "same_game_multiple_snapshots_are_independent_samples": false,
+    "target_game_participation_used_as_prediction_feature": false,
+    "target_game_minutes_used_as_prediction_feature": false,
+    "missing_injury_values_imputed_as_zero": false,
+    "post_result_candidate_changes_allowed": false,
+    "secondary_metrics_can_override_primary_failure": false,
+    "subgroup_results_can_override_primary_failure": false,
+    "holdout_pass_directly_activates_model": false,
+    "holdout_pass_directly_enables_betting": false,
+    "valid_negative_result_must_be_retained": true
+  }
+}

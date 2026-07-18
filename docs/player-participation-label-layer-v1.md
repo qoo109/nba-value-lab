@@ -2,7 +2,7 @@
 
 ## Roadmap position
 
-This layer is not a new project direction. It is a repair subtask inside the 2026-07-17 roadmap step:
+This layer does not replace or reorder the 2026-07-17 roadmap. It is a repair subtask inside:
 
 ```text
 Expected Minutes Accuracy Audit
@@ -21,7 +21,7 @@ Official injury snapshot backfill
 → Betting Decision Layer
 ```
 
-Wave 1＋Wave 2 already produced 176 independent frozen T-60 games. Accuracy Audit v1 executed, but target-game participation-label coverage was incomplete. This layer fills that data gap before a separately predeclared Accuracy Audit v2.
+Wave 1＋Wave 2 produced 176 independent frozen T-60 games. Expected Minutes Accuracy Audit v1 executed, but its target-game participation labels were incomplete. Player Participation Label Layer v1 fills that specific evaluation-data gap before a separately predeclared Accuracy Audit v2.
 
 ## Source
 
@@ -37,7 +37,7 @@ URL contract:
 https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{official_game_id}.json
 ```
 
-The official final-game payload provides:
+The final-game payload supplies:
 
 - `personId`;
 - team tricode;
@@ -47,7 +47,9 @@ The official final-game payload provides:
 - `notPlayingReason` code;
 - actual minutes.
 
-Player names and free-text `notPlayingDescription` values are read only as part of the source payload and are never retained in repository outputs or uploaded Artifacts.
+NBA.com rejected the original research user agent from GitHub Actions with HTTP 403. The verified runner therefore uses browser-compatible `User-Agent`, `Origin`, `Referer`, `Accept`, and fetch-context headers with bounded parallelism. The source, label, and promotion contracts were not changed to solve the HTTP access issue.
+
+Player names and free-text `notPlayingDescription` values are never retained in repository outputs or uploaded Artifacts.
 
 ## Frozen label contract
 
@@ -91,7 +93,7 @@ source fetch failure ≠ DNP
 UNKNOWN ≠ zero minutes
 ```
 
-No missing or ambiguous state is silently converted to a successful zero-minute label.
+No missing or ambiguous state is converted into a successful zero-minute label.
 
 ## Source validation
 
@@ -100,8 +102,8 @@ Every selected game must pass:
 - historical game ID → 10-digit official NBA game ID normalization;
 - official response game ID equality;
 - final game status `3`;
-- Gold-selected game date agreement;
-- home and away team tricode agreement;
+- selected game-date agreement;
+- exact home and away team tricode agreement;
 - unique `(historical_game_id, player_id)` rows;
 - valid numeric player IDs;
 - source URL, retrieval timestamp, byte count, and SHA-256 provenance.
@@ -110,7 +112,7 @@ Raw official JSON is not retained.
 
 ## Frozen structural gates
 
-The gates are committed before the 176-game live result:
+The following gates were committed before the official 176-game live result:
 
 ```text
 combined selected games: exactly 176
@@ -125,44 +127,133 @@ duplicate audit rows: 0
 team mismatches: 0
 ```
 
-The gates are not relaxed after observing the live result.
+The gates were not relaxed after observing the result.
 
-## Workflow
+## Official result
+
+Verified workflow run:
 
 ```text
-Validate player participation label layer v1
+29626746364
 ```
 
-The workflow:
+Latest successful Artifact:
 
-1. downloads audited five-season Historical Gold;
-2. downloads the verified combined 176-game frozen T-60 panel;
-3. rebuilds the fixed Wave 1 and Wave 2 official injury sources;
-4. validates the frozen source success／failure patterns;
-5. rebuilds deterministic player identity using the existing research archive;
-6. downloads NBA Official LiveData final-game boxscores for all 176 games;
-7. produces temporary deidentified participation labels;
-8. joins labels only to the exact frozen selected snapshots;
-9. audits source, identity, label, unknown, duplicate, and team coverage;
-10. deletes player-level labels, identities, snapshots, boxscores, and raw source material;
-11. uploads only aggregate reports, subgroup summaries, and game-level provenance.
+```text
+player-participation-label-layer-v1-browser
+artifact id: 8424167164
+digest: sha256:5eff2c563eb1cb769a318ad4509d15635002e8ffb5426fe56dee4df5647b01ea
+```
 
-## Decision boundary
+### Official source coverage
 
-Passing this layer means only:
+```text
+requested selected games: 176
+successful official games: 176
+failed official games: 0
+official source coverage: 100%
+official player rows: 6,198
+unique official player IDs: 585
+```
+
+All-roster official classifications:
+
+```text
+PLAYED: 3,718
+EXPLICIT_DNP: 30
+INACTIVE_OR_NOT_DRESSED: 1,707
+UNKNOWN: 743
+```
+
+The all-roster UNKNOWN count is not the frozen audit denominator. The promotion gate applies only to matched players listed in the exact selected injury snapshots.
+
+### Frozen selected-snapshot join
+
+```text
+combined selected games: 176
+selected player snapshot rows: 1,840
+identity matched rows: 1,834
+identity match rate: 99.6739%
+official participation joins: 1,832 / 1,834
+participation join rate: 99.8909%
+source-missing games: 0
+complete team-game groups: 345
+```
+
+Selected matched-player labels:
+
+```text
+PLAYED: 314
+EXPLICIT_DNP: 28
+INACTIVE_OR_NOT_DRESSED: 1,450
+UNKNOWN: 42
+UNKNOWN rate: 2.2901%
+```
+
+All frozen structural gates passed:
+
+- exact 176-game population;
+- 100% official game-source coverage;
+- identity match rate above 95%;
+- participation-label join rate above 95%;
+- UNKNOWN rate below 5%;
+- zero source-missing games;
+- zero selected-game, official game-player, and audit-row duplicates;
+- zero team mismatches;
+- zero invalid minutes／played label combinations;
+- no selected game without participation rows.
+
+## Privacy boundary
+
+The live workflow temporarily rebuilds:
+
+- Wave 1 and Wave 2 official injury player rows;
+- deterministic identity maps;
+- identity-reference player boxscores;
+- official player participation rows;
+- deidentified selected-snapshot participation audit rows.
+
+Before Artifact upload it deletes:
+
+- player names and injury reasons;
+- injury player rows;
+- identity maps;
+- identity-reference boxscores;
+- official player-level participation rows;
+- selected player-level audit rows;
+- raw PDFs and raw official JSON.
+
+The retained Artifact contains aggregate reports, subgroup counts, and game-level source provenance only.
+
+## Decision
 
 ```text
 ready_for_expected_minutes_accuracy_audit_v2_inputs = true
+ready_for_expected_minutes_accuracy_audit_v2 = false
+ready_for_injury_feature_walk_forward_holdout_design = false
+ready_for_injury_feature_walk_forward_holdout = false
+ready_for_model_training = false
+ready_for_probability_adjustment = false
+ready_for_betting_edge_claim = false
 ```
 
-It does not mean:
+Passing this layer means only that the target-game participation input gap found by Accuracy Audit v1 has been repaired for the frozen 176-game population.
+
+It does not mean that Expected Minutes Accuracy Audit v2 has passed. It does not unlock Injury Feature Walk-forward Holdout.
+
+## Next task
+
+The next task remains inside step 3 of the 2026-07-17 roadmap:
 
 ```text
-Expected Minutes Accuracy Audit v2 passed
-Injury Feature Walk-forward Holdout unlocked
-model training unlocked
-probability adjustment unlocked
-betting edge established
+Predeclare Expected Minutes Accuracy Audit v2
+→ rebuild the same frozen 176-game evaluation population
+→ use the official participation labels as target-game evaluation labels only
+→ rerun structural and accuracy gates
 ```
 
-After this layer passes, the next task is to predeclare Accuracy Audit v2 and rerun the Expected Minutes evaluation using the new official participation labels. Only an Accuracy Audit pass can return the project to the next 2026-07-17 roadmap stage: Injury Feature Walk-forward Holdout.
+Only an Accuracy Audit v2 pass may advance the project to the next canonical roadmap step:
+
+```text
+Injury Feature Walk-forward Holdout
+```

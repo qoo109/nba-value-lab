@@ -1,0 +1,77 @@
+name: Validate Injury Feature holdout v1 policy
+
+on:
+  pull_request:
+    paths:
+      - "data/injury-feature-walk-forward-holdout-v1.json"
+      - "docs/injury-feature-walk-forward-holdout-v1.md"
+      - "scripts/validate_injury_feature_holdout_v1_policy.py"
+      - ".github/workflows/validate-injury-feature-holdout-v1-policy.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile policy validator
+        run: |
+          python -m py_compile scripts/validate_injury_feature_holdout_v1_policy.py
+
+      - name: Run deterministic policy self-tests
+        run: |
+          python scripts/validate_injury_feature_holdout_v1_policy.py \
+            --policy data/injury-feature-walk-forward-holdout-v1.json \
+            --self-test
+
+      - name: Validate frozen predeclaration
+        run: |
+          rm -rf /tmp/nbavl-injury-holdout-policy-v1
+          mkdir -p /tmp/nbavl-injury-holdout-policy-v1
+          python scripts/validate_injury_feature_holdout_v1_policy.py \
+            --policy data/injury-feature-walk-forward-holdout-v1.json \
+            --output /tmp/nbavl-injury-holdout-policy-v1/injury-feature-holdout-v1-policy-validation.json
+
+      - name: Enforce policy-only and non-activation boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('/tmp/nbavl-injury-holdout-policy-v1/injury-feature-holdout-v1-policy-validation.json')
+          report = json.loads(path.read_text())
+          quality = report['quality']
+          decision = report['decision']
+
+          assert quality['failed_checks'] == [], report
+          assert quality['holdout_metrics_calculated'] is False, report
+          assert quality['candidate_fit_performed'] is False, report
+          assert quality['game_outcomes_read'] is False, report
+          assert quality['market_odds_read'] is False, report
+
+          assert decision['ready_for_injury_feature_holdout_v1_implementation'] is True, report
+          assert decision['ready_for_injury_feature_holdout_v1_execution'] is False, report
+          assert decision['ready_for_timestamped_odds_execution'] is False, report
+          assert decision['ready_for_production_model_training'] is False, report
+          assert decision['ready_for_probability_adjustment'] is False, report
+          assert decision['ready_for_betting_edge_claim'] is False, report
+          assert decision['formal_stake'] == 0, report
+          PY
+
+      - name: Upload policy validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: injury-feature-holdout-v1-policy-validation
+          path: /tmp/nbavl-injury-holdout-policy-v1/injury-feature-holdout-v1-policy-validation.json
+          retention-days: 14
+          if-no-files-found: error

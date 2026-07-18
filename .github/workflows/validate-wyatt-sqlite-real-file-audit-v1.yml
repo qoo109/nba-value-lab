@@ -1,0 +1,93 @@
+name: Validate Wyatt SQLite real file audit v1
+
+on:
+  pull_request:
+    paths:
+      - "data/wyatt-sqlite-real-schema-census-v1.json"
+      - "data/wyatt-sqlite-real-coverage-v1.json"
+      - "data/wyatt-sqlite-real-privacy-safe-sample-v1.json"
+      - "docs/wyatt-sqlite-real-file-audit-v1.md"
+      - ".github/workflows/validate-wyatt-sqlite-real-file-audit-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  aggregate-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate aggregate reports
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          schema = json.loads(Path("data/wyatt-sqlite-real-schema-census-v1.json").read_text())
+          coverage = json.loads(Path("data/wyatt-sqlite-real-coverage-v1.json").read_text())
+          sample = json.loads(Path("data/wyatt-sqlite-real-privacy-safe-sample-v1.json").read_text())
+
+          assert schema["formal_state"] == "STRUCTURAL_BLOCKED"
+          assert coverage["formal_outcome"] == "STRUCTURAL_BLOCKED"
+          assert schema["database"]["integrity_check"] == ["ok"]
+          assert schema["database"]["table_count"] == 16
+          assert schema["database"]["total_table_rows"] == 14060690
+          assert schema["metadata_comparison"]["uploaded_metadata_claimed_table_count"] == 235
+          assert schema["metadata_comparison"]["actual_table_count"] == 16
+          assert schema["metadata_comparison"]["table_count_difference"] == 219
+          assert schema["metadata_comparison"]["metadata_claim_matches_file"] is False
+          assert schema["metadata_comparison"]["actual_game_date_max"] == "2023-06-12 00:00:00"
+          assert schema["focused_metrics"]["game"]["pilot_2023_24_distinct_games"] == 0
+          assert schema["focused_metrics"]["game"]["duplicate_game_id_groups"] == 56
+          assert schema["focused_metrics"]["play_by_play"]["rows"] == 13592899
+          assert schema["focused_metrics"]["play_by_play"]["duplicate_game_event_groups"] == 7360
+          assert schema["role_candidates"]["player_boxscore"] == []
+          assert coverage["source_pilot_games"] == 0
+          assert coverage["cross_source_join_executed"] is False
+          assert coverage["secondary_source_qualified"] is False
+          assert sample["table_count"] == 16
+          assert sample["pilot_2023_24_games"] == 0
+          assert sample["raw_rows_emitted"] == 0
+          assert schema["raw_rows_emitted"] == 0
+          assert schema["raw_database_emitted"] is False
+          assert schema["boundaries"]["input_modified"] is False
+          assert schema["boundaries"]["existing_silver_replacement"] is False
+          assert schema["boundaries"]["existing_gold_replacement"] is False
+          assert schema["boundaries"]["formal_stake"] == 0
+
+          report = {
+              "report_schema_version": "wyatt-sqlite-real-file-audit-validation-v1",
+              "formal_state": "STRUCTURAL_BLOCKED",
+              "checks_passed": 27,
+              "checks_failed": 0,
+              "table_count": 16,
+              "claimed_table_count": 235,
+              "latest_game_date": "2023-06-12 00:00:00",
+              "pilot_2023_24_games": 0,
+              "secondary_source_qualified": False,
+              "raw_rows_in_artifact": 0,
+              "formal_stake": 0,
+          }
+          Path("out").mkdir(exist_ok=True)
+          Path("out/wyatt-sqlite-real-file-audit-validation-v1.json").write_text(json.dumps(report, indent=2) + "\n")
+          PY
+
+      - name: Upload aggregate-only audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wyatt-sqlite-real-file-audit-v1
+          path: |
+            data/wyatt-sqlite-real-schema-census-v1.json
+            data/wyatt-sqlite-real-coverage-v1.json
+            data/wyatt-sqlite-real-privacy-safe-sample-v1.json
+            out/wyatt-sqlite-real-file-audit-validation-v1.json
+          retention-days: 14
+          if-no-files-found: error

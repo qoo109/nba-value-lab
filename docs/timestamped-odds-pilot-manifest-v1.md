@@ -2,18 +2,41 @@
 
 更新日期：2026-07-18  
 Roadmap：Step 5  
-狀態：**Official schedule / no-price manifest validation**
+狀態：**Official season schedule / no-price manifest validation**
 
 ## Purpose
 
 在不呼叫付費 odds endpoint 的前提下，為 PR #57 凍結的 30 場 qualification sample 建立：
 
 1. Historical Gold 驗證的 exact game identity；
-2. NBA Official LiveData 提供的 exact scheduled tip-off；
+2. NBA Official season schedule 提供的 exact UTC tip-off；
 3. 每場 6 個 frozen game/snapshot slots；
 4. 依 `requested_at_utc` 去重後的 exact request／quota plan。
 
-Historical Gold 正式表只有 `game_date`，不能猜測固定開賽時間。NBA Official LiveData 只用於 schedule metadata；球員、比分與 raw JSON 不留存。
+Historical Gold 正式表只有 `game_date`，不能猜測固定開賽時間或從 PBP 第一事件反推。
+
+## Recorded source correction
+
+最初嘗試使用單場 NBA Official LiveData Boxscore：
+
+```text
+workflow run: 29638960721
+Gold matches: 30 / 30
+single-game official requests: 30
+HTTP 403: 30 / 30
+paid odds-provider calls: 0
+```
+
+此結果只證明 GitHub runner 的單場 CDN 路徑不可用；沒有繞過 403、沒有替換比賽、沒有降低 Gate。
+
+正式 schedule metadata 路徑改為同樣屬 NBA 官方網域的低頻 season schedule files：
+
+```text
+https://data.nba.com/data/10s/v2015/json/mobile_teams/
+nba/{season_start}/league/00_full_schedule.json
+```
+
+每個 frozen season 只請求一份檔案，共 3 份。這是 schedule metadata source correction，不是 odds source、sample 或 snapshot policy 的事後替換。
 
 ## Frozen upstream controls
 
@@ -30,7 +53,7 @@ market path: frozen baseline only
 formal stake: 0
 ```
 
-本層不修改 source、sample、market、region、snapshots、quota cap 或 bookmaker gates。
+本層不修改 odds source、sample、market、region、snapshots、quota cap 或 bookmaker gates。
 
 ## Historical Gold identity
 
@@ -45,41 +68,35 @@ away_team_abbr
 
 30 場必須全部唯一存在，且日期與主客隊完全符合 frozen policy。Missing 或 mismatch 不得以其他比賽替換。
 
-## Official schedule metadata
+## NBA Official season schedule fields
 
-來源：
-
-```text
-https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{official_game_id}.json
-```
-
-只保留：
+每份 season schedule 只使用：
 
 ```text
-gameId
-gameCode
-gameTimeUTC
-gameTimeLocal
-gameEt
-homeTeam.teamTricode
-awayTeam.teamTricode
-arena.arenaTimezone
-source URL / retrieved_at / bytes / SHA-256
+gid      official game ID
+gdte     Eastern game date
+gdtutc   UTC date
+utctm    UTC time
+etm      Eastern display time
+htm      home-local display time
+h.ta     home team abbreviation
+v.ta     away team abbreviation
 ```
 
 每場必須通過：
 
 ```text
-official game ID = zero-padded Historical Gold game ID
-gameStatus = final
-gameCode date = frozen game_date
-home / away tricode = frozen teams
-gameEt date = frozen game_date
-gameTimeUTC and gameEt = same instant
-optional gameTimeLocal / gameTimeHome / gameTimeAway = same instant
+normalized gid = zero-padded Historical Gold game ID
+gid candidate count = exactly 1
+gdte = frozen game_date
+h.ta = frozen home team
+v.ta = frozen away team
+gdtutc = valid ISO date
+utctm = valid UTC clock time
+scheduled_tipoff_utc = gdtutc + utctm + Z
 ```
 
-`gameTimeUTC` 成為 `scheduled_tipoff_utc`。不得從 PBP 第一事件、比分或人工常識反推。
+不使用 nearest date、fuzzy schedule matching 或人工覆寫。
 
 ## Frozen outputs
 
@@ -88,6 +105,8 @@ optional gameTimeLocal / gameTimeHome / gameTimeAway = same instant
 ```text
 timestamped-odds-pilot-exact-schedule-v1.csv
 ```
+
+每列保存 Gold identity、official game ID、scheduled UTC、官方 season source URL、retrieved-at、bytes 與 SHA-256。
 
 ### Game-slot manifest — 180 rows
 
@@ -112,7 +131,7 @@ Closing = scheduled_tipoff_utc - 1 second
 timestamped-odds-pilot-unique-request-plan-v1.csv
 ```
 
-Historical endpoint 以 absolute requested timestamp 查詢整個 NBA sport snapshot，因此相同 `requested_at_utc` 只規劃一次未來請求：
+未來 Historical Odds endpoint 以 absolute requested timestamp 查詢 NBA sport snapshot，因此相同 `requested_at_utc` 只規劃一次請求：
 
 ```text
 exact requests = unique requested_at_utc
@@ -127,8 +146,11 @@ Game slots 仍保持 180；去重只降低未來 request count，不改變每場
 Historical Gold matches = 30 / 30
 Gold duplicates = 0
 Gold missing / identity mismatch = 0
-official schedule success = 30 / 30
-official source SHA-256 = 30 unique
+official season source requests = 3
+official season source success = 3 / 3
+official source SHA-256 = 3 unique
+official schedule games = 30 / 30
+official game candidate / identity / UTC errors = 0
 schedule games each season = 10 / 10 / 10
 game slots = 180
 game slots each season = 60 / 60 / 60
@@ -146,12 +168,12 @@ exact planned quota <= 1,800
 - no-price game-slot manifest；
 - no-price unique request plan；
 - aggregate QA；
-- deidentified source failures。
+- deidentified season-source／game failures。
 
 禁止 Artifact：
 
 ```text
-raw NBA JSON
+raw NBA season JSON
 player rows
 scores
 bookmaker fields

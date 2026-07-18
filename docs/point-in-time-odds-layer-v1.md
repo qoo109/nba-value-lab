@@ -16,6 +16,16 @@ It produces:
 
 The output remains research data. It does not create a betting-edge claim.
 
+## Current execution boundary
+
+The layer and schema already exist, but executable historical odds have not yet been acquired. The frozen acquisition contract is:
+
+```text
+data/real-timestamped-odds-acquisition-policy-v1.json
+```
+
+Until that policy is merged and its separately approved acquisition passes, this document remains an implementation specification only. It does not authorize paid API requests, odds joins, market backtests, CLV, EV, ROI, Drawdown or nonzero stake.
+
 ## Canonical CSV schema
 
 Start from `data/templates/point-in-time-odds-template.csv`.
@@ -24,12 +34,12 @@ Required fields:
 
 | field | rule |
 |---|---|
-| `game_id` | must match `calibrated-predictions.csv` |
+| `game_id` | must match the frozen OOF prediction population |
 | `commence_time_utc` | ISO-8601 with timezone |
-| `observed_at_utc` | ISO-8601 with timezone and strictly before commence time |
+| `observed_at_utc` | source snapshot time, ISO-8601 with timezone and strictly before commence time |
 | `bookmaker` | stable bookmaker name or key |
 | `market_key` | `h2h` or `moneyline` |
-| `snapshot_label` | normally `21:00`, `T-60m`, `T-5m` or `Closing` |
+| `snapshot_label` | acquisition v1 freezes `OpeningGridProxy`, `T-6h`, `T-3h`, `T-1h`, `T-30m` and `Closing` |
 | `home_price_decimal` | decimal odds greater than 1 |
 | `away_price_decimal` | decimal odds greater than 1 |
 
@@ -43,6 +53,9 @@ Recommended provenance fields:
 - `fetched_at_utc`
 - `raw_hash`
 - `adapter_version`
+- provider bookmaker key and title
+- provider bookmaker `last_update`
+- provider outcome source IDs when available
 
 Rows with an unknown game, a team mismatch, a duplicate quote key, or `observed_at_utc >= commence_time_utc` are excluded and reported.
 
@@ -61,69 +74,66 @@ fair_away = q_away / (q_home + q_away)
 
 Version 1 deliberately uses the transparent proportional method. More complex power or Shin methods can be compared later, but they must not replace this baseline silently.
 
+No-vig, edge or performance metrics are forbidden during the acquisition stage. They belong only to a later, separately predeclared odds-join and market-backtest stage.
+
 ## Entry and closing quotes
 
-The entry quote is the latest row with the requested `snapshot_label`, normally `T-60m`.
+The first future executable-entry study is frozen at `T-1h`; other fixed snapshots are retained for movement and sensitivity analysis. No entry rule is active during acquisition.
 
-Closing is:
+Closing is the same-book two-sided quote associated with the frozen `Closing` request and passing the source timestamp and bookmaker last-update freshness gates. It may not be selected after outcomes or ROI are observed.
 
-1. the latest same-book row labeled `Closing`, or
-2. if no explicit label exists, the latest same-book quote after entry and before start.
+Closing prices are used only for later CLV analysis. They are never used to select a bet.
 
-Closing prices are used only for CLV analysis. They are never used to select a bet.
+## Opening proxy
+
+Acquisition v1 does not claim to recover each bookmaker's true first-posted opening line. It uses a frozen request grid and labels the earliest valid two-sided quote:
+
+```text
+OpeningGridProxy
+```
+
+The proxy label must remain visible in every downstream output.
 
 ## Selection rule
 
-The model probability is the calibration decision from v1:
+The only model path allowed for future market research is the calibration decision retained after the injury holdout:
 
 ```text
-raw_logistic_elo
+frozen raw_logistic_elo baseline only
 ```
 
-For the home side:
+The exact injury candidate from Holdout v1 was formally rejected and must not enter this layer.
+
+For the home side in a future market-backtest PR:
 
 ```text
 home_edge = model_home_probability - fair_home_probability
 ```
 
-The selected side is whichever side has positive edge. A research bet requires:
-
-```text
-selected_edge >= minimum_edge
-and
-expected_value > 0
-```
-
-Default minimum edge:
-
-```text
-0.025
-```
-
-All results use one flat unit per bet. No Kelly sizing is used in v1.
+Any threshold, expected-value rule, transaction-cost assumption or bet-selection policy must be frozen in a separate future predeclaration. The earlier example threshold in this implementation is not activated by acquisition.
 
 ## CLV
 
-Same-book closing-line value is reported two ways:
+A future same-book closing-line value may be reported two ways:
 
 ```text
 clv_price = entry_decimal_odds / closing_decimal_odds - 1
 clv_probability = closing_fair_probability - entry_fair_probability
 ```
 
-Positive values mean the entry price beat the same-book close.
+Positive values mean the entry price beat the same-book close. No CLV is calculated in the acquisition PR.
 
-## Outputs
+## Outputs of the later market layer
 
 - `normalized-odds.csv`
 - `market-edge-records.csv`
 - `point-in-time-odds-report.json`
 
-The report includes model and market Log Loss/Brier comparisons, threshold sensitivity, ROI, maximum drawdown, closing coverage and source QA.
+These outputs are not public by default. Provider usage rights and restricted-storage boundaries control whether quote-level data may leave private storage.
 
 ## Research readiness gate
 
-`ready_for_research_market_backtest` requires:
+The generic layer requires:
 
 - a non-synthetic source
 - zero point-in-time violations
@@ -131,46 +141,69 @@ The report includes model and market Log Loss/Brier comparisons, threshold sensi
 - at least 500 matched games
 - at least 3 seasons
 - at least 80% same-book closing coverage
-- one primary bookmaker selected by explicit request or coverage, never by ROI
+- one primary bookmaker selected by coverage, never by ROI
 
-Even after the gate passes:
+The frozen Real Timestamped Odds Acquisition v1 contract is stricter for the planned full backfill:
+
+```text
+matched independent games >= 3,000
+matched games in every season >= 900
+T-1h two-sided coverage >= 80%
+same-book T-1h / Closing paired coverage >= 80%
+```
+
+The stricter acquisition contract governs this project milestone.
+
+Even after acquisition passes:
 
 ```text
 ready_for_betting_edge_claim = false
 ```
 
-A separate untouched holdout, source-rights review, transaction-cost assumptions, and sensitivity analysis are still required.
+A separate odds-join and market-backtest predeclaration, an untouched evaluation, usage-rights review, transaction-cost assumptions and sensitivity analysis are still required.
 
 ## Local usage
+
+This command is retained only for a future restricted-input market study:
 
 ```bash
 python scripts/build_point_in_time_odds.py \
   --predictions /path/calibrated-predictions.csv \
-  --odds-csv /path/point-in-time-odds.csv \
-  --output-dir /tmp/nbavl-point-in-time-odds \
-  --entry-snapshot T-60m \
+  --odds-csv /restricted/path/point-in-time-odds.csv \
+  --output-dir /restricted/path/nbavl-point-in-time-odds \
+  --entry-snapshot T-1h \
   --minimum-edge 0.025
 ```
 
-Optional single-book filter:
+It must not be run as part of the acquisition predeclaration or source-health pilot.
 
-```bash
---bookmaker Pinnacle
-```
+## GitHub Actions and storage
 
-## GitHub Actions
+The public repository may contain:
 
-`Validate point-in-time Odds Layer v1` can read:
+- adapter and validation code
+- credential-free source manifests
+- schema and policy files
+- hashes, byte counts and request/quota totals
+- aggregate source-health QA
+- deidentified failure diagnostics
 
-- `probability-calibration-v1` from a prior workflow run, and
-- an odds CSV from another artifact run or a repository path.
-
-The full odds archive should not be committed publicly unless its source rights explicitly allow redistribution.
+It must not contain API credentials or raw/normalized bookmaker quote rows. The Odds API data must stay in restricted user-controlled storage; temporary workflow copies must be deleted. Public Artifacts remain aggregate-only.
 
 ## Source strategy
 
-The current active source remains `user_odds`: manual, same-book, two-sided timestamped snapshots.
+The selected planned source is `the_odds_api_historical_v4`, governed by `data/real-timestamped-odds-acquisition-policy-v1.json` and the existing `data/historical-odds-source-registry.json`.
 
-An optional commercial adapter may use The Odds API historical endpoint. Its official documentation states that featured-market history begins in June 2020, snapshots are 10 minutes until September 2022 and 5 minutes afterward, and historical access requires a paid plan. API keys must be stored as GitHub Secrets and raw responses must stay in temporary workflow storage or restricted artifacts.
+Historical access is commercial and remains blocked until all of the following exist:
 
-Unknown websites must not be scraped merely to fill coverage.
+```text
+merged predeclaration
+paid historical access
+THE_ODDS_API_KEY configured privately
+restricted raw/normalized storage
+explicit 90-game pilot budget approval
+```
+
+A successful 90-game source-health pilot may only unlock a separately approved full backfill. The full 3,688-game acquisition is not automatically authorized.
+
+`user_odds` remains a manual schema-compatible reference path, not an automatic replacement source. Unknown websites, manual-reference sites and sources that prohibit automated extraction must not be scraped to fill coverage.

@@ -1,0 +1,233 @@
+name: Build Timestamped Odds exact no-price manifest v1
+
+on:
+  pull_request:
+    paths:
+      - "data/timestamped-odds-acquisition-v1.json"
+      - "scripts/build_timestamped_odds_exact_manifest_v1.py"
+      - "scripts/qualify_timestamped_odds_v1.py"
+      - "scripts/import_official_nba_participation_labels.py"
+      - "docs/timestamped-odds-exact-manifest-v1.md"
+      - ".github/workflows/build-timestamped-odds-exact-manifest-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install shared offline dependency
+        run: python -m pip install --disable-pip-version-check pandas
+
+      - name: Compile exact-manifest modules
+        run: |
+          python -m py_compile scripts/import_official_nba_participation_labels.py
+          python -m py_compile scripts/qualify_timestamped_odds_v1.py
+          python -m py_compile scripts/build_timestamped_odds_exact_manifest_v1.py
+
+      - name: Run deterministic exact-manifest self-tests
+        env:
+          PYTHONPATH: scripts
+        run: |
+          python scripts/build_timestamped_odds_exact_manifest_v1.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --output-dir /tmp/nbavl-exact-manifest-self-test \
+            --self-test
+          test -s /tmp/nbavl-exact-manifest-self-test/timestamped-odds-exact-manifest-v1-self-test.json
+
+      - name: Enforce synthetic non-access boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path(
+              '/tmp/nbavl-exact-manifest-self-test/timestamped-odds-exact-manifest-v1-self-test.json'
+          ).read_text())
+          checks = report['checks']
+          boundary = report['execution_boundary']
+          assert checks['synthetic_schedule_games'] == 30, report
+          assert checks['synthetic_game_slots'] == 180, report
+          assert checks['synthetic_exact_quota'] <= 1800, report
+          assert checks['opening_labels'] == 0, report
+          assert checks['wrong_time_consistency_rejected'] is True, report
+          assert checks['no_player_or_score_fields_retained'] is True, report
+          assert checks['no_paid_odds_access'] is True, report
+          assert boundary == {
+              'official_live_requests': 0,
+              'odds_provider_requests': 0,
+              'odds_api_key_read': False,
+              'real_odds_quotes_downloaded': 0,
+              'market_metrics_calculated': False,
+              'formal_stake': 0,
+          }, boundary
+          PY
+
+  live-official-schedule:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ROOT: /tmp/nbavl-timestamped-odds-exact-manifest-v1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install shared offline dependency
+        run: python -m pip install --disable-pip-version-check pandas
+
+      - name: Fetch only NBA Official LiveData schedule metadata and build manifests
+        env:
+          PYTHONPATH: scripts
+        run: |
+          rm -rf "$ROOT"
+          mkdir -p "$ROOT"
+          python scripts/build_timestamped_odds_exact_manifest_v1.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --output-dir "$ROOT" \
+            --live
+
+      - name: Enforce exact manifest structural gates
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+          report = json.loads((root / 'timestamped-odds-exact-manifest-v1-report.json').read_text())
+          assert report['formal_state'] == 'EXACT_MANIFEST_READY_ACCESS_NOT_PROVIDED', report
+          assert report['source']['provider'] == 'NBA Official LiveData Boxscore', report
+          assert report['source']['official_source_requests'] == 30, report
+          assert report['source']['official_source_successes'] == 30, report
+          assert report['source']['official_source_failures'] == 0, report
+          assert report['source']['source_hashes'] == 30, report
+          assert report['source']['raw_source_files_retained'] == 0, report
+
+          coverage = report['coverage']
+          assert coverage['frozen_sample_games'] == 30, report
+          assert coverage['schedule_rows'] == 30, report
+          assert sorted(coverage['schedule_games_by_season'].values()) == [10, 10, 10], report
+          assert coverage['game_slot_rows'] == 180, report
+          assert sorted(coverage['game_slots_by_season'].values()) == [60, 60, 60], report
+          assert 1 <= coverage['unique_request_timestamps'] <= 180, report
+          assert coverage['exact_planned_quota_credits'] == coverage['unique_request_timestamps'] * 10, report
+          assert coverage['exact_planned_quota_credits'] <= 1800, report
+          assert coverage['duplicate_request_plan_timestamps'] == 0, report
+
+          quality = report['quality']
+          assert quality['duplicate_schedule_game_ids'] == 0, report
+          assert quality['duplicate_game_tipoff_pairs'] == 0, report
+          assert quality['duplicate_game_slot_keys'] == 0, report
+          assert quality['opening_labels'] == 0, report
+          assert quality['game_date_team_identity_mismatches'] == 0, report
+          assert quality['missing_schedule_games'] == 0, report
+          assert quality['prices_in_manifests'] is False, report
+          assert quality['bookmaker_fields_in_manifests'] is False, report
+          assert quality['player_fields_retained'] == 0, report
+          assert quality['score_fields_retained'] == 0, report
+          assert quality['odds_api_key_read'] is False, report
+          assert quality['paid_odds_endpoint_called'] is False, report
+          assert quality['real_odds_quotes_downloaded'] == 0, report
+          assert quality['market_metrics_calculated'] is False, report
+          assert quality['structural_blockers'] == [], report
+
+          decision = report['decision']
+          assert decision['exact_no_price_manifest_ready'] is True, report
+          assert decision['access_state'] == 'ACCESS_NOT_PROVIDED', report
+          assert decision['ready_for_paid_qualification_execution'] is False, report
+          assert decision['ready_for_production_backfill'] is False, report
+          assert decision['ready_for_market_backtest'] is False, report
+          assert decision['ready_for_clv_ev_roi'] is False, report
+          assert decision['ready_for_betting_edge_claim'] is False, report
+          assert decision['formal_stake'] == 0, report
+
+          expected_headers = {
+              'timestamped-odds-schedule-manifest-v1.csv': {
+                  'historical_game_id', 'official_game_id', 'season', 'game_date',
+                  'away_team_abbr', 'home_team_abbr', 'scheduled_tipoff_utc',
+                  'source_url', 'source_sha256'
+              },
+              'timestamped-odds-game-slot-manifest-v1.csv': {
+                  'historical_game_id', 'scheduled_tipoff_utc', 'snapshot_label',
+                  'requested_at_utc', 'market', 'region'
+              },
+              'timestamped-odds-unique-request-plan-v1.csv': {
+                  'request_plan_id', 'requested_at_utc', 'target_game_count',
+                  'target_slot_count', 'target_game_ids'
+              },
+          }
+          forbidden_columns = {
+              'price', 'home_price', 'away_price', 'bookmaker', 'player_id',
+              'player_name', 'home_score', 'away_score', 'outcome', 'edge',
+              'ev', 'roi', 'clv'
+          }
+          for name, required in expected_headers.items():
+              path = root / name
+              assert path.is_file() and path.stat().st_size > 0, name
+              with path.open(newline='', encoding='utf-8') as handle:
+                  reader = csv.DictReader(handle)
+                  headers = set(reader.fieldnames or [])
+                  rows = list(reader)
+              assert required <= headers, (name, required - headers)
+              assert not (headers & forbidden_columns), (name, headers & forbidden_columns)
+              assert rows, name
+
+          failures = json.loads((root / 'timestamped-odds-schedule-source-failures-v1.json').read_text())
+          assert failures == [], failures
+          assert 'THE_ODDS_API_KEY' not in os.environ, 'Paid odds secret must not be exposed'
+          PY
+
+      - name: Verify no raw JSON or quote rows retained
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+          allowed_json = {
+              'timestamped-odds-exact-manifest-v1-report.json',
+              'timestamped-odds-schedule-source-failures-v1.json',
+          }
+          unexpected_json = sorted(
+              str(path) for path in root.rglob('*.json')
+              if path.name not in allowed_json
+          )
+          assert not unexpected_json, unexpected_json
+          forbidden_names = {
+              'raw-response.json', 'normalized-quotes.csv', 'quote-rows.csv',
+              'players.csv', 'boxscore.json'
+          }
+          found = sorted(
+              str(path) for path in root.rglob('*')
+              if path.is_file() and path.name in forbidden_names
+          )
+          assert not found, found
+          PY
+
+      - name: Upload no-price exact manifest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: timestamped-odds-exact-manifest-v1
+          path: |
+            /tmp/nbavl-timestamped-odds-exact-manifest-v1/timestamped-odds-schedule-manifest-v1.csv
+            /tmp/nbavl-timestamped-odds-exact-manifest-v1/timestamped-odds-game-slot-manifest-v1.csv
+            /tmp/nbavl-timestamped-odds-exact-manifest-v1/timestamped-odds-unique-request-plan-v1.csv
+            /tmp/nbavl-timestamped-odds-exact-manifest-v1/timestamped-odds-schedule-source-failures-v1.json
+            /tmp/nbavl-timestamped-odds-exact-manifest-v1/timestamped-odds-exact-manifest-v1-report.json
+          retention-days: 14
+          if-no-files-found: error

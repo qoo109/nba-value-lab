@@ -1,0 +1,52 @@
+name: Validate no-cost timestamped odds metadata census v1
+
+on:
+  pull_request:
+    paths:
+      - "data/no-cost-timestamped-odds-metadata-census-v1.json"
+      - "docs/no-cost-timestamped-odds-metadata-census-v1.md"
+      - "scripts/validate_no_cost_timestamped_odds_metadata_census_v1.py"
+      - ".github/workflows/validate-no-cost-timestamped-odds-metadata-census-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  metadata-census:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_no_cost_timestamped_odds_metadata_census_v1.py
+      - name: Run deterministic self-test
+        run: python scripts/validate_no_cost_timestamped_odds_metadata_census_v1.py --self-test
+      - name: Validate aggregate census
+        run: |
+          python scripts/validate_no_cost_timestamped_odds_metadata_census_v1.py \
+            --input data/no-cost-timestamped-odds-metadata-census-v1.json \
+            --output out/no-cost-timestamped-odds-metadata-census-v1-report.json
+      - name: Enforce no-access boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("out/no-cost-timestamped-odds-metadata-census-v1-report.json").read_text())
+          assert report["census_state"] == "CENSUS_VALID"
+          assert report["qualified_candidate_count"] == 0
+          assert report["quote_downloads"] == 0
+          assert report["paid_calls"] == 0
+          assert report["api_keys_read"] == 0
+          assert report["market_metrics_calculated"] is False
+          assert report["formal_stake"] == 0
+          PY
+      - name: Upload aggregate census artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-cost-timestamped-odds-metadata-census-v1
+          path: out/no-cost-timestamped-odds-metadata-census-v1-report.json
+          if-no-files-found: error
+          retention-days: 14

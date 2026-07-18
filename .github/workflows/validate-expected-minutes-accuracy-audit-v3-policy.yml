@@ -1,0 +1,63 @@
+name: Validate Expected Minutes Accuracy Audit v3 policy
+
+on:
+  pull_request:
+    paths:
+      - "data/expected-minutes-accuracy-audit-v2.json"
+      - "data/expected-minutes-accuracy-audit-v3.json"
+      - "docs/expected-minutes-accuracy-audit-v3.md"
+      - "scripts/validate_expected_minutes_accuracy_audit_v3_policy.py"
+      - ".github/workflows/validate-expected-minutes-accuracy-audit-v3-policy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-policy-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile policy validator
+        run: python -m py_compile scripts/validate_expected_minutes_accuracy_audit_v3_policy.py
+      - name: Run deterministic validator self-test
+        run: python scripts/validate_expected_minutes_accuracy_audit_v3_policy.py --self-test
+      - name: Validate policy JSON
+        run: |
+          python -m json.tool data/expected-minutes-accuracy-audit-v3.json >/dev/null
+          python scripts/validate_expected_minutes_accuracy_audit_v3_policy.py \
+            --v2-policy data/expected-minutes-accuracy-audit-v2.json \
+            --v3-policy data/expected-minutes-accuracy-audit-v3.json \
+            --output /tmp/expected-minutes-accuracy-audit-v3-policy-validation.json
+      - name: Enforce predeclaration-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(
+              Path('/tmp/expected-minutes-accuracy-audit-v3-policy-validation.json').read_text()
+          )
+          assert report['passed'] is True, report
+          assert report['failed_checks'] == [], report
+          assert report['decision']['ready_for_v3_predeclaration_merge'] is True
+          assert report['decision']['ready_for_v3_accuracy_execution'] is False
+          assert report['decision']['ready_for_injury_holdout'] is False
+          assert report['decision']['ready_for_model_training'] is False
+          assert report['decision']['ready_for_betting_edge_claim'] is False
+          assert report['decision']['formal_stake'] == 0
+          policy = json.loads(Path('data/expected-minutes-accuracy-audit-v3.json').read_text())
+          assert policy['predeclaration']['execution_requires_separate_post_predeclaration_work'] is True
+          assert policy['upstream_census']['accuracy_metrics_calculated_in_census'] is False
+          assert policy['post_decision_permissions']['ready_for_injury_feature_walk_forward_holdout_execution'] is False
+          PY
+      - name: Upload policy validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: expected-minutes-accuracy-audit-v3-policy-validation
+          path: /tmp/expected-minutes-accuracy-audit-v3-policy-validation.json
+          retention-days: 14
+          if-no-files-found: error

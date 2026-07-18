@@ -11,33 +11,35 @@
 ### Latest Main SHA
 
 ```text
-95bf21a2b7dbe44cbd3eba09a9d72873c391fc70
+926fd8355602935f51a5fe38f82ba2fa37c825fb
 ```
 
 最新已合併里程碑：
 
 ```text
-PR #56 — Injury Feature Walk-forward Holdout v1 — VALID_NEGATIVE_RESULT
+PR #57 — Predeclare Real Timestamped Odds Acquisition v1
 ```
 
 ### Open PR
 
 | PR | 狀態 | 正式內容 |
 |---|---|---|
-| #57 — Predeclare Real Timestamped Odds Acquisition v1 | Draft | 只鎖定來源資格、付費邊界、30 場 pilot、quota、bookmaker coverage、provenance 與 storage gates；不呼叫付費端點。 |
+| #58 — Timestamped Odds Qualification Adapter v1 | Draft | Offline parser、request manifest、synthetic tests 與 `ACCESS_NOT_PROVIDED` 結果；不讀 key、不呼叫 paid endpoint。 |
 
 ### Next unique mainline
 
 ```text
-完成 PR #57 policy-only validation 並合併
-→ 另開 adapter / synthetic self-test PR
-→ 不使用 API key、不呼叫 paid endpoint
-→ 只有使用者明確核准費用並提供 THE_ODDS_API_KEY 後，才可執行 frozen 30-game qualification pilot
+完成並合併 PR #58 的 offline validation
+→ 從 Historical Gold 建立 frozen 30-game exact schedule manifest
+→ 固定 180 個 requested timestamps 與 1,800-credit ceiling
+→ 停在 paid pilot 前
+→ 只有使用者明確核准費用並提供 THE_ODDS_API_KEY 後才可執行
 ```
 
 ### Known blockers
 
-- PR #57 尚未合併，Timestamped Odds acquisition contract 尚未成為 main 正式規則。
+- PR #58 尚未合併，adapter 尚未成為 main 正式工具。
+- Frozen 30-game sample 的 exact scheduled tipoff manifest 尚未由 Historical Gold 產生。
 - The Odds API historical access 需要付費方案；目前未取得使用者付費核准。
 - `THE_ODDS_API_KEY` 尚未提供或連接。
 - 正式執行前必須重新確認當時價格、Terms、quota 與資料使用邊界。
@@ -47,21 +49,21 @@ PR #56 — Injury Feature Walk-forward Holdout v1 — VALID_NEGATIVE_RESULT
 
 ### Do Not Do
 
-- 不得自動建立帳號、訂閱方案、購買 credits 或產生任何費用。
+- 不得自動建立帳號、訂閱方案、購買 credits 或產生費用。
 - 不得在未獲使用者明確核准前呼叫 Historical paid endpoint。
 - 不得把 API key 寫入 commit、log、Artifact、error message 或下載檔。
 - 不得繞過 401、403、429、登入、付款或 access control。
 - 不得把 T-6h、T-24h 或 provider first-seen quote 冒充 true bookmaker Opening。
 - 不得用 future snapshot 補較早缺失 snapshot。
-- 不得混用不同 bookmaker 或不同 snapshot 的兩側價格。
-- 不得在 qualification pilot 計算 model edge、EV、ROI、CLV、Drawdown、bet count 或 bookmaker profit ranking。
-- 不得按 ROI、模型表現或價格高低選擇 primary bookmaker；只能按 coverage 與固定 key 排序。
-- 不得在 public repo 或 public Artifact 保留 raw JSON、quote-level rows、價格資料或可下載 odds archive。
-- 不得把已拒絕的 injury candidate 放回市場模型；使用 frozen baseline-only path。
+- 不得混用不同 bookmaker 或不同 provider snapshot 的兩側價格。
+- Qualification pilot 不得計算 model edge、EV、ROI、CLV、Drawdown、bet count 或 bookmaker profit ranking。
+- Primary bookmaker 不得按 ROI、模型表現或價格高低選擇；只能按 coverage 與固定 key 排序。
+- Public repo 或 Artifact 不得保留 raw JSON、quote-level rows、價格資料或可下載 odds archive。
+- 已拒絕的 injury candidate 不得放回市場模型；使用 frozen baseline-only path。
 - 不重做 odds schema、bookmaker schema、no-vig boundary 或 source registry。
 - Closing-only benchmark 不得當 executable market backtest。
 - 未完成 point-in-time odds join 前，不宣稱 CLV、EV、ROI、Drawdown 或 betting edge。
-- CI 綠燈只代表流程執行成功，必須讀 Artifact QA。
+- CI 綠燈只代表流程成功，必須讀 Artifact QA。
 - 正式 Stake 維持 0。
 
 ## Canonical Roadmap
@@ -80,10 +82,10 @@ PR #56 — Injury Feature Walk-forward Holdout v1 — VALID_NEGATIVE_RESULT
 目前節點：
 
 ```text
-Step 5 — Real Timestamped Odds Acquisition v1 predeclaration
+Step 5 — Timestamped Odds offline adapter and exact manifest preparation
 ```
 
-Holdout v1 已產生 structurally valid negative result。市場研究只保留 frozen baseline-only path；目前只允許來源與取得政策預先宣告，尚未允許付費 qualification、production backfill、Market Backtest 或投注。
+PR #57 已鎖定來源、付費、quota、snapshot、bookmaker、provenance 與 storage contract。目前只允許離線 adapter／manifest 準備；尚未允許 paid qualification、production backfill、Market Backtest 或投注。
 
 ## Core Status
 
@@ -95,14 +97,13 @@ Holdout v1 已產生 structurally valid negative result。市場研究只保留 
 | Closing Market Benchmark | Model lost | 模型明顯輸給 Closing Market。 |
 | Market Residual v1 | Negative Result | 100% Closing Market、0% model residual。 |
 | Rest / Travel v1 | Negative Result | Untouched holdout 未通過。 |
-| Wave 1 / 2 / 3 Injury Features | Research Ready | 91 + 85 + 117 = 293 independent games。 |
-| Expanded Participation Census v1 | Completed | 226 evaluable games；516 PLAYED；209 bench；502 long-history。 |
 | Expected Minutes Audit v3 | **ACCURACY_PASS** | 所有預先宣告的結構、樣本與數值 gates 通過。 |
 | Injury Feature Holdout v1 | **VALID_NEGATIVE_RESULT** | 結構通過；固定兩特徵 candidate 未達跨 Fold promotion gates。 |
 | Injury candidate | Rejected | 不進入後續市場模型。 |
-| Timestamped Odds Acquisition v1 | Predeclaration in progress | PR #57 Draft；尚未讀 key、呼叫 paid endpoint 或下載 quote。 |
-| Paid qualification pilot | Blocked | 需要 PR #57 合併、顯式費用核准與 `THE_ODDS_API_KEY`。 |
-| Production Backfill | Blocked | 需要 pilot 通過、offline manifest 與另一次明確 cost approval。 |
+| Timestamped Odds Acquisition Policy v1 | Completed | PR #57 已合併；來源與 no-spend contract 已鎖定。 |
+| Timestamped Odds Adapter v1 | Offline validation in progress | PR #58 Draft；目前 formal access state 為 `ACCESS_NOT_PROVIDED`。 |
+| Paid qualification pilot | Blocked | 需要 exact manifest、顯式費用核准與 `THE_ODDS_API_KEY`。 |
+| Production Backfill | Blocked | 需要 pilot 通過、offline production manifest 與另一次 cost approval。 |
 | Market Backtest | Blocked | 尚無 executable point-in-time odds join。 |
 | Betting Decision Layer | Blocked | Stake = 0。 |
 
@@ -133,7 +134,6 @@ Elo Accuracy: 64.073%
 ```text
 PR #53 — predeclaration
 PR #54 — execution
-Merge: 28866b168fc6194bea05353b01b120e649adcfd5
 Formal state: ACCURACY_PASS
 ```
 
@@ -151,16 +151,12 @@ Audit v3 只證明 prior-only Expected Minutes proxy 達標，不證明 injury f
 
 ## Injury Feature Walk-forward Holdout v1
 
-### Evidence
-
 ```text
-Predeclaration PR: #55
-Execution PR: #56
-Merge: 95bf21a2b7dbe44cbd3eba09a9d72873c391fc70
+PR #55 — predeclaration
+PR #56 — execution
 Formal state: VALID_NEGATIVE_RESULT
+Market path: frozen baseline-only
 ```
-
-### Probability results
 
 | Population | Baseline Log Loss | Candidate Log Loss | Gain |
 |---|---:|---:|---:|
@@ -168,15 +164,9 @@ Formal state: VALID_NEGATIVE_RESULT
 | Mar-Apr final — 104 games | 0.589324 | 0.586426 | **+0.002898** |
 | Combined forward — 169 games | 0.615511 | 0.617785 | **-0.002274** |
 
-| Population | Baseline Brier | Candidate Brier | Gain |
-|---|---:|---:|---:|
-| Feb development | 0.233483 | 0.235695 | **-0.002212** |
-| Mar-Apr final | 0.202537 | 0.201171 | **+0.001366** |
-| Combined forward | 0.214439 | 0.214450 | **-0.000010** |
+Final fold 的改善保留為診斷，但不可推翻 combined negative decision。
 
-Final fold 的改善保留為診斷，但不可推翻 combined negative decision。後續 market path 固定為 baseline-only。
-
-## Timestamped Odds Acquisition v1 — PR #57 Frozen Contract
+## Timestamped Odds Acquisition v1 — Frozen Contract
 
 ### Existing assets to reuse
 
@@ -196,7 +186,7 @@ True missing asset：
 licensed bookmaker-level historical quotes with reliable observed_at
 ```
 
-### Candidate source scope
+### Candidate source
 
 ```text
 provider: The Odds API Historical API v4
@@ -205,10 +195,10 @@ region: us
 market: h2h only
 odds format: decimal
 paid historical access required
-secret name: THE_ODDS_API_KEY
+secret: THE_ODDS_API_KEY
 ```
 
-### Frozen snapshot targets
+### Snapshot targets
 
 ```text
 T-6h
@@ -219,20 +209,20 @@ T-5m
 Closing = scheduled tip-off minus one second query
 ```
 
-Opening is not part of v1 and may not be inferred from fixed T-minus snapshots or provider first-seen rows.
+Opening is not part of v1 and may not be inferred.
 
-### Frozen qualification pilot
+### Qualification pilot
 
 ```text
 30 deterministic games
-10 games per season: 2021-22 / 2022-23 / 2023-24
-6 snapshot requests per game
-maximum request slots: 180
-maximum paid quota: 1,800 credits
-market metrics calculated: false
+10 per season: 2021-22 / 2022-23 / 2023-24
+6 requests per game
+maximum slots: 180
+maximum quota: 1,800 credits
+market metrics: forbidden
 ```
 
-### Qualification decisions
+### Future decisions
 
 ```text
 ACCESS_NOT_PROVIDED
@@ -241,15 +231,50 @@ NO_QUALIFIED_BOOKMAKER
 QUALIFIED_FOR_PRODUCTION_MANIFEST
 ```
 
-Even `QUALIFIED_FOR_PRODUCTION_MANIFEST` only permits an offline production manifest and exact cost preflight. It does not permit full backfill, Market Backtest, CLV / EV / ROI, betting-edge claims or nonzero stake.
+Even a qualified result only permits an offline production manifest and exact cost preflight—not full backfill or backtest.
+
+## Timestamped Odds Adapter v1 — PR #58
+
+Offline implementation：
+
+```text
+scripts/qualify_timestamped_odds_v1.py
+```
+
+Capabilities：
+
+- build no-price request manifest from exact schedule rows;
+- parse Historical v4 supplied payloads;
+- exact home/away event matching;
+- reject future snapshots and ambiguous events;
+- keep provider snapshot, bookmaker last_update and fetched_at separate;
+- parse same-bookmaker two-way h2h prices;
+- calculate overround and aggregate bookmaker coverage;
+- emit `ACCESS_NOT_PROVIDED` without reading secret or calling provider.
+
+Current formal state：
+
+```text
+ACCESS_NOT_PROVIDED
+provider requests made: 0
+API key read: false
+paid endpoint called: false
+quotes downloaded: 0
+subscription or purchase created: false
+market metrics calculated: false
+ready_for_production_manifest: false
+ready_for_market_backtest: false
+formal_stake: 0
+```
 
 ## Next Exact Task
 
 ```text
-Validate and merge PR #57 policy-only predeclaration
-→ implement source adapter and synthetic tests without API key or network call
-→ stop before paid pilot
-→ request explicit spend approval and THE_ODDS_API_KEY only when the frozen 30-game pilot is ready
+Validate and merge PR #58
+→ derive exact 30-game scheduled tipoffs from Historical Gold
+→ build and freeze 180-row no-price request manifest
+→ verify estimated quota = 1,800 credits or less
+→ stop before paid execution
 ```
 
 ## Important PRs
@@ -274,4 +299,5 @@ Validate and merge PR #57 policy-only predeclaration
 - PR #53 / #54 — Accuracy Audit v3
 - PR #55 — Injury Holdout Predeclaration
 - PR #56 — Injury Holdout VALID_NEGATIVE_RESULT
-- PR #57 — Timestamped Odds Acquisition v1 Predeclaration (Draft)
+- PR #57 — Timestamped Odds Acquisition Policy v1
+- PR #58 — Timestamped Odds Adapter v1 (Draft)

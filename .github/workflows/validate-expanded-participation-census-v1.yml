@@ -9,6 +9,7 @@ on:
       - "data/multi-report-injury-backfill-wave2-times.json"
       - "data/multi-report-injury-backfill-wave3-times.json"
       - "scripts/audit_expanded_participation_census_v1.py"
+      - "scripts/filter_recognized_roster_transitions.py"
       - "scripts/summarize_participation_team_mismatches.py"
       - "scripts/validate_expected_minutes_audit_source_rebuild.py"
       - "scripts/import_official_nba_participation_labels.py"
@@ -45,6 +46,7 @@ jobs:
       - name: Compile census modules
         run: |
           python -m py_compile scripts/audit_expanded_participation_census_v1.py
+          python -m py_compile scripts/filter_recognized_roster_transitions.py
           python -m py_compile scripts/summarize_participation_team_mismatches.py
           python -m py_compile scripts/validate_expected_minutes_audit_source_rebuild.py
           python -m py_compile scripts/import_official_nba_participation_labels.py
@@ -58,6 +60,9 @@ jobs:
           PYTHONPATH=scripts python scripts/import_official_nba_participation_labels.py \
             --self-test \
             --output-dir /tmp/nbavl-expanded-census-self-test/import
+          PYTHONPATH=scripts python scripts/filter_recognized_roster_transitions.py \
+            --self-test \
+            --output-dir /tmp/nbavl-expanded-census-self-test/transition
           PYTHONPATH=scripts python scripts/audit_player_participation_labels.py \
             --self-test \
             --output-dir /tmp/nbavl-expanded-census-self-test/participation
@@ -215,6 +220,25 @@ jobs:
             --output-dir "$ROOT/official-labels" \
             --max-workers 6
 
+      - name: Apply verified same-day roster transition exclusion
+        run: |
+          PYTHONPATH=scripts python scripts/filter_recognized_roster_transitions.py \
+            --official-labels "$ROOT/official-labels/official-player-participation-labels.csv" \
+            --identity-map wave1 "$ROOT/wave1/identity/injury-player-id-map.csv" \
+            --identity-map wave2 "$ROOT/wave2/identity/injury-player-id-map.csv" \
+            --identity-map wave3 "$ROOT/wave3/identity/injury-player-id-map.csv" \
+            --policy data/expanded-participation-census-v1.json \
+            --output-dir "$ROOT/roster-transition"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ["ROOT"])
+          report = json.loads((root / "roster-transition/recognized-roster-transition-filter-report.json").read_text())
+          assert report["decision"]["ready_for_exact_team_evaluation_join"] is True, report
+          assert report["coverage"]["recognized_roster_transition_rows"] == 1, report
+          assert report["quality"]["validation_errors"] == [], report
+          PY
+
       - name: Validate official labels on the frozen three-wave snapshots
         id: participation
         run: |
@@ -224,7 +248,7 @@ jobs:
             --wave wave1 "$ROOT/wave1/overlap/overlap-player-injury-panel.csv" "$ROOT/wave1/identity/injury-player-id-map.csv" \
             --wave wave2 "$ROOT/wave2/overlap/overlap-player-injury-panel.csv" "$ROOT/wave2/identity/injury-player-id-map.csv" \
             --wave wave3 "$ROOT/wave3/overlap/overlap-player-injury-panel.csv" "$ROOT/wave3/identity/injury-player-id-map.csv" \
-            --labels "$ROOT/official-labels/official-player-participation-labels.csv" \
+            --labels "$ROOT/roster-transition/evaluation-player-participation-labels.csv" \
             --source-index "$ROOT/official-labels/official-player-participation-source-index.csv" \
             --import-report "$ROOT/official-labels/official-player-participation-import-report.json" \
             --policy data/expanded-participation-census-v1.json \
@@ -236,12 +260,13 @@ jobs:
           test -s "$ROOT/participation-audit/player-participation-label-audit-rows.csv"
           echo "audit_exit=$AUDIT_EXIT" >> "$GITHUB_OUTPUT"
 
-      - name: Summarize team consistency diagnostics without player identifiers
+      - name: Summarize any remaining team consistency diagnostics without player identifiers
         if: always()
         run: |
           if test -s "$ROOT/participation-audit/player-participation-label-audit-rows.csv"; then
             python scripts/summarize_participation_team_mismatches.py \
               --audit-rows "$ROOT/participation-audit/player-participation-label-audit-rows.csv" \
+              --official-labels "$ROOT/roster-transition/evaluation-player-participation-labels.csv" \
               --output-dir "$ROOT/participation-diagnostics"
           fi
 
@@ -254,7 +279,7 @@ jobs:
             --wave wave2 "$ROOT/wave2/overlap/overlap-player-injury-panel.csv" "$ROOT/wave2/identity/injury-player-id-map.csv" "$ROOT/wave2/values/point-in-time-player-values.csv" \
             --wave wave3 "$ROOT/wave3/overlap/overlap-player-injury-panel.csv" "$ROOT/wave3/identity/injury-player-id-map.csv" "$ROOT/wave3/values/point-in-time-player-values.csv" \
             --prior-player-logs "$ROOT/combined-player-boxscores.csv" \
-            --participation-labels "$ROOT/official-labels/official-player-participation-labels.csv" \
+            --participation-labels "$ROOT/roster-transition/evaluation-player-participation-labels.csv" \
             --participation-source-index "$ROOT/official-labels/official-player-participation-source-index.csv" \
             --participation-import-report "$ROOT/official-labels/official-player-participation-import-report.json" \
             --participation-audit-report "$ROOT/participation-audit/player-participation-label-audit.json" \
@@ -342,6 +367,7 @@ jobs:
             /tmp/nbavl-expanded-participation-census-v1/wave3/values/point-in-time-player-value-report.json
             /tmp/nbavl-expanded-participation-census-v1/official-labels/official-player-participation-source-index.csv
             /tmp/nbavl-expanded-participation-census-v1/official-labels/official-player-participation-import-report.json
+            /tmp/nbavl-expanded-participation-census-v1/roster-transition/recognized-roster-transition-filter-report.json
             /tmp/nbavl-expanded-participation-census-v1/participation-audit/player-participation-label-audit.json
             /tmp/nbavl-expanded-participation-census-v1/participation-audit/player-participation-label-summary.csv
             /tmp/nbavl-expanded-participation-census-v1/participation-diagnostics/participation-team-mismatch-summary.json
@@ -357,13 +383,24 @@ jobs:
           import json, os
           from pathlib import Path
           root = Path(os.environ["ROOT"])
+          transition = json.loads(
+              (root / "roster-transition/recognized-roster-transition-filter-report.json").read_text()
+          )
+          assert transition["decision"]["ready_for_exact_team_evaluation_join"] is True, transition
+          assert transition["coverage"]["recognized_roster_transition_rows"] == 1, transition
+          assert transition["quality"]["validation_errors"] == [], transition
+          diagnostic_path = root / "participation-diagnostics/participation-team-mismatch-summary.json"
+          if diagnostic_path.exists():
+              diagnostic = json.loads(diagnostic_path.read_text())
+              assert diagnostic["coverage"]["team_mismatch_rows"] == 0, diagnostic
           census_path = root / "census/expanded-participation-census-v1.json"
           if not census_path.exists():
-              diagnostic_path = root / "participation-diagnostics/participation-team-mismatch-summary.json"
-              diagnostic = json.loads(diagnostic_path.read_text()) if diagnostic_path.exists() else {}
+              participation_path = root / "participation-audit/player-participation-label-audit.json"
+              participation = json.loads(participation_path.read_text()) if participation_path.exists() else {}
               raise AssertionError(json.dumps({
                   "reason": "Participation structural gate blocked census construction",
-                  "diagnostic": diagnostic,
+                  "participation": participation,
+                  "transition": transition,
               }, indent=2))
           census = json.loads(census_path.read_text())
           assert census["decision_state"] in {
@@ -380,6 +417,7 @@ jobs:
           assert census["decision"]["ready_for_betting_edge_claim"] is False
           assert census["decision"]["formal_stake"] == 0
           print(json.dumps({
+              "roster_transition": transition["coverage"],
               "decision_state": census["decision_state"],
               "coverage": census["coverage"],
               "sample_blockers": census["quality"]["sample_blockers"],

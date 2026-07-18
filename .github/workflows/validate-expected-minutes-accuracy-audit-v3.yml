@@ -1,0 +1,409 @@
+name: Validate Expected Minutes accuracy audit v3
+
+on:
+  pull_request:
+    paths:
+      - "data/expected-minutes-accuracy-audit-v3.json"
+      - "data/expanded-participation-census-v1.json"
+      - "data/multi-report-injury-backfill-wave1-times.json"
+      - "data/multi-report-injury-backfill-wave2-times.json"
+      - "data/multi-report-injury-backfill-wave3-times.json"
+      - "scripts/audit_expected_minutes_accuracy_v3.py"
+      - "scripts/audit_expected_minutes_accuracy_v2.py"
+      - "scripts/audit_expected_minutes_accuracy.py"
+      - "scripts/build_expected_minutes_accuracy_dataset_v2.py"
+      - "scripts/filter_recognized_roster_transitions.py"
+      - "scripts/import_official_nba_participation_labels.py"
+      - "scripts/run_official_nba_participation_import.py"
+      - "scripts/audit_player_participation_labels.py"
+      - "scripts/validate_expected_minutes_accuracy_audit_v3_policy.py"
+      - "scripts/validate_expected_minutes_audit_source_rebuild.py"
+      - ".github/workflows/validate-expected-minutes-accuracy-audit-v3.yml"
+      - "docs/expected-minutes-accuracy-audit-v3.md"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+    inputs:
+      gold_source_run_id:
+        description: "Workflow run containing historical-gold-multiseason"
+        required: true
+        default: "29551715399"
+      combined_feature_run_id:
+        description: "Verified PR #51 run containing the combined 293-game selected panel"
+        required: true
+        default: "29629934161"
+      census_run_id:
+        description: "Official PR #52 expanded census result run"
+        required: true
+        default: "29632917590"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile v3 audit modules
+        run: |
+          python -m py_compile scripts/audit_expected_minutes_accuracy.py
+          python -m py_compile scripts/audit_expected_minutes_accuracy_v2.py
+          python -m py_compile scripts/audit_expected_minutes_accuracy_v3.py
+          python -m py_compile scripts/build_expected_minutes_accuracy_dataset_v2.py
+          python -m py_compile scripts/filter_recognized_roster_transitions.py
+          python -m py_compile scripts/import_official_nba_participation_labels.py
+          python -m py_compile scripts/run_official_nba_participation_import.py
+          python -m py_compile scripts/audit_player_participation_labels.py
+          python -m py_compile scripts/validate_expected_minutes_accuracy_audit_v3_policy.py
+          python -m py_compile scripts/validate_expected_minutes_audit_source_rebuild.py
+      - name: Run deterministic self-tests
+        run: |
+          rm -rf /tmp/nbavl-audit-v3-self-test
+          python scripts/validate_expected_minutes_audit_source_rebuild.py --self-test
+          python scripts/validate_expected_minutes_accuracy_audit_v3_policy.py --self-test
+          PYTHONPATH=scripts python scripts/import_official_nba_participation_labels.py \
+            --self-test \
+            --output-dir /tmp/nbavl-audit-v3-self-test/import
+          PYTHONPATH=scripts python scripts/filter_recognized_roster_transitions.py \
+            --self-test \
+            --output-dir /tmp/nbavl-audit-v3-self-test/transition
+          PYTHONPATH=scripts python scripts/audit_player_participation_labels.py \
+            --self-test \
+            --output-dir /tmp/nbavl-audit-v3-self-test/participation
+          PYTHONPATH=scripts python scripts/build_expected_minutes_accuracy_dataset_v2.py \
+            --self-test \
+            --output-dir /tmp/nbavl-audit-v3-self-test/dataset
+          PYTHONPATH=scripts python scripts/audit_expected_minutes_accuracy_v2.py \
+            --self-test \
+            --output-dir /tmp/nbavl-audit-v3-self-test/v2
+          PYTHONPATH=scripts python scripts/audit_expected_minutes_accuracy_v3.py \
+            --self-test \
+            --output-dir /tmp/nbavl-audit-v3-self-test/v3
+          python -m json.tool data/expected-minutes-accuracy-audit-v3.json >/dev/null
+
+  live-audit:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GOLD_SOURCE_RUN_ID: ${{ github.event.inputs.gold_source_run_id || '29551715399' }}
+      COMBINED_FEATURE_RUN_ID: ${{ github.event.inputs.combined_feature_run_id || '29629934161' }}
+      CENSUS_RUN_ID: ${{ github.event.inputs.census_run_id || '29632917590' }}
+      ROOT: /tmp/nbavl-expected-minutes-accuracy-audit-v3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+
+      - name: Download audited Gold, frozen 293-game panel, and official census
+        run: |
+          rm -rf "$ROOT"
+          mkdir -p "$ROOT/gold" "$ROOT/combined-source" "$ROOT/census-source"
+          gh run download "$GOLD_SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name historical-gold-multiseason \
+            --dir "$ROOT/gold"
+          GOLD_FILE="$(find "$ROOT/gold" -name 'historical-gold-multiseason.sqlite.gz' -print -quit)"
+          test -n "$GOLD_FILE"
+          echo "GOLD_FILE=$GOLD_FILE" >> "$GITHUB_ENV"
+          gh run download "$COMBINED_FEATURE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name injury-backfill-wave3-features \
+            --dir "$ROOT/combined-source"
+          gh run download "$CENSUS_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name expanded-participation-census-v1 \
+            --dir "$ROOT/census-source"
+          CENSUS_REPORT="$(find "$ROOT/census-source" -name 'expanded-participation-census-v1.json' -print -quit)"
+          test -n "$CENSUS_REPORT"
+          echo "CENSUS_REPORT=$CENSUS_REPORT" >> "$GITHUB_ENV"
+          python - <<'PY'
+          import csv, json, os
+          from pathlib import Path
+          root = Path(os.environ['ROOT'])
+          combined_root = root / 'combined-source/combined'
+          combined = json.loads((combined_root / 'combined-selected-injury-waves-report.json').read_text())
+          rows = list(csv.DictReader((combined_root / 'combined-selected-matchup-injury-burden.csv').open()))
+          census = json.loads(Path(os.environ['CENSUS_REPORT']).read_text())
+          assert combined['decision']['ready_for_combined_selected_panel_research'] is True, combined
+          assert combined['coverage']['combined_independent_games'] == 293, combined
+          assert combined['coverage']['selected_source_wave_counts'] == {
+              'wave1': 91, 'wave2': 85, 'wave3': 117
+          }, combined
+          assert len(rows) == 293 and len({row['historical_game_id'] for row in rows}) == 293
+          assert census['decision_state'] == 'CENSUS_READY_AUDIT_V3_ELIGIBLE', census
+          assert census['quality']['accuracy_metrics_calculated'] is False, census
+          assert census['quality']['structural_blockers'] == [], census
+          assert census['quality']['sample_blockers'] == [], census
+          PY
+
+      - name: Validate frozen v3 policy
+        run: |
+          python scripts/validate_expected_minutes_accuracy_audit_v3_policy.py \
+            --v2-policy data/expected-minutes-accuracy-audit-v2.json \
+            --v3-policy data/expected-minutes-accuracy-audit-v3.json \
+            --output "$ROOT/expected-minutes-accuracy-audit-v3-policy-validation.json"
+
+      - name: Rebuild frozen Wave 1, Wave 2, and Wave 3 sources
+        run: |
+          for WAVE in wave1 wave2 wave3; do
+            mkdir -p "$ROOT/$WAVE"
+            set +e
+            PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
+              --report-times "data/multi-report-injury-backfill-${WAVE}-times.json" \
+              --output-dir "$ROOT/$WAVE/player"
+            PLAYER_EXIT=$?
+            set -e
+            python scripts/validate_expected_minutes_audit_source_rebuild.py \
+              --wave "$WAVE" \
+              --report "$ROOT/$WAVE/player/multi-report-injury-panel-report.json" \
+              --source-index "$ROOT/$WAVE/player/multi-report-source-index.csv" \
+              --importer-exit "$PLAYER_EXIT"
+            PYTHONPATH=scripts python scripts/build_multi_report_team_submission_panel.py \
+              --report-times "data/multi-report-injury-backfill-${WAVE}-times.json" \
+              --output-dir "$ROOT/$WAVE/team"
+            python scripts/audit_ready_injury_report_overlap.py \
+              --player-source-index "$ROOT/$WAVE/player/multi-report-source-index.csv" \
+              --team-source-index "$ROOT/$WAVE/team/multi-report-team-submission-source-index.csv" \
+              --output-dir "$ROOT/$WAVE/ready"
+            python scripts/filter_injury_panels_to_acquisition_overlap.py \
+              --player-panel "$ROOT/$WAVE/player/multi-report-injury-panel-normalized.csv" \
+              --player-source-index "$ROOT/$WAVE/ready/ready-player-source-index.csv" \
+              --team-panel "$ROOT/$WAVE/team/multi-report-team-submission-panel.csv" \
+              --team-source-index "$ROOT/$WAVE/team/multi-report-team-submission-source-index.csv" \
+              --output-dir "$ROOT/$WAVE/overlap"
+          done
+
+      - name: Match all ready player snapshots to Historical Gold
+        run: |
+          for WAVE in wave1 wave2 wave3; do
+            python scripts/validate_injury_snapshot_schedule_match.py \
+              --snapshot-csv "$ROOT/$WAVE/overlap/overlap-player-injury-panel.csv" \
+              --gold "$GOLD_FILE" \
+              --output-dir "$ROOT/$WAVE/schedule"
+          done
+
+      - name: Import and combine prior-only identity reference logs
+        run: |
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --season 2022-23 \
+            --gold "$GOLD_FILE" \
+            --output-dir "$ROOT/boxscores-2022"
+          PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
+            --season 2023-24 \
+            --gold "$GOLD_FILE" \
+            --output-dir "$ROOT/boxscores-2023"
+          python - <<'PY'
+          import csv, os
+          from pathlib import Path
+          root = Path(os.environ['ROOT'])
+          rows = {}
+          fields = None
+          for path in [
+              root / 'boxscores-2022/open-player-boxscores.csv',
+              root / 'boxscores-2023/open-player-boxscores.csv',
+          ]:
+              with path.open('r', encoding='utf-8-sig', newline='') as handle:
+                  reader = csv.DictReader(handle)
+                  fields = fields or list(reader.fieldnames or [])
+                  for row in reader:
+                      rows[(row['SEASON_YEAR'], row['GAME_ID'], row['PLAYER_ID'])] = row
+          with (root / 'combined-player-boxscores.csv').open('w', encoding='utf-8', newline='') as handle:
+              writer = csv.DictWriter(handle, fieldnames=fields)
+              writer.writeheader()
+              writer.writerows(rows[key] for key in sorted(rows))
+          print({'combined_rows': len(rows)})
+          PY
+
+      - name: Rebuild deterministic identities and prior-only Expected Minutes
+        run: |
+          for WAVE in wave1 wave2 wave3; do
+            PYTHONPATH=scripts python scripts/match_injury_players_from_boxscores.py \
+              --snapshot-csv "$ROOT/$WAVE/overlap/overlap-player-injury-panel.csv" \
+              --game-map-csv "$ROOT/$WAVE/schedule/injury-snapshot-game-id-map.csv" \
+              --boxscore-csv "$ROOT/combined-player-boxscores.csv" \
+              --output-dir "$ROOT/$WAVE/identity"
+            PYTHONPATH=scripts python scripts/build_point_in_time_player_values.py \
+              --player-logs "$ROOT/combined-player-boxscores.csv" \
+              --snapshot-csv "$ROOT/$WAVE/overlap/overlap-player-injury-panel.csv" \
+              --player-id-map "$ROOT/$WAVE/identity/injury-player-id-map.csv" \
+              --output-dir "$ROOT/$WAVE/values"
+          done
+
+      - name: Import official final-game participation labels for 293 games
+        run: |
+          PYTHONPATH=scripts python scripts/run_official_nba_participation_import.py \
+            --selected-games "$ROOT/combined-source/combined/combined-selected-matchup-injury-burden.csv" \
+            --output-dir "$ROOT/official-labels" \
+            --max-workers 6
+
+      - name: Apply verified same-day roster transition exclusion
+        run: |
+          PYTHONPATH=scripts python scripts/filter_recognized_roster_transitions.py \
+            --official-labels "$ROOT/official-labels/official-player-participation-labels.csv" \
+            --identity-map wave1 "$ROOT/wave1/identity/injury-player-id-map.csv" \
+            --identity-map wave2 "$ROOT/wave2/identity/injury-player-id-map.csv" \
+            --identity-map wave3 "$ROOT/wave3/identity/injury-player-id-map.csv" \
+            --policy data/expanded-participation-census-v1.json \
+            --output-dir "$ROOT/roster-transition"
+
+      - name: Validate official labels on the frozen three-wave snapshots
+        run: |
+          python scripts/audit_player_participation_labels.py \
+            --combined-selected "$ROOT/combined-source/combined/combined-selected-matchup-injury-burden.csv" \
+            --wave wave1 "$ROOT/wave1/overlap/overlap-player-injury-panel.csv" "$ROOT/wave1/identity/injury-player-id-map.csv" \
+            --wave wave2 "$ROOT/wave2/overlap/overlap-player-injury-panel.csv" "$ROOT/wave2/identity/injury-player-id-map.csv" \
+            --wave wave3 "$ROOT/wave3/overlap/overlap-player-injury-panel.csv" "$ROOT/wave3/identity/injury-player-id-map.csv" \
+            --labels "$ROOT/roster-transition/evaluation-player-participation-labels.csv" \
+            --source-index "$ROOT/official-labels/official-player-participation-source-index.csv" \
+            --import-report "$ROOT/official-labels/official-player-participation-import-report.json" \
+            --policy data/expanded-participation-census-v1.json \
+            --output-dir "$ROOT/participation-audit"
+
+      - name: Build temporary v3 accuracy rows
+        run: |
+          PYTHONPATH=scripts python scripts/build_expected_minutes_accuracy_dataset_v2.py \
+            --combined-selected "$ROOT/combined-source/combined/combined-selected-matchup-injury-burden.csv" \
+            --wave wave1 "$ROOT/wave1/overlap/overlap-player-injury-panel.csv" "$ROOT/wave1/identity/injury-player-id-map.csv" "$ROOT/wave1/values/point-in-time-player-values.csv" \
+            --wave wave2 "$ROOT/wave2/overlap/overlap-player-injury-panel.csv" "$ROOT/wave2/identity/injury-player-id-map.csv" "$ROOT/wave2/values/point-in-time-player-values.csv" \
+            --wave wave3 "$ROOT/wave3/overlap/overlap-player-injury-panel.csv" "$ROOT/wave3/identity/injury-player-id-map.csv" "$ROOT/wave3/values/point-in-time-player-values.csv" \
+            --prior-player-logs "$ROOT/combined-player-boxscores.csv" \
+            --participation-labels "$ROOT/roster-transition/evaluation-player-participation-labels.csv" \
+            --participation-source-index "$ROOT/official-labels/official-player-participation-source-index.csv" \
+            --participation-import-report "$ROOT/official-labels/official-player-participation-import-report.json" \
+            --participation-audit-report "$ROOT/participation-audit/player-participation-label-audit.json" \
+            --output-dir "$ROOT/accuracy-dataset"
+
+      - name: Run predeclared Expected Minutes Accuracy Audit v3
+        id: audit
+        run: |
+          set +e
+          PYTHONPATH=scripts python scripts/audit_expected_minutes_accuracy_v3.py \
+            --rows "$ROOT/accuracy-dataset/expected-minutes-accuracy-v2-rows.csv" \
+            --dataset-report "$ROOT/accuracy-dataset/expected-minutes-accuracy-v2-dataset-report.json" \
+            --policy data/expected-minutes-accuracy-audit-v3.json \
+            --census-report "$CENSUS_REPORT" \
+            --participation-import-report "$ROOT/official-labels/official-player-participation-import-report.json" \
+            --participation-audit-report "$ROOT/participation-audit/player-participation-label-audit.json" \
+            --transition-report "$ROOT/roster-transition/recognized-roster-transition-filter-report.json" \
+            --policy-validation-report "$ROOT/expected-minutes-accuracy-audit-v3-policy-validation.json" \
+            --identity-report "$ROOT/wave1/identity/injury-player-boxscore-identity-report.json" \
+            --identity-report "$ROOT/wave2/identity/injury-player-boxscore-identity-report.json" \
+            --identity-report "$ROOT/wave3/identity/injury-player-boxscore-identity-report.json" \
+            --sensitive-root "$ROOT" \
+            --output-dir "$ROOT/audit-v3"
+          AUDIT_EXIT=$?
+          set -e
+          test "$AUDIT_EXIT" -eq 0 -o "$AUDIT_EXIT" -eq 2
+          test -s "$ROOT/audit-v3/expected-minutes-accuracy-audit-v3.json"
+          echo "audit_exit=$AUDIT_EXIT" >> "$GITHUB_OUTPUT"
+
+      - name: Verify aggregate-only privacy boundary
+        if: always()
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          root = Path(os.environ['ROOT'])
+          forbidden = {
+              'combined-player-boxscores.csv',
+              'open-player-boxscores.csv',
+              'official-player-participation-labels.csv',
+              'evaluation-player-participation-labels.csv',
+              'player-participation-label-audit-rows.csv',
+              'expected-minutes-accuracy-v2-rows.csv',
+              'expected-minutes-accuracy-v3-rows.csv',
+              'overlap-player-injury-panel.csv',
+              'multi-report-injury-panel-normalized.csv',
+              'injury-lineup-snapshots-normalized.csv',
+              'injury-player-id-map.csv',
+              'point-in-time-player-values.csv',
+          }
+          found = sorted(
+              str(path.relative_to(root))
+              for path in root.rglob('*')
+              if path.is_file() and path.name in forbidden
+          )
+          assert not found, found
+          assert not list(root.rglob('*.pdf'))
+          assert not [path for path in root.rglob('*') if path.is_file() and path.name.endswith('.json.raw')]
+          PY
+
+      - name: Upload aggregate v3 audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expected-minutes-accuracy-audit-v3
+          path: |
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/census-source/**/expanded-participation-census-v1.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/combined-source/combined/combined-selected-injury-waves-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave1/player/multi-report-injury-panel-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave2/player/multi-report-injury-panel-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave3/player/multi-report-injury-panel-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave1/ready/ready-overlap-audit.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave2/ready/ready-overlap-audit.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave3/ready/ready-overlap-audit.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave1/schedule/injury-snapshot-schedule-match-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave2/schedule/injury-snapshot-schedule-match-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave3/schedule/injury-snapshot-schedule-match-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave1/identity/injury-player-boxscore-identity-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave2/identity/injury-player-boxscore-identity-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave3/identity/injury-player-boxscore-identity-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave1/values/point-in-time-player-value-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave2/values/point-in-time-player-value-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/wave3/values/point-in-time-player-value-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/official-labels/official-player-participation-source-index.csv
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/official-labels/official-player-participation-import-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/roster-transition/recognized-roster-transition-filter-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/participation-audit/player-participation-label-audit.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/participation-audit/player-participation-label-summary.csv
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/accuracy-dataset/expected-minutes-accuracy-v2-dataset-report.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/expected-minutes-accuracy-audit-v3-policy-validation.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/audit-v3/expected-minutes-accuracy-audit-v3.json
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/audit-v3/expected-minutes-accuracy-v3-subgroups.csv
+            /tmp/nbavl-expected-minutes-accuracy-audit-v3/audit-v3/expected-minutes-accuracy-v3-team-summary.csv
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Enforce formal v3 decision and permanent non-activation
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ['ROOT'])
+          report = json.loads((root / 'audit-v3/expected-minutes-accuracy-audit-v3.json').read_text())
+          assert report['decision_state'] in {
+              'VALID_NEGATIVE_RESULT',
+              'ACCURACY_PASS',
+          }, report
+          assert report['quality']['all_structural_gates_passed'] is True, report
+          assert report['quality']['frozen_input_integrity_gates_passed'] is True, report
+          assert report['quality']['structural_blockers'] == [], report
+          assert report['quality']['forbidden_player_level_files_retained'] == 0, report
+          assert report['decision']['ready_for_injury_feature_walk_forward_holdout_execution'] is False
+          assert report['decision']['ready_for_model_training'] is False
+          assert report['decision']['ready_for_probability_adjustment'] is False
+          assert report['decision']['ready_for_betting_edge_claim'] is False
+          assert report['decision']['formal_stake'] == 0
+          if report['decision_state'] == 'ACCURACY_PASS':
+              assert report['decision']['ready_for_injury_feature_walk_forward_holdout_design_predeclaration'] is True
+          else:
+              assert report['decision']['ready_for_injury_feature_walk_forward_holdout_design_predeclaration'] is False
+          print(json.dumps({
+              'decision_state': report['decision_state'],
+              'coverage': report['coverage'],
+              'primary_accuracy': report['primary_accuracy'],
+              'accuracy_blockers': report['quality']['accuracy_blockers'],
+              'decision': report['decision'],
+          }, indent=2))
+          PY

@@ -8,6 +8,7 @@ on:
       - "docs/expected-minutes-accuracy-audit-v3.md"
       - "scripts/validate_expected_minutes_accuracy_audit_v3_policy.py"
       - ".github/workflows/validate-expected-minutes-accuracy-audit-v3-policy.yml"
+      - "PROJECT_STATUS.md"
   workflow_dispatch:
 
 permissions:

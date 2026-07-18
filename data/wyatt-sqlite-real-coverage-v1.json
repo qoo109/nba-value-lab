@@ -1,0 +1,35 @@
+{
+  "blockers": [
+    "supplied SQLite ends at 2023-06-12 and contains zero 2023-24 pilot games",
+    "actual SQLite has 16 tables while uploaded metadata describes 235 cataloged outputs",
+    "no player game boxscore table is present in the supplied SQLite schema",
+    "game table contains 56 duplicate game_id groups",
+    "play_by_play contains 7360 duplicate (game_id,eventnum) groups"
+  ],
+  "cross_source_join_executed": false,
+  "cross_source_join_reason": "pilot season absent from supplied SQLite file",
+  "existing_gold_replacement": false,
+  "existing_silver_replacement": false,
+  "formal_outcome": "STRUCTURAL_BLOCKED",
+  "formal_stake": 0,
+  "formal_state": "STRUCTURAL_BLOCKED",
+  "gates": {
+    "exact_duplicate_game_count_maximum_0": false,
+    "final_score_match_rate_minimum_0_98": "NOT_RUN_SOURCE_HAS_ZERO_PILOT_GAMES",
+    "game_identity_match_rate_minimum_0_98": "NOT_RUN_SOURCE_HAS_ZERO_PILOT_GAMES",
+    "pbp_game_coverage_minimum_0_95": "NOT_RUN_SOURCE_HAS_ZERO_PILOT_GAMES",
+    "pilot_reference_games_minimum_met": false,
+    "player_boxscore_coverage_minimum_0_95": false,
+    "sqlite_integrity_check_ok": true,
+    "team_boxscore_coverage_minimum_0_98": "NOT_RUN_SOURCE_HAS_ZERO_PILOT_GAMES"
+  },
+  "pilot_season": "2023-24",
+  "player_boxscore_candidate_tables": [],
+  "qualification_evaluated": true,
+  "raw_rows_emitted": 0,
+  "reference_minimum_games": 1000,
+  "report_schema_version": "wyatt-sqlite-real-coverage-v1",
+  "secondary_source_qualified": false,
+  "source_latest_game_date": "2023-06-12 00:00:00",
+  "source_pilot_games": 0
+}

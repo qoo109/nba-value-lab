@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-07-18T12:04:10.027151Z",
+    "generated_at": "2026-07-18T16:14:21.528886Z",
     "overall_status": "ok",
     "formal_model_publishable": false,
     "reason": "Schedule/status layer only; injuries, market consensus and model calibration are not yet connected."
@@ -11,7 +11,7 @@
       "url": "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_1.json",
       "status": "error",
       "observed_at": null,
-      "fetched_at": "2026-07-18T12:04:10.027164Z",
+      "fetched_at": "2026-07-18T16:14:21.528896Z",
       "data_age_hours": null,
       "stale": true,
       "raw_hash": null,
@@ -23,8 +23,8 @@
       "source_id": "espn_scoreboard_range",
       "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=YYYYMMDD",
       "status": "ok",
-      "observed_at": "2026-07-18T12:04:10.220850Z",
-      "fetched_at": "2026-07-18T12:04:10.220850Z",
+      "observed_at": "2026-07-18T16:14:21.696534Z",
+      "fetched_at": "2026-07-18T16:14:21.696534Z",
       "data_age_hours": 0.0,
       "stale": false,
       "raw_hash": "ef6bbca2128e64c928b8056098c0f9698670925586c0bdd44aa7d5409b1f864b",
@@ -36,11 +36,11 @@
       "source_id": "nba_live_scoreboard_s3",
       "url": "https://nba-prod-us-east-1-mediaops-stats.s3.amazonaws.com/NBA/liveData/scoreboard/todaysScoreboard_00.json",
       "status": "ok",
-      "observed_at": "2026-07-18T08:04:05.450000Z",
-      "fetched_at": "2026-07-18T12:04:10.537679Z",
+      "observed_at": "2026-07-18T12:14:21.142100Z",
+      "fetched_at": "2026-07-18T16:14:21.980367Z",
       "data_age_hours": 4.0,
       "stale": false,
-      "raw_hash": "19c98fac01515e9349278555ffbe23db4df2cb7a47961a22d0c75dc66c4ed9ea",
+      "raw_hash": "d6ba92af9f8d1af5a1f5c89a40d9c68bd7cbd80514264a9ddfb53e4a090bd0b4",
       "adapter_version": "nba-free-data-v2",
       "notes": "Official same-day status fallback; may be stale during offseason.",
       "error": null

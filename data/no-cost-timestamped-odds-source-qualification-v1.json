@@ -1,0 +1,187 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-v1",
+  "created_at": "2026-07-18T18:50:00+08:00",
+  "roadmap_parent": "step-5-real-timestamped-odds-acquisition",
+  "base_main_sha": "ee8a5674659f4cc407a5056e7f7f8d7836637284",
+  "upstream_decision": {
+    "source_pr": 65,
+    "formal_state": "PAID_PILOT_NOT_APPROVED",
+    "paid_access_authorized": false,
+    "subscription_authorized": false,
+    "paid_endpoint_execution_authorized": false,
+    "formal_stake": 0
+  },
+  "purpose": "Qualify only lawful no-cost, already-held, or user-supplied NBA bookmaker-level historical quotes with reliable point-in-time timestamps. This policy does not download quotes or calculate market performance.",
+  "predeclaration": {
+    "committed_before_candidate_download": true,
+    "committed_before_quote_inspection": true,
+    "committed_before_candidate_ranking": true,
+    "committed_before_market_metrics": true,
+    "post_result_gate_weakening_allowed": false,
+    "post_result_candidate_replacement_allowed": false
+  },
+  "access_boundary": {
+    "anonymous_public_metadata_allowed": true,
+    "anonymous_public_download_allowed_after_metadata_gate": true,
+    "existing_project_artifact_allowed_after_provenance_check": true,
+    "user_supplied_file_allowed_after_license_and_provenance_check": true,
+    "account_creation_allowed": false,
+    "paid_plan_allowed": false,
+    "api_key_or_secret_allowed": false,
+    "login_or_consent_bypass_allowed": false,
+    "robots_or_terms_bypass_allowed": false,
+    "restricted_scraping_allowed": false,
+    "public_raw_quote_redistribution_allowed": false
+  },
+  "must_reuse": {
+    "frozen_source_registry": "data/historical-odds-source-registry.json",
+    "existing_acquisition_policy": "data/timestamped-odds-acquisition-v1.json",
+    "existing_schema": "data/templates/point-in-time-odds-template.csv",
+    "existing_builder": "scripts/build_point_in_time_odds.py",
+    "existing_adapter": "scripts/qualify_timestamped_odds_v1.py",
+    "new_odds_schema_allowed": false,
+    "new_bookmaker_schema_allowed": false,
+    "new_no_vig_method_allowed": false
+  },
+  "frozen_market_scope": {
+    "sport": "NBA",
+    "market": "h2h_moneyline",
+    "odds_format": "decimal_after_normalization",
+    "snapshot_labels": ["T-6h", "T-3h", "T-1h", "T-30m", "T-5m", "Closing"],
+    "opening_required": false,
+    "opening_may_be_inferred": false,
+    "closing_only_source_may_unlock_market_backtest": false
+  },
+  "frozen_sample": {
+    "source": "data/timestamped-odds-acquisition-v1.json#qualification_pilot.sample",
+    "games": 30,
+    "seasons": ["2021-22", "2022-23", "2023-24"],
+    "games_per_season": 10,
+    "requested_snapshot_slots": 180,
+    "candidate_specific_game_replacement_allowed": false
+  },
+  "candidate_sources": [
+    {
+      "source_id": "kaggle_christophertreasure_nba_odds",
+      "class": "existing_project_source",
+      "metadata_state": "KNOWN_CLOSING_ONLY_OR_TIMESTAMP_UNKNOWN",
+      "allowed_initial_action": "reuse_existing_aggregate_evidence_only",
+      "expected_boundary": "closing benchmark only; cannot qualify as executable PIT source without new timestamp evidence"
+    },
+    {
+      "source_id": "kaggle_ehallmar_nba_historical_betting",
+      "class": "public_dataset",
+      "metadata_state": "LICENSE_UNKNOWN_PROVENANCE_UNCLEAR",
+      "allowed_initial_action": "metadata_review_only",
+      "expected_boundary": "blocked from automated import until license and provenance are explicit"
+    },
+    {
+      "source_id": "kaggle_erichqiu_nba_odds_scores",
+      "class": "public_dataset",
+      "metadata_state": "CC0_LABEL_BUT_SCRAPED_FROM_UNSPECIFIED_SOURCES",
+      "allowed_initial_action": "metadata_and_schema_review_only",
+      "expected_boundary": "CC0 label does not establish original-source rights or timestamp semantics"
+    },
+    {
+      "source_id": "kaggle_cviaxmiwnptr_nba_betting_data",
+      "class": "public_dataset",
+      "url": "https://www.kaggle.com/datasets/cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024",
+      "metadata_state": "CC0_LABEL_DERIVED_FROM_SBR_AND_ESPN_SINGLE_GAME_ODDS",
+      "allowed_initial_action": "metadata_and_schema_review_only",
+      "expected_boundary": "single game-level odds without explicit bookmaker and observed_at cannot qualify"
+    },
+    {
+      "source_id": "sportsbookreviewsonline_nba_archive_legacy",
+      "class": "legacy_web_archive",
+      "metadata_state": "DIRECT_URL_404",
+      "allowed_initial_action": "availability_record_only",
+      "expected_boundary": "no mirror import without separate license, provenance and schema review"
+    },
+    {
+      "source_id": "oddsportal_nba_results",
+      "class": "manual_reference",
+      "metadata_state": "AUTOMATION_PROHIBITED_BY_PROJECT_REGISTRY",
+      "allowed_initial_action": "manual_spot_check_only",
+      "expected_boundary": "never an automated source"
+    },
+    {
+      "source_id": "public_github_odds_collectors",
+      "class": "code_only_discovery",
+      "metadata_state": "COLLECTOR_CODE_IS_NOT_A_LICENSED_DATASET",
+      "allowed_initial_action": "repository_license_and_included_data_inventory_only",
+      "expected_boundary": "API client code or private collectors do not establish reusable historical data rights"
+    },
+    {
+      "source_id": "user_supplied_timestamped_odds",
+      "class": "future_user_supplied",
+      "metadata_state": "NOT_PROVIDED",
+      "allowed_initial_action": "none_until_file_and_rights_statement_exist",
+      "expected_boundary": "must pass the same gates; no relaxed treatment"
+    }
+  ],
+  "metadata_gates": {
+    "license_or_permission_explicit": true,
+    "automated_research_use_allowed": true,
+    "source_provenance_explicit": true,
+    "original_source_terms_reviewed": true,
+    "bookmaker_definition_explicit": true,
+    "moneyline_semantics_explicit": true,
+    "timestamp_semantics_explicit": true,
+    "scheduled_tipoff_available": true,
+    "no_paid_or_secret_requirement": true,
+    "no_access_control_bypass": true
+  },
+  "schema_gates": {
+    "same_bookmaker_two_sided_prices": true,
+    "bookmaker_key_present": true,
+    "provider_snapshot_at_or_observed_at_present": true,
+    "bookmaker_last_update_retained_when_available": true,
+    "scheduled_tipoff_utc_present": true,
+    "home_and_away_identity_present": true,
+    "source_event_id_or_stable_source_key_present": true,
+    "retrieval_or_file_version_provenance_present": true,
+    "fuzzy_matching_allowed": false,
+    "future_snapshot_allowed": false
+  },
+  "frozen_source_health_gates": {
+    "minimum_target_game_mapping_rate": 0.9,
+    "minimum_mapped_games_each_season": 8,
+    "minimum_primary_bookmaker_complete_t60_closing_games": 24,
+    "minimum_primary_bookmaker_complete_t60_closing_games_each_season": 7,
+    "minimum_primary_bookmaker_all_target_snapshot_coverage": 0.7,
+    "maximum_point_in_time_violations": 0,
+    "maximum_future_snapshot_rows": 0,
+    "maximum_team_mismatches": 0,
+    "maximum_fuzzy_matches": 0,
+    "maximum_duplicate_quote_keys": 0,
+    "minimum_decimal_price": 1.01,
+    "maximum_decimal_price": 100.0,
+    "minimum_two_way_overround": -0.05,
+    "maximum_two_way_overround": 0.3,
+    "maximum_opening_labels_inferred": 0
+  },
+  "forbidden_outputs": [
+    "model_edge",
+    "EV",
+    "ROI",
+    "CLV",
+    "drawdown",
+    "bet_count",
+    "profit_ranking",
+    "stake_recommendation"
+  ],
+  "decision_states": [
+    "NO_COST_METADATA_BLOCKED",
+    "NO_COST_SCHEMA_REVIEW_REQUIRED",
+    "NO_COST_SOURCE_STRUCTURAL_BLOCKED",
+    "NO_COST_SOURCE_QUALIFIED_FOR_FROZEN_PILOT"
+  ],
+  "activation_boundary": {
+    "this_policy_downloads_quotes": false,
+    "this_policy_runs_source_health_pilot": false,
+    "this_policy_unlocks_market_backtest": false,
+    "this_policy_unlocks_betting_claims": false,
+    "separate_execution_pr_required": true,
+    "formal_stake": 0
+  }
+}

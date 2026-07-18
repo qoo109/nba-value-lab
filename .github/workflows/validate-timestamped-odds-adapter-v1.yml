@@ -6,6 +6,7 @@ on:
       - "data/timestamped-odds-acquisition-v1.json"
       - "docs/timestamped-odds-adapter-v1.md"
       - "scripts/qualify_timestamped_odds_v1.py"
+      - "scripts/run_timestamped_odds_qualification_v1.py"
       - "scripts/validate_timestamped_odds_acquisition_v1_policy.py"
       - "scripts/import_closing_odds_archive.py"
       - ".github/workflows/validate-timestamped-odds-adapter-v1.yml"
@@ -36,24 +37,35 @@ jobs:
           python -m py_compile scripts/validate_timestamped_odds_acquisition_v1_policy.py
           python -m py_compile scripts/import_closing_odds_archive.py
           python -m py_compile scripts/qualify_timestamped_odds_v1.py
+          python -m py_compile scripts/run_timestamped_odds_qualification_v1.py
 
       - name: Validate merged acquisition policy
         run: |
           rm -rf "$ROOT"
-          mkdir -p "$ROOT/policy" "$ROOT/self-test" "$ROOT/access"
+          mkdir -p "$ROOT/policy" "$ROOT/base-self-test" "$ROOT/hardening" "$ROOT/access"
           python scripts/validate_timestamped_odds_acquisition_v1_policy.py \
             --policy data/timestamped-odds-acquisition-v1.json \
             --output "$ROOT/policy/timestamped-odds-acquisition-v1-policy-validation.json"
 
-      - name: Run deterministic offline adapter self-tests
+      - name: Run base deterministic offline adapter self-tests
         env:
           PYTHONPATH: scripts
         run: |
           python scripts/qualify_timestamped_odds_v1.py \
             --policy data/timestamped-odds-acquisition-v1.json \
-            --output-dir "$ROOT/self-test" \
+            --output-dir "$ROOT/base-self-test" \
             --self-test
-          test -s "$ROOT/self-test/synthetic-adapter-self-test.json"
+          test -s "$ROOT/base-self-test/synthetic-adapter-self-test.json"
+
+      - name: Run hardened identity quota and bookmaker self-tests
+        env:
+          PYTHONPATH: scripts
+        run: |
+          python scripts/run_timestamped_odds_qualification_v1.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --output-dir "$ROOT/hardening" \
+            --self-test
+          test -s "$ROOT/hardening/timestamped-odds-adapter-v1-hardening-report.json"
 
       - name: Emit formal access-not-provided result
         env:
@@ -76,8 +88,11 @@ jobs:
           policy_report = json.loads(
               (root / 'policy/timestamped-odds-acquisition-v1-policy-validation.json').read_text()
           )
-          self_test = json.loads(
-              (root / 'self-test/synthetic-adapter-self-test.json').read_text()
+          base_test = json.loads(
+              (root / 'base-self-test/synthetic-adapter-self-test.json').read_text()
+          )
+          hardening = json.loads(
+              (root / 'hardening/timestamped-odds-adapter-v1-hardening-report.json').read_text()
           )
           access = json.loads(
               (root / 'access/timestamped-odds-qualification-v1-report.json').read_text()
@@ -90,9 +105,37 @@ jobs:
           assert policy_report['quality']['market_metrics_calculated'] is False, policy_report
           assert policy_report['quality']['subscription_or_purchase_created'] is False, policy_report
 
-          assert self_test['future_snapshot_rejected'] is True, self_test
-          assert self_test['ambiguous_event_rejected'] is True, self_test
-          assert self_test['valid_quote_count'] == 1, self_test
+          assert base_test['future_snapshot_rejected'] is True, base_test
+          assert base_test['ambiguous_event_rejected'] is True, base_test
+          assert base_test['valid_quote_count'] == 1, base_test
+
+          checks = hardening['checks']
+          boundary = hardening['execution_boundary']
+          assert checks['manifest_rows'] == 180, hardening
+          assert checks['manifest_quota_ceiling'] == 1800, hardening
+          assert checks['opening_labels_created'] == 0, hardening
+          assert checks['strict_event_and_tipoff_match'] is True, hardening
+          assert checks['wrong_tipoff_rejected'] is True, hardening
+          assert checks['future_snapshot_rejected'] is True, hardening
+          assert checks['bookmaker_update_after_snapshot_rejected'] is True, hardening
+          assert checks['coverage_only_tie_break'] == 'synthetic_a', hardening
+          assert checks['nonselected_abnormal_book_does_not_block'] is True, hardening
+          assert checks['global_pit_violation_blocks'] is True, hardening
+          assert checks['quota_headers_enforced'] is True, hardening
+          assert boundary == {
+              'network_requests_made': 0,
+              'api_key_read': False,
+              'paid_endpoint_called': False,
+              'real_quotes_downloaded': 0,
+              'subscription_or_purchase_created': False,
+              'market_metrics_calculated': False,
+              'quote_level_rows_retained': 0,
+              'ready_for_paid_qualification_execution': False,
+              'ready_for_production_backfill': False,
+              'ready_for_market_backtest': False,
+              'ready_for_betting_edge_claim': False,
+              'formal_stake': 0,
+          }, boundary
 
           assert access['decision_state'] == 'ACCESS_NOT_PROVIDED', access
           assert access['coverage']['network_requests_made'] == 0, access
@@ -144,7 +187,8 @@ jobs:
           name: timestamped-odds-adapter-v1-offline-validation
           path: |
             /tmp/nbavl-timestamped-odds-adapter-v1/policy/timestamped-odds-acquisition-v1-policy-validation.json
-            /tmp/nbavl-timestamped-odds-adapter-v1/self-test/synthetic-adapter-self-test.json
+            /tmp/nbavl-timestamped-odds-adapter-v1/base-self-test/synthetic-adapter-self-test.json
+            /tmp/nbavl-timestamped-odds-adapter-v1/hardening/timestamped-odds-adapter-v1-hardening-report.json
             /tmp/nbavl-timestamped-odds-adapter-v1/access/timestamped-odds-qualification-v1-report.json
           retention-days: 14
           if-no-files-found: error

@@ -1,0 +1,94 @@
+name: Validate Wyatt SQLite census runner v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/run_wyatt_sqlite_census_v1.py"
+      - "docs/wyatt-sqlite-census-runner-v1.md"
+      - ".github/workflows/validate-wyatt-sqlite-census-runner-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-runner-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile runner
+        run: python -m py_compile scripts/run_wyatt_sqlite_census_v1.py
+
+      - name: Run synthetic read-only census
+        run: |
+          python scripts/run_wyatt_sqlite_census_v1.py \
+            --self-test \
+            --output-dir out/synthetic
+
+      - name: Write input-required state
+        run: |
+          python scripts/run_wyatt_sqlite_census_v1.py \
+            --write-input-required-report \
+            --output-dir out/input-required
+
+      - name: Enforce synthetic and no-raw boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          schema = json.loads(Path("out/synthetic/aggregate_schema_report.json").read_text())
+          coverage = json.loads(Path("out/synthetic/aggregate_coverage_report.json").read_text())
+          sample = json.loads(Path("out/synthetic/privacy_safe_schema_sample.json").read_text())
+          waiting = json.loads(Path("out/input-required/input-required-report.json").read_text())
+
+          assert schema["report_type"] == "synthetic_self_test"
+          assert schema["qualification_evaluated"] is False
+          assert schema["cross_source_audit_executed"] is False
+          assert schema["database"]["integrity_check"] == ["ok"]
+          assert schema["database"]["table_count"] == 4
+          assert schema["aggregate"]["raw_rows_emitted"] == 0
+          assert schema["aggregate"]["raw_database_emitted"] is False
+          assert schema["boundaries"]["input_modified"] is False
+          assert schema["boundaries"]["existing_silver_replacement"] is False
+          assert schema["boundaries"]["existing_gold_replacement"] is False
+          assert schema["boundaries"]["model_metrics"] is False
+          assert schema["boundaries"]["market_metrics"] is False
+          assert schema["boundaries"]["formal_stake"] == 0
+
+          assert coverage["cross_source_audit_executed"] is False
+          assert coverage["qualification_evaluated"] is False
+          assert coverage["raw_rows_emitted"] == 0
+
+          assert sample["raw_rows_emitted"] == 0
+          assert "rows" not in sample
+
+          assert waiting["formal_state"] == "INPUT_FILE_REQUIRED"
+          assert waiting["runner_ready"] is True
+          assert waiting["input_file_present"] is False
+          assert waiting["database_opened"] is False
+          assert waiting["qualification_evaluated"] is False
+          assert waiting["raw_rows_emitted"] == 0
+          assert waiting["existing_silver_replacement"] is False
+          assert waiting["existing_gold_replacement"] is False
+          assert waiting["formal_stake"] == 0
+          PY
+
+      - name: Upload aggregate-only runner artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wyatt-sqlite-census-runner-v1
+          path: |
+            out/synthetic/aggregate_schema_report.json
+            out/synthetic/aggregate_coverage_report.json
+            out/synthetic/privacy_safe_schema_sample.json
+            out/input-required/input-required-report.json
+          retention-days: 14
+          if-no-files-found: error

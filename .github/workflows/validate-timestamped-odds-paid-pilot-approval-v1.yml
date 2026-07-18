@@ -1,0 +1,103 @@
+name: Validate Timestamped Odds paid pilot approval v1
+
+on:
+  pull_request:
+    paths:
+      - "data/timestamped-odds-paid-pilot-approval-v1.json"
+      - "docs/timestamped-odds-paid-pilot-approval-v1.md"
+      - "scripts/validate_timestamped_odds_paid_pilot_approval_v1.py"
+      - ".github/workflows/validate-timestamped-odds-paid-pilot-approval-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  approval-packet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_timestamped_odds_paid_pilot_approval_v1.py
+
+      - name: Validate no-spend approval packet and self-tests
+        run: |
+          rm -rf /tmp/nbavl-paid-pilot-approval-v1
+          mkdir -p /tmp/nbavl-paid-pilot-approval-v1
+          python scripts/validate_timestamped_odds_paid_pilot_approval_v1.py \
+            --packet data/timestamped-odds-paid-pilot-approval-v1.json \
+            --output /tmp/nbavl-paid-pilot-approval-v1/approval-report-v1.json \
+            --self-test
+
+      - name: Enforce approval and non-execution boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          packet = json.loads(
+              Path('data/timestamped-odds-paid-pilot-approval-v1.json').read_text()
+          )
+          report = json.loads(
+              Path('/tmp/nbavl-paid-pilot-approval-v1/approval-report-v1.json').read_text()
+          )
+
+          assert report['formal_state'] == 'APPROVAL_PACKET_VALID_AWAITING_USER_APPROVAL', report
+          assert report['passed_checks'] == report['total_checks'], report
+          assert report['failures'] == [], report
+          assert packet['approval_state'] == 'AWAITING_EXPLICIT_USER_APPROVAL', packet
+          assert packet['maximum_exposure']['base_subscription_price_usd'] == 30, packet
+          assert packet['maximum_exposure']['recurring_subscription'] is True, packet
+          assert packet['maximum_exposure']['automatic_purchase_or_subscription_allowed'] is False, packet
+          assert packet['frozen_pilot']['unique_historical_requests'] == 180, packet
+          assert packet['frozen_pilot']['maximum_pilot_credits'] == 1800, packet
+          assert packet['execution_boundary']['api_key_read'] is False, packet
+          assert packet['execution_boundary']['paid_endpoint_calls'] == 0, packet
+          assert packet['execution_boundary']['ready_for_paid_qualification_execution'] is False, packet
+          assert packet['execution_boundary']['ready_for_production_backfill'] is False, packet
+          assert packet['execution_boundary']['ready_for_market_backtest'] is False, packet
+          assert packet['execution_boundary']['formal_stake'] == 0, packet
+          PY
+
+      - name: Verify no secrets or executable paid client were introduced
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          paths = [
+              Path('data/timestamped-odds-paid-pilot-approval-v1.json'),
+              Path('docs/timestamped-odds-paid-pilot-approval-v1.md'),
+              Path('scripts/validate_timestamped_odds_paid_pilot_approval_v1.py'),
+          ]
+          text = '\n'.join(path.read_text() for path in paths)
+          forbidden = [
+              'apiKey=sk_',
+              'THE_ODDS_API_KEY=',
+              'requests.get(',
+              'urllib.request.urlopen(',
+              'httpx.get(',
+              'subprocess.run(["curl"',
+          ]
+          found = [token for token in forbidden if token in text]
+          assert not found, found
+          packet = json.loads(paths[0].read_text())
+          assert packet['execution_boundary']['account_created_by_automation'] is False
+          assert packet['execution_boundary']['subscription_created_by_automation'] is False
+          assert packet['execution_boundary']['payment_created_by_automation'] is False
+          PY
+
+      - name: Upload aggregate approval report
+        uses: actions/upload-artifact@v4
+        with:
+          name: timestamped-odds-paid-pilot-approval-v1
+          path: /tmp/nbavl-paid-pilot-approval-v1/approval-report-v1.json
+          retention-days: 14
+          if-no-files-found: error

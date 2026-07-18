@@ -212,12 +212,19 @@ jobs:
             --output-dir "$ROOT/accuracy-dataset"
 
       - name: Run aggregate Expected Minutes audit
+        id: accuracy_audit
         run: |
+          set +e
           python scripts/audit_expected_minutes_accuracy.py \
             --accuracy-rows "$ROOT/accuracy-dataset/expected-minutes-accuracy-rows.csv" \
             --dataset-report "$ROOT/accuracy-dataset/expected-minutes-accuracy-dataset-report.json" \
             --policy data/expected-minutes-accuracy-audit-v1.json \
             --output-dir "$ROOT/accuracy-audit"
+          AUDIT_EXIT=$?
+          set -e
+          test "$AUDIT_EXIT" -eq 0 -o "$AUDIT_EXIT" -eq 2
+          test -s "$ROOT/accuracy-audit/expected-minutes-accuracy-audit.json"
+          echo "audit_exit=$AUDIT_EXIT" >> "$GITHUB_OUTPUT"
 
       - name: Remove player-level data
         if: always()
@@ -268,7 +275,7 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
-      - name: Enforce structural and non-activation boundaries
+      - name: Enforce executed-audit and non-activation boundaries
         if: always()
         run: |
           python - <<'PY'
@@ -277,11 +284,45 @@ jobs:
           root = Path(os.environ['ROOT'])
           dataset = json.loads((root/'accuracy-dataset/expected-minutes-accuracy-dataset-report.json').read_text())
           audit = json.loads((root/'accuracy-audit/expected-minutes-accuracy-audit.json').read_text())
+          structural = audit['quality']['structural_gate_results']
+          blockers = {name for name, passed in structural.items() if not passed}
+          expected_blockers = {
+              'minimum_evaluable_games',
+              'actual_boxscore_join_rate',
+              'minimum_conditional_role_rows',
+              'minimum_actual_bench_rows',
+              'minimum_long_history_rows',
+              'minimum_complete_team_game_groups',
+          }
+          safety_gates = {
+              'dataset_builder_ready',
+              'combined_selected_games_exact',
+              'minimum_player_snapshot_rows',
+              'identity_match_rate',
+              'expected_minutes_coverage',
+              'minimum_actual_starter_rows',
+              'strict_prior_date_violations',
+              'duplicate_selected_games',
+              'duplicate_accuracy_rows',
+              'target_labels_not_used_in_prediction',
+              'missing_actual_not_imputed_zero',
+              'missing_expected_not_imputed_zero',
+          }
           assert dataset['decision']['ready_for_expected_minutes_accuracy_audit'] is True, dataset
-          assert audit['quality']['all_structural_gates_passed'] is True, audit
+          assert blockers == expected_blockers, {'blockers': sorted(blockers), 'structural': structural}
+          assert all(structural[name] is True for name in safety_gates), structural
+          assert audit['quality']['all_primary_accuracy_gates_passed'] is True, audit
+          assert audit['decision']['expected_minutes_accuracy_audit_passed'] is False
+          assert audit['decision']['ready_for_injury_feature_walk_forward_holdout_design'] is False
           assert audit['decision']['ready_for_injury_feature_walk_forward_holdout'] is False
           assert audit['decision']['ready_for_model_training'] is False
           assert audit['decision']['ready_for_probability_adjustment'] is False
           assert audit['decision']['ready_for_betting_edge_claim'] is False
-          print(json.dumps({'coverage':audit['coverage'],'primary_accuracy':audit['primary_accuracy'],'accuracy_gate_results':audit['quality']['accuracy_gate_results'],'decision':audit['decision']}, indent=2))
+          print(json.dumps({
+              'status': 'AUDIT_EXECUTED_STRUCTURAL_BLOCKED',
+              'coverage': audit['coverage'],
+              'structural_blockers': sorted(blockers),
+              'primary_accuracy_descriptive_only': audit['primary_accuracy'],
+              'decision': audit['decision'],
+          }, indent=2))
           PY

@@ -1,0 +1,238 @@
+{
+  "schema_version": "expected-minutes-accuracy-audit-policy-v3",
+  "roadmap_parent": "2026-07-17-step-3-expected-minutes-accuracy-audit",
+  "predeclaration": {
+    "policy_committed_before_v3_accuracy_result": true,
+    "policy_committed_before_v3_accuracy_execution": true,
+    "v1_v2_primary_accuracy_thresholds_preserved": true,
+    "v1_v2_sample_size_thresholds_preserved": true,
+    "expanded_census_may_define_input_availability_but_not_accuracy_thresholds": true,
+    "execution_requires_separate_post_predeclaration_work": true,
+    "post_result_threshold_edits_allowed": false
+  },
+  "upstream_census": {
+    "source_pr": 52,
+    "source_merge_commit": "b2e07050e883cc62c35714406bdab606377d301c",
+    "official_workflow_run": 29632917590,
+    "official_artifact_name": "expanded-participation-census-v1",
+    "official_artifact_id": 8426181763,
+    "official_artifact_digest": "sha256:2acdf9c62fb16c19f649fdeffce1fa79261adfba3ee186cf707c77631d5d7ba0",
+    "latest_head_validation_run": 29633290057,
+    "formal_state": "CENSUS_READY_AUDIT_V3_ELIGIBLE",
+    "accuracy_metrics_calculated_in_census": false,
+    "structural_blockers": 0,
+    "sample_blockers": 0
+  },
+  "evaluation_population": {
+    "combined_selected_independent_games": 293,
+    "selection_policy": "latest_feature_ready_at_or_before_t60",
+    "minimum_minutes_before_tip": 60,
+    "fallback_allowed": false,
+    "waves": ["wave1", "wave2", "wave3"],
+    "wave_selected_games": {
+      "wave1": 91,
+      "wave2": 85,
+      "wave3": 117
+    },
+    "deduplication_key": "historical_game_id",
+    "player_population": "players listed in the frozen selected official injury snapshots",
+    "prediction_source": "prior_only_expected_minutes",
+    "actual_participation_source": "NBA Official LiveData Boxscore",
+    "actual_minutes_source": "NBA Official LiveData Boxscore",
+    "target_game_labels_are_evaluation_only": true
+  },
+  "frozen_input_counts": {
+    "successful_official_source_games": 293,
+    "source_missing_games": 0,
+    "official_player_rows": 10309,
+    "selected_player_snapshot_rows": 3045,
+    "identity_matched_rows": 3037,
+    "official_participation_join_rows": 3022,
+    "unknown_rows": 103,
+    "games_with_evaluable_played_rows": 226,
+    "conditional_played_rows": 516,
+    "actual_starter_rows": 307,
+    "actual_bench_rows": 209,
+    "long_history_rows": 502,
+    "complete_team_game_groups": 450,
+    "recognized_roster_transition_rows": 1,
+    "unrecognized_team_mismatches": 0
+  },
+  "recognized_roster_transition_contract": {
+    "source_policy": "data/expanded-participation-census-v1.json",
+    "required_transition_id": "2024-02-08-gsw-ind-same-day-trade-v1",
+    "historical_game_id": "22300733",
+    "game_date": "2024-02-08",
+    "expected_team_abbr": "GSW",
+    "official_team_abbr": "IND",
+    "required_rows": 1,
+    "raw_official_labels_modified": false,
+    "evaluation_handling": "exclude_official_opponent_team_row_from_target_team_evaluation_join",
+    "counted_as_played": false,
+    "counted_as_dnp": false,
+    "imputed_as_zero_minutes": false,
+    "all_other_team_mismatches_are_fatal": true
+  },
+  "participation_labels": {
+    "primary_played_label": "PLAYED",
+    "explicit_zero_labels": ["EXPLICIT_DNP", "INACTIVE_OR_NOT_DRESSED"],
+    "excluded_labels": ["SOURCE_MISSING", "UNKNOWN", "IDENTITY_MISSING"],
+    "missing_player_row_is_dnp": false,
+    "missing_player_row_is_zero_minutes": false,
+    "unknown_label_is_zero_minutes": false,
+    "recognized_roster_transition_is_zero_minutes": false
+  },
+  "primary_estimand": {
+    "name": "conditional_role_minutes_given_official_played_label",
+    "prediction": "prior_only_expected_minutes",
+    "label": "official_target_game_actual_minutes",
+    "include": [
+      "official participation label PLAYED",
+      "positive official actual minutes",
+      "matched deterministic identity",
+      "prior-only Expected Minutes available"
+    ],
+    "exclude": [
+      "EXPLICIT_DNP",
+      "INACTIVE_OR_NOT_DRESSED",
+      "SOURCE_MISSING",
+      "UNKNOWN",
+      "IDENTITY_MISSING",
+      "missing expected minutes",
+      "recognized same-day roster transition rows"
+    ]
+  },
+  "naive_prior_only_baselines": [
+    {
+      "name": "last_prior_game_minutes",
+      "promotion_comparison": true
+    },
+    {
+      "name": "recent10_mean_minutes",
+      "promotion_comparison": true
+    },
+    {
+      "name": "current_season_mean_minutes",
+      "promotion_comparison": false
+    }
+  ],
+  "secondary_estimands": [
+    {
+      "name": "status_adjusted_realized_minutes",
+      "prediction": "expected_minutes * (1 - status_unavailability_weight)",
+      "label": "official actual minutes for PLAYED and explicit official zero for EXPLICIT_DNP or INACTIVE_OR_NOT_DRESSED",
+      "promotion_gate": false
+    },
+    {
+      "name": "status_play_probability",
+      "prediction": "1 - status_unavailability_weight",
+      "label": "1 for PLAYED and 0 for EXPLICIT_DNP or INACTIVE_OR_NOT_DRESSED",
+      "promotion_gate": false
+    }
+  ],
+  "structural_gates": {
+    "required_combined_selected_games": 293,
+    "minimum_games_with_evaluable_player_rows": 150,
+    "minimum_selected_player_snapshot_rows": 1500,
+    "minimum_official_game_source_coverage": 1.0,
+    "minimum_identity_match_rate": 0.95,
+    "minimum_expected_minutes_coverage": 0.85,
+    "minimum_participation_label_join_rate_for_matched_players": 0.99,
+    "maximum_unknown_rate_for_matched_players": 0.05,
+    "maximum_source_missing_games": 0,
+    "minimum_conditional_role_rows": 500,
+    "minimum_actual_starter_rows": 150,
+    "minimum_actual_bench_rows": 200,
+    "minimum_long_history_rows": 400,
+    "minimum_complete_team_game_groups": 100,
+    "required_recognized_roster_transition_rows": 1,
+    "maximum_unrecognized_team_mismatches": 0,
+    "strict_prior_date_violations": 0,
+    "ambiguous_identity_rows": 0,
+    "fuzzy_identity_used": false,
+    "duplicate_selected_games": 0,
+    "duplicate_accuracy_rows": 0,
+    "duplicate_official_game_player_rows": 0,
+    "invalid_participation_labels": 0,
+    "invalid_minutes_label_combinations": 0,
+    "forbidden_player_level_files_retained": 0
+  },
+  "frozen_input_integrity_gates": {
+    "require_exact_frozen_input_counts": true,
+    "require_exact_wave_selected_game_counts": true,
+    "require_exact_census_formal_state": true,
+    "require_census_accuracy_metrics_calculated_false": true,
+    "require_raw_official_labels_unmodified": true,
+    "require_target_labels_not_used_in_prediction": true,
+    "require_missing_values_not_imputed_as_zero": true
+  },
+  "primary_accuracy_gates": {
+    "maximum_overall_mae_minutes": 6.5,
+    "maximum_overall_rmse_minutes": 9.0,
+    "maximum_overall_median_absolute_error_minutes": 5.5,
+    "maximum_absolute_overall_bias_minutes": 2.0,
+    "minimum_mae_improvement_vs_last_prior_game_minutes": 0.25,
+    "minimum_mae_improvement_vs_recent10_mean_minutes": 0.0,
+    "maximum_actual_starter_mae_minutes": 6.5,
+    "maximum_actual_bench_mae_minutes": 7.5,
+    "maximum_long_history_mae_minutes": 6.25,
+    "maximum_complete_team_played_aggregate_mae_minutes": 18.0,
+    "maximum_absolute_complete_team_played_aggregate_bias_minutes": 7.0,
+    "maximum_monitored_subgroup_absolute_bias_minutes": 4.0,
+    "minimum_monitored_subgroup_rows": 50
+  },
+  "required_subgroups": [
+    "availability_status",
+    "participation_label",
+    "actual_role",
+    "expected_minutes_method",
+    "prior_game_count_band",
+    "expected_minutes_band",
+    "days_since_latest_prior_game_band",
+    "source_wave"
+  ],
+  "decision_states": [
+    "STRUCTURAL_BLOCKED",
+    "VALID_NEGATIVE_RESULT",
+    "ACCURACY_PASS"
+  ],
+  "decision_rules": {
+    "STRUCTURAL_BLOCKED": "one or more structural or frozen-input integrity gates fail; numerical results, if produced, are descriptive only",
+    "VALID_NEGATIVE_RESULT": "all structural and frozen-input integrity gates pass but one or more primary accuracy gates fail",
+    "ACCURACY_PASS": "all structural, frozen-input integrity, and primary accuracy gates pass"
+  },
+  "post_decision_permissions": {
+    "STRUCTURAL_BLOCKED": {
+      "ready_for_injury_feature_walk_forward_holdout_design_predeclaration": false
+    },
+    "VALID_NEGATIVE_RESULT": {
+      "ready_for_injury_feature_walk_forward_holdout_design_predeclaration": false
+    },
+    "ACCURACY_PASS": {
+      "ready_for_injury_feature_walk_forward_holdout_design_predeclaration": true
+    },
+    "ready_for_injury_feature_walk_forward_holdout_execution": false,
+    "ready_for_model_training": false,
+    "ready_for_probability_adjustment": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "guardrails": {
+    "v1_v2_structural_blocks_are_reclassified_as_pass": false,
+    "missing_actual_is_zero_minutes": false,
+    "missing_expected_minutes_is_zero_minutes": false,
+    "explicit_dnp_is_included_in_primary_role_minutes_metric": false,
+    "inactive_is_included_in_primary_role_minutes_metric": false,
+    "recognized_roster_transition_is_included_in_primary_metric": false,
+    "actual_starter_or_bench_is_feature_input": false,
+    "actual_target_minutes_may_update_prediction": false,
+    "status_weights_are_validated_expected_minutes": false,
+    "secondary_metrics_can_override_primary_failure": false,
+    "subgroup_results_can_override_primary_failure": false,
+    "accuracy_pass_directly_executes_holdout": false,
+    "accuracy_pass_directly_enables_model_training": false,
+    "accuracy_pass_directly_enables_probability_adjustment": false,
+    "accuracy_pass_directly_enables_betting_claim": false,
+    "accuracy_result_may_change_this_policy": false
+  }
+}

@@ -1,0 +1,106 @@
+name: Validate Timestamped Odds pilot manifest v1
+
+on:
+  pull_request:
+    paths:
+      - "data/timestamped-odds-acquisition-v1.json"
+      - "scripts/qualify_timestamped_odds_v1.py"
+      - "scripts/build_timestamped_odds_pilot_manifest_v1.py"
+      - ".github/workflows/validate-timestamped-odds-pilot-manifest-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+    inputs:
+      gold_run_id:
+        description: "Run containing historical-gold-multiseason"
+        required: true
+        default: "29551715399"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile manifest modules
+        run: |
+          python -m py_compile scripts/qualify_timestamped_odds_v1.py
+          python -m py_compile scripts/build_timestamped_odds_pilot_manifest_v1.py
+      - name: Run deterministic no-price self-test
+        run: |
+          rm -rf /tmp/nbavl-odds-pilot-manifest-self-test
+          PYTHONPATH=scripts python scripts/build_timestamped_odds_pilot_manifest_v1.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --output-dir /tmp/nbavl-odds-pilot-manifest-self-test \
+            --self-test
+
+  live-manifest:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GOLD_RUN_ID: ${{ github.event.inputs.gold_run_id || '29551715399' }}
+      ROOT: /tmp/nbavl-odds-pilot-manifest-v1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download frozen Historical Gold
+        run: |
+          rm -rf "$ROOT"
+          mkdir -p "$ROOT/gold" "$ROOT/result"
+          gh run download "$GOLD_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name historical-gold-multiseason \
+            --dir "$ROOT/gold"
+          GOLD_FILE="$(find "$ROOT/gold" -name 'historical-gold-multiseason.sqlite.gz' -print -quit)"
+          test -n "$GOLD_FILE"
+          echo "GOLD_FILE=$GOLD_FILE" >> "$GITHUB_ENV"
+      - name: Build official exact schedule and frozen no-price manifest
+        run: |
+          PYTHONPATH=scripts python scripts/build_timestamped_odds_pilot_manifest_v1.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --gold "$GOLD_FILE" \
+            --output-dir "$ROOT/result"
+      - name: Enforce manifest and no-spend boundary
+        run: |
+          python - <<'PY'
+          import csv,json,os
+          from pathlib import Path
+          root=Path(os.environ['ROOT'])/'result'
+          report=json.loads((root/'timestamped-odds-pilot-manifest-v1.json').read_text())
+          manifest=list(csv.DictReader((root/'timestamped-odds-pilot-request-manifest-v1.csv').open()))
+          schedule=list(csv.DictReader((root/'timestamped-odds-pilot-exact-schedule-v1.csv').open()))
+          assert report['formal_state']=='PILOT_MANIFEST_READY', report
+          assert len(schedule)==30 and len(manifest)==180, report
+          assert report['coverage']['estimated_paid_quota_credits']==1800, report
+          assert report['coverage']['matched_sample_games']==30, report
+          assert report['quality']['official_failures']==[], report
+          assert report['quality']['opening_labels']==0, report
+          assert report['quality']['prices_in_manifest'] is False, report
+          assert report['quality']['network_calls_to_paid_odds_provider']==0, report
+          assert report['quality']['api_key_read'] is False, report
+          assert report['quality']['paid_endpoint_called'] is False, report
+          assert report['decision']['ready_for_paid_qualification_execution'] is False, report
+          assert report['decision']['ready_for_market_backtest'] is False, report
+          assert report['decision']['formal_stake']==0, report
+          forbidden={'price','decimal_price','home_price','away_price','api_key'}
+          assert not any(forbidden & set(row) for row in manifest), manifest[0]
+          PY
+      - name: Remove downloaded Gold before Artifact upload
+        run: rm -rf "$ROOT/gold"
+      - name: Upload no-price pilot manifest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: timestamped-odds-pilot-manifest-v1
+          path: ${{ env.ROOT }}/result
+          retention-days: 14
+          if-no-files-found: error

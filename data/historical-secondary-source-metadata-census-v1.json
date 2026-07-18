@@ -1,0 +1,90 @@
+{
+  "schema_version": "historical-secondary-source-metadata-census-v1",
+  "created_at": "2026-07-18T00:00:00Z",
+  "policy_dependency": "historical-secondary-source-qualification-v1",
+  "formal_state": "METADATA_READY_DOWNLOAD_NOT_AUTHORIZED",
+  "candidate_count": 2,
+  "metadata_ready_count": 2,
+  "full_secondary_source_qualified_count": 0,
+  "results": [
+    {
+      "source_id": "kaggle_eoinamoore_historical_nba",
+      "formal_outcome": "METADATA_READY_DOWNLOAD_NOT_AUTHORIZED",
+      "metadata_observed_on": "2026-07-18",
+      "page_resolves": true,
+      "provider_identity_present": true,
+      "license_label": "CC0: Public Domain",
+      "listed_assets": [
+        "PlayerStatistics.csv",
+        "TeamStatistics.csv",
+        "Games.csv",
+        "LeagueSchedule24_25.csv",
+        "Players.csv",
+        "TeamHistories.csv"
+      ],
+      "eligible_future_roles": [
+        "game_identity_crosscheck",
+        "team_boxscore_crosscheck",
+        "player_boxscore_crosscheck"
+      ],
+      "blocked_future_roles": [
+        "advanced_stats_crosscheck_until_file_inventory_verifies_assets",
+        "pbp_crosscheck_until_file_inventory_verifies_assets"
+      ],
+      "known_blockers": [
+        "backend rebuild in progress",
+        "advanced files not listed as current assets",
+        "play-by-play file not listed as a current asset",
+        "schema and season coverage not yet inspected"
+      ]
+    },
+    {
+      "source_id": "kaggle_wyattowalsh_basketball",
+      "formal_outcome": "METADATA_READY_DOWNLOAD_NOT_AUTHORIZED",
+      "metadata_observed_on": "2026-07-18",
+      "page_resolves": true,
+      "provider_identity_present": true,
+      "license_label": "CC BY-SA 4.0",
+      "listed_assets": [
+        "SQLite database",
+        "65000+ games claim",
+        "13000000+ play-by-play rows claim"
+      ],
+      "eligible_future_roles": [
+        "game_identity_crosscheck",
+        "team_boxscore_crosscheck",
+        "player_boxscore_crosscheck",
+        "pbp_coverage_crosscheck",
+        "sqlite_schema_reference"
+      ],
+      "blocked_future_roles": [
+        "freshness_claim_until_database_content_is_measured",
+        "production_or_primary_source_role"
+      ],
+      "known_blockers": [
+        "visible dataset update metadata is materially older than the page daily-update claim",
+        "schema and season coverage not yet inspected",
+        "game and team identifier semantics not yet verified"
+      ]
+    }
+  ],
+  "next_execution_gate": {
+    "separate_download_pilot_pr_required": true,
+    "first_pilot_season": "2023-24",
+    "minimum_reference_games": 1000,
+    "deterministic_matching_only": true,
+    "fuzzy_matching": false,
+    "existing_silver_replacement": false
+  },
+  "boundaries": {
+    "downloads_in_this_pr": 0,
+    "external_data_calls_in_workflow": 0,
+    "raw_rows_in_artifact": 0,
+    "model_retraining": false,
+    "model_metrics": false,
+    "market_metrics": false,
+    "existing_silver_replacement": false,
+    "existing_gold_replacement": false,
+    "formal_stake": 0
+  }
+}

@@ -1,0 +1,80 @@
+name: Validate Timestamped Odds acquisition v1 policy
+
+on:
+  pull_request:
+    paths:
+      - "data/timestamped-odds-acquisition-v1.json"
+      - "docs/timestamped-odds-acquisition-v1.md"
+      - "scripts/validate_timestamped_odds_acquisition_v1_policy.py"
+      - ".github/workflows/validate-timestamped-odds-acquisition-v1-policy.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile policy validator
+        run: python -m py_compile scripts/validate_timestamped_odds_acquisition_v1_policy.py
+
+      - name: Run deterministic mutation self-tests
+        run: |
+          python scripts/validate_timestamped_odds_acquisition_v1_policy.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --self-test
+
+      - name: Validate frozen acquisition policy
+        run: |
+          rm -rf /tmp/nbavl-timestamped-odds-policy-v1
+          mkdir -p /tmp/nbavl-timestamped-odds-policy-v1
+          python scripts/validate_timestamped_odds_acquisition_v1_policy.py \
+            --policy data/timestamped-odds-acquisition-v1.json \
+            --output /tmp/nbavl-timestamped-odds-policy-v1/timestamped-odds-acquisition-v1-policy-validation.json
+
+      - name: Enforce policy-only and no-spend boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path('/tmp/nbavl-timestamped-odds-policy-v1/timestamped-odds-acquisition-v1-policy-validation.json').read_text()
+          )
+          quality = report['quality']
+          decision = report['decision']
+
+          assert quality['failed_checks'] == [], report
+          assert quality['network_calls_made'] is False, report
+          assert quality['paid_endpoint_called'] is False, report
+          assert quality['api_key_read'] is False, report
+          assert quality['quotes_downloaded'] is False, report
+          assert quality['market_metrics_calculated'] is False, report
+          assert quality['subscription_or_purchase_created'] is False, report
+
+          assert decision['ready_for_timestamped_odds_qualification_implementation'] is True, report
+          assert decision['ready_for_paid_qualification_execution'] is False, report
+          assert decision['ready_for_production_manifest'] is False, report
+          assert decision['ready_for_production_backfill'] is False, report
+          assert decision['ready_for_market_backtest'] is False, report
+          assert decision['ready_for_clv_ev_roi'] is False, report
+          assert decision['ready_for_betting_edge_claim'] is False, report
+          assert decision['formal_stake'] == 0, report
+          PY
+
+      - name: Upload policy validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: timestamped-odds-acquisition-v1-policy-validation
+          path: /tmp/nbavl-timestamped-odds-policy-v1/timestamped-odds-acquisition-v1-policy-validation.json
+          retention-days: 14
+          if-no-files-found: error

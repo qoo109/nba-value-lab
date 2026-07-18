@@ -1,0 +1,299 @@
+{
+  "schema_version": "real-timestamped-odds-acquisition-policy-v1",
+  "roadmap_parent": "step-5-real-timestamped-odds-acquisition",
+  "predeclaration": {
+    "policy_committed_before_paid_api_request": true,
+    "policy_committed_before_raw_historical_odds_inspection": true,
+    "policy_committed_before_coverage_results": true,
+    "policy_committed_before_market_backtest": true,
+    "post_result_source_substitution_allowed": false,
+    "post_result_population_substitution_allowed": false,
+    "post_result_snapshot_substitution_allowed": false,
+    "outcome_or_roi_based_bookmaker_selection_allowed": false
+  },
+  "upstream_evidence": {
+    "base_main_commit": "95bf21a2b7dbe44cbd3eba09a9d72873c391fc70",
+    "injury_holdout": {
+      "source_pr": 56,
+      "source_merge_commit": "95bf21a2b7dbe44cbd3eba09a9d72873c391fc70",
+      "workflow_run": 29636667921,
+      "artifact_name": "injury-feature-walk-forward-holdout-v1",
+      "artifact_id": 8427322134,
+      "artifact_digest": "sha256:f5a00bf4c5034b40d5692306459611012e176092e54ab4f647c6c23b0c3e40a0",
+      "formal_state": "VALID_NEGATIVE_RESULT",
+      "market_research_model_path": "frozen_baseline_only"
+    },
+    "baseline_oof": {
+      "source_run": 29551715399,
+      "artifact_name": "model-walk-forward-v2",
+      "artifact_id": 8396002523,
+      "artifact_digest": "sha256:6063adac9851b47d339a93e35935115008b736a16925548d36a8c54a0353b41b",
+      "model_version": "walk-forward-v2",
+      "probability_field": "predicted_home_win_probability",
+      "calibration_decision": "raw_logistic_elo"
+    }
+  },
+  "existing_assets_reused": {
+    "point_in_time_odds_layer": "docs/point-in-time-odds-layer-v1.md",
+    "odds_builder": "scripts/build_point_in_time_odds.py",
+    "odds_template": "data/templates/point-in-time-odds-template.csv",
+    "source_registry": "data/historical-odds-source-registry.json",
+    "closing_benchmark": "kaggle_christophertreasure_nba_odds",
+    "rebuild_schema_or_registry": false
+  },
+  "source_contract": {
+    "primary_source_id": "the_odds_api_historical_v4",
+    "provider": "The Odds API Pty Ltd",
+    "source_class": "commercial_market_data_aggregator",
+    "api_base": "https://api.the-odds-api.com/v4",
+    "documentation_url": "https://the-odds-api.com/liveapi/guides/v4/",
+    "historical_data_url": "https://the-odds-api.com/historical-odds-data/",
+    "terms_url": "https://the-odds-api.com/terms-and-conditions.html",
+    "terms_checked_at": "2026-07-18",
+    "historical_access": "paid_plan_only",
+    "api_secret_name": "THE_ODDS_API_KEY",
+    "api_key_must_remain_secret": true,
+    "api_key_in_logs_or_artifacts": false,
+    "standalone_data_resale_or_redistribution": false,
+    "public_raw_or_normalized_odds_rows": false,
+    "public_allowed_outputs": [
+      "source manifest without credentials",
+      "request counts and quota usage",
+      "raw SHA-256 and byte counts",
+      "aggregate source-health and coverage QA",
+      "schema and adapter version",
+      "deidentified failure diagnostics"
+    ],
+    "restricted_storage_required_for_raw_and_normalized_rows": true,
+    "workflow_temporary_raw_files_deleted": true,
+    "final_legal_review_before_external_product": true,
+    "documented_source_properties": {
+      "featured_market_history_start": "2020-06-06",
+      "snapshot_interval_before_2022_09_18_minutes": 10,
+      "snapshot_interval_from_2022_09_18_minutes": 5,
+      "historical_query_returns_closest_snapshot_at_or_before_requested_time": true,
+      "historical_endpoint_credit_cost_per_region_per_market": 10
+    }
+  },
+  "full_target_population": {
+    "source": "frozen walk-forward-v2 OOF predictions",
+    "independent_games": 3688,
+    "deduplication_key": "game_id",
+    "seasons": [
+      {
+        "season_label": "2021-22",
+        "games": 1230,
+        "game_date_start": "2021-10-19",
+        "game_date_end": "2022-04-10"
+      },
+      {
+        "season_label": "2022-23",
+        "games": 1230,
+        "game_date_start": "2022-10-18",
+        "game_date_end": "2023-04-09"
+      },
+      {
+        "season_label": "2023-24",
+        "games": 1228,
+        "game_date_start": "2023-10-24",
+        "game_date_end": "2024-04-14"
+      }
+    ],
+    "model_path": "frozen_baseline_only",
+    "injury_candidate_included": false,
+    "game_outcomes_used_for_acquisition_selection": false,
+    "closing_market_results_used_for_acquisition_selection": false
+  },
+  "pilot_population": {
+    "independent_games": 90,
+    "games_per_season": 30,
+    "selection_method": "sort each season by sha256('timestamped-odds-v1-pilot|' + game_id) ascending and take first 30",
+    "selection_salt": "timestamped-odds-v1-pilot",
+    "selection_uses_outcomes_or_existing_odds": false,
+    "pilot_manifest_must_be_frozen_before_api_requests": true,
+    "date_or_game_replacement_after_failure": false
+  },
+  "api_query_contract": {
+    "sport_key": "basketball_nba",
+    "region": "us",
+    "markets": ["h2h"],
+    "odds_format": "decimal",
+    "date_format": "iso",
+    "include_sids": true,
+    "include_rotation_numbers": true,
+    "include_links": false,
+    "bookmakers_parameter": null,
+    "bookmaker_scope": "all bookmakers returned for the frozen region",
+    "spread_and_total_acquisition_in_v1": false,
+    "historical_events_endpoint_used_for_event_discovery": true,
+    "historical_odds_endpoint_used_for_featured_market_snapshots": true
+  },
+  "event_identity_contract": {
+    "team_mapping": "fixed deterministic NBA full-name to abbreviation map",
+    "home_team_exact_after_normalization": true,
+    "away_team_exact_after_normalization": true,
+    "provider_commence_local_date_timezone": "America/New_York",
+    "provider_commence_local_date_must_equal_gold_game_date": true,
+    "fuzzy_team_matching": false,
+    "fuzzy_schedule_matching": false,
+    "nearest_date_matching": false,
+    "ambiguous_event_matches_allowed": 0,
+    "provider_event_id_required": true,
+    "provider_commence_time_utc_required": true,
+    "event_discovery_query_time": "00:00 America/New_York on the frozen Gold game date",
+    "anchor_commence_time": "provider commence_time from the event-discovery response",
+    "maximum_commence_time_drift_minutes_across_snapshots": 30,
+    "games_exceeding_commence_time_drift_are_excluded_and_reported": true
+  },
+  "snapshot_contract": {
+    "fixed_snapshots": [
+      {"label": "T-6h", "seconds_before_anchor_commence": 21600},
+      {"label": "T-3h", "seconds_before_anchor_commence": 10800},
+      {"label": "T-1h", "seconds_before_anchor_commence": 3600},
+      {"label": "T-30m", "seconds_before_anchor_commence": 1800},
+      {"label": "Closing", "seconds_before_anchor_commence": 1}
+    ],
+    "opening_grid": [
+      {"label": "T-14d", "seconds_before_anchor_commence": 1209600},
+      {"label": "T-10d", "seconds_before_anchor_commence": 864000},
+      {"label": "T-7d", "seconds_before_anchor_commence": 604800},
+      {"label": "T-5d", "seconds_before_anchor_commence": 432000},
+      {"label": "T-3d", "seconds_before_anchor_commence": 259200},
+      {"label": "T-48h", "seconds_before_anchor_commence": 172800},
+      {"label": "T-24h", "seconds_before_anchor_commence": 86400},
+      {"label": "T-12h", "seconds_before_anchor_commence": 43200},
+      {"label": "T-6h", "seconds_before_anchor_commence": 21600}
+    ],
+    "opening_definition": "earliest valid two-sided quote on the frozen opening grid",
+    "opening_public_label": "OpeningGridProxy",
+    "opening_must_not_be_described_as_true_first_posted_bookmaker_open": true,
+    "source_snapshot_must_be_at_or_before_requested_time": true,
+    "maximum_source_snapshot_age_minutes": 15,
+    "bookmaker_last_update_must_be_at_or_before_source_snapshot": true,
+    "bookmaker_last_update_must_be_before_anchor_commence": true,
+    "closing_bookmaker_last_update_max_age_minutes": 60,
+    "later_snapshot_fallback": false,
+    "cross_book_fill": false,
+    "cross_game_fill": false
+  },
+  "quote_normalization_contract": {
+    "market_key": "h2h",
+    "required_outcomes": ["home_team", "away_team"],
+    "draw_outcome_allowed": false,
+    "decimal_price_strictly_greater_than": 1.0,
+    "american_price_used_as_canonical": false,
+    "line_value_for_moneyline": null,
+    "bookmaker_key_required": true,
+    "bookmaker_title_preserved": true,
+    "bookmaker_last_update_preserved": true,
+    "source_snapshot_timestamp_preserved": true,
+    "source_event_id_preserved": true,
+    "source_outcome_sid_preserved_when_available": true,
+    "raw_response_sha256_required": true,
+    "retrieved_at_utc_required": true,
+    "adapter_version_required": true,
+    "unique_quote_key": ["game_id", "snapshot_label", "bookmaker_key", "market_key"],
+    "duplicate_quote_keys_allowed": 0,
+    "missing_prices_imputed": false,
+    "missing_bookmakers_imputed": false,
+    "no_vig_method": "proportional_two_way",
+    "no_vig_or_edge_calculated_during_acquisition": false
+  },
+  "request_and_cost_guardrails": {
+    "dry_run_request_plan_required": true,
+    "request_plan_must_report_endpoint_counts_and_estimated_credits": true,
+    "pilot_credit_hard_cap": 20000,
+    "abort_before_request_if_pilot_estimate_exceeds_cap": true,
+    "response_quota_headers_recorded": [
+      "x-requests-remaining",
+      "x-requests-used",
+      "x-requests-last"
+    ],
+    "http_401_or_403_bypass_allowed": false,
+    "http_429_retry_policy": "bounded exponential backoff honoring provider response; no concurrency escalation",
+    "maximum_retry_attempts_per_request": 3,
+    "full_backfill_requires_separate_explicit_user_budget_approval": true,
+    "full_backfill_execution_allowed_by_this_predeclaration_alone": false
+  },
+  "pilot_source_health_gates": {
+    "planned_games": 90,
+    "minimum_exact_event_match_rate": 0.95,
+    "minimum_exact_event_match_rate_each_season": 0.9,
+    "maximum_ambiguous_event_matches": 0,
+    "maximum_team_identity_mismatches": 0,
+    "minimum_successful_request_rate": 0.95,
+    "minimum_snapshot_timestamp_compliance_rate": 1.0,
+    "minimum_fixed_snapshot_freshness_rate": 0.99,
+    "minimum_games_with_two_or_more_bookmakers_at_t1h": 0.8,
+    "minimum_games_with_same_book_t1h_and_closing_pair": 0.8,
+    "maximum_secret_exposures": 0,
+    "maximum_public_raw_or_normalized_quote_rows": 0,
+    "maximum_post_tip_quotes": 0,
+    "maximum_later_snapshot_fallbacks": 0,
+    "maximum_fuzzy_matches": 0
+  },
+  "full_backfill_gates": {
+    "target_independent_games": 3688,
+    "minimum_matched_independent_games": 3000,
+    "minimum_matched_games_each_season": 900,
+    "minimum_seasons": 3,
+    "minimum_t1h_two_sided_quote_coverage": 0.8,
+    "minimum_same_book_t1h_and_closing_pair_coverage": 0.8,
+    "primary_bookmaker_selection": "highest same-book T-1h and Closing paired coverage among eligible bookmakers; ties resolved by bookmaker key ascending",
+    "primary_bookmaker_minimum_overall_pair_coverage": 0.8,
+    "primary_bookmaker_minimum_pair_coverage_each_season": 0.7,
+    "bookmaker_selection_uses_roi_or_outcomes": false,
+    "maximum_point_in_time_violations": 0,
+    "maximum_team_identity_mismatches": 0,
+    "maximum_duplicate_quote_keys": 0,
+    "maximum_public_raw_or_normalized_quote_rows": 0
+  },
+  "decision_states": [
+    "SOURCE_ACCESS_BLOCKED",
+    "SOURCE_STRUCTURAL_BLOCKED",
+    "PILOT_READY_FOR_FULL_BACKFILL",
+    "FULL_BACKFILL_READY_FOR_ODDS_JOIN_PREDECLARATION"
+  ],
+  "decision_rules": {
+    "SOURCE_ACCESS_BLOCKED": "paid historical access, API secret, restricted storage or explicit pilot budget approval is missing; no source-quality conclusion",
+    "SOURCE_STRUCTURAL_BLOCKED": "access exists but one or more event identity, timestamp, quote, privacy, cost or source-health gates fail",
+    "PILOT_READY_FOR_FULL_BACKFILL": "all pilot structural and source-health gates pass; full backfill still requires explicit budget approval",
+    "FULL_BACKFILL_READY_FOR_ODDS_JOIN_PREDECLARATION": "full 3-season acquisition passes all frozen coverage, same-book and point-in-time gates; only a separate odds-join and market-backtest predeclaration is unlocked"
+  },
+  "post_decision_permissions": {
+    "SOURCE_ACCESS_BLOCKED": {
+      "ready_for_full_backfill": false,
+      "ready_for_odds_join_predeclaration": false
+    },
+    "SOURCE_STRUCTURAL_BLOCKED": {
+      "ready_for_full_backfill": false,
+      "ready_for_odds_join_predeclaration": false
+    },
+    "PILOT_READY_FOR_FULL_BACKFILL": {
+      "ready_for_full_backfill_after_explicit_budget_approval": true,
+      "ready_for_odds_join_predeclaration": false
+    },
+    "FULL_BACKFILL_READY_FOR_ODDS_JOIN_PREDECLARATION": {
+      "ready_for_odds_join_predeclaration": true,
+      "market_research_model_path": "frozen_baseline_only"
+    },
+    "ready_for_point_in_time_odds_join_execution": false,
+    "ready_for_market_backtest": false,
+    "ready_for_clv_ev_roi_drawdown": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "guardrails": {
+    "injury_candidate_used": false,
+    "odds_used_for_model_training": false,
+    "closing_used_to_select_entry": false,
+    "same_game_snapshots_count_as_independent_games": false,
+    "missing_quote_means_no_quote": true,
+    "missing_quote_imputed_from_other_book_or_time": false,
+    "source_failures_replaced_with_handpicked_dates": false,
+    "raw_data_committed_to_public_repo": false,
+    "raw_data_distributed_as_standalone_product": false,
+    "market_performance_metrics_calculated_in_acquisition_stage": false,
+    "stake_nonzero": false
+  }
+}

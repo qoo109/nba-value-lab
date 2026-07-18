@@ -11,7 +11,7 @@
 ### Latest Main SHA at this snapshot
 
 ```text
-7b60dd9b7a35e4dcc2ab2e04ade7409ee6538afe
+1a7c6551cac58063797e56a3b79057ce1af81f27
 ```
 
 最新完成：
@@ -21,6 +21,8 @@ PR #69 — Historical Secondary Source Qualification v1 predeclaration
 PR #70 — Historical Secondary Source Metadata Census v1
 PR #71 — Wyatt SQLite File-level Pilot v1 predeclaration
 PR #72 — Wyatt SQLite Census Runner v1 implementation
+PR #74 — Wyatt SQLite operational size ceiling amendment to 3 GiB
+PR #75 — Wyatt SQLite Aggregate Audit v1
 ```
 
 ### Currently open research execution PRs
@@ -32,10 +34,10 @@ None
 ### Next unique mainline
 
 ```text
-INPUT_FILE_REQUIRED
+WYATT_SQLITE_STRUCTURAL_BLOCKED
 ```
 
-下一個正式執行只在使用者提供 Wyatt Walsh `.sqlite`／`.sqlite3`／`.db` 檔後開始。不得把 synthetic runner success 寫成真實來源已通過。
+使用者已提供真實 Wyatt Walsh `nba.sqlite`。檔案通過 SQLite header、唯讀開啟與 `integrity_check = ok`，但實際內容只有 16 tables、最晚到 2023-06-12、2023-24 pilot games 為 0，與上傳 metadata 所描述的 235-table current-season warehouse 不一致。
 
 ### Parallel blocked line
 
@@ -47,8 +49,13 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 
 ## Known blockers
 
-- Wyatt Walsh 真實 SQLite 尚未提供，因此 schema census 與 2023-24 cross-source audit 尚未執行。
-- Eoin A Moore 與 Wyatt Walsh 目前都只有 metadata-ready，完整次要來源合格數仍為 0。
+- Wyatt 真實 SQLite 已完成 aggregate-only audit，正式結果為 `STRUCTURAL_BLOCKED`。
+- 真實檔案只有 16 tables，並非 metadata 所描述的 235-table warehouse。
+- `game` 最晚日期為 2023-06-12；2023-24 pilot games = 0，因此凍結的 1,000-game cross-source audit 無法執行。
+- supplied schema 沒有 player game boxscore candidate table。
+- `game` 有 56 個 duplicate `game_id` groups。
+- `play_by_play` 有 7,360 個 duplicate `(game_id, eventnum)` groups。
+- Eoin A Moore 與 Wyatt Walsh 的完整次要來源合格數仍為 0。
 - 使用者已明確不核准付費 Historical Odds pilot。
 - 8 個零成本／既有 odds 候選中，合格 bookmaker-level point-in-time source 為 0。
 - Production Odds Backfill、PIT Odds Join、Market Backtest、CLV、EV、ROI、Drawdown 全部未解鎖。
@@ -56,11 +63,12 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 
 ## Do Not Do
 
-- 不把 PR #72 synthetic SQLite 自測當成 Wyatt 真實資料驗證。
+- 不把 PR #72 synthetic SQLite self-test 或 PR #75 integrity pass 寫成 Wyatt source qualification pass。
 - 不公開或 commit 完整第三方 SQLite、原始 PBP、球員列或大量來源資料。
 - 不以 fuzzy matching 連接 game、team、player 或 PBP。
 - 不替換目前已驗證的 `shufinskiy/nba_data` Silver／Gold 主路徑。
 - 不降低 PR #71 固定的 coverage、identity、score、duplicate 或 integrity gates。
+- 不把 metadata 的 235-table 描述套用到實際只有 16 tables 的檔案。
 - 不重新開啟付費 odds 路徑，除非使用者未來另行明確改變決定。
 - 不建立帳號、訂閱、付款或呼叫付費歷史端點。
 - Closing-only benchmark 不得當 executable market backtest。
@@ -77,7 +85,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 5. Real Timestamped Odds Acquisition                        NO_COST_METADATA_BLOCKED
 6. Historical Secondary Source Metadata Review              METADATA_READY_DOWNLOAD_NOT_AUTHORIZED
 7. Wyatt SQLite read-only census runner                     Completed / synthetic only
-8. Wyatt real file schema and 2023-24 cross-source audit     INPUT_FILE_REQUIRED
+8. Wyatt real file schema and 2023-24 cross-source audit     STRUCTURAL_BLOCKED
 9. Point-in-time Odds Join and Market Backtest              Blocked
 10. CLV / EV / ROI / Drawdown                               Blocked
 11. Betting Decision Layer                                  Blocked
@@ -97,8 +105,10 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 | No-cost Odds Metadata Census | **NO_COST_METADATA_BLOCKED** | 8 candidates；qualified 0。 |
 | Historical Secondary Source Policy | Completed | PR #69；Eoin 與 Wyatt 兩候選、固定 2023-24 gates。 |
 | Historical Secondary Source Metadata Census | **METADATA_READY_DOWNLOAD_NOT_AUTHORIZED** | PR #70；metadata-ready 2、full-qualified 0。 |
-| Wyatt SQLite Pilot Policy | **INPUT_FILE_REQUIRED** | PR #71；真實 SQLite 未提供。 |
-| Wyatt SQLite Census Runner | Completed / synthetic only | PR #72；唯讀 runner 已驗證，不代表來源通過。 |
+| Wyatt SQLite Pilot Policy | Completed | PR #71；real-file gates 已凍結。 |
+| Wyatt SQLite Census Runner | Completed / synthetic only | PR #72；唯讀 runner 已驗證。 |
+| Wyatt SQLite Size Amendment | Completed | PR #74；operation ceiling 3 GiB，scientific gates 未改。 |
+| Wyatt SQLite Real-file Audit | **STRUCTURAL_BLOCKED** | PR #75；16 tables、latest 2023-06-12、2023-24 games 0。 |
 | Market Backtest | Blocked | 尚無 executable PIT odds join。 |
 | Betting Decision Layer | Blocked | Stake = 0。 |
 
@@ -147,63 +157,45 @@ Injury Feature Holdout v1：
 
 Formal state：`VALID_NEGATIVE_RESULT`。
 
-## Secondary Historical Source Evidence
+## Wyatt Real-file Evidence
 
-PR #69 policy Artifact：
+PR #74 policy amendment：
 
 ```text
-workflow run: 29649382555
-artifact id: 8431003217
-digest: sha256:4327c92f5e90255cc41d7b5afdca7efc094d7aacc0bf4084e1249b8a3c1183ee
-candidate count: 2
-downloads: 0
-existing Silver replacement: false
-formal stake: 0
+archive: nba.sqlite.zip
+archive size: 434,150,473 bytes
+SQLite member size: 2,349,588,480 bytes
+operational maximum: 3,221,225,472 bytes
+scientific gates changed: false
 ```
 
-PR #70 metadata census Artifact：
+PR #75 aggregate audit：
 
 ```text
-workflow run: 29649555363
-artifact id: 8431049131
-digest: sha256:4ee249a9cb873365424a1bda55b9e295ae9d52834c18d50020da71fccd573e55
-formal state: METADATA_READY_DOWNLOAD_NOT_AUTHORIZED
-metadata-ready candidates: 2
-full-qualified candidates: 0
-downloads: 0
-```
-
-PR #71 policy Artifact：
-
-```text
-workflow run: 29650340574
-artifact id: 8431271984
-digest: sha256:f97dfcee7a3beae2e049d50a17837101b4bd3ba870028749ec23be0162125fda
-formal state: INPUT_FILE_REQUIRED
-database opened: false
-raw rows: 0
-```
-
-PR #72 synthetic runner Artifact：
-
-```text
-workflow run: 29651474770
-artifact id: 8431589455
-digest: sha256:7b11a7847b1085e3ee4f3f9ed69c803321efbc1d9c058671035d58ee1938019b
-synthetic tables: 4
+workflow run: 29657039708
+artifact id: 8433179663
+digest: sha256:875a24b0c24cb8f9e62ee85b89d7c415bb563669e4f56169d948d33b963bde9c
+checks: 27 / 27
+formal state: STRUCTURAL_BLOCKED
 SQLite integrity_check: ok
-opened read-only: true
-input modified: false
-raw rows emitted: 0
-cross-source audit executed: false
-qualification evaluated: false
+actual tables: 16
+metadata-described tables: 235
+total table rows: 14,060,690
+actual latest game date: 2023-06-12
+2023-24 pilot games: 0
+PBP rows: 13,592,899
+duplicate game_id groups: 56
+duplicate PBP event-key groups: 7,360
+player game boxscore candidate: none
+raw rows in Artifact: 0
+secondary source qualified: false
 ```
 
 ## Wyatt Real-file Gates
 
 ```text
 accepted extensions: .sqlite / .sqlite3 / .db
-size: 1 MiB to 2 GiB
+size: 1 MiB to 3 GiB
 SQLite header required
 read-only open required
 integrity_check = ok
@@ -221,14 +213,17 @@ fuzzy matching = false
 
 ## Reopening Conditions
 
-Wyatt file-level audit 可在以下條件成立時開始：
+Wyatt file-level audit 只在以下條件成立時重新開啟：
 
 ```text
-1. the user supplies the Wyatt SQLite file;
-2. the file extension and size satisfy PR #71;
-3. provenance identifies it as the Wyatt Walsh Kaggle dataset;
-4. the runner records filename, size, SHA-256 and read-only integrity evidence.
+1. a supplied SQLite or DuckDB bundle actually contains the advertised current schema;
+2. the actual file includes 2023-24 games and a player game boxscore table;
+3. provenance ties the file to the published dataset version;
+4. filename, size, SHA-256, read-only integrity, schema and date coverage are revalidated;
+5. all original identity, score, coverage and duplicate gates remain unchanged.
 ```
+
+目前這份 16-table legacy file 可保留為 1946–2022-23 exploratory cross-check candidate，但不得升格為正式次要來源。
 
 市場資料研究只在以下條件之一成立時重新開啟：
 
@@ -252,4 +247,6 @@ Wyatt file-level audit 可在以下條件成立時開始：
 #70 Historical Secondary Source Metadata Census v1
 #71 Wyatt SQLite File-level Pilot v1 predeclaration
 #72 Wyatt SQLite Census Runner v1 implementation
+#74 Wyatt SQLite operational size ceiling amendment
+#75 Wyatt SQLite Aggregate Audit v1
 ```

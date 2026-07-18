@@ -35,11 +35,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Compile Expected Minutes audit modules
+      - name: Compile audit modules
         run: |
           python -m py_compile scripts/build_expected_minutes_accuracy_dataset.py
           python -m py_compile scripts/audit_expected_minutes_accuracy.py
-      - name: Run deterministic Expected Minutes audit self-tests
+      - name: Run deterministic self-tests
         run: |
           rm -rf /tmp/nbavl-expected-minutes-self-test
           python scripts/build_expected_minutes_accuracy_dataset.py \
@@ -66,10 +66,11 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
-      - name: Download audited Historical Gold
+
+      - name: Download audited Historical Gold and combined selected panel
         run: |
           rm -rf "$ROOT"
-          mkdir -p "$ROOT/gold"
+          mkdir -p "$ROOT/gold" "$ROOT/combined-source"
           gh run download "$GOLD_SOURCE_RUN_ID" \
             --repo "$GITHUB_REPOSITORY" \
             --name historical-gold-multiseason \
@@ -77,19 +78,12 @@ jobs:
           GOLD_FILE="$(find "$ROOT/gold" -name 'historical-gold-multiseason.sqlite.gz' -print -quit)"
           test -n "$GOLD_FILE"
           echo "GOLD_FILE=$GOLD_FILE" >> "$GITHUB_ENV"
-      - name: Download verified combined 176-game selected panel
-        run: |
-          mkdir -p "$ROOT/combined-source"
           gh run download "$COMBINED_FEATURE_RUN_ID" \
             --repo "$GITHUB_REPOSITORY" \
             --name injury-backfill-wave2-features \
             --dir "$ROOT/combined-source"
-          test -s "$ROOT/combined-source/combined/combined-selected-matchup-injury-burden.csv"
-          test -s "$ROOT/combined-source/combined/combined-selected-injury-waves-report.json"
           python - <<'PY'
-          import csv
-          import json
-          import os
+          import csv, json, os
           from pathlib import Path
           root = Path(os.environ['ROOT']) / 'combined-source/combined'
           report = json.loads((root / 'combined-selected-injury-waves-report.json').read_text())
@@ -99,11 +93,9 @@ jobs:
           assert len(rows) == 176
           assert len({row['historical_game_id'] for row in rows}) == 176
           assert {row['source_wave'] for row in rows} == {'wave1', 'wave2'}
-          print({'combined_selected_games': len(rows)})
           PY
-      - name: Rebuild Wave 1 official player and team panels
-        id: wave1_sources
-        continue-on-error: true
+
+      - name: Rebuild Wave 1 official source overlap
         run: |
           PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
             --report-times data/multi-report-injury-backfill-wave1-times.json \
@@ -111,10 +103,6 @@ jobs:
           PYTHONPATH=scripts python scripts/build_multi_report_team_submission_panel.py \
             --report-times data/multi-report-injury-backfill-wave1-times.json \
             --output-dir "$ROOT/wave1/team"
-      - name: Restrict Wave 1 to single-report-ready overlap
-        id: wave1_overlap
-        continue-on-error: true
-        run: |
           python scripts/audit_ready_injury_report_overlap.py \
             --player-source-index "$ROOT/wave1/player/multi-report-source-index.csv" \
             --team-source-index "$ROOT/wave1/team/multi-report-team-submission-source-index.csv" \
@@ -125,9 +113,8 @@ jobs:
             --team-panel "$ROOT/wave1/team/multi-report-team-submission-panel.csv" \
             --team-source-index "$ROOT/wave1/team/multi-report-team-submission-source-index.csv" \
             --output-dir "$ROOT/wave1/overlap"
-      - name: Rebuild Wave 2 official player and team panels
-        id: wave2_sources
-        continue-on-error: true
+
+      - name: Rebuild Wave 2 official source overlap
         run: |
           PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
             --report-times data/multi-report-injury-backfill-wave2-times.json \
@@ -135,10 +122,6 @@ jobs:
           PYTHONPATH=scripts python scripts/build_multi_report_team_submission_panel.py \
             --report-times data/multi-report-injury-backfill-wave2-times.json \
             --output-dir "$ROOT/wave2/team"
-      - name: Restrict Wave 2 to single-report-ready overlap
-        id: wave2_overlap
-        continue-on-error: true
-        run: |
           python scripts/audit_ready_injury_report_overlap.py \
             --player-source-index "$ROOT/wave2/player/multi-report-source-index.csv" \
             --team-source-index "$ROOT/wave2/team/multi-report-team-submission-source-index.csv" \
@@ -149,9 +132,8 @@ jobs:
             --team-panel "$ROOT/wave2/team/multi-report-team-submission-panel.csv" \
             --team-source-index "$ROOT/wave2/team/multi-report-team-submission-source-index.csv" \
             --output-dir "$ROOT/wave2/overlap"
-      - name: Match Wave 1 and Wave 2 player snapshots to Historical Gold
-        id: schedule_match
-        continue-on-error: true
+
+      - name: Match selected source snapshots to Historical Gold
         run: |
           python scripts/validate_injury_snapshot_schedule_match.py \
             --snapshot-csv "$ROOT/wave1/overlap/overlap-player-injury-panel.csv" \
@@ -161,9 +143,8 @@ jobs:
             --snapshot-csv "$ROOT/wave2/overlap/overlap-player-injury-panel.csv" \
             --gold "$GOLD_FILE" \
             --output-dir "$ROOT/wave2/schedule"
-      - name: Import Gold-validated player boxscores
-        id: boxscores
-        continue-on-error: true
+
+      - name: Import and combine Gold-validated player boxscores
         run: |
           PYTHONPATH=scripts python scripts/import_open_player_boxscores.py \
             --season 2022-23 \
@@ -173,62 +154,41 @@ jobs:
             --season 2023-24 \
             --gold "$GOLD_FILE" \
             --output-dir "$ROOT/boxscores-2023"
-      - name: Combine temporary player boxscore archive
-        id: combine_boxscores
-        continue-on-error: true
-        run: |
           python - <<'PY'
-          import csv
-          import os
+          import csv, os
           from pathlib import Path
           root = Path(os.environ['ROOT'])
           sources = [root / 'boxscores-2022/open-player-boxscores.csv', root / 'boxscores-2023/open-player-boxscores.csv']
-          rows = {}
-          fields = None
+          rows, fields = {}, None
           for path in sources:
               with path.open('r', encoding='utf-8-sig', newline='') as handle:
                   reader = csv.DictReader(handle)
                   fields = fields or list(reader.fieldnames or [])
                   for row in reader:
                       rows[(row['SEASON_YEAR'], row['GAME_ID'], row['PLAYER_ID'])] = row
-          output = root / 'combined-player-boxscores.csv'
-          with output.open('w', encoding='utf-8', newline='') as handle:
+          with (root / 'combined-player-boxscores.csv').open('w', encoding='utf-8', newline='') as handle:
               writer = csv.DictWriter(handle, fieldnames=fields)
               writer.writeheader()
               writer.writerows(rows[key] for key in sorted(rows))
           print({'combined_rows': len(rows)})
           PY
-      - name: Build Wave 1 deterministic identity and prior-only values
-        id: wave1_values
-        continue-on-error: true
+
+      - name: Rebuild Wave 1 and Wave 2 identity and prior-only values
         run: |
-          PYTHONPATH=scripts python scripts/match_injury_players_from_boxscores.py \
-            --snapshot-csv "$ROOT/wave1/overlap/overlap-player-injury-panel.csv" \
-            --game-map-csv "$ROOT/wave1/schedule/injury-snapshot-game-id-map.csv" \
-            --boxscore-csv "$ROOT/combined-player-boxscores.csv" \
-            --output-dir "$ROOT/wave1/identity"
-          PYTHONPATH=scripts python scripts/build_point_in_time_player_values.py \
-            --player-logs "$ROOT/combined-player-boxscores.csv" \
-            --snapshot-csv "$ROOT/wave1/overlap/overlap-player-injury-panel.csv" \
-            --player-id-map "$ROOT/wave1/identity/injury-player-id-map.csv" \
-            --output-dir "$ROOT/wave1/values"
-      - name: Build Wave 2 deterministic identity and prior-only values
-        id: wave2_values
-        continue-on-error: true
-        run: |
-          PYTHONPATH=scripts python scripts/match_injury_players_from_boxscores.py \
-            --snapshot-csv "$ROOT/wave2/overlap/overlap-player-injury-panel.csv" \
-            --game-map-csv "$ROOT/wave2/schedule/injury-snapshot-game-id-map.csv" \
-            --boxscore-csv "$ROOT/combined-player-boxscores.csv" \
-            --output-dir "$ROOT/wave2/identity"
-          PYTHONPATH=scripts python scripts/build_point_in_time_player_values.py \
-            --player-logs "$ROOT/combined-player-boxscores.csv" \
-            --snapshot-csv "$ROOT/wave2/overlap/overlap-player-injury-panel.csv" \
-            --player-id-map "$ROOT/wave2/identity/injury-player-id-map.csv" \
-            --output-dir "$ROOT/wave2/values"
-      - name: Build temporary deidentified accuracy rows
-        id: accuracy_dataset
-        continue-on-error: true
+          for WAVE in wave1 wave2; do
+            PYTHONPATH=scripts python scripts/match_injury_players_from_boxscores.py \
+              --snapshot-csv "$ROOT/$WAVE/overlap/overlap-player-injury-panel.csv" \
+              --game-map-csv "$ROOT/$WAVE/schedule/injury-snapshot-game-id-map.csv" \
+              --boxscore-csv "$ROOT/combined-player-boxscores.csv" \
+              --output-dir "$ROOT/$WAVE/identity"
+            PYTHONPATH=scripts python scripts/build_point_in_time_player_values.py \
+              --player-logs "$ROOT/combined-player-boxscores.csv" \
+              --snapshot-csv "$ROOT/$WAVE/overlap/overlap-player-injury-panel.csv" \
+              --player-id-map "$ROOT/$WAVE/identity/injury-player-id-map.csv" \
+              --output-dir "$ROOT/$WAVE/values"
+          done
+
+      - name: Build temporary deidentified accuracy dataset
         run: |
           python scripts/build_expected_minutes_accuracy_dataset.py \
             --combined-selected "$ROOT/combined-source/combined/combined-selected-matchup-injury-burden.csv" \
@@ -236,15 +196,15 @@ jobs:
             --wave wave2 "$ROOT/wave2/overlap/overlap-player-injury-panel.csv" "$ROOT/wave2/identity/injury-player-id-map.csv" "$ROOT/wave2/values/point-in-time-player-values.csv" \
             --player-logs "$ROOT/combined-player-boxscores.csv" \
             --output-dir "$ROOT/accuracy-dataset"
+
       - name: Run aggregate Expected Minutes accuracy audit
-        id: accuracy_audit
-        continue-on-error: true
         run: |
           python scripts/audit_expected_minutes_accuracy.py \
             --accuracy-rows "$ROOT/accuracy-dataset/expected-minutes-accuracy-rows.csv" \
             --dataset-report "$ROOT/accuracy-dataset/expected-minutes-accuracy-dataset-report.json" \
             --policy data/expected-minutes-accuracy-audit-v1.json \
             --output-dir "$ROOT/accuracy-audit"
+
       - name: Remove all player-level data before Artifact upload
         if: always()
         run: |
@@ -262,6 +222,7 @@ jobs:
           rm -f "$ROOT/boxscores-2023/open-player-boxscores.csv"
           find "$ROOT" -name 'injury-lineup-snapshots-normalized.csv' -delete 2>/dev/null || true
           find "$ROOT" -name '*.pdf' -delete 2>/dev/null || true
+
       - name: Verify privacy boundary
         if: always()
         run: |
@@ -270,20 +231,16 @@ jobs:
           from pathlib import Path
           root = Path(os.environ['ROOT'])
           forbidden = {
-              'expected-minutes-accuracy-rows.csv',
-              'overlap-player-injury-panel.csv',
-              'multi-report-injury-panel-normalized.csv',
-              'injury-lineup-snapshots-normalized.csv',
-              'injury-player-id-map.csv',
-              'point-in-time-player-values.csv',
-              'combined-player-boxscores.csv',
-              'open-player-boxscores.csv',
+              'expected-minutes-accuracy-rows.csv', 'overlap-player-injury-panel.csv',
+              'multi-report-injury-panel-normalized.csv', 'injury-lineup-snapshots-normalized.csv',
+              'injury-player-id-map.csv', 'point-in-time-player-values.csv',
+              'combined-player-boxscores.csv', 'open-player-boxscores.csv',
           }
           found = sorted(str(path) for path in root.rglob('*') if path.is_file() and path.name in forbidden)
           assert not found, found
-          print({'forbidden_player_files': found})
           PY
-      - name: Upload aggregate Expected Minutes audit artifact
+
+      - name: Upload aggregate audit artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -303,13 +260,13 @@ jobs:
             /tmp/nbavl-expected-minutes-audit/accuracy-audit/expected-minutes-accuracy-subgroups.csv
             /tmp/nbavl-expected-minutes-audit/accuracy-audit/expected-minutes-team-aggregate-summary.csv
           retention-days: 14
-          if-no-files-found: error
+          if-no-files-found: warn
+
       - name: Enforce structural audit and non-activation boundaries
         if: always()
         run: |
           python - <<'PY'
-          import json
-          import os
+          import json, os
           from pathlib import Path
           root = Path(os.environ['ROOT'])
           dataset = json.loads((root / 'accuracy-dataset/expected-minutes-accuracy-dataset-report.json').read_text())

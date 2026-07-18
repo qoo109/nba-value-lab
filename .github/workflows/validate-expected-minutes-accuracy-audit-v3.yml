@@ -125,6 +125,7 @@ jobs:
             --dir "$ROOT/census-source"
           CENSUS_REPORT="$(find "$ROOT/census-source" -name 'expanded-participation-census-v1.json' -print -quit)"
           test -n "$CENSUS_REPORT"
+          export CENSUS_REPORT
           echo "CENSUS_REPORT=$CENSUS_REPORT" >> "$GITHUB_ENV"
           python - <<'PY'
           import csv, json, os

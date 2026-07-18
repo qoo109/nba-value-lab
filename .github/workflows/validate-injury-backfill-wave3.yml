@@ -1,0 +1,249 @@
+name: Validate injury backfill wave 3 acquisition
+
+on:
+  pull_request:
+    paths:
+      - "data/multi-report-injury-backfill-wave1-times.json"
+      - "data/multi-report-injury-backfill-wave2-times.json"
+      - "data/multi-report-injury-backfill-wave3-times.json"
+      - "scripts/audit_injury_backfill_wave.py"
+      - "scripts/audit_ready_injury_report_overlap.py"
+      - ".github/workflows/validate-injury-backfill-wave3.yml"
+      - "docs/injury-backfill-wave3-acquisition.md"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+    inputs:
+      registry_file:
+        description: "Calendar-fixed Wave 3 injury report acquisition registry"
+        required: true
+        default: "data/multi-report-injury-backfill-wave3-times.json"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile reusable acquisition audits
+        run: |
+          python -m py_compile scripts/audit_injury_backfill_wave.py
+          python -m py_compile scripts/audit_ready_injury_report_overlap.py
+      - name: Run deterministic acquisition audit self-tests
+        run: |
+          rm -rf /tmp/nbavl-wave3-self-test
+          python scripts/audit_injury_backfill_wave.py \
+            --self-test \
+            --output-dir /tmp/nbavl-wave3-self-test/generic
+          python scripts/audit_ready_injury_report_overlap.py \
+            --self-test \
+            --output-dir /tmp/nbavl-wave3-self-test/ready
+          python -m json.tool /tmp/nbavl-wave3-self-test/generic/injury-backfill-wave-audit.json >/dev/null
+          python -m json.tool /tmp/nbavl-wave3-self-test/ready/ready-overlap-audit.json >/dev/null
+
+  live-acquisition:
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    env:
+      REGISTRY_FILE: ${{ github.event.inputs.registry_file || 'data/multi-report-injury-backfill-wave3-times.json' }}
+      ROOT: /tmp/nbavl-wave3-acquisition
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install official PDF parser dependencies
+        run: python -m pip install --disable-pip-version-check pandas httpx pymupdf
+
+      - name: Validate fixed Wave 3 registry before acquisition
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+
+          wave1 = json.loads(Path('data/multi-report-injury-backfill-wave1-times.json').read_text())
+          wave2 = json.loads(Path('data/multi-report-injury-backfill-wave2-times.json').read_text())
+          wave3 = json.loads(Path(os.environ['REGISTRY_FILE']).read_text())
+
+          times1 = set(wave1['report_times'])
+          times2 = set(wave2['report_times'])
+          times3 = wave3['report_times']
+          policy = wave3['sampling_policy']
+          gate = wave3['acquisition_gate']
+
+          assert len(times3) == 45, len(times3)
+          assert len(times3) == len(set(times3)), 'duplicate Wave 3 timestamps'
+          assert times1.isdisjoint(times3), sorted(times1 & set(times3))
+          assert times2.isdisjoint(times3), sorted(times2 & set(times3))
+
+          assert policy['candidate_reports'] == 45
+          assert policy['dates'] == 15
+          assert policy['cadence_days'] == 7
+          assert policy['overlap_with_wave1_requested_timestamps'] == 0
+          assert policy['overlap_with_wave2_requested_timestamps'] == 0
+          assert policy['competition_phase'] == 'regular_season_only'
+          assert gate['minimum_overlapping_successful_reports'] == 27
+          assert gate['minimum_unique_successful_dates'] == 10
+          assert float(gate['maximum_failure_rate_per_pipeline']) == 0.40
+
+          et = ZoneInfo('America/New_York')
+          local = [datetime.fromisoformat(value).astimezone(et) for value in times3]
+          assert {item.strftime('%A') for item in local} == {'Thursday'}
+          assert {item.strftime('%H:%M') for item in local} == {'08:30', '13:30', '17:30'}
+          dates = sorted({item.date() for item in local})
+          assert len(dates) == 15
+          assert dates[0].isoformat() == '2024-01-04'
+          assert dates[-1].isoformat() == '2024-04-11'
+          assert all((later - earlier).days == 7 for earlier, later in zip(dates, dates[1:]))
+
+          print({
+              'candidate_reports': len(times3),
+              'dates': len(dates),
+              'cadence_days': 7,
+              'wave1_overlap': 0,
+              'wave2_overlap': 0,
+          })
+          PY
+
+      - name: Build official player acquisition panel
+        id: player_acquisition
+        continue-on-error: true
+        run: |
+          rm -rf "$ROOT"
+          mkdir -p "$ROOT"
+          PYTHONPATH=scripts python scripts/build_multi_report_injury_panel.py \
+            --report-times "$REGISTRY_FILE" \
+            --output-dir "$ROOT/player"
+
+      - name: Build official team submission acquisition panel
+        id: team_acquisition
+        continue-on-error: true
+        run: |
+          PYTHONPATH=scripts python scripts/build_multi_report_team_submission_panel.py \
+            --report-times "$REGISTRY_FILE" \
+            --output-dir "$ROOT/team"
+
+      - name: Remove player-level acquisition rows before audit
+        if: always()
+        run: |
+          rm -f "$ROOT/player/multi-report-injury-panel-normalized.csv"
+          find "$ROOT/player" -name 'injury-lineup-snapshots-normalized.csv' -delete 2>/dev/null || true
+          find "$ROOT/player" -name '*.pdf' -delete 2>/dev/null || true
+
+      - name: Run aggregate acquisition audit
+        id: acquisition_audit
+        if: always()
+        continue-on-error: true
+        run: |
+          test -s "$ROOT/player/multi-report-injury-panel-report.json"
+          test -s "$ROOT/player/multi-report-source-index.csv"
+          test -s "$ROOT/team/multi-report-team-submission-report.json"
+          test -s "$ROOT/team/multi-report-team-submission-source-index.csv"
+          test -s "$ROOT/team/multi-report-team-submission-panel.csv"
+          python scripts/audit_injury_backfill_wave.py \
+            --registry "$REGISTRY_FILE" \
+            --player-report "$ROOT/player/multi-report-injury-panel-report.json" \
+            --player-source-index "$ROOT/player/multi-report-source-index.csv" \
+            --team-report "$ROOT/team/multi-report-team-submission-report.json" \
+            --team-source-index "$ROOT/team/multi-report-team-submission-source-index.csv" \
+            --team-panel "$ROOT/team/multi-report-team-submission-panel.csv" \
+            --sensitive-root "$ROOT" \
+            --output-dir "$ROOT/audit"
+
+      - name: Run single-report-ready overlap audit
+        id: ready_overlap_audit
+        if: always()
+        continue-on-error: true
+        run: |
+          python scripts/audit_ready_injury_report_overlap.py \
+            --player-source-index "$ROOT/player/multi-report-source-index.csv" \
+            --team-source-index "$ROOT/team/multi-report-team-submission-source-index.csv" \
+            --output-dir "$ROOT/ready-overlap"
+
+      - name: Verify no player-level files remain
+        if: always()
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+          forbidden = {
+              'multi-report-injury-panel-normalized.csv',
+              'injury-lineup-snapshots-normalized.csv',
+              'injury-player-id-map.csv',
+              'point-in-time-player-values.csv',
+              'combined-player-boxscores.csv',
+              'open-player-boxscores.csv',
+          }
+          found = sorted(
+              str(path)
+              for path in root.rglob('*')
+              if path.is_file() and path.name in forbidden
+          )
+          assert not found, found
+          print({'forbidden_player_files': found})
+          PY
+
+      - name: Upload aggregate Wave 3 acquisition artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: injury-backfill-wave3-acquisition
+          path: |
+            data/multi-report-injury-backfill-wave3-times.json
+            /tmp/nbavl-wave3-acquisition/player/multi-report-injury-panel-report.json
+            /tmp/nbavl-wave3-acquisition/player/multi-report-source-index.csv
+            /tmp/nbavl-wave3-acquisition/team/multi-report-team-submission-report.json
+            /tmp/nbavl-wave3-acquisition/team/multi-report-team-submission-source-index.csv
+            /tmp/nbavl-wave3-acquisition/team/multi-report-team-submission-panel.csv
+            /tmp/nbavl-wave3-acquisition/audit/injury-backfill-wave-audit.json
+            /tmp/nbavl-wave3-acquisition/audit/injury-backfill-wave-report-index.csv
+            /tmp/nbavl-wave3-acquisition/ready-overlap/ready-overlap-audit.json
+            /tmp/nbavl-wave3-acquisition/ready-overlap/ready-overlap-report-index.csv
+            /tmp/nbavl-wave3-acquisition/ready-overlap/ready-overlap-report-times.json
+            /tmp/nbavl-wave3-acquisition/ready-overlap/ready-player-source-index.csv
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Enforce Wave 3 acquisition and non-activation gates
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+          generic = json.loads((root / 'audit/injury-backfill-wave-audit.json').read_text())
+          ready = json.loads((root / 'ready-overlap/ready-overlap-audit.json').read_text())
+
+          assert generic['schema_version'] == 'injury-backfill-wave-acquisition-audit-v2', generic
+          assert generic['quality']['registry_cadence_days'] == 7, generic
+          assert generic['decision']['ready_for_feature_backfill'] is True, generic
+          assert ready['decision']['ready_for_feature_backfill'] is True, ready
+
+          assert generic['decision']['ready_for_model_training'] is False
+          assert generic['decision']['ready_for_probability_adjustment'] is False
+          assert generic['decision']['ready_for_betting_edge_claim'] is False
+          assert ready['decision']['ready_for_model_training'] is False
+          assert ready['decision']['ready_for_probability_adjustment'] is False
+          assert ready['decision']['ready_for_betting_edge_claim'] is False
+
+          print(json.dumps({
+              'parsed_coverage': generic['coverage'],
+              'ready_coverage': ready['coverage'],
+              'generic_decision': generic['decision'],
+              'ready_decision': ready['decision'],
+          }, indent=2))
+          PY

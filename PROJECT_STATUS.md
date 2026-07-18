@@ -4,45 +4,47 @@
 定位：**Research Candidate / Pre-Market-Backtest**  
 正式 Stake：**0**
 
-最新 main、合併 PR、Actions 與 Artifact QA 是正式 Source of Truth；舊 handoff 與聊天紀錄只保留歷史脈絡。
+最新 `main`、合併 PR、Actions 與 Artifact QA 是正式 Source of Truth；舊 handoff 與聊天紀錄只保留歷史脈絡。
 
 ## Current Control Block
 
 ### Latest Main SHA
 
 ```text
-926fd8355602935f51a5fe38f82ba2fa37c825fb
+cc833fe2e7cf3f2bdd943f7692a1118866bd8b9b
 ```
 
 最新已合併：
 
 ```text
-PR #57 — Predeclare Real Timestamped Odds Acquisition v1
+PR #59 — Add Offline Timestamped Odds Qualification Adapter v1
 ```
 
 ### Open PR
 
 | PR | 狀態 | 用途 |
 |---|---|---|
-| #59 — Offline Timestamped Odds Qualification Adapter v1 | Draft | Parser、no-price manifest、synthetic tests 與 `ACCESS_NOT_PROVIDED`；不讀 key、不呼叫 paid endpoint。 |
+| #60 — Frozen Timestamped Odds Pilot Manifest v1 | Draft / live QA passed | Historical Gold＋NBA Official season schedule；30 場 exact tip-off、180 no-price slots、exact 1,800-credit plan。 |
+
+PR #61 已因與 #60 重複而關閉；嚴格驗證已整合回 #60，不存在第二套 manifest 主線。
 
 ### Next unique mainline
 
 ```text
-驗證並合併 PR #59
-→ 從 Historical Gold 產生 frozen 30-game exact schedule manifest
-→ 固定 180 requested timestamps 與 <= 1,800 credits
-→ 停在 paid pilot 前
-→ 只有使用者明確核准費用並提供 THE_ODDS_API_KEY 後才執行
+驗證 latest-head regression 並合併 PR #60
+→ 重新確認 The Odds API pricing / Terms / quota
+→ 公開 exact maximum exposure = 1,800 credits
+→ 停止並取得使用者明確付費核准
+→ 私密連接 THE_ODDS_API_KEY
+→ 只有之後才可執行 frozen 30-game source qualification pilot
 ```
 
 ### Known blockers
 
-- PR #59 尚未合併。
-- Frozen 30-game sample 的 exact scheduled tipoff manifest 尚未完成。
-- Historical API 需要付費方案；尚未取得使用者費用核准。
+- PR #60 尚未合併。
+- Historical Odds API 需要付費方案；尚未取得使用者對最高 1,800 credits 的明確核准。
 - `THE_ODDS_API_KEY` 尚未提供或連接。
-- 正式執行前仍須重新確認價格、Terms、quota 與資料使用邊界。
+- 付費執行前仍須重新確認 provider pricing、Terms、quota 與資料使用邊界。
 - 真實 bookmaker-level `observed_at` quotes 尚未取得。
 - Point-in-time Odds Join、Market Backtest、CLV、EV、ROI、Drawdown 尚未解鎖。
 - Historical model 仍明顯輸給 Closing Market。
@@ -53,12 +55,13 @@ PR #57 — Predeclare Real Timestamped Odds Acquisition v1
 - 未獲明確核准前，不呼叫 Historical paid endpoint。
 - API key 不得寫入 commit、log、Artifact、錯誤訊息或下載檔。
 - 不繞過 401、403、429、登入、付款或 access control。
+- 不替換 frozen 失敗比賽或手挑日期補 coverage。
 - 不把 T-6h、T-24h 或 provider first-seen 冒充 true Opening。
 - 不用 future snapshot 補較早缺失 snapshot。
 - 不混用不同 bookmaker 或不同 provider snapshot 的兩側價格。
 - Qualification pilot 不計算 edge、EV、ROI、CLV、Drawdown、bet count 或 profit ranking。
 - Primary bookmaker 只按 coverage 與固定 key 排序，不按模型結果或價格選擇。
-- Public repo／Artifact 不保留 raw JSON、quote-level rows、價格或可下載 odds archive。
+- Public repo／Artifact 不保留 raw odds JSON、quote-level rows、價格或可下載 odds archive。
 - 已拒絕的 injury candidate 不得回到市場模型；使用 frozen baseline-only path。
 - 不重做 odds schema、bookmaker schema、no-vig boundary 或 source registry。
 - Closing-only benchmark 不得當 executable market backtest。
@@ -82,7 +85,8 @@ PR #57 — Predeclare Real Timestamped Odds Acquisition v1
 目前節點：
 
 ```text
-Step 5 — Offline Timestamped Odds adapter and exact manifest preparation
+Step 5 — Exact no-price Timestamped Odds pilot manifest completed in PR #60
+→ pending merge and explicit paid-access approval
 ```
 
 ## Core Status
@@ -98,10 +102,11 @@ Step 5 — Offline Timestamped Odds adapter and exact manifest preparation
 | Expected Minutes Audit v3 | **ACCURACY_PASS** | 所有預先宣告的結構、樣本與數值 gates 通過。 |
 | Injury Feature Holdout v1 | **VALID_NEGATIVE_RESULT** | 結構通過；固定兩特徵 candidate 未達跨 Fold promotion gates。 |
 | Injury candidate | Rejected | 後續只使用 frozen baseline-only path。 |
-| Timestamped Odds Acquisition Policy v1 | Completed | PR #57 已鎖定來源、no-spend、quota、snapshot 與 storage contract。 |
-| Timestamped Odds Adapter v1 | Offline validation in progress | PR #59 Draft；正式 access state 為 `ACCESS_NOT_PROVIDED`。 |
-| Paid qualification pilot | Blocked | 需要 exact manifest、費用核准與 `THE_ODDS_API_KEY`。 |
-| Production Backfill | Blocked | 需要 pilot pass、offline production manifest 與另一次 cost approval。 |
+| Timestamped Odds Acquisition Policy v1 | Completed | PR #57 已鎖定 source、no-spend、quota、snapshots 與 storage contract。 |
+| Timestamped Odds Adapter v1 | Completed / offline | PR #59；112 policy checks passed；正式 access state `ACCESS_NOT_PROVIDED`。 |
+| Exact Pilot Manifest v1 | **Live QA passed / PR #60 Draft** | 30 exact games、180 slots、180 unique timestamps、exact 1,800-credit plan。 |
+| Paid qualification pilot | Blocked | 需要使用者費用核准與 private `THE_ODDS_API_KEY`。 |
+| Production Backfill | Blocked | 需要 qualification pass、offline production manifest 與另一次 cost approval。 |
 | Market Backtest | Blocked | 尚無 executable PIT odds join。 |
 | Betting Decision Layer | Blocked | Stake = 0。 |
 
@@ -199,7 +204,7 @@ Frozen qualification pilot：
 ```text
 30 deterministic games
 10 per season: 2021-22 / 2022-23 / 2023-24
-6 requests per game
+6 game slots per game
 maximum 180 slots
 maximum 1,800 credits
 market metrics forbidden
@@ -220,42 +225,105 @@ QUALIFIED_FOR_PRODUCTION_MANIFEST
 
 ```text
 scripts/qualify_timestamped_odds_v1.py
+scripts/run_timestamped_odds_qualification_v1.py
 ```
 
-Offline capabilities：
-
-- build a no-price request manifest from exact schedule rows;
-- parse supplied Historical v4 payloads;
-- exact home/away mapping only;
-- reject future snapshots and ambiguous events;
-- separate provider snapshot, bookmaker last_update and fetched_at;
-- keep two sides from one bookmaker / one h2h market;
-- calculate overround and aggregate coverage;
-- emit `ACCESS_NOT_PROVIDED` without reading a secret or calling the provider.
-
-Current formal state：
+Latest validation：
 
 ```text
-ACCESS_NOT_PROVIDED
-provider requests: 0
-quotes downloaded: 0
-API key read: false
-paid endpoint called: false
-subscription or purchase created: false
-market metrics calculated: false
-ready_for_production_manifest: false
+workflow run: 29638171563
+artifact id: 8427770023
+digest: sha256:420202ffb077869695e598d9052b722211318d2e9dad579df3b41e8706eb0c52
+policy checks: 112 / 112
+manifest slots tested: 180
+maximum quota tested: 1,800
+Opening labels: 0
+formal access state: ACCESS_NOT_PROVIDED
+```
+
+Hardened offline checks：
+
+- exact home / away / scheduled-tipoff identity;
+- reject wrong tipoff, future provider snapshot and ambiguous event;
+- bookmaker `last_update <= provider_snapshot < tipoff`;
+- same-book two-sided h2h only;
+- coverage-only stable-key tie-break;
+- quota-header and response-hash provenance;
+- no HTTP client and no paid source call.
+
+## Frozen Pilot Manifest v1 — PR #60
+
+### Failed per-game official path retained
+
+```text
+workflow run: 29638960721
+Historical Gold matches: 30 / 30
+NBA Official LiveData per-game requests: 30
+HTTP 403: 30 / 30
+paid odds-provider calls: 0
+```
+
+此失敗沒有被繞過，也沒有替換 sample。Schedule metadata 改由低頻 NBA Official season schedule files 取得。
+
+### Successful official season schedule result
+
+```text
+workflow run: 29639184035
+artifact: timestamped-odds-pilot-manifest-v1
+artifact id: 8428065745
+digest: sha256:d049e340163142d40e09ea19d339055707670cd571ca812c7e6846cf67d9e02c
+formal state: PILOT_MANIFEST_READY_ACCESS_NOT_PROVIDED
+```
+
+Coverage／QA：
+
+```text
+Historical Gold matches: 30 / 30
+Gold duplicates: 0
+Gold missing / identity mismatch: 0
+Official season source requests: 3
+Official season source success: 3 / 3
+Official source hashes: 3
+Official schedule games: 30 / 30
+Game schedule failures: 0
+Games per season: 10 / 10 / 10
+Game slots: 180
+Slots per season: 60 / 60 / 60
+Snapshot labels: 30 each × 6 labels
+Unique request timestamps: 180
+Dedup request savings: 0
+Exact planned quota: 1,800 credits
+Opening labels: 0
+Raw official JSON retained: 0
+Player / score / bookmaker / price fields retained: 0
+Paid odds-provider calls: 0
+Real quotes downloaded: 0
+Market metrics calculated: false
+```
+
+Current permissions：
+
+```text
+manifest_structurally_ready: true
+access_state: ACCESS_NOT_PROVIDED
+ready_for_paid_qualification_execution: false
+paid_execution_requires_explicit_user_approval: true
+paid_execution_requires_private_secret: true
+ready_for_production_backfill: false
 ready_for_market_backtest: false
+ready_for_clv_ev_roi: false
+ready_for_betting_edge_claim: false
 formal_stake: 0
 ```
 
 ## Next Exact Task
 
 ```text
-Validate and merge PR #59
-→ derive exact frozen 30-game scheduled tipoffs from Historical Gold
-→ build the 180-row no-price request manifest
-→ verify quota <= 1,800 credits
-→ stop before paid execution
+Validate latest PR #60 head and full regression suite
+→ merge exact no-price manifest
+→ revalidate provider price / Terms / quota
+→ present exact maximum exposure: 1,800 credits
+→ obtain explicit user approval before any paid execution
 ```
 
 ## Important Recent PRs
@@ -265,5 +333,7 @@ Validate and merge PR #59
 #53 / #54 Expected Minutes Audit v3
 #55 / #56 Injury Holdout v1
 #57 Timestamped Odds Acquisition Policy v1
-#59 Timestamped Odds Adapter v1 — Draft
+#59 Timestamped Odds Adapter v1 — merged
+#60 Frozen Timestamped Odds Pilot Manifest v1 — Draft / live QA passed
+#61 duplicate manifest PR — closed
 ```

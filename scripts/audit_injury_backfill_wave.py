@@ -16,7 +16,7 @@ from tempfile import TemporaryDirectory
 from typing import Any
 from zoneinfo import ZoneInfo
 
-VERSION = "injury-backfill-wave-acquisition-audit-v1"
+VERSION = "injury-backfill-wave-acquisition-audit-v2"
 ET = ZoneInfo("America/New_York")
 FORBIDDEN_PLAYER_FILENAMES = {
     "multi-report-injury-panel-normalized.csv",
@@ -103,6 +103,9 @@ def validate_registry(registry: dict[str, Any]) -> dict[str, Any]:
     expected_count = as_int(policy.get("candidate_reports"), -1)
     expected_dates = as_int(policy.get("dates"), -1)
     expected_slots = sorted(str(value) for value in policy.get("official_slots_et", []))
+    cadence_days = as_int(policy.get("cadence_days"), 14)
+    if cadence_days <= 0:
+        errors.append(f"cadence_days must be positive: {cadence_days}")
     if expected_count != len(values):
         errors.append(f"candidate_reports={expected_count}, actual={len(values)}")
     if expected_dates != len(requested_dates):
@@ -111,8 +114,10 @@ def validate_registry(registry: dict[str, Any]) -> dict[str, Any]:
         errors.append(f"official_slots_et={expected_slots}, actual={slots}")
     if weekdays != [str(policy.get("weekday", ""))]:
         errors.append(f"weekday policy mismatch: {weekdays}")
-    if date_gaps and any(gap != 14 for gap in date_gaps):
-        errors.append(f"calendar cadence is not consistently 14 days: {date_gaps}")
+    if date_gaps and any(gap != cadence_days for gap in date_gaps):
+        errors.append(
+            f"calendar cadence is not consistently {cadence_days} days: {date_gaps}"
+        )
     if requested_dates[0] != str(policy.get("start_date", "")):
         errors.append("start_date does not match first requested date")
     if requested_dates[-1] != str(policy.get("end_date", "")):
@@ -136,6 +141,7 @@ def validate_registry(registry: dict[str, Any]) -> dict[str, Any]:
         "requested_dates": requested_dates,
         "slots_et": slots,
         "weekdays": weekdays,
+        "cadence_days": cadence_days,
         "date_gaps_days": date_gaps,
         "duplicate_requested_timestamps": duplicate_requested,
         "errors": errors,
@@ -308,6 +314,8 @@ def audit(
         },
         "quality": {
             "registry_errors": registry_qa["errors"],
+            "registry_cadence_days": registry_qa["cadence_days"],
+            "registry_date_gaps_days": registry_qa["date_gaps_days"],
             "duplicate_requested_timestamps": registry_qa["duplicate_requested_timestamps"],
             "duplicate_player_source_times": duplicate_player_times,
             "duplicate_team_source_times": duplicate_team_times,
@@ -327,6 +335,7 @@ def audit(
             "outcomes_or_market_prices_used": False,
         },
         "decision": {
+            "ready_for_feature_backfill": ready,
             "ready_for_wave1_feature_backfill": ready,
             "ready_for_model_training": False,
             "ready_for_probability_adjustment": False,
@@ -379,6 +388,34 @@ def self_test(output_dir: Path) -> None:
             },
             "report_times": times,
         }
+        weekly_registry = {
+            "schema_version": "weekly-test",
+            "sampling_policy": {
+                "selection_basis": "calendar_only_before_outcome_or_market_join",
+                "weekday": "Thursday",
+                "cadence_days": 7,
+                "official_slots_et": ["08:30"],
+                "start_date": "2024-01-04",
+                "end_date": "2024-01-11",
+                "dates": 2,
+                "candidate_reports": 2,
+            },
+            "acquisition_gate": {
+                "minimum_successful_player_reports": 1,
+                "minimum_successful_team_reports": 1,
+                "minimum_overlapping_successful_reports": 1,
+                "minimum_unique_successful_dates": 1,
+                "maximum_failure_rate_per_pipeline": 0.50,
+            },
+            "report_times": [
+                "2024-01-04T08:30:00-05:00",
+                "2024-01-11T08:30:00-05:00",
+            ],
+        }
+        weekly_qa = validate_registry(weekly_registry)
+        assert weekly_qa["errors"] == [], weekly_qa
+        assert weekly_qa["cadence_days"] == 7, weekly_qa
+
         player_sources = [
             {"requested_report_time": value, "source_url": f"https://player/{index}", "source_file_sha256": f"{index + 1:064x}"}
             for index, value in enumerate(times[:3])
@@ -404,7 +441,6 @@ def self_test(output_dir: Path) -> None:
                     "submission_status": "SUBMITTED_WITH_PLAYER_ROWS",
                     "submission_conflict": "0",
                 })
-        # Align report count to synthetic panel rows.
         team_report["coverage"]["team_submission_rows"] = len(team_panel)
         report = audit(
             registry,
@@ -416,6 +452,7 @@ def self_test(output_dir: Path) -> None:
             root,
             output_dir,
         )
+    assert report["decision"]["ready_for_feature_backfill"] is True, report
     assert report["decision"]["ready_for_wave1_feature_backfill"] is True, report
     assert report["coverage"]["overlapping_successful_reports"] == 2, report
     assert report["decision"]["ready_for_model_training"] is False, report
@@ -458,7 +495,7 @@ def main() -> None:
         args.output_dir,
     )
     print(json.dumps(report["decision"], indent=2))
-    if not report["decision"]["ready_for_wave1_feature_backfill"]:
+    if not report["decision"]["ready_for_feature_backfill"]:
         raise SystemExit(2)
 
 

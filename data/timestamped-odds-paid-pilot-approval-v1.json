@@ -1,0 +1,108 @@
+{
+  "schema_version": "timestamped-odds-paid-pilot-approval-v1",
+  "reviewed_at": "2026-07-18",
+  "approval_state": "AWAITING_EXPLICIT_USER_APPROVAL",
+  "upstream": {
+    "manifest_pr": 60,
+    "manifest_merge_commit": "332d199122ad61815503d1165c81a696c28dbfee",
+    "manifest_workflow_run": 29639270948,
+    "manifest_artifact_id": 8428103801,
+    "manifest_artifact_digest": "sha256:31aa2acafe9834a09720486c96413d8da863f35623de78ef8ef1da8b6432a2a4",
+    "formal_manifest_state": "PILOT_MANIFEST_READY_ACCESS_NOT_PROVIDED"
+  },
+  "official_sources": {
+    "pricing_url": "https://the-odds-api.com/",
+    "historical_data_url": "https://the-odds-api.com/historical-odds-data/",
+    "v4_documentation_url": "https://the-odds-api.com/liveapi/guides/v4/",
+    "terms_url": "https://the-odds-api.com/terms-and-conditions.html",
+    "subscription_management_url": "https://the-odds-api.com/manage/upgrade-downgrade-cancel-a-subscription.html"
+  },
+  "revalidated_official_facts": {
+    "historical_access_requires_paid_plan": true,
+    "historical_featured_markets_available_from": "2020-06-06",
+    "snapshot_interval_before_2022_09_minutes": 10,
+    "snapshot_interval_from_2022_09_minutes": 5,
+    "historical_snapshot_rule": "closest available snapshot equal to or earlier than requested date",
+    "historical_quota_formula": "10 x regions x markets",
+    "response_headers_required": [
+      "x-requests-last",
+      "x-requests-used",
+      "x-requests-remaining"
+    ],
+    "empty_historical_response_charged": false,
+    "lowest_listed_historical_enabled_plan": {
+      "plan_name": "START 20K",
+      "listed_price_usd_per_month": 30,
+      "monthly_credits": 20000,
+      "historical_odds_included": true,
+      "billing_starts_immediately": true,
+      "recurs_monthly_until_cancelled": true,
+      "taxes_fx_and_card_fees_verified": false
+    }
+  },
+  "frozen_pilot": {
+    "sport_key": "basketball_nba",
+    "region": "us",
+    "market": "h2h",
+    "odds_format": "decimal",
+    "independent_games": 30,
+    "snapshot_labels": [
+      "T-6h",
+      "T-3h",
+      "T-1h",
+      "T-30m",
+      "T-5m",
+      "Closing"
+    ],
+    "unique_historical_requests": 180,
+    "credits_per_request": 10,
+    "maximum_pilot_credits": 1800,
+    "share_of_start_20k_quota_percent": 9.0,
+    "opening_requested": false,
+    "production_backfill_authorized": false,
+    "market_metrics_authorized": false
+  },
+  "maximum_exposure": {
+    "base_subscription_price_usd": 30,
+    "billing_unit": "month",
+    "recurring_subscription": true,
+    "maximum_api_credits_for_this_pilot": 1800,
+    "tax_fx_card_fee_amount": null,
+    "automatic_purchase_or_subscription_allowed": false,
+    "automatic_renewal_management_allowed": false,
+    "explicit_user_approval_required": true
+  },
+  "terms_and_storage_boundary": {
+    "standalone_raw_data_resale_allowed": false,
+    "standalone_raw_data_redistribution_allowed": false,
+    "analytics_and_user_facing_tools_allowed_subject_to_terms": true,
+    "api_key_must_remain_private": true,
+    "public_raw_response_files_allowed": false,
+    "public_quote_level_files_allowed": false,
+    "public_price_rows_allowed": false,
+    "public_outputs_limited_to_aggregate_qa_and_non_reconstructable_research_summaries": true,
+    "formal_rights_review_required_before_production_backfill": true
+  },
+  "execution_boundary": {
+    "account_created_by_automation": false,
+    "subscription_created_by_automation": false,
+    "payment_created_by_automation": false,
+    "api_key_read": false,
+    "paid_endpoint_calls": 0,
+    "real_quotes_downloaded": 0,
+    "ready_for_paid_qualification_execution": false,
+    "ready_for_production_backfill": false,
+    "ready_for_market_backtest": false,
+    "ready_for_clv_ev_roi": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "required_user_acknowledgements": [
+    "Approve the currently listed START 20K base subscription price of USD 30 per month, before any unverified taxes, FX conversion or card fees.",
+    "Acknowledge that paid billing starts immediately and recurs monthly until cancelled.",
+    "Authorize no more than 1,800 API credits for the frozen 30-game qualification pilot.",
+    "Do not authorize production backfill, market backtest, CLV, EV, ROI, Drawdown or betting execution.",
+    "Provide THE_ODDS_API_KEY only through a private secret channel; never place it in chat, a commit, log or Artifact."
+  ],
+  "approval_text_template": "I approve the currently listed The Odds API START 20K subscription at a base price of USD 30 per month, acknowledge recurring monthly billing until cancelled and possible unverified taxes/FX/card fees, and authorize the frozen 30-game qualification pilot to use at most 1,800 API credits. This does not authorize production backfill, market metrics or betting execution."
+}

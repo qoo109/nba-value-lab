@@ -1,9 +1,53 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.1.0",
-  "updated_at": "2026-07-17T12:55:00+08:00",
+  "registry_version": "1.2.0",
+  "updated_at": "2026-07-18T16:30:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
+    {
+      "source_id": "the_odds_api_historical_v4",
+      "name": "The Odds API Historical Odds v4",
+      "url": "https://the-odds-api.com/historical-odds-data/",
+      "api_base": "https://api.the-odds-api.com/v4",
+      "status": "selected_predeclared_source_access_blocked",
+      "source_class": "commercial_market_data_aggregator",
+      "use_cases": ["bookmaker_level_historical_h2h", "fixed_t_minus_snapshots", "same_book_closing_pair", "future_point_in_time_market_backtest"],
+      "coverage_claim": "Featured-market historical snapshots documented from 2020-06-06; 10-minute intervals before 2022-09-18 and 5-minute intervals afterward.",
+      "timestamp_quality": "provider_snapshot_timestamp_plus_bookmaker_last_update",
+      "historical_access": "paid_plan_only",
+      "automation_allowed": "only_after_predeclaration_merge_api_secret_restricted_storage_and_explicit_pilot_budget_approval",
+      "authentication": {
+        "required_secret": "THE_ODDS_API_KEY",
+        "secret_in_logs_or_artifacts_allowed": false
+      },
+      "query_contract": {
+        "sport_key": "basketball_nba",
+        "region": "us",
+        "markets": ["h2h"],
+        "odds_format": "decimal",
+        "snapshot_semantics": "closest provider snapshot at or before the requested ISO-8601 time",
+        "credit_cost": "10 credits per region per market for historical odds"
+      },
+      "terms_review": {
+        "terms_url": "https://the-odds-api.com/terms-and-conditions.html",
+        "checked_at": "2026-07-18",
+        "summary": "API key must remain private. Provider data must not be resold, repackaged or redistributed as a standalone data product. Raw and normalized odds rows remain in restricted storage; the public repository and public Artifacts contain aggregate QA only."
+      },
+      "commit_policy": "no_raw_or_normalized_bookmaker_rows_in_public_repository",
+      "artifact_policy": "credential_free_manifest_hashes_request_totals_and_aggregate_source_health_only",
+      "predeclaration": "data/real-timestamped-odds-acquisition-policy-v1.json",
+      "guardrails": {
+        "paid_requests_performed": false,
+        "pilot_budget_approved": false,
+        "full_backfill_approved": false,
+        "market_backtest_allowed": false,
+        "roi_allowed": false,
+        "clv_allowed": false,
+        "betting_edge_claim_allowed": false,
+        "formal_stake": 0
+      },
+      "notes": "Selected for a separately approved 90-game source-health pilot. This registry entry does not authorize API access or the 3,688-game full backfill."
+    },
     {
       "source_id": "oddsportal_nba_results",
       "name": "OddsPortal NBA historical results and odds",
@@ -70,7 +114,7 @@
         "clv_allowed": false,
         "betting_edge_claim_allowed": false
       },
-      "notes": "First automated candidate for a closing-market forecast benchmark; never treat as exact point-in-time entry odds."
+      "notes": "Closing-market forecast benchmark only; never treat as exact point-in-time entry odds."
     },
     {
       "source_id": "kaggle_ehallmar_nba_historical_betting",

@@ -1,0 +1,115 @@
+{
+  "schema_version": "eoin-full-adapter-one-time-execution-request-v1",
+  "created_at": "2026-07-19T16:45:00+08:00",
+  "request_id": "EOIN-FULL-ADAPTER-2026-07-19-001",
+  "request_state": "AWAITING_EXPLICIT_USER_APPROVAL",
+  "source_id": "kaggle_eoinamoore_historical_nba",
+  "dataset_handle": "eoinamoore/historical-nba-data-and-player-box-scores",
+  "upstream_evidence": {
+    "preflight": {
+      "formal_state": "FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED",
+      "workflow_run_id": 29677698906,
+      "artifact_id": 8439486695,
+      "artifact_digest": "sha256:39dd80ca107e2dc65f6bbba8012ba8b9ac40b60bd6a44db6f05cacb05a27d311"
+    },
+    "execution_policy": {
+      "formal_state": "FULL_ADAPTER_EXECUTION_POLICY_READY_FOR_IMPLEMENTATION_BUT_EXECUTION_DISABLED",
+      "workflow_run_id": 29677971194,
+      "artifact_id": 8439578942,
+      "artifact_digest": "sha256:9b81c9ef61f1f9d19453b9e04a8e42cd362700ac86e79a4377328f24fdfe25a2"
+    },
+    "runner_implementation": {
+      "formal_state": "FULL_ADAPTER_RUNNER_READY_FOR_ONE_TIME_EXECUTION_APPROVAL_BUT_DISABLED",
+      "workflow_run_id": 29679274470,
+      "artifact_id": 8440008401,
+      "artifact_digest": "sha256:15032709922439d062108994b08bfec76e815fb42443572c36e7d5db51d10331"
+    }
+  },
+  "frozen_scope": {
+    "one_time_only": true,
+    "workflow_dispatch_only": true,
+    "automatic_main_push_execution_allowed": false,
+    "scheduled_execution_allowed": false,
+    "concurrent_execution_allowed": false,
+    "pilot_season": "2023-24",
+    "required_input_files": [
+      "Games.csv",
+      "TeamStatistics.csv",
+      "PlayerStatistics.csv",
+      "PlayByPlay.parquet"
+    ],
+    "allowed_operations": [
+      "download_public_dataset_to_temporary_storage",
+      "validate_archive_inventory",
+      "calculate_file_hashes_and_sizes",
+      "read_schema_and_parquet_metadata",
+      "calculate_aggregate_row_counts",
+      "calculate_duplicate_key_groups",
+      "calculate_deterministic_game_identity_coverage",
+      "calculate_final_score_match_rate",
+      "calculate_team_boxscore_coverage",
+      "calculate_player_boxscore_candidate_coverage_only",
+      "calculate_pbp_game_coverage",
+      "emit_aggregate_validation_reports"
+    ],
+    "temporary_raw_source_rows_may_be_read_if_later_approved": true,
+    "raw_rows_emitted": 0,
+    "raw_files_uploaded_as_artifact": false,
+    "silver_or_gold_replacement": false
+  },
+  "operational_limits": {
+    "max_runtime_minutes": 45,
+    "max_concurrent_runs": 1,
+    "max_input_file_count": 4,
+    "max_total_input_bytes": 10737418240,
+    "max_single_input_file_bytes": 8589934592,
+    "max_public_output_bytes": 10485760,
+    "max_public_artifact_file_count": 6
+  },
+  "approval_boundary": {
+    "explicit_user_approval_required": true,
+    "approval_granted": false,
+    "approved_by": null,
+    "approved_at": null,
+    "approval_record_sha256": null,
+    "execution_enabled": false,
+    "approval_text_template": "I approve request EOIN-FULL-ADAPTER-2026-07-19-001 for one one-time aggregate-only Eoin full-adapter validation run. This does not authorize raw-row artifacts, Historical Silver or Gold replacement, model retraining, market backtest, betting edge claims, or non-zero Stake. Formal Stake remains 0."
+  },
+  "required_user_acknowledgements": [
+    "The run is one-time and workflow-dispatch only.",
+    "Raw Eoin rows may be read only in temporary Actions storage.",
+    "Raw rows, raw files, archives, and databases will not be uploaded as artifacts.",
+    "Player boxscore output remains coverage-only and does not establish player-stat parity.",
+    "Historical Silver, Historical Gold, model training, and market backtest remain disabled.",
+    "Formal Stake remains 0."
+  ],
+  "execution_boundary": {
+    "network_calls_made": 0,
+    "full_bundle_execution_count": 0,
+    "raw_eoin_rows_read": false,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "ready_for_execution": false,
+    "ready_for_silver_replacement": false,
+    "ready_for_gold_replacement": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_state_if_request_validation_passes": {
+    "formal_state": "ONE_TIME_EXECUTION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL",
+    "ready_for_user_approval": true,
+    "ready_for_execution": false,
+    "ready_for_silver_replacement": false,
+    "ready_for_gold_replacement": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "decision_states": [
+    "ONE_TIME_EXECUTION_REQUEST_STRUCTURAL_BLOCKED",
+    "ONE_TIME_EXECUTION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL"
+  ]
+}

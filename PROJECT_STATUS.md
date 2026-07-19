@@ -1,6 +1,6 @@
 # NBA Value Lab — Project Status
 
-更新日期：2026-07-18  
+更新日期：2026-07-19
 定位：**Research Candidate / Pre-Market-Backtest**  
 正式 Stake：**0**
 
@@ -11,7 +11,7 @@
 ### Latest Main SHA at this snapshot
 
 ```text
-1a7c6551cac58063797e56a3b79057ce1af81f27
+2654873d9e823a1e392da55b4b08f0c702abf799
 ```
 
 最新完成：
@@ -23,6 +23,8 @@ PR #71 — Wyatt SQLite File-level Pilot v1 predeclaration
 PR #72 — Wyatt SQLite Census Runner v1 implementation
 PR #74 — Wyatt SQLite operational size ceiling amendment to 3 GiB
 PR #75 — Wyatt SQLite Aggregate Audit v1
+Commit ce88b24 — Eoin data source automation
+Commit 2654873 — Eoin cross-source audit workflow
 ```
 
 ### Currently open research execution PRs
@@ -34,10 +36,12 @@ None
 ### Next unique mainline
 
 ```text
-WYATT_SQLITE_STRUCTURAL_BLOCKED
+EOIN_ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE_NEXT_ADAPTER_PREDECLARATION
 ```
 
 使用者已提供真實 Wyatt Walsh `nba.sqlite`。檔案通過 SQLite header、唯讀開啟與 `integrity_check = ok`，但實際內容只有 16 tables、最晚到 2023-06-12、2023-24 pilot games 為 0，與上傳 metadata 所描述的 235-table current-season warehouse 不一致。
+
+使用者也提供 Eoin A Moore Kaggle 檔案組，並已在 GitHub Actions 完成 census、internal qualification 與 2023-24 cross-source audit。Eoin 正式結果為 `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE`，可做 game identity、final score、team boxscore 與 PBP coverage cross-check；player boxscore 目前只通過 coverage-only，不等於 player stat parity。
 
 ### Parallel blocked line
 
@@ -55,7 +59,9 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 - supplied schema 沒有 player game boxscore candidate table。
 - `game` 有 56 個 duplicate `game_id` groups。
 - `play_by_play` 有 7,360 個 duplicate `(game_id, eventnum)` groups。
-- Eoin A Moore 與 Wyatt Walsh 的完整次要來源合格數仍為 0。
+- Wyatt 的完整次要來源合格數仍為 0。
+- Eoin A Moore 已通過 role-limited secondary-source audit，但不是 Historical Silver／Gold replacement。
+- Eoin player boxscore 只通過 coverage-only；尚未有獨立 player-stat parity reference。
 - 使用者已明確不核准付費 Historical Odds pilot。
 - 8 個零成本／既有 odds 候選中，合格 bookmaker-level point-in-time source 為 0。
 - Production Odds Backfill、PIT Odds Join、Market Backtest、CLV、EV、ROI、Drawdown 全部未解鎖。
@@ -64,6 +70,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 ## Do Not Do
 
 - 不把 PR #72 synthetic SQLite self-test 或 PR #75 integrity pass 寫成 Wyatt source qualification pass。
+- 不把 Eoin `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE` 寫成完整 player stat parity、model promotion 或 Silver／Gold replacement。
 - 不公開或 commit 完整第三方 SQLite、原始 PBP、球員列或大量來源資料。
 - 不以 fuzzy matching 連接 game、team、player 或 PBP。
 - 不替換目前已驗證的 `shufinskiy/nba_data` Silver／Gold 主路徑。
@@ -86,9 +93,11 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 6. Historical Secondary Source Metadata Review              METADATA_READY_DOWNLOAD_NOT_AUTHORIZED
 7. Wyatt SQLite read-only census runner                     Completed / synthetic only
 8. Wyatt real file schema and 2023-24 cross-source audit     STRUCTURAL_BLOCKED
-9. Point-in-time Odds Join and Market Backtest              Blocked
-10. CLV / EV / ROI / Drawdown                               Blocked
-11. Betting Decision Layer                                  Blocked
+9. Eoin census, internal qualification, cross-source audit   ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
+10. Eoin adapter predeclaration                             Next
+11. Point-in-time Odds Join and Market Backtest              Blocked
+12. CLV / EV / ROI / Drawdown                               Blocked
+13. Betting Decision Layer                                  Blocked
 ```
 
 ## Core Status
@@ -109,6 +118,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 | Wyatt SQLite Census Runner | Completed / synthetic only | PR #72；唯讀 runner 已驗證。 |
 | Wyatt SQLite Size Amendment | Completed | PR #74；operation ceiling 3 GiB，scientific gates 未改。 |
 | Wyatt SQLite Real-file Audit | **STRUCTURAL_BLOCKED** | PR #75；16 tables、latest 2023-06-12、2023-24 games 0。 |
+| Eoin Cross-source Audit v1 | **ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE** | Run 29672984966；1,230 / 1,230 games matched；score match 99.9187%；PBP coverage 100%。 |
 | Market Backtest | Blocked | 尚無 executable PIT odds join。 |
 | Betting Decision Layer | Blocked | Stake = 0。 |
 
@@ -156,6 +166,48 @@ Injury Feature Holdout v1：
 | Combined — 169 | 0.615511 | 0.617785 | -0.002274 |
 
 Formal state：`VALID_NEGATIVE_RESULT`。
+
+## Eoin Cross-source Evidence
+
+GitHub Actions aggregate-only audit：
+
+```text
+workflow run: 29672984966
+workflow URL: https://github.com/qoo109/nba-value-lab/actions/runs/29672984966
+commit SHA: 2654873d9e823a1e392da55b4b08f0c702abf799
+artifact id: 8437932113
+digest: sha256:96a87c6b52614ea6f7478e1bdbcc729c7c8eb2347490ca236475444ca5fcc63a
+formal outcome: ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
+all core gates passed: true
+raw rows in Artifact: 0
+raw files in Artifact: false
+formal stake: 0
+```
+
+2023-24 deterministic comparison against `shufinskiy/nba_data`：
+
+```text
+reference games: 1,230
+matched games: 1,230
+game identity match rate: 100%
+final score match rate: 99.9187% (1,229 / 1,230)
+team boxscore coverage: 100%
+team boxscore score match rate: 99.9187%
+player boxscore candidate coverage: 100% coverage-only
+PBP game coverage: 100%
+Eoin pilot games: 1,383
+extra Eoin pilot games: 153
+Eoin PBP rows: 18,727,295
+Eoin PBP unique games: 39,164
+```
+
+限制：
+
+```text
+shufinskiy reference 是 event-level source，不是完整獨立 player boxscore stat reference。
+player boxscore 結果只代表 candidate row coverage，不代表 player stat parity。
+此結果不解鎖 model metrics、market metrics、CLV、EV、ROI、Drawdown 或投注決策。
+```
 
 ## Wyatt Real-file Evidence
 
@@ -225,6 +277,16 @@ Wyatt file-level audit 只在以下條件成立時重新開啟：
 
 目前這份 16-table legacy file 可保留為 1946–2022-23 exploratory cross-check candidate，但不得升格為正式次要來源。
 
+Eoin 下一步只可開啟 adapter predeclaration：
+
+```text
+1. define role-limited Eoin adapter scope;
+2. map deterministic game/team/PBP identifiers only;
+3. keep player-stat parity out of scope until an independent boxscore reference exists;
+4. keep existing Silver and Gold unchanged;
+5. emit only aggregate validation reports and small derived schema metadata.
+```
+
 市場資料研究只在以下條件之一成立時重新開啟：
 
 ```text
@@ -249,4 +311,6 @@ Wyatt file-level audit 只在以下條件成立時重新開啟：
 #72 Wyatt SQLite Census Runner v1 implementation
 #74 Wyatt SQLite operational size ceiling amendment
 #75 Wyatt SQLite Aggregate Audit v1
+ce88b24 Eoin data source automation
+2654873 Eoin cross-source audit workflow
 ```

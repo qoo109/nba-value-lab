@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.7",
+    appVersion: "V5.3.8",
     model: "V3.1 x G1.1",
     updated: "2026-07-19",
     state: "Research Candidate / Pre-Market-Backtest",
@@ -59,7 +59,7 @@
     if (!rail) return;
     const cells = qsa(":scope > div", rail);
     if (cells[0]) cells[0].innerHTML = '<span class="rail-code">STATE</span><span><strong>Research Candidate</strong>・Pre-Market-Backtest</span>';
-    if (cells[1]) cells[1].innerHTML = '<span class="rail-code">QUEUE</span><span>Wyatt blocked・Eoin cross-source ready・Market odds 暫停</span>';
+    if (cells[1]) cells[1].innerHTML = '<span class="rail-code">QUEUE</span><span>Wyatt blocked・Eoin role-limited eligible・Market odds 暫停</span>';
     if (cells[2]) cells[2].innerHTML = '<span class="rail-code">STAKE</span><span>正式投注額 0・不宣稱 edge / ROI / CLV</span>';
   }
 
@@ -94,7 +94,7 @@
       <div>
         <span class="eyebrow">CURRENT CONTROL BLOCK</span>
         <h2>現在先做資料進件，不產生正式投注建議</h2>
-        <p>Wyatt 已完成真實檔 aggregate audit 並正式 blocked；Eoin 已通過 GitHub census 與 internal qualification，下一條線是 2023-24 cross-source audit。市場 PIT odds 尚未解鎖，因此 CLV、EV、ROI、Drawdown 與投注決策層仍關閉。</p>
+        <p>Wyatt 已完成真實檔 aggregate audit 並正式 blocked；Eoin 已通過 GitHub census、internal qualification 與 2023-24 cross-source audit，目前可作 role-limited secondary cross-check。市場 PIT odds 尚未解鎖，因此 CLV、EV、ROI、Drawdown 與投注決策層仍關閉。</p>
       </div>
       <div class="current-status-pill"><span>STAKE</span><strong>${STATUS.stake}</strong></div>
     </div>
@@ -104,11 +104,11 @@
         "DuckDB: 12 KB empty shell",
         "2023-24 pilot games: 0",
       ])}
-      ${statusCard("EOIN", "GitHub Actions 可直接跑 cross-source audit", "Eoin 已通過內部一致性；下一關與 shufinskiy 2023-24 event-level reference 做 deterministic 對帳。", "ready", [
-        "Internal gates: passed",
-        "Actions: Run Eoin cross-source audit v1",
-        "No raw rows in Git or artifacts",
-        "Deterministic matching only",
+      ${statusCard("EOIN", "Role-limited secondary source 已通過", "Eoin 與 shufinskiy 2023-24 event-level reference deterministic 對帳通過；下一步是 adapter predeclaration，不是取代 Silver / Gold。", "ready", [
+        "Matched games: 1,230 / 1,230",
+        "Final score match: 99.9187%",
+        "Team boxscore + PBP coverage: 100%",
+        "Player boxscore: coverage-only",
       ])}
       ${statusCard("MARKET", "PIT odds line 暫停", "沒有合法且可核對 timestamp / bookmaker semantics 的 odds source 前，不做 market backtest。", "paused", [
         "No paid pilot approved",
@@ -258,7 +258,7 @@
     section.innerHTML = `<div class="github-automation-copy">
       <span class="eyebrow">GITHUB WEBSITE RUNNER</span>
       <h2>從網站直接啟動 cross-source audit</h2>
-      <p>Token 只留在這次瀏覽器請求中；不要把 token commit、截圖或分享。</p>
+      <p>目前 Eoin v1 已通過；這個工具保留給未來重新驗證新版資料。Token 只留在這次瀏覽器請求中。</p>
     </div>
     <form class="github-automation-form">
       <label>
@@ -281,7 +281,7 @@
         <button type="submit">啟動 Eoin audit</button>
         <a id="githubAutomationRunLink" href="#" target="_blank" rel="noopener" hidden>查看最新 run</a>
       </div>
-      <div class="github-automation-status" id="githubAutomationStatus" data-tone="muted">等待啟動。</div>
+      <div class="github-automation-status" id="githubAutomationStatus" data-tone="muted">Eoin v1 已通過；僅在新版資料需要重驗時啟動。</div>
     </form>`;
 
     if (anchor) anchor.insertAdjacentElement("afterend", section);
@@ -315,12 +315,12 @@
         </dl>
       </article>
       <article class="registry-card licensed">
-        <div><span>Eoin A Moore</span><em>CROSS_SOURCE_READY</em></div>
-        <h2>下一個 2023-24 cross-source audit</h2>
+        <div><span>Eoin A Moore</span><em>ROLE_LIMITED_ELIGIBLE</em></div>
+        <h2>cross-source 通過，等待 adapter predeclaration</h2>
         <dl>
-          <div><dt>已完成</dt><dd>file census + internal qualification</dd></div>
-          <div><dt>角色</dt><dd>game / team / player boxscore cross-check</dd></div>
-          <div><dt>下一關</dt><dd>Eoin vs shufinskiy deterministic audit</dd></div>
+          <div><dt>已完成</dt><dd>census + internal + cross-source audit</dd></div>
+          <div><dt>可用角色</dt><dd>game / team / PBP coverage cross-check</dd></div>
+          <div><dt>限制</dt><dd>player stats 仍需獨立 parity audit</dd></div>
         </dl>
       </article>
       <article class="registry-card odds">

@@ -1,0 +1,145 @@
+{
+  "schema_version": "eoin-cross-source-audit-result-v1",
+  "updated_at": "2026-07-19T12:30:00+08:00",
+  "source_id": "kaggle_eoinamoore_historical_nba",
+  "source_name": "Eoin A Moore historical NBA data and player box scores",
+  "dataset_handle": "eoinamoore/historical-nba-data-and-player-box-scores",
+  "reference_source_id": "shufinskiy_nba_data_nbastats_2023",
+  "pilot_season": "2023-24",
+  "workflow": {
+    "name": "Run Eoin cross-source audit v1",
+    "run_id": 29672984966,
+    "run_url": "https://github.com/qoo109/nba-value-lab/actions/runs/29672984966",
+    "commit_sha": "2654873d9e823a1e392da55b4b08f0c702abf799",
+    "artifact_name": "eoin-cross-source-audit-v1",
+    "artifact_id": 8437932113,
+    "artifact_digest": "sha256:96a87c6b52614ea6f7478e1bdbcc729c7c8eb2347490ca236475444ca5fcc63a"
+  },
+  "formal_outcome": "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+  "all_core_gates_passed": true,
+  "deterministic_matching_only": true,
+  "fuzzy_matching": false,
+  "formal_source_replacement_approved": false,
+  "existing_silver_replacement": false,
+  "existing_gold_replacement": false,
+  "formal_stake": 0,
+  "comparison": {
+    "reference_games": 1230,
+    "matched_games": 1230,
+    "eoin_pilot_games": 1383,
+    "extra_eoin_pilot_game_count": 153,
+    "missing_from_eoin_count": 0,
+    "game_identity_match_rate": 1.0,
+    "score_comparable_games": 1230,
+    "score_match_games": 1229,
+    "final_score_match_rate": 0.9991869918699187,
+    "team_boxscore_covered_games": 1230,
+    "team_boxscore_coverage_rate": 1.0,
+    "team_boxscore_score_match_games": 1229,
+    "team_boxscore_score_match_rate": 0.9991869918699187,
+    "player_boxscore_candidate_covered_games": 1230,
+    "player_boxscore_candidate_coverage_rate": 1.0,
+    "pbp_covered_games": 1230,
+    "pbp_game_coverage_rate": 1.0
+  },
+  "eoin_observed": {
+    "games": {
+      "total_rows": 73279,
+      "selected_rows": 1383,
+      "unique_games": 1383,
+      "duplicate_game_id_groups": 0,
+      "missing_id_rows": 0
+    },
+    "team_statistics": {
+      "total_rows": 146560,
+      "selected_rows": 2766,
+      "unique_games": 1383,
+      "duplicate_game_team_key_groups": 0
+    },
+    "player_statistics": {
+      "total_rows": 1669922,
+      "selected_rows": 37300,
+      "unique_games": 1384,
+      "duplicate_game_player_key_groups": 0
+    },
+    "play_by_play": {
+      "present": true,
+      "game_column": "gameId",
+      "metadata_rows_read": true,
+      "row_count": 18727295,
+      "unique_games": 39164,
+      "raw_rows_emitted": 0
+    }
+  },
+  "reference_observed": {
+    "unique_games": 1230,
+    "total_rows": 567665,
+    "score_rows": 156844,
+    "missing_game_id_rows": 0,
+    "duplicate_game_event_key_groups": 3,
+    "event_rows_per_game": {
+      "min": 371,
+      "max": 597,
+      "total": 567665
+    }
+  },
+  "gate_results": [
+    {
+      "name": "minimum_reference_games",
+      "observed": 1230,
+      "threshold": 1000,
+      "passed": true
+    },
+    {
+      "name": "game_identity_match_rate",
+      "observed": 1.0,
+      "threshold": 0.98,
+      "passed": true
+    },
+    {
+      "name": "final_score_match_rate",
+      "observed": 0.9991869918699187,
+      "threshold": 0.98,
+      "passed": true
+    },
+    {
+      "name": "team_boxscore_coverage",
+      "observed": 1.0,
+      "threshold": 0.98,
+      "passed": true
+    },
+    {
+      "name": "player_boxscore_candidate_coverage",
+      "observed": 1.0,
+      "threshold": 0.95,
+      "passed": true,
+      "note": "coverage only; shufinskiy nbastats is not an independent player boxscore stat reference"
+    },
+    {
+      "name": "pbp_game_coverage_when_claimed",
+      "observed": 1.0,
+      "threshold": 0.95,
+      "passed": true,
+      "status": "evaluated"
+    },
+    {
+      "name": "exact_duplicate_games",
+      "observed": 0,
+      "threshold": 0,
+      "passed": true
+    }
+  ],
+  "limitations": [
+    "shufinskiy nbastats provides independent game and event-level reference, not complete independent player boxscore stat rows",
+    "player boxscore result is coverage-only and cannot approve player stat parity by itself",
+    "raw Eoin rows, raw shufinskiy rows, archives, and databases are not uploaded",
+    "this result does not unlock model metrics, market metrics, ROI, CLV, betting decisions, or Silver/Gold replacement"
+  ],
+  "boundaries": {
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "model_metrics": false,
+    "market_metrics": false,
+    "betting_decision_layer": false
+  }
+}

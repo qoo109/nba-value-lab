@@ -231,8 +231,8 @@ API secrets
 
 ## Current Priority
 
-1. Run `Run Eoin Kaggle CSV census v1`.
-2. Review `internal_qualification_report.json`.
-3. Run `Run Eoin cross-source audit v1`.
-4. Review `eoin_cross_source_audit_report.json`.
+1. Keep the completed Eoin census and cross-source reports as aggregate-only evidence.
+2. Treat Eoin as `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE`.
+3. Draft the Eoin adapter predeclaration before importing any derived Eoin data.
+4. Keep player-stat parity out of scope until an independent player boxscore reference exists.
 5. Keep Wyatt blocked unless a materially new dataset bundle appears.

@@ -53,7 +53,7 @@ content.
 
 ```text
 1. Wyatt Walsh SQLite/DuckDB      STRUCTURAL_BLOCKED
-2. Eoin A Moore file bundle       CROSS_SOURCE_AUDIT_READY
+2. Eoin A Moore file bundle       ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
 3. Market point-in-time odds      PAUSED_UNTIL_LAWFUL_SOURCE_OR_USER_FILE
 ```
 
@@ -71,7 +71,7 @@ player game boxscore table: missing
 A Wyatt audit may only reopen if a materially new bundle contains the advertised
 current schema and season coverage.
 
-## Eoin Next Step
+## Eoin Status and Next Step
 
 Observed local files:
 
@@ -110,8 +110,7 @@ python3 scripts/run_eoin_internal_qualification_v1.py \
   --output-dir out/eoin-internal-qualification-v1
 ```
 
-The internal qualification pass still does not replace Silver or Gold. If it
-passes, the next step is a separate 2023-24 deterministic cross-source audit.
+The internal qualification pass does not replace Silver or Gold.
 
 GitHub cross-source execution:
 
@@ -124,6 +123,29 @@ event-level reference. It can produce a role-limited secondary-source outcome
 for game identity, final score, team-score coverage, player-row availability,
 and PBP availability. It still does not approve Historical Silver or Gold
 replacement.
+
+Latest completed cross-source result:
+
+```text
+workflow run: 29672984966
+artifact id: 8437932113
+formal outcome: ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
+reference games: 1,230
+matched games: 1,230
+final score match rate: 99.9187%
+team boxscore coverage: 100%
+PBP game coverage: 100%
+player boxscore candidate coverage: 100% coverage-only
+```
+
+Next step:
+
+```text
+Draft Eoin adapter predeclaration before importing derived data.
+Keep player-stat parity out of scope until an independent player boxscore
+reference exists.
+Keep existing Silver and Gold unchanged.
+```
 
 ## Frozen Gates
 

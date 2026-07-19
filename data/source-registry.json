@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.3.0",
+  "registry_version": "1.4.0",
   "site_version_policy": "follow_current_release",
-  "updated_at": "2026-07-17T11:50:00+08:00",
+  "updated_at": "2026-07-19T12:30:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -162,6 +162,42 @@
       ],
       "storage_policy": "workflow_temp_only_full_sqlite_as_expiring_artifact",
       "notes": "NBA Value Lab 歷史 Silver 試驗；版本名稱永遠跟隨網站目前正式版本。完整 SQLite 僅作 14 天 Actions artifact，上游資料再發布權不作推定。"
+    },
+    {
+      "source_id": "kaggle_eoinamoore_historical_nba",
+      "name": "Eoin A Moore historical NBA data and player box scores",
+      "status": "role_limited_secondary_eligible",
+      "mode": "public_kaggle_archive_crosscheck",
+      "domains": [
+        "game_identity_crosscheck",
+        "final_score_crosscheck",
+        "team_boxscore_crosscheck",
+        "player_boxscore_candidate_coverage",
+        "play_by_play_coverage",
+        "cross_source_validation"
+      ],
+      "requires_secret": false,
+      "quality_checks": [
+        "kaggle_download_temp_only",
+        "file_inventory",
+        "row_counts",
+        "duplicate_keys",
+        "deterministic_game_id_match",
+        "final_score_match_rate",
+        "team_boxscore_coverage",
+        "player_boxscore_candidate_coverage",
+        "pbp_game_coverage",
+        "no_raw_rows_emitted"
+      ],
+      "storage_policy": "workflow_temp_only_raw_archive_no_raw_artifact",
+      "latest_evidence": {
+        "report": "data/eoin-cross-source-audit-v1.json",
+        "formal_outcome": "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+        "workflow_run": "https://github.com/qoo109/nba-value-lab/actions/runs/29672984966",
+        "artifact_id": 8437932113,
+        "artifact_digest": "sha256:96a87c6b52614ea6f7478e1bdbcc729c7c8eb2347490ca236475444ca5fcc63a"
+      },
+      "notes": "2023-24 deterministic audit passed against shufinskiy event-level reference. Player result is coverage-only, not independent player-stat parity. Does not replace Historical Silver or Gold."
     },
     {
       "source_id": "basketball_reference",

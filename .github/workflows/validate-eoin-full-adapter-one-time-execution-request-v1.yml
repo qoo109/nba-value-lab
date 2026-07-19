@@ -1,0 +1,98 @@
+name: Validate Eoin one-time execution request v1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/eoin-full-adapter-one-time-execution-request-v1.json"
+      - "data/eoin-full-adapter-runner-implementation-v1.json"
+      - "data/eoin-full-adapter-execution-policy-v1.json"
+      - "docs/eoin-full-adapter-one-time-execution-request-v1.md"
+      - "scripts/validate_eoin_full_adapter_one_time_execution_request_v1.py"
+      - "scripts/run_eoin_full_adapter_execution_v1.py"
+      - ".github/workflows/validate-eoin-full-adapter-one-time-execution-request-v1.yml"
+      - "PROJECT_STATUS.md"
+  pull_request:
+    paths:
+      - "data/eoin-full-adapter-one-time-execution-request-v1.json"
+      - "data/eoin-full-adapter-runner-implementation-v1.json"
+      - "data/eoin-full-adapter-execution-policy-v1.json"
+      - "docs/eoin-full-adapter-one-time-execution-request-v1.md"
+      - "scripts/validate_eoin_full_adapter_one_time_execution_request_v1.py"
+      - "scripts/run_eoin_full_adapter_execution_v1.py"
+      - ".github/workflows/validate-eoin-full-adapter-one-time-execution-request-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  request-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile request modules
+        run: |
+          python -m py_compile \
+            scripts/validate_eoin_full_adapter_one_time_execution_request_v1.py \
+            scripts/run_eoin_full_adapter_execution_v1.py
+
+      - name: Validate one-time execution request
+        run: |
+          rm -rf /tmp/nbavl-eoin-one-time-request-v1
+          mkdir -p /tmp/nbavl-eoin-one-time-request-v1
+          python scripts/validate_eoin_full_adapter_one_time_execution_request_v1.py \
+            --packet data/eoin-full-adapter-one-time-execution-request-v1.json \
+            --self-test \
+            --output /tmp/nbavl-eoin-one-time-request-v1/eoin-one-time-execution-request-v1-report.json
+
+      - name: Revalidate runner remains disabled
+        run: |
+          python scripts/run_eoin_full_adapter_execution_v1.py \
+            --self-test \
+            --output /tmp/nbavl-eoin-one-time-request-v1/eoin-full-adapter-runner-validation-v1-report.json
+
+      - name: Enforce no-execution boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-eoin-one-time-request-v1')
+          request = json.loads((root / 'eoin-one-time-execution-request-v1-report.json').read_text())
+          runner = json.loads((root / 'eoin-full-adapter-runner-validation-v1-report.json').read_text())
+
+          assert request['formal_state'] == 'ONE_TIME_EXECUTION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL', request
+          assert request['passed_checks'] == request['total_checks'], request
+          assert request['approval_boundary']['approval_granted'] is False, request
+          assert request['approval_boundary']['execution_enabled'] is False, request
+          assert request['approval_boundary']['ready_for_user_approval'] is True, request
+          assert request['approval_boundary']['ready_for_execution'] is False, request
+          assert request['approval_boundary']['network_calls_made'] == 0, request
+          assert request['approval_boundary']['raw_eoin_rows_read'] is False, request
+          assert request['approval_boundary']['raw_rows_emitted'] == 0, request
+          assert request['approval_boundary']['formal_stake'] == 0, request
+
+          assert runner['formal_state'] == 'FULL_ADAPTER_RUNNER_READY_FOR_ONE_TIME_EXECUTION_APPROVAL_BUT_DISABLED', runner
+          assert runner['quality']['full_bundle_execution_performed'] is False, runner
+          assert runner['quality']['raw_eoin_rows_read'] is False, runner
+          assert runner['decision']['ready_for_full_bundle_execution'] is False, runner
+          PY
+
+      - name: Upload aggregate-only request artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-one-time-execution-request-v1
+          path: |
+            /tmp/nbavl-eoin-one-time-request-v1/eoin-one-time-execution-request-v1-report.json
+            /tmp/nbavl-eoin-one-time-request-v1/eoin-full-adapter-runner-validation-v1-report.json
+          retention-days: 14
+          if-no-files-found: error

@@ -1,0 +1,127 @@
+name: Validate Eoin full adapter runner implementation v1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/eoin-full-adapter-runner-implementation-v1.json"
+      - "data/eoin-full-adapter-execution-policy-v1.json"
+      - "data/eoin-full-adapter-preflight-v1.json"
+      - "docs/eoin-full-adapter-runner-implementation-v1.md"
+      - "scripts/run_eoin_full_adapter_execution_v1.py"
+      - "scripts/validate_eoin_full_adapter_execution_policy_v1.py"
+      - "scripts/validate_eoin_full_adapter_preflight_v1.py"
+      - "scripts/run_eoin_role_limited_adapter_v1.py"
+      - ".github/workflows/validate-eoin-full-adapter-runner-implementation-v1.yml"
+      - "PROJECT_STATUS.md"
+  pull_request:
+    paths:
+      - "data/eoin-full-adapter-runner-implementation-v1.json"
+      - "data/eoin-full-adapter-execution-policy-v1.json"
+      - "data/eoin-full-adapter-preflight-v1.json"
+      - "docs/eoin-full-adapter-runner-implementation-v1.md"
+      - "scripts/run_eoin_full_adapter_execution_v1.py"
+      - "scripts/validate_eoin_full_adapter_execution_policy_v1.py"
+      - "scripts/validate_eoin_full_adapter_preflight_v1.py"
+      - "scripts/run_eoin_role_limited_adapter_v1.py"
+      - ".github/workflows/validate-eoin-full-adapter-runner-implementation-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runner-implementation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Parquet fixture dependency
+        run: python -m pip install --disable-pip-version-check pyarrow
+
+      - name: Compile runner modules
+        run: |
+          python -m py_compile \
+            scripts/run_eoin_role_limited_adapter_v1.py \
+            scripts/validate_eoin_full_adapter_preflight_v1.py \
+            scripts/validate_eoin_full_adapter_execution_policy_v1.py \
+            scripts/run_eoin_full_adapter_execution_v1.py
+
+      - name: Generate aggregate-only upstream reports
+        run: |
+          rm -rf /tmp/nbavl-eoin-runner-implementation-v1
+          mkdir -p /tmp/nbavl-eoin-runner-implementation-v1
+          python scripts/run_eoin_role_limited_adapter_v1.py \
+            --self-test \
+            --require-parquet-fixture \
+            --output-dir /tmp/nbavl-eoin-runner-implementation-v1
+          python scripts/validate_eoin_full_adapter_preflight_v1.py \
+            --adapter-self-test-report /tmp/nbavl-eoin-runner-implementation-v1/eoin-role-limited-secondary-adapter-v1-report.json \
+            --output /tmp/nbavl-eoin-runner-implementation-v1/eoin-full-adapter-execution-preflight-v1-report.json
+          python scripts/validate_eoin_full_adapter_execution_policy_v1.py \
+            --preflight-report /tmp/nbavl-eoin-runner-implementation-v1/eoin-full-adapter-execution-preflight-v1-report.json \
+            --output /tmp/nbavl-eoin-runner-implementation-v1/eoin-full-adapter-execution-policy-v1-report.json
+
+      - name: Validate runner self-test
+        run: |
+          python scripts/run_eoin_full_adapter_execution_v1.py \
+            --self-test \
+            --output /tmp/nbavl-eoin-runner-implementation-v1/eoin-full-adapter-runner-validation-v1-report.json
+          python -m json.tool /tmp/nbavl-eoin-runner-implementation-v1/eoin-full-adapter-runner-validation-v1-report.json >/dev/null
+
+      - name: Prove execution path blocks before data access
+        run: |
+          if python scripts/run_eoin_full_adapter_execution_v1.py \
+            --dataset-root /tmp/does-not-exist \
+            --output /tmp/nbavl-eoin-runner-implementation-v1/eoin-full-adapter-execution-blocked-v1-report.json; then
+            echo "runner unexpectedly allowed execution"
+            exit 1
+          fi
+
+      - name: Enforce runner guardrails
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-eoin-runner-implementation-v1')
+          report = json.loads((root / 'eoin-full-adapter-runner-validation-v1-report.json').read_text())
+          blocked = json.loads((root / 'eoin-full-adapter-execution-blocked-v1-report.json').read_text())
+
+          assert report['formal_state'] == 'FULL_ADAPTER_RUNNER_READY_FOR_ONE_TIME_EXECUTION_APPROVAL_BUT_DISABLED', report
+          assert report['quality']['checks_failed'] == 0, report
+          assert report['quality']['network_calls_made'] is False, report
+          assert report['quality']['full_bundle_execution_performed'] is False, report
+          assert report['quality']['raw_eoin_rows_read'] is False, report
+          assert report['quality']['raw_rows_emitted'] == 0, report
+          assert report['quality']['raw_files_emitted'] is False, report
+          assert report['quality']['blocked_before_data_access'] is True, report
+          assert report['decision']['ready_for_one_time_execution_request_design'] is True, report
+          assert report['decision']['ready_for_full_bundle_execution'] is False, report
+          assert report['decision']['ready_for_market_backtest'] is False, report
+          assert report['decision']['formal_stake'] == 0, report
+
+          assert blocked['formal_state'] == 'FULL_ADAPTER_EXECUTION_BLOCKED_BEFORE_DATA_ACCESS', blocked
+          assert blocked['quality']['raw_eoin_rows_read'] is False, blocked
+          assert blocked['quality']['raw_rows_emitted'] == 0, blocked
+          assert blocked['quality']['formal_stake'] == 0, blocked
+          PY
+
+      - name: Upload aggregate-only runner artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-full-adapter-runner-implementation-v1
+          path: |
+            /tmp/nbavl-eoin-runner-implementation-v1/eoin-full-adapter-runner-validation-v1-report.json
+            /tmp/nbavl-eoin-runner-implementation-v1/eoin-full-adapter-execution-blocked-v1-report.json
+            /tmp/nbavl-eoin-runner-implementation-v1/eoin-full-adapter-execution-policy-v1-report.json
+            /tmp/nbavl-eoin-runner-implementation-v1/eoin-full-adapter-execution-preflight-v1-report.json
+          retention-days: 14
+          if-no-files-found: error

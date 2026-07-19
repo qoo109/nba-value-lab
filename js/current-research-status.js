@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.12",
+    appVersion: "V5.3.13",
     model: "V3.1 x G1.1",
     updated: "2026-07-19",
     state: "Research Candidate / Pre-Market-Backtest",
@@ -25,7 +25,7 @@
     if (qs('link[data-current-research-status-css]')) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "./css/current-research-status.css?v=20260719g";
+    link.href = "./css/current-research-status.css?v=20260719h";
     link.setAttribute("data-current-research-status-css", "true");
     document.head.appendChild(link);
   }
@@ -49,7 +49,7 @@
     if (!rail) return;
     const cells = qsa(":scope > div", rail);
     if (cells[0]) cells[0].innerHTML = '<span class="rail-code">STATE</span><span><strong>Research Candidate</strong>・Pre-Market-Backtest</span>';
-    if (cells[1]) cells[1].innerHTML = '<span class="rail-code">QUEUE</span><span>Wyatt blocked・Eoin adapter self-test・Market odds 暫停</span>';
+    if (cells[1]) cells[1].innerHTML = '<span class="rail-code">QUEUE</span><span>Wyatt blocked・Eoin preflight ready・Market odds 暫停</span>';
     if (cells[2]) cells[2].innerHTML = '<span class="rail-code">STAKE</span><span>正式投注額 0・不宣稱 edge / ROI / CLV</span>';
   }
 
@@ -84,7 +84,7 @@
       <div>
         <span class="eyebrow">CURRENT CONTROL BLOCK</span>
         <h2>現在先做資料進件，不產生正式投注建議</h2>
-        <p>Wyatt 已完成真實檔 aggregate audit 並正式 blocked；Eoin 已通過 cross-source audit，adapter predeclaration 已凍結，且 role-limited adapter self-test implementation 已建立。市場 PIT odds 尚未解鎖，因此 CLV、EV、ROI、Drawdown 與投注決策層仍關閉。</p>
+        <p>Wyatt 已完成真實檔 aggregate audit 並正式 blocked；Eoin 已通過 cross-source audit、adapter self-test 與 full adapter execution preflight。完整 Eoin bundle execution 仍關閉；市場 PIT odds 尚未解鎖，因此 CLV、EV、ROI、Drawdown 與投注決策層仍關閉。</p>
       </div>
       <div class="current-status-pill"><span>STAKE</span><strong>${STATUS.stake}</strong></div>
     </div>
@@ -94,10 +94,10 @@
         "DuckDB: 12 KB empty shell",
         "2023-24 pilot games: 0",
       ])}
-      ${statusCard("EOIN", "Adapter self-test 已建立", "Eoin adapter 目前只跑 synthetic fixture；完整 bundle execution 仍關閉，需等 CI artifact 通過後再開 preflight。", "ready", [
+      ${statusCard("EOIN", "Full adapter preflight 已建立", "Eoin 現在可跑 aggregate-only preflight；完整 bundle execution 仍關閉，下一步必須另立 execution policy。", "ready", [
         "Matched games: 1,230 / 1,230",
-        "Local self-test: passed",
-        "CI: Parquet fixture validation",
+        "Adapter self-test: passed",
+        "Preflight: ready but disabled",
         "Player boxscore: coverage-only",
       ])}
       ${statusCard("MARKET", "PIT odds line 暫停", "沒有合法且可核對 timestamp / bookmaker semantics 的 odds source 前，不做 market backtest。", "paused", [
@@ -136,10 +136,10 @@
       </article>
       <article class="registry-card licensed">
         <div><span>Eoin A Moore</span><em>ROLE_LIMITED_ELIGIBLE</em></div>
-        <h2>adapter self-test implementation 已建立</h2>
+        <h2>full adapter execution preflight 已建立</h2>
         <dl>
-          <div><dt>已完成</dt><dd>predeclaration + local synthetic self-test</dd></div>
-          <div><dt>下一步</dt><dd>GitHub CI artifact review</dd></div>
+          <div><dt>已完成</dt><dd>predeclaration + self-test + preflight</dd></div>
+          <div><dt>下一步</dt><dd>separate execution policy only</dd></div>
           <div><dt>限制</dt><dd>full adapter execution disabled</dd></div>
         </dl>
       </article>

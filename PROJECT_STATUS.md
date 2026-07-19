@@ -11,7 +11,7 @@
 ### Latest feature SHA before this status snapshot
 
 ```text
-b29f9213c52ac641b9365decc67d202d716a826b
+587112d3d864f75db26195e36b2d53ac9f2417ef
 ```
 
 ### 最新完成
@@ -29,6 +29,7 @@ PR #79 — Disabled Eoin full adapter runner guardrails v1
 PR #80 — One-time Eoin full adapter execution request v1
 PR #81 — Eoin request status and source-registry sync
 PR #82 — Explicit approval record and manual one-time execution workflow
+PR #83 — Approved Eoin manual-dispatch status sync
 ```
 
 ### Currently open research execution PRs
@@ -40,7 +41,7 @@ None
 ### Next unique mainline
 
 ```text
-ONE_TIME_EXECUTION_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH
+ONE_TIME_FULL_ADAPTER_AGGREGATE_VALIDATION_PASS
 ```
 
 Request ID：
@@ -53,11 +54,11 @@ EOIN-FULL-ADAPTER-2026-07-19-001
 
 ```text
 approval granted: true
-manual dispatch ready: true
+manual dispatch ready: false
 execution workflow: Run approved Eoin full adapter once v1
-full bundle execution count: 0
-network download performed: false
-raw Eoin rows read: false
+full bundle execution count: 1
+network download performed: true
+temporary raw Eoin rows read: true
 raw rows emitted: 0
 raw files emitted: false
 Historical Silver replacement: false
@@ -69,18 +70,17 @@ formal stake: 0
 
 使用者已在 2026-07-19 明確核准上述 request ID。核准只涵蓋一次、手動 `workflow_dispatch`、aggregate-only 的 Eoin full-adapter validation。
 
-尚未執行真實完整 bundle。下一步是手動執行：
+真實完整 bundle 已完成一次性 aggregate-only validation。GitHub Actions Artifact 已檢查，公開輸出只有一份 aggregate JSON report；raw rows、raw files、Historical Silver／Gold replacement、model retraining、market backtest 與正式 stake 仍未開放。
 
 ```text
-GitHub
-→ Actions
-→ Run approved Eoin full adapter once v1
-→ Run workflow
-→ Branch: main
-→ request_id: EOIN-FULL-ADAPTER-2026-07-19-001
+workflow run: 29680729672
+artifact id: 8440485189
+artifact digest: sha256:e068940df05bfc51d8757aef500e9c6f812687bfa171b5fff8680ee3b59bb56c
+execution count for request: 1
+request consumed: true
 ```
 
-不能只看 workflow 綠勾；執行後必須下載並檢查 Artifact。
+不得重複執行同一 request。下一步只能設計後續研究封包或升格政策，不能直接升格資料層或模型層。
 
 ## Current Research Position
 
@@ -88,7 +88,7 @@ GitHub
 
 Eoin A Moore Kaggle 檔案組已完成 census、internal qualification 與 2023-24 deterministic cross-source audit。正式結果為 `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE`；可作 game identity、final score、team boxscore、player candidate coverage 與 PBP coverage cross-check。Player 結果仍是 coverage-only，不等於 independent player-stat parity。
 
-Eoin role-limited adapter self-test、full adapter preflight、separate execution policy、disabled runner guardrails、one-time execution request 與 explicit approval record 都已建立並通過 aggregate-only CI。
+Eoin role-limited adapter self-test、full adapter preflight、separate execution policy、disabled runner guardrails、one-time execution request、explicit approval record 與一次性 full-adapter aggregate validation 都已完成。一次性執行只產生 aggregate-only report，不解鎖 raw files、Historical Silver／Gold replacement、player-stat parity、模型重訓、市場回測或非 0 Stake。
 
 市場資料線仍暫停。使用者未核准付費 Historical Odds pilot；目前零成本或既有來源中，合格 bookmaker-level point-in-time odds source 仍為 0。
 
@@ -155,6 +155,53 @@ ready for repeat execution: false
 formal stake: 0
 ```
 
+### 7. One-time Full Adapter Aggregate Execution
+
+```text
+formal state: ONE_TIME_FULL_ADAPTER_AGGREGATE_VALIDATION_PASS
+workflow run: 29680729672
+artifact id: 8440485189
+artifact digest: sha256:e068940df05bfc51d8757aef500e9c6f812687bfa171b5fff8680ee3b59bb56c
+request id: EOIN-FULL-ADAPTER-2026-07-19-001
+workflow event: workflow_dispatch
+head sha: 587112d3d864f75db26195e36b2d53ac9f2417ef
+execution count for request: 1
+request consumed: true
+all research gates passed: true
+raw rows emitted: 0
+raw files emitted: false
+Historical Silver replacement: false
+Historical Gold replacement: false
+model retraining: false
+market backtest: false
+formal stake: 0
+```
+
+Frozen gates:
+
+```text
+minimum games: pass
+duplicate game_id groups: pass
+team boxscore coverage: pass
+team boxscore score match: pass
+player boxscore candidate coverage: pass
+PBP game coverage: pass
+```
+
+Aggregate results:
+
+```text
+games: 1,383
+team boxscore covered games: 1,383
+team boxscore coverage rate: 1.000
+team boxscore score match rate: 1.000
+player boxscore candidate covered games: 1,383
+player boxscore candidate coverage rate: 1.000
+PBP covered games: 1,383
+PBP game coverage rate: 1.000
+duplicate game_id groups: 0
+```
+
 ### Frozen operational limits
 
 ```text
@@ -178,7 +225,7 @@ public Artifact: one aggregate JSON report
 - Wyatt `game` 有 56 個 duplicate `game_id` groups。
 - Wyatt `play_by_play` 有 7,360 個 duplicate `(game_id, eventnum)` groups。
 - Eoin player boxscore 仍只通過 coverage-only；尚無獨立 player-stat parity reference。
-- Eoin one-time full-bundle aggregate validation 尚未手動 dispatch，執行次數仍為 0。
+- Eoin one-time execution request 已使用，不能重複執行同一 request ID。
 - 使用者未核准付費 Historical Odds pilot。
 - 8 個零成本／既有 odds candidates 中，合格 point-in-time source 為 0。
 - Production Odds Backfill、PIT Odds Join、Market Backtest、CLV、EV、ROI、Drawdown 全部未解鎖。

@@ -101,6 +101,7 @@ Actions -> Validate Eoin adapter predeclaration v1 -> Run workflow
 What it does:
 
 ```text
+automatically runs on main pushes that touch the Eoin adapter policy surface
 validates data/eoin-adapter-predeclaration-v1.json
 requires the completed cross-source evidence file
 allows only role-limited adapter implementation
@@ -126,6 +127,7 @@ Actions -> Validate Eoin role-limited adapter v1 -> Run workflow
 What it does:
 
 ```text
+automatically runs on main pushes that touch the Eoin adapter self-test surface
 runs only synthetic fixtures
 validates deterministic gameId normalization
 validates team score and player candidate coverage aggregates

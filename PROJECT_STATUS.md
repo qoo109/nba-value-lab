@@ -11,7 +11,7 @@
 ### Latest Main SHA at this snapshot
 
 ```text
-9ba38738ef26c8040897dd06d683da2bbb285a9d
+2b871e81d3d716342dab85b3ca4bce6d76a07cd9
 ```
 
 最新完成：
@@ -27,6 +27,7 @@ Commit ce88b24 — Eoin data source automation
 Commit 2654873 — Eoin cross-source audit workflow
 Commit bf9db74 — Eoin cross-source audit result recorded
 Commit 9ba3873 — Eoin role-limited adapter predeclaration
+Commit 2b871e8 — Eoin role-limited adapter self-test
 ```
 
 ### Currently open research execution PRs
@@ -38,7 +39,7 @@ None
 ### Next unique mainline
 
 ```text
-EOIN_ROLE_LIMITED_ADAPTER_SELF_TEST_READY_FOR_CI_VALIDATION
+EOIN_LIGHTWEIGHT_ADAPTER_CI_AUTORUN_READY
 ```
 
 使用者已提供真實 Wyatt Walsh `nba.sqlite`。檔案通過 SQLite header、唯讀開啟與 `integrity_check = ok`，但實際內容只有 16 tables、最晚到 2023-06-12、2023-24 pilot games 為 0，與上傳 metadata 所描述的 235-table current-season warehouse 不一致。
@@ -47,7 +48,7 @@ EOIN_ROLE_LIMITED_ADAPTER_SELF_TEST_READY_FOR_CI_VALIDATION
 
 Eoin adapter predeclaration v1 已建立。此政策只授權後續實作 role-limited adapter self-test，不授權 adapter execution、raw row artifact、Silver／Gold replacement、model retraining 或 market backtest。
 
-Eoin role-limited adapter v1 self-test implementation 已建立。本機 synthetic fixture self-test 通過；GitHub Actions 將跑含 Parquet fixture 的 CI self-test。完整 Eoin bundle execution 仍關閉。
+Eoin role-limited adapter v1 self-test implementation 已建立。本機 synthetic fixture self-test 通過；輕量 Eoin policy / adapter workflows 現在會在相關 `main` push 自動跑，並可手動重跑。完整 Eoin bundle execution 仍關閉。
 
 ### Parallel blocked line
 
@@ -103,8 +104,8 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 8. Wyatt real file schema and 2023-24 cross-source audit     STRUCTURAL_BLOCKED
 9. Eoin census, internal qualification, cross-source audit   ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
 10. Eoin adapter predeclaration                             Completed / implementation-ready
-11. Eoin adapter self-test implementation                   Completed / CI validation pending
-12. Eoin full adapter execution preflight                   Next after CI pass
+11. Eoin adapter self-test implementation                   Completed / main push autorun ready
+12. Eoin full adapter execution preflight                   Next after autorun CI pass
 13. Point-in-time Odds Join and Market Backtest              Blocked
 14. CLV / EV / ROI / Drawdown                               Blocked
 15. Betting Decision Layer                                  Blocked
@@ -130,7 +131,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 | Wyatt SQLite Real-file Audit | **STRUCTURAL_BLOCKED** | PR #75；16 tables、latest 2023-06-12、2023-24 games 0。 |
 | Eoin Cross-source Audit v1 | **ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE** | Run 29672984966；1,230 / 1,230 games matched；score match 99.9187%；PBP coverage 100%。 |
 | Eoin Adapter Predeclaration v1 | **ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION** | Policy-only；禁止 raw rows、Silver/Gold replacement、model retraining 與 market metrics。 |
-| Eoin Role-limited Adapter v1 | **SELF_TEST_IMPLEMENTED** | Synthetic fixture only；full Eoin bundle execution disabled；CI validates Parquet fixture path。 |
+| Eoin Role-limited Adapter v1 | **SELF_TEST_IMPLEMENTED** | Synthetic fixture only；full Eoin bundle execution disabled；main push autorun validates Parquet fixture path。 |
 | Market Backtest | Blocked | 尚無 executable PIT odds join。 |
 | Betting Decision Layer | Blocked | Stake = 0。 |
 
@@ -347,4 +348,5 @@ ce88b24 Eoin data source automation
 2654873 Eoin cross-source audit workflow
 bf9db74 Eoin cross-source audit result recorded
 9ba3873 Eoin role-limited adapter predeclaration
+2b871e8 Eoin role-limited adapter self-test
 ```

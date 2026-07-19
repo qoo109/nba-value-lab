@@ -1,6 +1,16 @@
 name: Validate Eoin adapter predeclaration v1
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/eoin-adapter-predeclaration-v1.json"
+      - "data/eoin-cross-source-audit-v1.json"
+      - "docs/eoin-adapter-predeclaration-v1.md"
+      - "scripts/validate_eoin_adapter_predeclaration_v1.py"
+      - ".github/workflows/validate-eoin-adapter-predeclaration-v1.yml"
+      - "PROJECT_STATUS.md"
   pull_request:
     paths:
       - "data/eoin-adapter-predeclaration-v1.json"

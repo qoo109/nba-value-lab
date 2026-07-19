@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.6.0",
+  "registry_version": "1.7.0",
   "site_version_policy": "follow_current_release",
-  "updated_at": "2026-07-19T14:20:00+08:00",
+  "updated_at": "2026-07-19T16:55:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -218,11 +218,56 @@
         "validator": "scripts/validate_eoin_full_adapter_preflight_v1.py",
         "workflow": ".github/workflows/validate-eoin-full-adapter-preflight-v1.yml",
         "formal_state": "FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED",
+        "workflow_run_id": 29677698906,
+        "artifact_id": 8439486695,
+        "artifact_digest": "sha256:39dd80ca107e2dc65f6bbba8012ba8b9ac40b60bd6a44db6f05cacb05a27d311",
         "full_bundle_execution_enabled": false,
         "raw_rows_emitted": 0,
         "formal_stake": 0
       },
-      "notes": "2023-24 deterministic audit passed against shufinskiy event-level reference. Player result is coverage-only, not independent player-stat parity. Does not replace Historical Silver or Gold."
+      "full_adapter_execution_policy": {
+        "policy": "data/eoin-full-adapter-execution-policy-v1.json",
+        "documentation": "docs/eoin-full-adapter-execution-policy-v1.md",
+        "validator": "scripts/validate_eoin_full_adapter_execution_policy_v1.py",
+        "workflow": ".github/workflows/validate-eoin-full-adapter-execution-policy-v1.yml",
+        "formal_state": "FULL_ADAPTER_EXECUTION_POLICY_READY_FOR_IMPLEMENTATION_BUT_EXECUTION_DISABLED",
+        "workflow_run_id": 29677971194,
+        "artifact_id": 8439578942,
+        "artifact_digest": "sha256:9b81c9ef61f1f9d19453b9e04a8e42cd362700ac86e79a4377328f24fdfe25a2",
+        "full_bundle_execution_enabled": false,
+        "formal_stake": 0
+      },
+      "full_adapter_runner_implementation": {
+        "manifest": "data/eoin-full-adapter-runner-implementation-v1.json",
+        "documentation": "docs/eoin-full-adapter-runner-implementation-v1.md",
+        "runner": "scripts/run_eoin_full_adapter_execution_v1.py",
+        "workflow": ".github/workflows/validate-eoin-full-adapter-runner-implementation-v1.yml",
+        "formal_state": "FULL_ADAPTER_RUNNER_READY_FOR_ONE_TIME_EXECUTION_APPROVAL_BUT_DISABLED",
+        "workflow_run_id": 29679274470,
+        "artifact_id": 8440008401,
+        "artifact_digest": "sha256:15032709922439d062108994b08bfec76e815fb42443572c36e7d5db51d10331",
+        "blocked_before_data_access": true,
+        "full_bundle_execution_enabled": false,
+        "raw_rows_emitted": 0,
+        "formal_stake": 0
+      },
+      "one_time_execution_request": {
+        "request": "data/eoin-full-adapter-one-time-execution-request-v1.json",
+        "documentation": "docs/eoin-full-adapter-one-time-execution-request-v1.md",
+        "validator": "scripts/validate_eoin_full_adapter_one_time_execution_request_v1.py",
+        "workflow": ".github/workflows/validate-eoin-full-adapter-one-time-execution-request-v1.yml",
+        "request_id": "EOIN-FULL-ADAPTER-2026-07-19-001",
+        "formal_state": "ONE_TIME_EXECUTION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL",
+        "workflow_run_id": 29679511515,
+        "artifact_id": 8440091393,
+        "artifact_digest": "sha256:a1c4a76c3d09f38a40121bbdc71c93ddeb8d6076482b649acab105eef2c52a61",
+        "approval_granted": false,
+        "execution_enabled": false,
+        "full_bundle_execution_count": 0,
+        "raw_rows_emitted": 0,
+        "formal_stake": 0
+      },
+      "notes": "2023-24 deterministic audit passed against shufinskiy event-level reference. Player result is coverage-only, not independent player-stat parity. One-time request is structurally valid but still awaits explicit user approval; no full bundle execution has occurred. Does not replace Historical Silver or Gold."
     },
     {
       "source_id": "basketball_reference",

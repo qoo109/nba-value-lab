@@ -1,0 +1,61 @@
+{
+  "schema_version": "eoin-full-adapter-one-time-execution-approval-v1",
+  "created_at": "2026-07-19T16:33:52+08:00",
+  "request_id": "EOIN-FULL-ADAPTER-2026-07-19-001",
+  "approval_state": "EXPLICIT_USER_APPROVAL_GRANTED",
+  "approved_by": "repository_owner_user",
+  "approval_channel": "ChatGPT project conversation",
+  "user_response": "好 我核准",
+  "context_binding": {
+    "request_packet": "data/eoin-full-adapter-one-time-execution-request-v1.json",
+    "request_packet_state": "AWAITING_EXPLICIT_USER_APPROVAL",
+    "request_packet_main_commit": "8bf32e20d40315d508f78ae50e6d919e591abdc7",
+    "status_commit_before_approval": "b249053aee7819242fc8a2d3a942f25bd4affade",
+    "normalized_approval_scope": "one one-time aggregate-only Eoin full-adapter validation run"
+  },
+  "execution_authorization": {
+    "one_time_only": true,
+    "maximum_execution_count": 1,
+    "executions_recorded_before_approval": 0,
+    "workflow_dispatch_only": true,
+    "approved_ref": "refs/heads/main",
+    "dataset_handle": "eoinamoore/historical-nba-data-and-player-box-scores",
+    "pilot_season": "2023-24",
+    "required_input_files": [
+      "Games.csv",
+      "TeamStatistics.csv",
+      "PlayerStatistics.csv",
+      "PlayByPlay.parquet"
+    ],
+    "temporary_network_download_allowed": true,
+    "temporary_raw_rows_may_be_read": true,
+    "aggregate_outputs_only": true,
+    "execution_enabled_for_this_request": true
+  },
+  "acknowledgements": {
+    "raw_rows_or_raw_files_may_be_uploaded_as_artifact": false,
+    "downloaded_archive_may_be_uploaded_as_artifact": false,
+    "historical_silver_replacement_authorized": false,
+    "historical_gold_replacement_authorized": false,
+    "player_stat_parity_claim_authorized": false,
+    "player_stat_feature_import_authorized": false,
+    "model_training_or_retraining_authorized": false,
+    "market_backtest_authorized": false,
+    "clv_ev_roi_drawdown_authorized": false,
+    "betting_edge_claim_authorized": false,
+    "betting_decision_layer_authorized": false,
+    "formal_stake": 0
+  },
+  "required_confirmation_input": "EOIN-FULL-ADAPTER-2026-07-19-001",
+  "next_state_if_approval_validation_passes": {
+    "formal_state": "ONE_TIME_EXECUTION_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH",
+    "ready_for_one_time_aggregate_execution": true,
+    "ready_for_repeat_execution": false,
+    "ready_for_silver_replacement": false,
+    "ready_for_gold_replacement": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  }
+}

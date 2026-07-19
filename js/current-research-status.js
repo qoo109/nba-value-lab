@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.6",
+    appVersion: "V5.3.7",
     model: "V3.1 x G1.1",
     updated: "2026-07-19",
     state: "Research Candidate / Pre-Market-Backtest",
@@ -12,9 +12,10 @@
   const GITHUB_AUTOMATION = {
     owner: "qoo109",
     repo: "nba-value-lab",
-    workflow: "run-eoin-kaggle-csv-census-v1.yml",
+    workflow: "run-eoin-cross-source-audit-v1.yml",
     defaultRef: "main",
     defaultDataset: "eoinamoore/historical-nba-data-and-player-box-scores",
+    defaultMaxDownloadMb: "600",
     apiVersion: "2026-03-10",
   };
 
@@ -58,7 +59,7 @@
     if (!rail) return;
     const cells = qsa(":scope > div", rail);
     if (cells[0]) cells[0].innerHTML = '<span class="rail-code">STATE</span><span><strong>Research Candidate</strong>・Pre-Market-Backtest</span>';
-    if (cells[1]) cells[1].innerHTML = '<span class="rail-code">QUEUE</span><span>Wyatt blocked・Eoin GitHub census ready・Market odds 暫停</span>';
+    if (cells[1]) cells[1].innerHTML = '<span class="rail-code">QUEUE</span><span>Wyatt blocked・Eoin cross-source ready・Market odds 暫停</span>';
     if (cells[2]) cells[2].innerHTML = '<span class="rail-code">STAKE</span><span>正式投注額 0・不宣稱 edge / ROI / CLV</span>';
   }
 
@@ -93,7 +94,7 @@
       <div>
         <span class="eyebrow">CURRENT CONTROL BLOCK</span>
         <h2>現在先做資料進件，不產生正式投注建議</h2>
-        <p>Wyatt 已完成真實檔 aggregate audit 並正式 blocked；下一條線是 Eoin CSV file-level census。市場 PIT odds 尚未解鎖，因此 CLV、EV、ROI、Drawdown 與投注決策層仍關閉。</p>
+        <p>Wyatt 已完成真實檔 aggregate audit 並正式 blocked；Eoin 已通過 GitHub census 與 internal qualification，下一條線是 2023-24 cross-source audit。市場 PIT odds 尚未解鎖，因此 CLV、EV、ROI、Drawdown 與投注決策層仍關閉。</p>
       </div>
       <div class="current-status-pill"><span>STAKE</span><strong>${STATUS.stake}</strong></div>
     </div>
@@ -103,9 +104,9 @@
         "DuckDB: 12 KB empty shell",
         "2023-24 pilot games: 0",
       ])}
-      ${statusCard("EOIN", "GitHub Actions 可直接跑 census", "先跑 aggregate-only census；如果檔案、日期、key 與覆蓋率可用，再進 2023-24 cross-source audit。", "ready", [
-        "Games.csv / TeamStatistics.csv / PlayerStatistics.csv",
-        "Actions: Run Eoin Kaggle CSV census v1",
+      ${statusCard("EOIN", "GitHub Actions 可直接跑 cross-source audit", "Eoin 已通過內部一致性；下一關與 shufinskiy 2023-24 event-level reference 做 deterministic 對帳。", "ready", [
+        "Internal gates: passed",
+        "Actions: Run Eoin cross-source audit v1",
         "No raw rows in Git or artifacts",
         "Deterministic matching only",
       ])}
@@ -187,6 +188,7 @@
     const token = qs("#githubAutomationToken", form)?.value.trim();
     const ref = qs("#githubAutomationRef", form)?.value.trim() || GITHUB_AUTOMATION.defaultRef;
     const dataset = qs("#githubAutomationDataset", form)?.value.trim() || GITHUB_AUTOMATION.defaultDataset;
+    const maxDownloadMb = qs("#githubAutomationMaxDownloadMb", form)?.value.trim() || GITHUB_AUTOMATION.defaultMaxDownloadMb;
     const submitButton = qs('button[type="submit"]', form);
     const runLink = qs("#githubAutomationRunLink");
 
@@ -215,6 +217,7 @@
           ref,
           inputs: {
             dataset_handle: dataset,
+            max_download_mb: maxDownloadMb,
           },
         }),
       });
@@ -254,13 +257,17 @@
     section.className = "github-automation-launcher";
     section.innerHTML = `<div class="github-automation-copy">
       <span class="eyebrow">GITHUB WEBSITE RUNNER</span>
-      <h2>從網站直接啟動資料 census</h2>
+      <h2>從網站直接啟動 cross-source audit</h2>
       <p>Token 只留在這次瀏覽器請求中；不要把 token commit、截圖或分享。</p>
     </div>
     <form class="github-automation-form">
       <label>
         <span>Dataset handle</span>
         <input id="githubAutomationDataset" value="${GITHUB_AUTOMATION.defaultDataset}" autocomplete="off" />
+      </label>
+      <label>
+        <span>Max reference download MB</span>
+        <input id="githubAutomationMaxDownloadMb" value="${GITHUB_AUTOMATION.defaultMaxDownloadMb}" inputmode="numeric" autocomplete="off" />
       </label>
       <label>
         <span>Branch</span>
@@ -271,7 +278,7 @@
         <input id="githubAutomationToken" type="password" autocomplete="off" placeholder="fine-grained token: Actions read/write" />
       </label>
       <div class="github-automation-actions">
-        <button type="submit">啟動 Eoin census</button>
+        <button type="submit">啟動 Eoin audit</button>
         <a id="githubAutomationRunLink" href="#" target="_blank" rel="noopener" hidden>查看最新 run</a>
       </div>
       <div class="github-automation-status" id="githubAutomationStatus" data-tone="muted">等待啟動。</div>
@@ -295,7 +302,7 @@
     section.innerHTML = `<div>
       <span class="eyebrow">SECONDARY SOURCE QUEUE</span>
       <h2>資料來源進件分工</h2>
-      <p>使用者負責提供本機檔案；系統只跑 aggregate census、schema sample 與 frozen gates，不把原始資料 commit 進 GitHub。</p>
+      <p>系統只跑 aggregate census、internal qualification 與 cross-source frozen gates，不把原始資料 commit 進 GitHub。</p>
     </div>
     <div class="registry-grid">
       <article class="registry-card restricted">
@@ -308,12 +315,12 @@
         </dl>
       </article>
       <article class="registry-card licensed">
-        <div><span>Eoin A Moore</span><em>GITHUB_CENSUS_READY</em></div>
-        <h2>下一個 file-level census</h2>
+        <div><span>Eoin A Moore</span><em>CROSS_SOURCE_READY</em></div>
+        <h2>下一個 2023-24 cross-source audit</h2>
         <dl>
-          <div><dt>先看</dt><dd>file inventory, row counts, keys, dates</dd></div>
+          <div><dt>已完成</dt><dd>file census + internal qualification</dd></div>
           <div><dt>角色</dt><dd>game / team / player boxscore cross-check</dd></div>
-          <div><dt>下一關</dt><dd>2023-24 deterministic audit</dd></div>
+          <div><dt>下一關</dt><dd>Eoin vs shufinskiy deterministic audit</dd></div>
         </dl>
       </article>
       <article class="registry-card odds">

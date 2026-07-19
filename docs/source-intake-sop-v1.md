@@ -53,7 +53,7 @@ content.
 
 ```text
 1. Wyatt Walsh SQLite/DuckDB      STRUCTURAL_BLOCKED
-2. Eoin A Moore file bundle       INTERNAL_QUALIFICATION_READY
+2. Eoin A Moore file bundle       CROSS_SOURCE_AUDIT_READY
 3. Market point-in-time odds      PAUSED_UNTIL_LAWFUL_SOURCE_OR_USER_FILE
 ```
 
@@ -112,6 +112,18 @@ python3 scripts/run_eoin_internal_qualification_v1.py \
 
 The internal qualification pass still does not replace Silver or Gold. If it
 passes, the next step is a separate 2023-24 deterministic cross-source audit.
+
+GitHub cross-source execution:
+
+```text
+Actions -> Run Eoin cross-source audit v1 -> Run workflow
+```
+
+This compares Eoin against the existing `shufinskiy/nba_data` 2023-24
+event-level reference. It can produce a role-limited secondary-source outcome
+for game identity, final score, team-score coverage, player-row availability,
+and PBP availability. It still does not approve Historical Silver or Gold
+replacement.
 
 ## Frozen Gates
 

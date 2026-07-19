@@ -57,7 +57,42 @@ Optional secret if Kaggle requires authentication:
 KAGGLE_API_TOKEN
 ```
 
-### 2. NBA Free Data Refresh
+### 2. Eoin Cross-Source Audit
+
+```text
+Actions -> Run Eoin cross-source audit v1 -> Run workflow
+```
+
+What it does:
+
+```text
+downloads Eoin Kaggle data into temporary Actions storage
+downloads shufinskiy/nba_data nbastats_2023 reference into temporary Actions storage
+compares 2023-24 game identity, final scores, team-score coverage, player-row availability, and PBP availability
+uploads aggregate-only JSON reports
+does not upload raw source rows, archives, Parquet files, or databases
+does not approve Silver/Gold replacement
+formal stake remains 0
+```
+
+First file to inspect:
+
+```text
+eoin_cross_source_audit_report.json
+```
+
+Possible outcomes:
+
+```text
+ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
+SECONDARY_SOURCE_REJECTED
+```
+
+`ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE` remains role-limited because
+`shufinskiy/nba_data` is not a complete independent player boxscore stat
+reference.
+
+### 3. NBA Free Data Refresh
 
 ```text
 Actions -> Update NBA free data -> Run workflow
@@ -73,7 +108,7 @@ does not create model predictions
 does not unlock market backtest
 ```
 
-### 3. Model and UI Validation
+### 4. Model and UI Validation
 
 ```text
 Actions -> Validate model registry -> Run workflow
@@ -88,7 +123,7 @@ checks V5 UI module limits
 checks JavaScript syntax
 ```
 
-### 4. Closing Market Benchmark
+### 5. Closing Market Benchmark
 
 ```text
 Actions -> Build Kaggle closing market benchmark -> Run workflow
@@ -198,6 +233,6 @@ API secrets
 
 1. Run `Run Eoin Kaggle CSV census v1`.
 2. Review `internal_qualification_report.json`.
-3. If internal gates pass and 2023-24 coverage looks viable, create a separate
-   deterministic cross-source audit.
-4. Keep Wyatt blocked unless a materially new dataset bundle appears.
+3. Run `Run Eoin cross-source audit v1`.
+4. Review `eoin_cross_source_audit_report.json`.
+5. Keep Wyatt blocked unless a materially new dataset bundle appears.

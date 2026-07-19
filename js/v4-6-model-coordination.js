@@ -10,10 +10,10 @@ const FALLBACK_V31 = {
   preview_policy: { snapshot: "T-24h", maximum_grade: "ㄆ", extra_margin_pp: null },
   price_policy: {
     price_segments: [
-      { id: "extreme_low_excluded", min: 1.20, max: 1.30, min_inclusive: true, max_inclusive: false, label: "極低賠率區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "排除・極低賠率" },
-      { id: "low_extension", min: 1.30, max: 1.40, min_inclusive: true, max_inclusive: false, label: "低價延伸研究區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "ㄆ級・延伸研究" },
+      { id: "extreme_low_excluded", min: 1.20, max: 1.30, min_inclusive: true, max_inclusive: false, label: "極低市場賠率區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "排除・極低市場賠率" },
+      { id: "low_extension", min: 1.30, max: 1.40, min_inclusive: true, max_inclusive: false, label: "低市場賠率延伸研究區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "ㄆ級・延伸研究" },
       { id: "core", min: 1.40, max: 1.60, min_inclusive: true, max_inclusive: true, label: "核心決策區", required_margin_pp: 5, eligible_b: true, maximum_conclusion: "ㄅ級・研究候選" },
-      { id: "high_extension", min: 1.60, max: 1.75, min_inclusive: false, max_inclusive: true, label: "高價延伸研究區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "ㄆ級・延伸研究" },
+      { id: "high_extension", min: 1.60, max: 1.75, min_inclusive: false, max_inclusive: true, label: "高市場賠率延伸研究區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "ㄆ級・延伸研究" },
       { id: "separate_calibration", min: 1.75, max: 2.00, min_inclusive: false, max_inclusive: false, label: "另行校準區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "另行校準" },
     ],
     outside_conclusion: "範圍外",
@@ -24,11 +24,11 @@ const FALLBACK_V31 = {
 const FALLBACK_G1_FINAL = {
   engine_id: "G", version: "1.0", revision_id: "G1-FINAL-20260716",
   price_bands: [
-    { id: "extreme_low", min: 1.01, max: 1.20, min_inclusive: true, max_inclusive: false, label: "極低價層", required_margin_pp: null, eligible: false, maximum_conclusion: "只記錄" },
-    { id: "low_research", min: 1.20, max: 1.35, min_inclusive: true, max_inclusive: false, label: "低價研究層", required_margin_pp: 7, eligible: false, maximum_conclusion: "ㄆ級・延伸研究" },
+    { id: "extreme_low", min: 1.01, max: 1.20, min_inclusive: true, max_inclusive: false, label: "極低市場賠率層", required_margin_pp: null, eligible: false, maximum_conclusion: "只記錄" },
+    { id: "low_research", min: 1.20, max: 1.35, min_inclusive: true, max_inclusive: false, label: "低市場賠率研究層", required_margin_pp: 7, eligible: false, maximum_conclusion: "ㄆ級・延伸研究" },
     { id: "favorite_core", min: 1.35, max: 1.60, min_inclusive: true, max_inclusive: true, label: "偏熱門核心層", required_margin_pp: 5, eligible: true, maximum_conclusion: "ㄅ級・研究候選" },
     { id: "near_even_core", min: 1.60, max: 2.20, min_inclusive: false, max_inclusive: true, label: "接近盤／小冷核心層", required_margin_pp: 6, eligible: true, maximum_conclusion: "ㄅ級・研究候選" },
-    { id: "medium_high_extension", min: 2.20, max: 3.50, min_inclusive: false, max_inclusive: true, label: "中高價研究層", required_margin_pp: 8, eligible: false, maximum_conclusion: "ㄆ級・延伸研究" },
+    { id: "medium_high_extension", min: 2.20, max: 3.50, min_inclusive: false, max_inclusive: true, label: "中高市場賠率研究層", required_margin_pp: 8, eligible: false, maximum_conclusion: "ㄆ級・延伸研究" },
     { id: "high_volatility", min: 3.50, max: null, min_inclusive: false, max_inclusive: false, label: "高波動研究層", required_margin_pp: null, eligible: false, maximum_conclusion: "只記錄" },
   ],
   grading: { watch_gap_min_pp: -3 },
@@ -105,7 +105,7 @@ function segmentContains(segment, odds) {
 }
 
 function vPriceSegment(odds) {
-  if (!Number.isFinite(odds) || odds <= 1) return { id: "invalid", label: "無效賠率", required_margin_pp: null, eligible_b: false, maximum_conclusion: "賠率資料不足" };
+  if (!Number.isFinite(odds) || odds <= 1) return { id: "invalid", label: "無效市場賠率", required_margin_pp: null, eligible_b: false, maximum_conclusion: "市場賠率資料不足" };
   return modelV().price_policy.price_segments.find((segment) => segmentContains(segment, odds)) || {
     id: "outside", label: "範圍外", required_margin_pp: null, eligible_b: false,
     maximum_conclusion: modelV().price_policy.outside_conclusion || "範圍外",
@@ -113,7 +113,7 @@ function vPriceSegment(odds) {
 }
 
 function gPriceSegment(odds) {
-  if (!Number.isFinite(odds) || odds <= 1) return { id: "invalid", label: "無效賠率", required_margin_pp: null, eligible: false, maximum_conclusion: "賠率資料不足" };
+  if (!Number.isFinite(odds) || odds <= 1) return { id: "invalid", label: "無效市場賠率", required_margin_pp: null, eligible: false, maximum_conclusion: "市場賠率資料不足" };
   return modelG().price_bands.find((segment) => segmentContains(segment, odds)) || {
     id: "outside", label: "範圍外", required_margin_pp: null, eligible: false, maximum_conclusion: "只記錄",
   };
@@ -160,7 +160,7 @@ function vDecision(candidate, odds = candidate.target.odds) {
   grade = applyRiskCap(candidate, grade);
   let conclusion = gradeInfo[grade]?.label || grade;
   if (grade !== "資料不足" && grade !== "不支持") {
-    if (segment.id === "extreme_low_excluded") { grade = "ㄆ"; conclusion = "排除・極低賠率"; }
+    if (segment.id === "extreme_low_excluded") { grade = "ㄆ"; conclusion = "排除・極低市場賠率"; }
     else if (segment.id === "separate_calibration") { grade = grade === "ㄇ" ? "ㄇ" : "ㄆ"; conclusion = grade === "ㄇ" ? gradeInfo[grade].label : "另行校準"; }
     else if (segment.id === "outside") { grade = "ㄆ"; conclusion = "範圍外"; }
     else if (!segment.eligible_b && grade === "ㄅ") { grade = "ㄆ"; conclusion = segment.maximum_conclusion || "ㄆ級・延伸研究"; }
@@ -298,7 +298,7 @@ function renderTopPick() {
       <div class="pick-heading"><span class="grade-badge ${combined.tone}">${combined.label}</span><span>${tier}・台灣 ${game.start}</span></div>
       ${decisionPills(candidate)}
       <h1>${game.matchup}</h1>
-      <p>目標邊 <strong>${candidate.target.code}</strong>・賠率 <strong>${candidate.target.odds.toFixed(2)}</strong></p>
+      <p>目標邊 <strong>${candidate.target.code}</strong>・市場賠率 <strong>${candidate.target.odds.toFixed(2)}</strong></p>
       <button class="primary-button" data-open-candidate="${candidate.id}">查看 V／G 完整分析 →</button>
     </div>
     <div class="top-pick-numbers">
@@ -355,19 +355,19 @@ function renderTable() {
 function updateCalculator(resetOdds = false) {
   const candidate = candidates.find((item) => item.id === $("#calculatorGame").value) || candidates[0];
   if (resetOdds) $("#oddsInput").value = candidate.target.odds === null ? "" : candidate.target.odds.toFixed(2);
-  $("#oddsLabel").textContent = `${candidate.target.code} 獨贏賠率`;
+  $("#oddsLabel").textContent = `${candidate.target.code} 市場獨贏賠率`;
   const odds = Number($("#oddsInput").value);
   const valid = Number.isFinite(odds) && odds > 1;
   const v = valid ? vDecision(candidate, odds) : vDecision(candidate, NaN);
   const g = valid ? gDecision(candidate, odds) : gDecision(candidate, NaN);
-  const combined = valid ? coordinationDecision(candidate, odds) : { label: "賠率資料不足", tone: "insufficient" };
+  const combined = valid ? coordinationDecision(candidate, odds) : { label: "市場賠率資料不足", tone: "insufficient" };
   $("#calcBreakeven").textContent = percent(valid ? breakEven(odds) : null);
   $("#calcGap").textContent = `V ${signed(v.gap)}／G ${signed(g.gap)}`;
   $("#calcGap").className = g.gap !== null && g.gap >= 0 ? "positive" : "";
   $("#calcEv").textContent = signed(valid ? scenarioEv(candidate.target.conservative, odds) : null, "%");
   $("#calcStatus").textContent = `${$("#bookmakerInput").value || "我的莊家"}：${combined.label}`;
   $("#calcStatus").classList.toggle("pass", combined.grade === "ㄅ");
-  $("#calcNote").textContent = `V${modelV().version}：${v.conclusion}，最低 ${oddsText(v.minimumOdds, 3)}；G${modelG().version}：${g.conclusion}，最低 ${oddsText(g.minimumOdds, 3)}。單純賠率變動只新增 price_evaluation，不改模型勝率；正式投注額固定為 0。`;
+  $("#calcNote").textContent = `V${modelV().version}：${v.conclusion}，最低 ${oddsText(v.minimumOdds, 3)}；G${modelG().version}：${g.conclusion}，最低 ${oddsText(g.minimumOdds, 3)}。單純市場賠率變動只新增 price_evaluation，不改模型勝率；正式投注額固定為 0。`;
 }
 
 function showDetail(candidate) {
@@ -380,7 +380,7 @@ function showDetail(candidate) {
   $("#modalContent").innerHTML = `
     <div class="detail-header"><span class="grade-badge ${combined.tone}">${combined.label}</span>${decisionPills(candidate)}<h2>${game.matchup}・${candidate.target.code}</h2><p>${game.headline}</p></div>
     <div class="detail-metrics">
-      ${metric("目前賠率", oddsText(candidate.target.odds))}${metric("保守勝率", candidate.target.conservative === null ? "—" : `${candidate.target.conservative}%`, true)}
+      ${metric("目前市場賠率", oddsText(candidate.target.odds))}${metric("保守勝率", candidate.target.conservative === null ? "—" : `${candidate.target.conservative}%`, true)}
       ${metric("V3.1 區間", v.segment.label)}${metric("V3.1 結論", v.conclusion)}${metric("V3.1 距門檻", signed(v.gap))}${metric("V3.1 最低接受", oddsText(v.minimumOdds, 3))}
       ${metric("G1 區間", g.segment.label)}${metric("G1 結論", g.conclusion)}${metric("G1 距門檻", signed(g.gap), g.gap !== null && g.gap >= 0)}${metric("G1 最低接受", oddsText(g.minimumOdds, 3))}
     </div>
@@ -390,7 +390,7 @@ function showDetail(candidate) {
       <div><span>樂觀情境</span><strong>${candidate.target.optimistic === null ? "—" : `${candidate.target.optimistic}%`}</strong><small>EV ${signed(scenarioEv(candidate.target.optimistic, candidate.target.odds), "%")}</small></div>
     </div>
     <div class="detail-grid">
-      <article><span class="eyebrow">V3.1 賠率評估</span><ul><li>${v.segment.label}</li><li>${v.conclusion}</li><li>RequiredMargin ${v.margin == null ? "—" : `${v.margin}pp`}</li><li>賠率變動新增 price_evaluation_id，不改 prediction_id</li></ul></article>
+      <article><span class="eyebrow">V3.1 市場賠率評估</span><ul><li>${v.segment.label}</li><li>${v.conclusion}</li><li>RequiredMargin ${v.margin == null ? "—" : `${v.margin}pp`}</li><li>市場賠率變動新增 price_evaluation_id，不改 prediction_id</li></ul></article>
       <article><span class="eyebrow">G1 Gate</span><ul><li>${g.segment.label}</li><li>${g.conclusion}</li><li>比較來源 ${comparisonSources} 家</li><li>模型市場差 ${modelMarketGap}pp</li><li>${dualSideConflict(candidate) ? "雙邊價值衝突：阻止主要場次" : "雙邊一致性未觸發衝突"}</li></ul></article>
       <article><span class="eyebrow">支持證據</span><ul>${game.reasons.map((item) => `<li>${item}</li>`).join("")}</ul></article>
       <article><span class="eyebrow">主要風險</span><ul>${game.risks.map((item) => `<li>${item}</li>`).join("")}</ul></article>

@@ -7,7 +7,7 @@ function renderTopPick() {
       <div class="pick-heading">${gradeBadge(candidateGrade(candidate))}<span>${tier}・台灣 ${game.start}</span></div>
       <div class="engine-tags"><span>${engineLabel(candidate)}</span><span>模擬 T−60m</span></div>
       <h1>${game.matchup}</h1>
-      <p>目標邊 <strong>${candidate.target.code}</strong>・賠率 <strong>${candidate.target.odds.toFixed(2)}</strong></p>
+      <p>目標邊 <strong>${candidate.target.code}</strong>・市場賠率 <strong>${candidate.target.odds.toFixed(2)}</strong></p>
       <button class="primary-button" data-open-candidate="${candidate.id}">查看完整分析 →</button>
     </div>
     <div class="top-pick-numbers">
@@ -85,7 +85,7 @@ function renderCalculatorOptions() {
 function updateCalculator(resetOdds = false) {
   const candidate = candidates.find((item) => item.id === $("#calculatorGame").value) || candidates[0];
   if (resetOdds) $("#oddsInput").value = candidate.target.odds === null ? "" : candidate.target.odds.toFixed(2);
-  $("#oddsLabel").textContent = `${candidate.target.code} 獨贏賠率`;
+  $("#oddsLabel").textContent = `${candidate.target.code} 市場獨贏賠率`;
   const odds = Number($("#oddsInput").value);
   const valid = Number.isFinite(odds) && odds > 1;
   const be = valid ? breakEven(odds) : null;
@@ -118,7 +118,7 @@ function showDetail(candidate) {
   $("#modalContent").innerHTML = `
     <div class="detail-header">${gradeBadge(candidateGrade(candidate))}<div class="engine-tags"><span>${engineLabel(candidate)}</span><span>${candidateTier(candidate)}</span></div><h2>${game.matchup}・${candidate.target.code}</h2><p>${game.headline}</p></div>
     <div class="detail-metrics">
-      ${metric("目前賠率", oddsText(candidate.target.odds))}${metric("保守勝率", candidate.target.conservative === null ? "—" : `${candidate.target.conservative}%`, true)}
+      ${metric("目前市場賠率", oddsText(candidate.target.odds))}${metric("保守勝率", candidate.target.conservative === null ? "—" : `${candidate.target.conservative}%`, true)}
       ${metric("損益平衡", percent(breakEven(candidate.target.odds)))}${metric("保守優勢", signed(edge(candidate)))}
       ${metric("要求邊際", band.margin === null ? "—" : `${band.margin.toFixed(1)}pp`)}
       ${metric("距離門檻", signed(thresholdGap(candidate)), thresholdGap(candidate) !== null && thresholdGap(candidate) >= 0)}
@@ -130,7 +130,7 @@ function showDetail(candidate) {
       <div><span>樂觀情境</span><strong>${candidate.target.optimistic === null ? "—" : `${candidate.target.optimistic}%`}</strong><small>EV ${signed(scenarioEv(candidate.target.optimistic, candidate.target.odds), "%")}</small></div>
     </div>
     <div class="detail-grid">
-      <article><span class="eyebrow">市場數學</span><ul><li>${candidate.target.code} 原始隱含 ${percent(rawImplied(candidate.target.odds))}</li><li>${candidate.opponent.code} 原始隱含 ${percent(rawImplied(candidate.opponent.odds))}</li><li>理論超額水位 ${percent(overround(candidate))}</li><li>${candidate.target.code} 比例去水機率 ${percent(noVig(candidate))}</li><li>賠率分層 ${band.label}</li></ul></article>
+      <article><span class="eyebrow">市場數學</span><ul><li>${candidate.target.code} 原始隱含 ${percent(rawImplied(candidate.target.odds))}</li><li>${candidate.opponent.code} 原始隱含 ${percent(rawImplied(candidate.opponent.odds))}</li><li>理論超額水位 ${percent(overround(candidate))}</li><li>${candidate.target.code} 比例去水機率 ${percent(noVig(candidate))}</li><li>市場賠率分層 ${band.label}</li></ul></article>
       <article><span class="eyebrow">模型帳本</span>${buildSummary(candidate)}</article>
       <article><span class="eyebrow">支持證據</span><ul>${game.reasons.map((item) => `<li>${item}</li>`).join("")}</ul></article>
       <article><span class="eyebrow">主要風險</span><ul>${game.risks.map((item) => `<li>${item}</li>`).join("")}</ul></article>

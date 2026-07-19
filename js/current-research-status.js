@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.11",
+    appVersion: "V5.3.12",
     model: "V3.1 x G1.1",
     updated: "2026-07-19",
     state: "Research Candidate / Pre-Market-Backtest",
@@ -25,7 +25,7 @@
     if (qs('link[data-current-research-status-css]')) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "./css/current-research-status.css?v=20260719f";
+    link.href = "./css/current-research-status.css?v=20260719g";
     link.setAttribute("data-current-research-status-css", "true");
     document.head.appendChild(link);
   }

@@ -48,27 +48,27 @@
     panel.hidden = true;
     panel.innerHTML = `
       <div class="view-hero compact">
-        <div><span class="eyebrow">APPEND-ONLY LEDGER</span><h1>研究紀錄</h1><p>只保存賽前鎖定預測、賠率評估、模型版本與最小賽後結果。示範 slate 不會被計入正式績效。</p></div>
+        <div><span class="eyebrow">APPEND-ONLY LEDGER</span><h1>研究紀錄</h1><p>只保存賽前鎖定預測、市場賠率評估、模型版本與最小賽後結果。示範 slate 不會被計入正式績效。</p></div>
         <div class="candidate-summary"><div class="state-card green"><span>目前模型</span><strong id="historyModelVersion">V3.1 × G1</strong><small>歷史紀錄綁定版本</small></div><div class="state-card amber"><span>儲存政策</span><strong>精簡追加</strong><small>不保存完整 Box Score／PBP</small></div></div>
       </div>
       <section class="research-log-summary" aria-label="研究紀錄摘要">
         <article class="research-stat"><span>鎖定預測</span><strong id="historyRecordCount">0</strong></article>
-        <article class="research-stat"><span>賠率評估</span><strong id="historyPriceCount">0</strong></article>
+        <article class="research-stat"><span>市場賠率評估</span><strong id="historyPriceCount">0</strong></article>
         <article class="research-stat"><span>已有結果</span><strong id="historyOutcomeCount">0</strong></article>
         <article class="research-stat"><span>約略容量</span><strong id="historyStorageSize">0 B</strong></article>
       </section>
       <section class="research-policy">
-        <article><span class="eyebrow">IMMUTABLE RECORDS</span><h2>預測與賠率分開保存</h2><ul><li>基本面或傷病改變：建立新 prediction_id。</li><li>只有賠率改變：新增 price_evaluation_id，不改勝率。</li><li>Closing 與結果只追加，不回寫原始判斷。</li></ul></article>
-        <article><span class="eyebrow">SMALL STORAGE</span><h2>GitHub 只留必要欄位</h2><ul><li>不保存完整 Box Score、Play-by-play 或大型原始 PDF。</li><li>保留勝率、賠率、分級、CLV、勝負與可選比分。</li><li>索引只載入最近紀錄，舊資料按月份分檔。</li></ul></article>
+        <article><span class="eyebrow">IMMUTABLE RECORDS</span><h2>預測與市場賠率分開保存</h2><ul><li>基本面或傷病改變：建立新 prediction_id。</li><li>只有市場賠率改變：新增 price_evaluation_id，不改勝率。</li><li>Closing 與結果只追加，不回寫原始判斷。</li></ul></article>
+        <article><span class="eyebrow">SMALL STORAGE</span><h2>GitHub 只留必要欄位</h2><ul><li>不保存完整 Box Score、Play-by-play 或大型原始 PDF。</li><li>保留勝率、市場賠率、分級、CLV、勝負與可選比分。</li><li>索引只載入最近紀錄，舊資料按月份分檔。</li></ul></article>
       </section>
       <section>
-        <div class="section-heading"><div><span class="eyebrow">LOCKED RECORDS</span><h2>鎖定預測與賠率評估</h2></div><span class="table-hint" id="historyGeneratedAt">尚未建立正式紀錄</span></div>
+        <div class="section-heading"><div><span class="eyebrow">LOCKED RECORDS</span><h2>鎖定預測與市場賠率評估</h2></div><span class="table-hint" id="historyGeneratedAt">尚未建立正式紀錄</span></div>
         <div class="research-toolbar">
           <label><span>階段</span><select id="historyStageFilter"><option value="全部">全部</option><option>T-24h</option><option>21:00</option><option>T-60m</option><option>T-5m</option><option>Closing</option></select></label>
           <label><span>G1 結論</span><select id="historyGradeFilter"><option value="全部">全部</option><option>ㄅ</option><option>ㄆ</option><option>ㄇ</option><option>不支持</option><option>資料不足</option></select></label>
           <label><span>搜尋</span><input id="historySearch" type="search" placeholder="球隊、game_id、prediction_id" /></label>
         </div>
-        <div class="research-table-wrap"><table class="research-table"><thead><tr><th>時間／階段</th><th>比賽／選擇方</th><th>模型版本</th><th>三段勝率</th><th>賠率</th><th>V3.1</th><th>G1</th><th>主要狀態</th><th>結果／CLV</th><th>ID</th></tr></thead><tbody id="historyRows"></tbody></table><div class="research-empty" id="historyEmpty">目前沒有正式鎖定紀錄。網站中的示範比賽不會計入此處。</div></div>
+        <div class="research-table-wrap"><table class="research-table"><thead><tr><th>時間／階段</th><th>比賽／選擇方</th><th>模型版本</th><th>三段勝率</th><th>市場賠率</th><th>V3.1</th><th>G1</th><th>主要狀態</th><th>結果／CLV</th><th>ID</th></tr></thead><tbody id="historyRows"></tbody></table><div class="research-empty" id="historyEmpty">目前沒有正式鎖定紀錄。網站中的示範比賽不會計入此處。</div></div>
       </section>`;
     main.appendChild(panel);
   }

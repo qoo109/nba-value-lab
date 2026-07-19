@@ -34,7 +34,7 @@
         <span class="v5-stars" aria-label="研究強度 ${fmt.stars(candidate)} 星">${fmt.starText(candidate)}</span>
         <span>${engineLabel(candidate)}</span>
         <span>覆蓋 ${candidate.game.coverage}%</span>
-        <span>賠率 ${oddsText(candidate.target.odds)}</span>
+        <span>市場賠率 ${oddsText(candidate.target.odds)}</span>
       </div>
       <ul class="v5-reason-list">${reasonList(candidate)}</ul>
       <span class="v5-card-action">查看完整分析 →</span>
@@ -54,7 +54,7 @@
       </div>
       <div class="v5-candidate-key">
         <div><strong>${fmt.probability(candidate)}</strong><span>保守勝率</span></div>
-        <div><strong>${oddsText(candidate.target.odds)}</strong><span>獨贏賠率</span></div>
+        <div><strong>${oddsText(candidate.target.odds)}</strong><span>市場獨贏賠率</span></div>
         <div><strong>${signed(thresholdGap(candidate))}</strong><span>距門檻</span></div>
       </div>
       <div class="v5-candidate-bottom">

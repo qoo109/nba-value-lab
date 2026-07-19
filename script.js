@@ -8,7 +8,7 @@ const THEME_KEY = "nba-value-lab-theme";
 const gradeInfo = {
   "ㄅ": { label: "ㄅ級・研究候選", tone: "qualified", rule: "保守優勢通過研究門檻" },
   "ㄆ": { label: "ㄆ級・條件觀察", tone: "watch", rule: "距門檻 −3～0pp 或仍有條件" },
-  "ㄇ": { label: "ㄇ級・賠率合理", tone: "fair", rule: "賠率略有優勢但緩衝不足" },
+  "ㄇ": { label: "ㄇ級・市場賠率合理", tone: "fair", rule: "市場賠率略有優勢但緩衝不足" },
   "不支持": { label: "模型不支持", tone: "reject", rule: "保守勝率低於損益平衡" },
   "資料不足": { label: "資料不足", tone: "insufficient", rule: "無法可靠建立勝率" },
 };
@@ -20,23 +20,23 @@ const games = [
     coverage: 91, confidence: "高", injury: "傷病已確認", newsRisk: 0, snapshot: "示範 T−60m 09:32",
     grade: "ㄅ", headline: "保守情境仍跨過校準前 5pp 研究門檻",
     build: { base: 68, adjustments: [["近期狀態", 1], ["對手品質", 0], ["攻防對位", 2], ["傷病輪替", 1], ["賽程休息", 1], ["戰術風格", 0], ["主場移動", 1]] },
-    reasons: ["長期調整後淨效率與半場進攻均佔優", "休息日與核心輪替完整度符合模型門檻", "目前賠率高於最低可接受賠率"],
-    risks: ["PHX 大量三分出手可能放大單場變異", "若賠率跌破最低接受賠率則取消候選"],
+    reasons: ["長期調整後淨效率與半場進攻均佔優", "休息日與核心輪替完整度符合模型門檻", "目前市場賠率高於最低可接受賠率"],
+    risks: ["PHX 大量三分出手可能放大單場變異", "若市場賠率跌破最低接受賠率則取消候選"],
   },
   {
     id: "bos-nyk", matchup: "BOS @ NYK", start: "07:30", favorite: "NYK", favoriteName: "紐約尼克",
     odds: 1.52, underdogOdds: 2.55, conservative: 68, neutral: 71, optimistic: 74, noVig: 62.7,
     coverage: 83, confidence: "中", injury: "一名輪替待確認", newsRisk: 2, snapshot: "示範 T−60m 09:30",
-    grade: "ㄆ", headline: "模型略有優勢，但賠率尚未提供完整緩衝",
+    grade: "ㄆ", headline: "模型略有優勢，但市場賠率尚未提供完整緩衝",
     build: { base: 67, adjustments: [["近期狀態", 1], ["對手品質", 0], ["攻防對位", 1], ["傷病輪替", -1], ["賽程休息", 1], ["戰術風格", 0], ["主場移動", 2]] },
     reasons: ["主場半場防守與籃板對位略有優勢", "保守勝率仍高於損益平衡勝率"],
-    risks: ["核心側翼出賽狀態尚未完全確認", "最低可接受賠率高於目前賠率"],
+    risks: ["核心側翼出賽狀態尚未完全確認", "最低可接受賠率高於目前市場賠率"],
   },
   {
     id: "lal-gsw", matchup: "LAL @ GSW", start: "10:30", favorite: "GSW", favoriteName: "金州勇士",
     odds: 1.56, underdogOdds: 2.42, conservative: 65, neutral: 69, optimistic: 73, noVig: 60.8,
     coverage: 79, confidence: "中", injury: "主力預計出賽", newsRisk: 1, snapshot: "示範 T−60m 09:27",
-    grade: "ㄇ", headline: "可能贏球，但目前賠率沒有足夠安全邊際",
+    grade: "ㄇ", headline: "可能贏球，但目前市場賠率沒有足夠安全邊際",
     build: { base: 66, adjustments: [["近期狀態", 1], ["對手品質", 0], ["攻防對位", 1], ["傷病輪替", 0], ["賽程休息", 0], ["戰術風格", 0], ["主場移動", 1]] },
     reasons: ["主場與外線創造能力支持熱門方", "中性勝率略高於市場要求"],
     risks: ["兩隊三分出手量高，單場波動明顯", "保守優勢未達完整研究門檻"],
@@ -45,7 +45,7 @@ const games = [
     id: "okc-sas", matchup: "OKC @ SAS", start: "09:00", favorite: "OKC", favoriteName: "奧克拉荷馬雷霆",
     odds: 1.45, underdogOdds: 2.80, conservative: 67, neutral: 71, optimistic: 75, noVig: 65.9,
     coverage: 88, confidence: "高", injury: "傷病已確認", newsRisk: 0, snapshot: "示範 T−60m 09:35",
-    grade: "不支持", headline: "球隊較強，不代表 1.45 是合理賠率",
+    grade: "不支持", headline: "球隊較強，不代表 1.45 是合理市場賠率",
     build: { base: 69, adjustments: [["近期狀態", 1], ["對手品質", 0], ["攻防對位", 1], ["傷病輪替", 0], ["賽程休息", 0], ["戰術風格", 0], ["主場移動", 0]] },
     reasons: ["長期實力支持熱門方", "防守失誤製造能力具備對位優勢"],
     risks: ["損益平衡勝率接近 69%", "保守勝率低於市場要求"],
@@ -151,7 +151,7 @@ function renderTopPick() {
     <div class="top-pick-main">
       <div class="pick-heading">${gradeBadge(game.grade)}<span>台灣 ${game.start}</span></div>
       <h1>${game.matchup}</h1>
-      <p>熱門方 <strong>${game.favorite}</strong>・賠率 <strong>${game.odds.toFixed(2)}</strong></p>
+      <p>熱門方 <strong>${game.favorite}</strong>・市場賠率 <strong>${game.odds.toFixed(2)}</strong></p>
       <button class="primary-button" data-open-game="${game.id}">查看完整分析 →</button>
     </div>
     <div class="top-pick-numbers">
@@ -210,7 +210,7 @@ function renderCalculatorOptions() {
 function updateCalculator(resetOdds = false) {
   const game = games.find((item) => item.id === $("#calculatorGame").value) || games[0];
   if (resetOdds) $("#oddsInput").value = game.odds === null ? "" : game.odds.toFixed(2);
-  $("#oddsLabel").textContent = `${game.favorite} 獨贏賠率`;
+  $("#oddsLabel").textContent = `${game.favorite} 市場獨贏賠率`;
   const odds = Number($("#oddsInput").value);
   const valid = Number.isFinite(odds) && odds > 1;
   const be = valid ? breakEven(odds) : null;
@@ -233,7 +233,7 @@ function showDetail(game) {
   $("#modalContent").innerHTML = `
     <div class="detail-header">${gradeBadge(game.grade)}<h2>${game.matchup}</h2><p>${game.headline}</p></div>
     <div class="detail-metrics">
-      ${metric("目前賠率", oddsText(game.odds))}${metric("保守勝率", game.conservative === null ? "—" : `${game.conservative}%`, true)}
+      ${metric("目前市場賠率", oddsText(game.odds))}${metric("保守勝率", game.conservative === null ? "—" : `${game.conservative}%`, true)}
       ${metric("損益平衡", percent(breakEven(game.odds)))}${metric("保守優勢", signed(edge(game)))}
       ${metric("距離門檻", signed(thresholdGap(game)), thresholdGap(game) !== null && thresholdGap(game) >= 0)}
       ${metric("最低接受", oddsText(minimumOdds(game), 3))}

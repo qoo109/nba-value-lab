@@ -19,7 +19,7 @@
     }
     if (record.evaluation_stage === "Closing") return { label: "Closing／CLV", tone: "neutral" };
     if (record.change_type === "fundamental_update") return { label: "基本面更新", tone: "warning" };
-    if (record.change_type === "price_only") return { label: "賠率更新", tone: "info" };
+    if (record.change_type === "price_only") return { label: "市場賠率更新", tone: "info" };
     if (record.evaluation_stage === "T-5m") return { label: "T−5m 最終複核", tone: "strong" };
     if (record.evaluation_stage === "T-60m") return { label: "T−60m 鎖定", tone: "strong" };
     return { label: record.evaluation_stage || "研究快照", tone: "neutral" };
@@ -67,7 +67,7 @@
       <div class="v51-timeline-card">
         <div class="v51-timeline-head"><span class="v51-event-chip">${format.escapeHtml(meta.label)}</span><span>${model}</span></div>
         <div class="v51-timeline-main"><div><strong>${team}</strong><span>${game}</span></div><div><strong>${probability(record)}</strong><span>保守勝率</span></div></div>
-        <div class="v51-timeline-metrics"><span>賠率 <strong>${odds(record)}</strong></span><span>G1 <strong>${format.escapeHtml(record.g_grade || "—")}</strong></span><span>CLV <strong>${clv(record)}</strong></span></div>
+        <div class="v51-timeline-metrics"><span>市場賠率 <strong>${odds(record)}</strong></span><span>G1 <strong>${format.escapeHtml(record.g_grade || "—")}</strong></span><span>CLV <strong>${clv(record)}</strong></span></div>
         <div class="v51-timeline-foot"><span>${status}</span><code>${id}</code></div>
       </div>
     </article>`;

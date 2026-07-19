@@ -93,10 +93,10 @@
 
     grid.innerHTML = [
       card("命中率", percent(stats.hitRate), `${stats.wins} 勝 ${stats.losses} 負`, stats.hitRate >= 0.5 ? "positive" : "negative"),
-      card("紙上 ROI", percent(stats.roi), `有效賠率樣本 ${stats.roiSample}；固定 1 單位`, stats.roi == null ? "neutral" : stats.roi >= 0 ? "positive" : "negative"),
+      card("紙上 ROI", percent(stats.roi), `有效市場賠率樣本 ${stats.roiSample}；固定 1 單位`, stats.roi == null ? "neutral" : stats.roi >= 0 ? "positive" : "negative"),
       card("平均 CLV", percent(stats.avgClv), "只使用已有 Closing 的紀錄", stats.avgClv == null ? "neutral" : stats.avgClv >= 0 ? "positive" : "negative"),
       card("Brier Score", number(stats.brier), "越低越好；以中性勝率計算"),
-      card("最大回撤", stats.maxDrawdown == null ? "—" : `${stats.maxDrawdown.toFixed(2)}u`, "只使用具有有效賠率的紙上序列", stats.maxDrawdown > 3 ? "warning" : "neutral"),
+      card("最大回撤", stats.maxDrawdown == null ? "—" : `${stats.maxDrawdown.toFixed(2)}u`, "只使用具有有效市場賠率的紙上序列", stats.maxDrawdown > 3 ? "warning" : "neutral"),
       card("有效樣本", String(stats.sample), "正式主要場次且已有賽果"),
     ].join("");
   }

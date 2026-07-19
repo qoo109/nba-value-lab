@@ -50,7 +50,7 @@
       <p>${game.headline}</p>
     </header>
     <section class="v5-drawer-metrics">
-      ${metricItem("目前賠率", oddsText(candidate.target.odds))}
+      ${metricItem("目前市場賠率", oddsText(candidate.target.odds))}
       ${metricItem("保守勝率", candidate.target.conservative === null ? "—" : `${candidate.target.conservative}%`, true)}
       ${metricItem("損益平衡", percent(breakEven(candidate.target.odds)))}
       ${metricItem("距離門檻", signed(thresholdGap(candidate)), thresholdGap(candidate) !== null && thresholdGap(candidate) >= 0)}
@@ -74,9 +74,9 @@
     </section>
     <section class="v5-drawer-section">
       <span class="eyebrow">ODDS & DATA</span>
-      <h3>賠率與資料狀態</h3>
+      <h3>市場賠率與資料狀態</h3>
       <dl class="v5-data-list">
-        <div><dt>賠率分層</dt><dd>${band.label}</dd></div>
+        <div><dt>市場賠率分層</dt><dd>${band.label}</dd></div>
         <div><dt>要求邊際</dt><dd>${band.margin === null ? "—" : `${band.margin.toFixed(1)}pp`}</dd></div>
         <div><dt>去水機率</dt><dd>${percent(noVig(candidate))}</dd></div>
         <div><dt>信心水準</dt><dd>${game.confidence}</dd></div>
@@ -86,7 +86,7 @@
     </section>
     <footer class="v5-drawer-footer">
       <strong>研究模式・正式投注額固定為 0</strong>
-      <span>賠率改變只重算賠率層，不回頭改寫模型勝率。</span>
+      <span>市場賠率改變只重算市場賠率層，不回頭改寫模型勝率。</span>
     </footer>`;
   }
 

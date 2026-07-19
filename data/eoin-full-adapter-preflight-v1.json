@@ -1,0 +1,91 @@
+{
+  "schema_version": "eoin-full-adapter-execution-preflight-v1",
+  "created_at": "2026-07-19T14:45:00+08:00",
+  "roadmap_parent": "eoin-role-limited-secondary-source",
+  "formal_state": "FULL_ADAPTER_PREFLIGHT_DECLARED_EXECUTION_DISABLED",
+  "source_id": "kaggle_eoinamoore_historical_nba",
+  "adapter_version": "eoin-role-limited-secondary-adapter-v1",
+  "preflight_version": "eoin-full-adapter-execution-preflight-v1",
+  "upstream_requirements": {
+    "cross_source_report": "data/eoin-cross-source-audit-v1.json",
+    "cross_source_required_outcome": "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+    "adapter_predeclaration": "data/eoin-adapter-predeclaration-v1.json",
+    "adapter_predeclaration_required_state": "ADAPTER_PREDECLARED_EXECUTION_NOT_STARTED",
+    "adapter_self_test_workflow": ".github/workflows/validate-eoin-role-limited-adapter-v1.yml",
+    "adapter_self_test_required_state": "ROLE_LIMITED_ADAPTER_SELF_TEST_PASS",
+    "adapter_self_test_artifact_required_before_execution": true,
+    "adapter_self_test_ci_conclusion_required": "success"
+  },
+  "allowed_preflight_checks": [
+    "validate_cross_source_aggregate_report",
+    "validate_adapter_predeclaration_policy",
+    "validate_role_limited_adapter_self_test_report",
+    "validate_full_execution_boundaries",
+    "validate_public_artifact_allowlist",
+    "validate_no_raw_row_or_raw_file_public_outputs"
+  ],
+  "full_execution_boundary": {
+    "full_eoin_bundle_execution_enabled": false,
+    "full_eoin_bundle_execution_requires_separate_user_action": true,
+    "workflow_dispatch_only_when_later_enabled": true,
+    "requires_explicit_local_or_actions_dataset_path": true,
+    "requires_successful_preflight_report": true,
+    "requires_self_test_ci_run_id": true,
+    "requires_self_test_artifact_id_or_digest": true,
+    "requires_private_temporary_storage_only": true,
+    "read_only_source_access": true,
+    "safe_extract_required": true,
+    "deterministic_game_id_only": true,
+    "fuzzy_matching_allowed": false
+  },
+  "allowed_runtime_inputs_when_later_enabled": {
+    "Games.csv": true,
+    "TeamStatistics.csv": true,
+    "PlayerStatistics.csv": true,
+    "PlayByPlay.parquet": true,
+    "other_files": false
+  },
+  "allowed_public_outputs_when_later_enabled": {
+    "aggregate_json_reports": true,
+    "schema_metadata": true,
+    "row_counts": true,
+    "coverage_rates": true,
+    "hashes_and_file_sizes": true,
+    "raw_game_rows": false,
+    "raw_team_rows": false,
+    "raw_player_rows": false,
+    "raw_pbp_rows": false,
+    "derived_game_id_lists": false,
+    "full_csv_or_parquet_files": false,
+    "full_sqlite_or_duckdb_files": false
+  },
+  "forbidden_promotions": {
+    "historical_silver_replacement_allowed": false,
+    "historical_gold_replacement_allowed": false,
+    "player_stat_parity_claim_allowed": false,
+    "player_stat_feature_import_allowed": false,
+    "model_training_input_allowed": false,
+    "model_retraining_allowed": false,
+    "market_backtest_allowed": false,
+    "clv_ev_roi_drawdown_allowed": false,
+    "betting_decision_layer_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_state_if_preflight_passes": {
+    "formal_state": "FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED",
+    "ready_for_full_adapter_execution_policy": true,
+    "ready_for_full_adapter_execution": false,
+    "ready_for_silver_replacement": false,
+    "ready_for_gold_replacement": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "decision_states": [
+    "FULL_ADAPTER_PREFLIGHT_DECLARED_EXECUTION_DISABLED",
+    "FULL_ADAPTER_EXECUTION_PREFLIGHT_BLOCKED",
+    "FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED"
+  ]
+}

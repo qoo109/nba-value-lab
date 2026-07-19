@@ -145,7 +145,33 @@ Passing state:
 ROLE_LIMITED_ADAPTER_SELF_TEST_PASS
 ```
 
-### 5. NBA Free Data Refresh
+### 5. Eoin Full Adapter Execution Preflight
+
+```text
+Actions -> Validate Eoin full adapter preflight v1 -> Run workflow
+```
+
+What it does:
+
+```text
+generates a fresh aggregate-only adapter self-test report
+validates data/eoin-full-adapter-preflight-v1.json
+checks cross-source evidence, adapter policy and self-test boundaries together
+uploads only aggregate JSON reports
+keeps full Eoin bundle execution disabled
+does not read raw Eoin rows
+does not approve Silver/Gold replacement
+does not unlock model retraining or market backtest
+formal stake remains 0
+```
+
+Passing state:
+
+```text
+FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED
+```
+
+### 6. NBA Free Data Refresh
 
 ```text
 Actions -> Update NBA free data -> Run workflow
@@ -161,7 +187,7 @@ does not create model predictions
 does not unlock market backtest
 ```
 
-### 6. Model and UI Validation
+### 7. Model and UI Validation
 
 ```text
 Actions -> Validate model registry -> Run workflow
@@ -288,6 +314,7 @@ API secrets
 2. Treat Eoin as `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE`.
 3. Validate `Eoin Adapter Predeclaration v1`.
 4. Run `Validate Eoin role-limited adapter v1`.
-5. Inspect the aggregate-only CI artifact before any full adapter execution preflight.
-6. Keep player-stat parity out of scope until an independent player boxscore reference exists.
-7. Keep Wyatt blocked unless a materially new dataset bundle appears.
+5. Run `Validate Eoin full adapter preflight v1`.
+6. Keep full Eoin bundle execution disabled until a separate execution policy exists.
+7. Keep player-stat parity out of scope until an independent player boxscore reference exists.
+8. Keep Wyatt blocked unless a materially new dataset bundle appears.

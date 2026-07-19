@@ -180,9 +180,26 @@ ROLE_LIMITED_ADAPTER_SELF_TEST_PASS
 ```
 
 The self-test is fixture-only. It does not execute against the full Eoin bundle,
-does not read raw Eoin rows and does not permit public derived tables. After CI
-passes, the next step is a separate full adapter execution preflight, not direct
-Silver/Gold replacement.
+does not read raw Eoin rows and does not permit public derived tables.
+
+Full adapter execution preflight:
+
+```text
+data/eoin-full-adapter-preflight-v1.json
+docs/eoin-full-adapter-execution-preflight-v1.md
+scripts/validate_eoin_full_adapter_preflight_v1.py
+.github/workflows/validate-eoin-full-adapter-preflight-v1.yml
+```
+
+Passing state:
+
+```text
+FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED
+```
+
+This confirms the execution boundary only. It still does not authorize direct
+full Eoin bundle execution, raw-row artifacts, Silver/Gold replacement, model
+retraining, market metrics or betting decisions.
 
 ## Frozen Gates
 

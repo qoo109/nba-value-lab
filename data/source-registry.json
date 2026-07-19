@@ -212,6 +212,16 @@
         "fixture_only": true,
         "full_bundle_execution_enabled": false
       },
+      "full_adapter_execution_preflight": {
+        "policy": "data/eoin-full-adapter-preflight-v1.json",
+        "documentation": "docs/eoin-full-adapter-execution-preflight-v1.md",
+        "validator": "scripts/validate_eoin_full_adapter_preflight_v1.py",
+        "workflow": ".github/workflows/validate-eoin-full-adapter-preflight-v1.yml",
+        "formal_state": "FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED",
+        "full_bundle_execution_enabled": false,
+        "raw_rows_emitted": 0,
+        "formal_stake": 0
+      },
       "notes": "2023-24 deterministic audit passed against shufinskiy event-level reference. Player result is coverage-only, not independent player-stat parity. Does not replace Historical Silver or Gold."
     },
     {

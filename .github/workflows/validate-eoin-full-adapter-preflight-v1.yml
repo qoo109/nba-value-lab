@@ -1,0 +1,110 @@
+name: Validate Eoin full adapter preflight v1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/eoin-full-adapter-preflight-v1.json"
+      - "data/eoin-adapter-predeclaration-v1.json"
+      - "data/eoin-cross-source-audit-v1.json"
+      - "docs/eoin-full-adapter-execution-preflight-v1.md"
+      - "docs/eoin-role-limited-adapter-v1.md"
+      - "scripts/validate_eoin_full_adapter_preflight_v1.py"
+      - "scripts/run_eoin_role_limited_adapter_v1.py"
+      - ".github/workflows/validate-eoin-full-adapter-preflight-v1.yml"
+      - "PROJECT_STATUS.md"
+  pull_request:
+    paths:
+      - "data/eoin-full-adapter-preflight-v1.json"
+      - "data/eoin-adapter-predeclaration-v1.json"
+      - "data/eoin-cross-source-audit-v1.json"
+      - "docs/eoin-full-adapter-execution-preflight-v1.md"
+      - "docs/eoin-role-limited-adapter-v1.md"
+      - "scripts/validate_eoin_full_adapter_preflight_v1.py"
+      - "scripts/run_eoin_role_limited_adapter_v1.py"
+      - ".github/workflows/validate-eoin-full-adapter-preflight-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Parquet fixture dependency
+        run: python -m pip install --disable-pip-version-check pyarrow
+
+      - name: Compile Eoin preflight modules
+        run: |
+          python -m py_compile \
+            scripts/validate_eoin_adapter_predeclaration_v1.py \
+            scripts/run_eoin_role_limited_adapter_v1.py \
+            scripts/validate_eoin_full_adapter_preflight_v1.py
+
+      - name: Generate aggregate-only adapter self-test report
+        run: |
+          rm -rf /tmp/nbavl-eoin-full-adapter-preflight-v1
+          python scripts/run_eoin_role_limited_adapter_v1.py \
+            --self-test \
+            --require-parquet-fixture \
+            --output-dir /tmp/nbavl-eoin-full-adapter-preflight-v1
+
+      - name: Validate full adapter preflight policy
+        run: |
+          python scripts/validate_eoin_full_adapter_preflight_v1.py \
+            --adapter-self-test-report /tmp/nbavl-eoin-full-adapter-preflight-v1/eoin-role-limited-secondary-adapter-v1-report.json \
+            --self-test \
+            --output /tmp/nbavl-eoin-full-adapter-preflight-v1/eoin-full-adapter-execution-preflight-v1-report.json
+          python scripts/validate_eoin_full_adapter_preflight_v1.py \
+            --adapter-self-test-report /tmp/nbavl-eoin-full-adapter-preflight-v1/eoin-role-limited-secondary-adapter-v1-report.json \
+            --output /tmp/nbavl-eoin-full-adapter-preflight-v1/eoin-full-adapter-execution-preflight-v1-report.json
+          python -m json.tool /tmp/nbavl-eoin-full-adapter-preflight-v1/eoin-full-adapter-execution-preflight-v1-report.json >/dev/null
+
+      - name: Enforce preflight guardrails
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-eoin-full-adapter-preflight-v1')
+          report = json.loads((root / 'eoin-full-adapter-execution-preflight-v1-report.json').read_text())
+          adapter = json.loads((root / 'eoin-role-limited-secondary-adapter-v1-report.json').read_text())
+          status = json.loads((root / 'eoin-role-limited-secondary-adapter-v1-status.json').read_text())
+
+          assert report['formal_state'] == 'FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED', report
+          assert report['decision']['ready_for_full_adapter_execution_policy'] is True, report
+          assert report['decision']['ready_for_full_adapter_execution'] is False, report
+          assert report['decision']['ready_for_market_backtest'] is False, report
+          assert report['decision']['ready_for_betting_edge_claim'] is False, report
+          assert report['quality']['raw_rows_read'] is False, report
+          assert report['quality']['raw_rows_emitted'] == 0, report
+          assert report['quality']['raw_files_emitted'] is False, report
+          assert report['quality']['formal_stake'] == 0, report
+          assert adapter['formal_state'] == 'ROLE_LIMITED_ADAPTER_SELF_TEST_PASS', adapter
+          assert adapter['full_eoin_bundle_execution'] is False, adapter
+          assert adapter['boundaries']['raw_eoin_rows_read'] is False, adapter
+          assert adapter['boundaries']['raw_rows_emitted'] == 0, adapter
+          assert status['raw_files_uploaded_as_artifact'] is False, status
+          assert status['raw_rows_uploaded_as_artifact'] is False, status
+          PY
+
+      - name: Upload aggregate-only preflight artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-full-adapter-preflight-v1
+          path: |
+            /tmp/nbavl-eoin-full-adapter-preflight-v1/eoin-full-adapter-execution-preflight-v1-report.json
+            /tmp/nbavl-eoin-full-adapter-preflight-v1/eoin-role-limited-secondary-adapter-v1-report.json
+            /tmp/nbavl-eoin-full-adapter-preflight-v1/eoin-role-limited-secondary-adapter-v1-status.json
+          retention-days: 14
+          if-no-files-found: error

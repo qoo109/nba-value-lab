@@ -1,0 +1,110 @@
+name: Validate Eoin full adapter execution policy v1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/eoin-full-adapter-execution-policy-v1.json"
+      - "data/eoin-full-adapter-preflight-v1.json"
+      - "data/eoin-adapter-predeclaration-v1.json"
+      - "data/eoin-cross-source-audit-v1.json"
+      - "docs/eoin-full-adapter-execution-policy-v1.md"
+      - "scripts/validate_eoin_full_adapter_execution_policy_v1.py"
+      - "scripts/validate_eoin_full_adapter_preflight_v1.py"
+      - "scripts/run_eoin_role_limited_adapter_v1.py"
+      - ".github/workflows/validate-eoin-full-adapter-execution-policy-v1.yml"
+      - "PROJECT_STATUS.md"
+  pull_request:
+    paths:
+      - "data/eoin-full-adapter-execution-policy-v1.json"
+      - "data/eoin-full-adapter-preflight-v1.json"
+      - "data/eoin-adapter-predeclaration-v1.json"
+      - "data/eoin-cross-source-audit-v1.json"
+      - "docs/eoin-full-adapter-execution-policy-v1.md"
+      - "scripts/validate_eoin_full_adapter_execution_policy_v1.py"
+      - "scripts/validate_eoin_full_adapter_preflight_v1.py"
+      - "scripts/run_eoin_role_limited_adapter_v1.py"
+      - ".github/workflows/validate-eoin-full-adapter-execution-policy-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  execution-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Parquet fixture dependency
+        run: python -m pip install --disable-pip-version-check pyarrow
+
+      - name: Compile policy modules
+        run: |
+          python -m py_compile \
+            scripts/run_eoin_role_limited_adapter_v1.py \
+            scripts/validate_eoin_full_adapter_preflight_v1.py \
+            scripts/validate_eoin_full_adapter_execution_policy_v1.py
+
+      - name: Generate aggregate-only upstream reports
+        run: |
+          rm -rf /tmp/nbavl-eoin-execution-policy-v1
+          python scripts/run_eoin_role_limited_adapter_v1.py \
+            --self-test \
+            --require-parquet-fixture \
+            --output-dir /tmp/nbavl-eoin-execution-policy-v1
+          python scripts/validate_eoin_full_adapter_preflight_v1.py \
+            --adapter-self-test-report /tmp/nbavl-eoin-execution-policy-v1/eoin-role-limited-secondary-adapter-v1-report.json \
+            --output /tmp/nbavl-eoin-execution-policy-v1/eoin-full-adapter-execution-preflight-v1-report.json
+
+      - name: Validate execution policy
+        run: |
+          python scripts/validate_eoin_full_adapter_execution_policy_v1.py \
+            --preflight-report /tmp/nbavl-eoin-execution-policy-v1/eoin-full-adapter-execution-preflight-v1-report.json \
+            --self-test \
+            --output /tmp/nbavl-eoin-execution-policy-v1/eoin-full-adapter-execution-policy-v1-report.json
+          python -m json.tool /tmp/nbavl-eoin-execution-policy-v1/eoin-full-adapter-execution-policy-v1-report.json >/dev/null
+
+      - name: Enforce disabled-execution guardrails
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-eoin-execution-policy-v1')
+          report = json.loads((root / 'eoin-full-adapter-execution-policy-v1-report.json').read_text())
+          preflight = json.loads((root / 'eoin-full-adapter-execution-preflight-v1-report.json').read_text())
+
+          assert report['formal_state'] == 'FULL_ADAPTER_EXECUTION_POLICY_READY_FOR_IMPLEMENTATION_BUT_EXECUTION_DISABLED', report
+          assert report['quality']['checks_failed'] == 0, report
+          assert report['quality']['network_calls_made'] is False, report
+          assert report['quality']['full_bundle_execution_performed'] is False, report
+          assert report['quality']['raw_rows_read'] is False, report
+          assert report['quality']['raw_rows_emitted'] == 0, report
+          assert report['quality']['raw_files_emitted'] is False, report
+          assert report['decision']['ready_for_execution_implementation'] is True, report
+          assert report['decision']['ready_for_full_adapter_execution'] is False, report
+          assert report['decision']['ready_for_market_backtest'] is False, report
+          assert report['decision']['ready_for_betting_edge_claim'] is False, report
+          assert report['decision']['formal_stake'] == 0, report
+          assert preflight['formal_state'] == 'FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED', preflight
+          PY
+
+      - name: Upload aggregate-only execution policy artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-full-adapter-execution-policy-v1
+          path: |
+            /tmp/nbavl-eoin-execution-policy-v1/eoin-full-adapter-execution-policy-v1-report.json
+            /tmp/nbavl-eoin-execution-policy-v1/eoin-full-adapter-execution-preflight-v1-report.json
+            /tmp/nbavl-eoin-execution-policy-v1/eoin-role-limited-secondary-adapter-v1-report.json
+            /tmp/nbavl-eoin-execution-policy-v1/eoin-role-limited-secondary-adapter-v1-status.json
+          retention-days: 14
+          if-no-files-found: error

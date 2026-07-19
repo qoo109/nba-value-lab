@@ -130,7 +130,7 @@ function showDetail(candidate) {
       <div><span>樂觀情境</span><strong>${candidate.target.optimistic === null ? "—" : `${candidate.target.optimistic}%`}</strong><small>EV ${signed(scenarioEv(candidate.target.optimistic, candidate.target.odds), "%")}</small></div>
     </div>
     <div class="detail-grid">
-      <article><span class="eyebrow">市場數學</span><ul><li>${candidate.target.code} 原始隱含 ${percent(rawImplied(candidate.target.odds))}</li><li>${candidate.opponent.code} 原始隱含 ${percent(rawImplied(candidate.opponent.odds))}</li><li>理論超額水位 ${percent(overround(candidate))}</li><li>${candidate.target.code} 比例去水機率 ${percent(noVig(candidate))}</li><li>價格分層 ${band.label}</li></ul></article>
+      <article><span class="eyebrow">市場數學</span><ul><li>${candidate.target.code} 原始隱含 ${percent(rawImplied(candidate.target.odds))}</li><li>${candidate.opponent.code} 原始隱含 ${percent(rawImplied(candidate.opponent.odds))}</li><li>理論超額水位 ${percent(overround(candidate))}</li><li>${candidate.target.code} 比例去水機率 ${percent(noVig(candidate))}</li><li>賠率分層 ${band.label}</li></ul></article>
       <article><span class="eyebrow">模型帳本</span>${buildSummary(candidate)}</article>
       <article><span class="eyebrow">支持證據</span><ul>${game.reasons.map((item) => `<li>${item}</li>`).join("")}</ul></article>
       <article><span class="eyebrow">主要風險</span><ul>${game.risks.map((item) => `<li>${item}</li>`).join("")}</ul></article>

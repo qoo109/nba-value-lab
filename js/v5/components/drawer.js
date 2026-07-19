@@ -73,10 +73,10 @@
       ${list(game.risks, "目前沒有額外風險註記")}
     </section>
     <section class="v5-drawer-section">
-      <span class="eyebrow">PRICE & DATA</span>
-      <h3>價格與資料狀態</h3>
+      <span class="eyebrow">ODDS & DATA</span>
+      <h3>賠率與資料狀態</h3>
       <dl class="v5-data-list">
-        <div><dt>價格分層</dt><dd>${band.label}</dd></div>
+        <div><dt>賠率分層</dt><dd>${band.label}</dd></div>
         <div><dt>要求邊際</dt><dd>${band.margin === null ? "—" : `${band.margin.toFixed(1)}pp`}</dd></div>
         <div><dt>去水機率</dt><dd>${percent(noVig(candidate))}</dd></div>
         <div><dt>信心水準</dt><dd>${game.confidence}</dd></div>
@@ -86,7 +86,7 @@
     </section>
     <footer class="v5-drawer-footer">
       <strong>研究模式・正式投注額固定為 0</strong>
-      <span>價格改變只重算價格層，不回頭改寫模型勝率。</span>
+      <span>賠率改變只重算賠率層，不回頭改寫模型勝率。</span>
     </footer>`;
   }
 

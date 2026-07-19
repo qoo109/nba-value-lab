@@ -10,7 +10,7 @@ const FALLBACK_V31 = {
   preview_policy: { snapshot: "T-24h", maximum_grade: "ㄆ", extra_margin_pp: null },
   price_policy: {
     price_segments: [
-      { id: "extreme_low_excluded", min: 1.20, max: 1.30, min_inclusive: true, max_inclusive: false, label: "極低價格區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "排除・極低價格" },
+      { id: "extreme_low_excluded", min: 1.20, max: 1.30, min_inclusive: true, max_inclusive: false, label: "極低賠率區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "排除・極低賠率" },
       { id: "low_extension", min: 1.30, max: 1.40, min_inclusive: true, max_inclusive: false, label: "低價延伸研究區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "ㄆ級・延伸研究" },
       { id: "core", min: 1.40, max: 1.60, min_inclusive: true, max_inclusive: true, label: "核心決策區", required_margin_pp: 5, eligible_b: true, maximum_conclusion: "ㄅ級・研究候選" },
       { id: "high_extension", min: 1.60, max: 1.75, min_inclusive: false, max_inclusive: true, label: "高價延伸研究區", required_margin_pp: 5, eligible_b: false, maximum_conclusion: "ㄆ級・延伸研究" },
@@ -105,7 +105,7 @@ function segmentContains(segment, odds) {
 }
 
 function vPriceSegment(odds) {
-  if (!Number.isFinite(odds) || odds <= 1) return { id: "invalid", label: "無效價格", required_margin_pp: null, eligible_b: false, maximum_conclusion: "價格資料不足" };
+  if (!Number.isFinite(odds) || odds <= 1) return { id: "invalid", label: "無效賠率", required_margin_pp: null, eligible_b: false, maximum_conclusion: "賠率資料不足" };
   return modelV().price_policy.price_segments.find((segment) => segmentContains(segment, odds)) || {
     id: "outside", label: "範圍外", required_margin_pp: null, eligible_b: false,
     maximum_conclusion: modelV().price_policy.outside_conclusion || "範圍外",
@@ -113,7 +113,7 @@ function vPriceSegment(odds) {
 }
 
 function gPriceSegment(odds) {
-  if (!Number.isFinite(odds) || odds <= 1) return { id: "invalid", label: "無效價格", required_margin_pp: null, eligible: false, maximum_conclusion: "價格資料不足" };
+  if (!Number.isFinite(odds) || odds <= 1) return { id: "invalid", label: "無效賠率", required_margin_pp: null, eligible: false, maximum_conclusion: "賠率資料不足" };
   return modelG().price_bands.find((segment) => segmentContains(segment, odds)) || {
     id: "outside", label: "範圍外", required_margin_pp: null, eligible: false, maximum_conclusion: "只記錄",
   };
@@ -160,7 +160,7 @@ function vDecision(candidate, odds = candidate.target.odds) {
   grade = applyRiskCap(candidate, grade);
   let conclusion = gradeInfo[grade]?.label || grade;
   if (grade !== "資料不足" && grade !== "不支持") {
-    if (segment.id === "extreme_low_excluded") { grade = "ㄆ"; conclusion = "排除・極低價格"; }
+    if (segment.id === "extreme_low_excluded") { grade = "ㄆ"; conclusion = "排除・極低賠率"; }
     else if (segment.id === "separate_calibration") { grade = grade === "ㄇ" ? "ㄇ" : "ㄆ"; conclusion = grade === "ㄇ" ? gradeInfo[grade].label : "另行校準"; }
     else if (segment.id === "outside") { grade = "ㄆ"; conclusion = "範圍外"; }
     else if (!segment.eligible_b && grade === "ㄅ") { grade = "ㄆ"; conclusion = segment.maximum_conclusion || "ㄆ級・延伸研究"; }
@@ -360,14 +360,14 @@ function updateCalculator(resetOdds = false) {
   const valid = Number.isFinite(odds) && odds > 1;
   const v = valid ? vDecision(candidate, odds) : vDecision(candidate, NaN);
   const g = valid ? gDecision(candidate, odds) : gDecision(candidate, NaN);
-  const combined = valid ? coordinationDecision(candidate, odds) : { label: "價格資料不足", tone: "insufficient" };
+  const combined = valid ? coordinationDecision(candidate, odds) : { label: "賠率資料不足", tone: "insufficient" };
   $("#calcBreakeven").textContent = percent(valid ? breakEven(odds) : null);
   $("#calcGap").textContent = `V ${signed(v.gap)}／G ${signed(g.gap)}`;
   $("#calcGap").className = g.gap !== null && g.gap >= 0 ? "positive" : "";
   $("#calcEv").textContent = signed(valid ? scenarioEv(candidate.target.conservative, odds) : null, "%");
   $("#calcStatus").textContent = `${$("#bookmakerInput").value || "我的莊家"}：${combined.label}`;
   $("#calcStatus").classList.toggle("pass", combined.grade === "ㄅ");
-  $("#calcNote").textContent = `V${modelV().version}：${v.conclusion}，最低 ${oddsText(v.minimumOdds, 3)}；G${modelG().version}：${g.conclusion}，最低 ${oddsText(g.minimumOdds, 3)}。單純價格變動只新增 price_evaluation，不改模型勝率；正式投注額固定為 0。`;
+  $("#calcNote").textContent = `V${modelV().version}：${v.conclusion}，最低 ${oddsText(v.minimumOdds, 3)}；G${modelG().version}：${g.conclusion}，最低 ${oddsText(g.minimumOdds, 3)}。單純賠率變動只新增 price_evaluation，不改模型勝率；正式投注額固定為 0。`;
 }
 
 function showDetail(candidate) {
@@ -390,7 +390,7 @@ function showDetail(candidate) {
       <div><span>樂觀情境</span><strong>${candidate.target.optimistic === null ? "—" : `${candidate.target.optimistic}%`}</strong><small>EV ${signed(scenarioEv(candidate.target.optimistic, candidate.target.odds), "%")}</small></div>
     </div>
     <div class="detail-grid">
-      <article><span class="eyebrow">V3.1 價格評估</span><ul><li>${v.segment.label}</li><li>${v.conclusion}</li><li>RequiredMargin ${v.margin == null ? "—" : `${v.margin}pp`}</li><li>價格變動新增 price_evaluation_id，不改 prediction_id</li></ul></article>
+      <article><span class="eyebrow">V3.1 賠率評估</span><ul><li>${v.segment.label}</li><li>${v.conclusion}</li><li>RequiredMargin ${v.margin == null ? "—" : `${v.margin}pp`}</li><li>賠率變動新增 price_evaluation_id，不改 prediction_id</li></ul></article>
       <article><span class="eyebrow">G1 Gate</span><ul><li>${g.segment.label}</li><li>${g.conclusion}</li><li>比較來源 ${comparisonSources} 家</li><li>模型市場差 ${modelMarketGap}pp</li><li>${dualSideConflict(candidate) ? "雙邊價值衝突：阻止主要場次" : "雙邊一致性未觸發衝突"}</li></ul></article>
       <article><span class="eyebrow">支持證據</span><ul>${game.reasons.map((item) => `<li>${item}</li>`).join("")}</ul></article>
       <article><span class="eyebrow">主要風險</span><ul>${game.risks.map((item) => `<li>${item}</li>`).join("")}</ul></article>
@@ -411,7 +411,7 @@ function renderModelRegistryStatus() {
     <div><span class="eyebrow">MODEL REGISTRY V4.6</span><h2>${activeModelLabel()}・${loaded ? "已載入新版 Registry" : "使用安全預設"}</h2>
     <p>${activeRevisionLabel()}。兩套引擎分開判定，不做未驗證的勝率平均；網站協調層只負責顯示與候選分類。</p></div>
     <div class="registry-grid">
-      <article class="registry-card ${loaded ? "licensed" : "restricted"}"><div><span>V ENGINE</span><em>V${modelV().version}</em></div><h2>Prediction／Price Evaluation 分離</h2><dl>
+      <article class="registry-card ${loaded ? "licensed" : "restricted"}"><div><span>V ENGINE</span><em>V${modelV().version}</em></div><h2>Prediction／Odds Evaluation 分離</h2><dl>
         <div><dt>核心區</dt><dd>${modelV().odds_scope.min.toFixed(2)}～${modelV().odds_scope.max.toFixed(2)}</dd></div>
         <div><dt>Stage 0～2 邊際</dt><dd>${modelV().required_margin_pp.toFixed(1)}pp</dd></div>
         <div><dt>T-24h</dt><dd>最高 ㄆ級</dd></div>

@@ -2,21 +2,11 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.10",
+    appVersion: "V5.3.11",
     model: "V3.1 x G1.1",
     updated: "2026-07-19",
     state: "Research Candidate / Pre-Market-Backtest",
     stake: "0",
-  };
-
-  const GITHUB_AUTOMATION = {
-    owner: "qoo109",
-    repo: "nba-value-lab",
-    workflow: "run-eoin-cross-source-audit-v1.yml",
-    defaultRef: "main",
-    defaultDataset: "eoinamoore/historical-nba-data-and-player-box-scores",
-    defaultMaxDownloadMb: "600",
-    apiVersion: "2026-03-10",
   };
 
   function qs(selector, root = document) {
@@ -35,7 +25,7 @@
     if (qs('link[data-current-research-status-css]')) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "./css/current-research-status.css?v=20260719";
+    link.href = "./css/current-research-status.css?v=20260719f";
     link.setAttribute("data-current-research-status-css", "true");
     document.head.appendChild(link);
   }
@@ -113,182 +103,12 @@
       ${statusCard("MARKET", "PIT odds line 暫停", "沒有合法且可核對 timestamp / bookmaker semantics 的 odds source 前，不做 market backtest。", "paused", [
         "No paid pilot approved",
         "No CLV / ROI / Drawdown claim",
-        "Manual price calculator remains research-only",
+        "Manual odds calculator remains research-only",
       ])}
     </div>`;
 
     if (timing) timing.insertAdjacentElement("afterend", section);
     else panel.prepend(section);
-  }
-
-  function automationStatus(text, tone = "muted") {
-    const node = qs("#githubAutomationStatus");
-    if (!node) return;
-    node.textContent = text;
-    node.dataset.tone = tone;
-  }
-
-  function classifyDispatchError(status, detail) {
-    if (status === 401) return "GitHub token 無效或已過期。";
-    if (status === 403) return "GitHub token 權限不足；需要此 repo 的 Actions read/write。";
-    if (status === 404) return "找不到 repo、branch 或 workflow；請確認 workflow 已經在該 branch。";
-    if (status === 422) return "workflow input 或 branch 不符合設定。";
-    return detail || `GitHub API 回應 ${status}`;
-  }
-
-  async function githubJson(url, token, options = {}) {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${token}`,
-        "X-GitHub-Api-Version": GITHUB_AUTOMATION.apiVersion,
-        ...(options.headers || {}),
-      },
-    });
-    if (!response.ok) {
-      let detail = "";
-      try {
-        const body = await response.json();
-        detail = body.message || "";
-      } catch (_) {
-        detail = response.statusText;
-      }
-      throw new Error(classifyDispatchError(response.status, detail));
-    }
-    if (response.status === 204) return null;
-    return response.json();
-  }
-
-  async function findLatestWorkflowRun(token, ref, submittedAt) {
-    const params = new URLSearchParams({
-      event: "workflow_dispatch",
-      branch: ref,
-      per_page: "5",
-    });
-    const url = `https://api.github.com/repos/${GITHUB_AUTOMATION.owner}/${GITHUB_AUTOMATION.repo}/actions/workflows/${GITHUB_AUTOMATION.workflow}/runs?${params}`;
-    const data = await githubJson(url, token);
-    const runs = Array.isArray(data?.workflow_runs) ? data.workflow_runs : [];
-    const threshold = submittedAt.getTime() - 60000;
-    return runs.find((run) => new Date(run.created_at).getTime() >= threshold) || runs[0] || null;
-  }
-
-  async function pollLatestRun(token, ref, submittedAt) {
-    for (const delay of [1800, 3200, 5200]) {
-      await new Promise((resolve) => window.setTimeout(resolve, delay));
-      const run = await findLatestWorkflowRun(token, ref, submittedAt);
-      if (run?.html_url) return run;
-    }
-    return null;
-  }
-
-  async function handleGithubAutomationSubmit(event) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const token = qs("#githubAutomationToken", form)?.value.trim();
-    const ref = qs("#githubAutomationRef", form)?.value.trim() || GITHUB_AUTOMATION.defaultRef;
-    const dataset = qs("#githubAutomationDataset", form)?.value.trim() || GITHUB_AUTOMATION.defaultDataset;
-    const maxDownloadMb = qs("#githubAutomationMaxDownloadMb", form)?.value.trim() || GITHUB_AUTOMATION.defaultMaxDownloadMb;
-    const submitButton = qs('button[type="submit"]', form);
-    const runLink = qs("#githubAutomationRunLink");
-
-    if (!token) {
-      automationStatus("請先貼上 GitHub fine-grained token。", "warn");
-      return;
-    }
-
-    if (runLink) {
-      runLink.hidden = true;
-      runLink.removeAttribute("href");
-    }
-
-    const submittedAt = new Date();
-    submitButton.disabled = true;
-    automationStatus("正在送出 GitHub Actions 執行請求...", "working");
-
-    try {
-      const url = `https://api.github.com/repos/${GITHUB_AUTOMATION.owner}/${GITHUB_AUTOMATION.repo}/actions/workflows/${GITHUB_AUTOMATION.workflow}/dispatches`;
-      const dispatchResult = await githubJson(url, token, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ref,
-          inputs: {
-            dataset_handle: dataset,
-            max_download_mb: maxDownloadMb,
-          },
-        }),
-      });
-
-      if (dispatchResult?.html_url && runLink) {
-        runLink.href = dispatchResult.html_url;
-        runLink.hidden = false;
-        automationStatus("已建立 workflow run，可等待 artifact 產生。", "ok");
-      } else {
-        automationStatus("已送出，正在抓最新 workflow run...", "ok");
-      }
-
-      const run = dispatchResult?.html_url ? null : await pollLatestRun(token, ref, submittedAt);
-      if (run?.html_url && runLink) {
-        runLink.href = run.html_url;
-        runLink.hidden = false;
-        automationStatus(`已建立 run #${run.run_number}，可等待 artifact 產生。`, "ok");
-      } else if (!dispatchResult?.html_url) {
-        automationStatus("已送出，但 GitHub 還沒回傳最新 run；稍等一分鐘再查。", "ok");
-      }
-      const tokenInput = qs("#githubAutomationToken", form);
-      if (tokenInput) tokenInput.value = "";
-    } catch (error) {
-      automationStatus(error.message || "啟動失敗。", "error");
-    } finally {
-      submitButton.disabled = false;
-    }
-  }
-
-  function ensureGithubAutomationLauncher() {
-    const panel = qs('[data-panel="analysis"]');
-    const anchor = qs("#currentResearchStatus");
-    if (!panel || qs("#githubAutomationLauncher")) return;
-
-    const section = document.createElement("section");
-    section.id = "githubAutomationLauncher";
-    section.className = "github-automation-launcher";
-    section.innerHTML = `<div class="github-automation-copy">
-      <span class="eyebrow">GITHUB WEBSITE RUNNER</span>
-      <h2>從網站直接啟動 cross-source audit</h2>
-      <p>目前 Eoin v1 已通過；這個工具保留給未來重新驗證新版資料。Token 只留在這次瀏覽器請求中。</p>
-    </div>
-    <form class="github-automation-form">
-      <label>
-        <span>Dataset handle</span>
-        <input id="githubAutomationDataset" value="${GITHUB_AUTOMATION.defaultDataset}" autocomplete="off" />
-      </label>
-      <label>
-        <span>Max reference download MB</span>
-        <input id="githubAutomationMaxDownloadMb" value="${GITHUB_AUTOMATION.defaultMaxDownloadMb}" inputmode="numeric" autocomplete="off" />
-      </label>
-      <label>
-        <span>Branch</span>
-        <input id="githubAutomationRef" value="${GITHUB_AUTOMATION.defaultRef}" autocomplete="off" />
-      </label>
-      <label class="github-token-field">
-        <span>GitHub token</span>
-        <input id="githubAutomationToken" type="password" autocomplete="off" placeholder="fine-grained token: Actions read/write" />
-      </label>
-      <div class="github-automation-actions">
-        <button type="submit">啟動 Eoin audit</button>
-        <a id="githubAutomationRunLink" href="#" target="_blank" rel="noopener" hidden>查看最新 run</a>
-      </div>
-      <div class="github-automation-status" id="githubAutomationStatus" data-tone="muted">Eoin v1 已通過；僅在新版資料需要重驗時啟動。</div>
-    </form>`;
-
-    if (anchor) anchor.insertAdjacentElement("afterend", section);
-    else panel.prepend(section);
-
-    const form = qs(".github-automation-form", section);
-    if (form) form.addEventListener("submit", handleGithubAutomationSubmit);
   }
 
   function ensureSourceQueue() {
@@ -360,7 +180,6 @@
     ensureHeader();
     updateRail();
     ensureAnalysisStatus();
-    ensureGithubAutomationLauncher();
     ensureSourceQueue();
     updateValidationCopy();
     document.documentElement.dataset.currentResearchStatus = "applied";

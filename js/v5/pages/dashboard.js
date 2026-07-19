@@ -179,7 +179,7 @@
       open: true,
       className: "v5-market-disclosure",
     });
-    wrapSection(analysis.querySelector(".calculator"), "賠率即時試算", { hint: "只重算價格，不改模型勝率" });
+    wrapSection(analysis.querySelector(".calculator"), "賠率即時試算", { hint: "只重算賠率，不改模型勝率" });
     wrapSection(analysis.querySelector(".source-card"), "資料來源策略", { hint: "目標莊家、比較來源與快照" });
     wrapSection(analysis.querySelector(".weights-card"), "證據覆蓋權重", { hint: "資料完整度，不是直接勝率係數" });
     wrapSection(analysis.querySelector(".pipeline-card"), "研究快照流程", { hint: "T−60m、T−5m 與 Closing" });
@@ -223,8 +223,8 @@
     const title = panel.querySelector(".view-hero h1");
     const copy = panel.querySelector(".view-hero p");
     const recordsHeading = panel.querySelector("#historyGeneratedAt")?.closest("section")?.querySelector("h2");
-    if (title) title.textContent = "研究 Timeline、績效與價格趨勢";
-    if (copy) copy.textContent = "依時間查看鎖定、價格、基本面、Closing 與賽果，並追蹤紙上淨值、CLV、勝率與盤口變化。";
+    if (title) title.textContent = "研究 Timeline、績效與賠率趨勢";
+    if (copy) copy.textContent = "依時間查看鎖定、賠率、基本面、Closing 與賽果，並追蹤紙上淨值、CLV、勝率與盤口變化。";
     if (recordsHeading) recordsHeading.textContent = "研究事件 Timeline";
   }
 

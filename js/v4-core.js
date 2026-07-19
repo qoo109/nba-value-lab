@@ -31,7 +31,7 @@ function bandContains(band, odds) {
   return aboveMin && belowMax;
 }
 function priceBand(odds) {
-  if (!Number.isFinite(odds) || odds <= 1) return { label: "無效價格", margin: null, eligible: false };
+  if (!Number.isFinite(odds) || odds <= 1) return { label: "無效賠率", margin: null, eligible: false };
   const configured = modelG().price_bands.find((band) => bandContains(band, odds));
   if (configured) return { label: configured.label, margin: configured.required_margin_pp, eligible: Boolean(configured.eligible) };
   if (odds < modelG().price_bands[0].min) return { label: "極低價層", margin: null, eligible: false };

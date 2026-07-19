@@ -42,7 +42,7 @@
     const section = document.createElement("section");
     section.id = "v52MarketTrends";
     section.className = "v52-market-trends";
-    section.innerHTML = `<div class="section-heading"><div><span class="eyebrow">PRICE × PROBABILITY</span><h2>單場勝率與賠率軌跡</h2><p>同一場、同一選擇方至少累積兩個快照後才顯示，方便確認價格變動有沒有錯誤改動模型勝率。</p></div></div><div class="v52-market-grid" id="v52MarketTrendGrid"></div>`;
+    section.innerHTML = `<div class="section-heading"><div><span class="eyebrow">ODDS × PROBABILITY</span><h2>單場勝率與賠率軌跡</h2><p>同一場、同一選擇方至少累積兩個快照後才顯示，方便確認賠率變動有沒有錯誤改動模型勝率。</p></div></div><div class="v52-market-grid" id="v52MarketTrendGrid"></div>`;
     timeline.parentNode.insertBefore(section, timeline);
   }
 

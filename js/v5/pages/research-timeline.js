@@ -19,7 +19,7 @@
     }
     if (record.evaluation_stage === "Closing") return { label: "Closing／CLV", tone: "neutral" };
     if (record.change_type === "fundamental_update") return { label: "基本面更新", tone: "warning" };
-    if (record.change_type === "price_only") return { label: "價格更新", tone: "info" };
+    if (record.change_type === "price_only") return { label: "賠率更新", tone: "info" };
     if (record.evaluation_stage === "T-5m") return { label: "T−5m 最終複核", tone: "strong" };
     if (record.evaluation_stage === "T-60m") return { label: "T−60m 鎖定", tone: "strong" };
     return { label: record.evaluation_stage || "研究快照", tone: "neutral" };

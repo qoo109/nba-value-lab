@@ -1,0 +1,113 @@
+name: Run approved Eoin full adapter once v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: "Exact approved request ID"
+        required: true
+        default: "EOIN-FULL-ADAPTER-2026-07-19-001"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eoin-full-adapter-once-EOIN-FULL-ADAPTER-2026-07-19-001
+  cancel-in-progress: false
+
+jobs:
+  execute-once:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.run_attempt == 1 &&
+      inputs.request_id == 'EOIN-FULL-ADAPTER-2026-07-19-001'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install execution dependencies
+        run: python -m pip install --disable-pip-version-check pyarrow kagglehub
+
+      - name: Compile approved executor
+        run: |
+          python -m py_compile \
+            scripts/run_eoin_full_adapter_one_time_execution_v1.py \
+            scripts/run_eoin_role_limited_adapter_v1.py \
+            scripts/run_eoin_kaggle_census_v1.py
+
+      - name: Revalidate approval before network access
+        run: |
+          rm -rf /tmp/nbavl-eoin-approved-execution-v1
+          mkdir -p /tmp/nbavl-eoin-approved-execution-v1
+          python scripts/run_eoin_full_adapter_one_time_execution_v1.py \
+            --validate-only \
+            --confirmation-request-id "${{ inputs.request_id }}" \
+            --workflow-event "${{ github.event_name }}" \
+            --workflow-ref "${{ github.ref }}" \
+            --output /tmp/nbavl-eoin-approved-execution-v1/approval-validation-report.json
+
+      - name: Run one-time aggregate-only full adapter validation
+        run: |
+          python scripts/run_eoin_full_adapter_one_time_execution_v1.py \
+            --confirmation-request-id "${{ inputs.request_id }}" \
+            --workflow-event "${{ github.event_name }}" \
+            --workflow-ref "${{ github.ref }}" \
+            --output /tmp/nbavl-eoin-approved-execution-v1/eoin-full-adapter-one-time-execution-report.json
+
+      - name: Enforce public output boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-eoin-approved-execution-v1')
+          report_path = root / 'eoin-full-adapter-one-time-execution-report.json'
+          report = json.loads(report_path.read_text())
+
+          assert report['formal_state'] in {
+              'ONE_TIME_FULL_ADAPTER_AGGREGATE_VALIDATION_PASS',
+              'ONE_TIME_FULL_ADAPTER_AGGREGATE_VALIDATION_RESEARCH_BLOCKED',
+          }, report
+          assert report['fixture_mode'] is False, report
+          assert report['request_id'] == 'EOIN-FULL-ADAPTER-2026-07-19-001', report
+          assert report['approval_validation']['formal_state'] == 'ONE_TIME_EXECUTION_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH', report
+          assert report['execution_receipt']['execution_count_for_request'] == 1, report
+          assert report['execution_receipt']['network_download_performed'] is True, report
+          assert report['execution_receipt']['temporary_raw_material_deleted_with_runner'] is True, report
+          assert report['boundaries']['temporary_raw_eoin_rows_read'] is True, report
+          assert report['boundaries']['raw_rows_emitted'] == 0, report
+          assert report['boundaries']['raw_files_emitted'] is False, report
+          assert report['boundaries']['raw_files_uploaded_as_artifact'] is False, report
+          assert report['boundaries']['historical_silver_replacement'] is False, report
+          assert report['boundaries']['historical_gold_replacement'] is False, report
+          assert report['boundaries']['player_stat_parity_claim'] is False, report
+          assert report['boundaries']['model_training_or_retraining'] is False, report
+          assert report['boundaries']['market_backtest'] is False, report
+          assert report['boundaries']['betting_edge_claim'] is False, report
+          assert report['boundaries']['formal_stake'] == 0, report
+          assert report_path.stat().st_size <= 10 * 1024 * 1024, report_path.stat().st_size
+
+          public_files = [path for path in root.iterdir() if path.is_file()]
+          assert len(public_files) == 2, public_files
+          assert all(path.suffix == '.json' for path in public_files), public_files
+          PY
+
+      - name: Remove admission-only report before Artifact upload
+        run: rm -f /tmp/nbavl-eoin-approved-execution-v1/approval-validation-report.json
+
+      - name: Upload aggregate-only execution Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-full-adapter-one-time-execution-v1
+          path: /tmp/nbavl-eoin-approved-execution-v1/eoin-full-adapter-one-time-execution-report.json
+          retention-days: 14
+          if-no-files-found: error

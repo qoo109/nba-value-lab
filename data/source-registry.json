@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.7.0",
+  "registry_version": "1.8.0",
   "site_version_policy": "follow_current_release",
-  "updated_at": "2026-07-19T16:55:00+08:00",
+  "updated_at": "2026-07-19T16:48:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -10,15 +10,8 @@
       "name": "使用者手動雙邊盤口",
       "status": "active",
       "mode": "manual",
-      "domains": [
-        "odds"
-      ],
-      "snapshots": [
-        "21:00",
-        "T-60m",
-        "T-5m",
-        "Closing"
-      ],
+      "domains": ["odds"],
+      "snapshots": ["21:00", "T-60m", "T-5m", "Closing"],
       "requires_secret": false,
       "quality_checks": [
         "game_id",
@@ -35,17 +28,9 @@
       "name": "The Odds API historical snapshots",
       "status": "disabled",
       "mode": "paid_api_optional",
-      "domains": [
-        "historical_odds",
-        "moneyline",
-        "spreads",
-        "totals",
-        "closing_line"
-      ],
+      "domains": ["historical_odds", "moneyline", "spreads", "totals", "closing_line"],
       "requires_secret": true,
-      "secret_names": [
-        "THE_ODDS_API_KEY"
-      ],
+      "secret_names": ["THE_ODDS_API_KEY"],
       "quality_checks": [
         "snapshot_timestamp",
         "commence_time",
@@ -63,12 +48,7 @@
       "name": "賽程衍生特徵",
       "status": "active",
       "mode": "derived",
-      "domains": [
-        "rest",
-        "travel",
-        "timezone",
-        "schedule_density"
-      ],
+      "domains": ["rest", "travel", "timezone", "schedule_density"],
       "requires_secret": false,
       "notes": "由賽程、場館座標與 IANA 時區資料計算"
     },
@@ -77,21 +57,10 @@
       "name": "NBA Official Injury Reports",
       "status": "pilot",
       "mode": "crawler",
-      "domains": [
-        "injuries"
-      ],
+      "domains": ["injuries"],
       "requires_secret": false,
-      "snapshots": [
-        "21:00",
-        "T-60m",
-        "T-5m"
-      ],
-      "quality_checks": [
-        "timestamp",
-        "pdf_schema",
-        "raw_hash",
-        "duplicate_revision"
-      ],
+      "snapshots": ["21:00", "T-60m", "T-5m"],
+      "quality_checks": ["timestamp", "pdf_schema", "raw_hash", "duplicate_revision"],
       "notes": "解析失敗時停止發布，不猜測欄位"
     },
     {
@@ -99,19 +68,9 @@
       "name": "NBA Live Data CDN",
       "status": "pilot",
       "mode": "api",
-      "domains": [
-        "schedule",
-        "scores",
-        "boxscore",
-        "play_by_play"
-      ],
+      "domains": ["schedule", "scores", "boxscore", "play_by_play"],
       "requires_secret": false,
-      "quality_checks": [
-        "http_status",
-        "schema_version",
-        "game_id",
-        "timestamp"
-      ],
+      "quality_checks": ["http_status", "schema_version", "game_id", "timestamp"],
       "notes": "官方公開 JSON，無商業 SLA"
     },
     {
@@ -119,19 +78,9 @@
       "name": "swar/nba_api",
       "status": "pilot",
       "mode": "api_client",
-      "domains": [
-        "stats",
-        "live_data",
-        "rotation",
-        "historical_import"
-      ],
+      "domains": ["stats", "live_data", "rotation", "historical_import"],
       "requires_secret": false,
-      "quality_checks": [
-        "adapter_version",
-        "endpoint_schema",
-        "rate_limit",
-        "timeout"
-      ],
+      "quality_checks": ["adapter_version", "endpoint_schema", "rate_limit", "timeout"],
       "notes": "client 使用 MIT License；NBA.com endpoint 可能改動"
     },
     {
@@ -261,22 +210,49 @@
         "workflow_run_id": 29679511515,
         "artifact_id": 8440091393,
         "artifact_digest": "sha256:a1c4a76c3d09f38a40121bbdc71c93ddeb8d6076482b649acab105eef2c52a61",
-        "approval_granted": false,
-        "execution_enabled": false,
+        "approval_granted_in_request_packet": false,
+        "superseded_by_separate_approval_record": true,
+        "execution_enabled_in_request_packet": false,
         "full_bundle_execution_count": 0,
         "raw_rows_emitted": 0,
         "formal_stake": 0
       },
-      "notes": "2023-24 deterministic audit passed against shufinskiy event-level reference. Player result is coverage-only, not independent player-stat parity. One-time request is structurally valid but still awaits explicit user approval; no full bundle execution has occurred. Does not replace Historical Silver or Gold."
+      "one_time_execution_approval": {
+        "approval_record": "data/eoin-full-adapter-one-time-execution-approval-v1.json",
+        "documentation": "docs/eoin-full-adapter-one-time-execution-approval-v1.md",
+        "executor": "scripts/run_eoin_full_adapter_one_time_execution_v1.py",
+        "validation_workflow": ".github/workflows/validate-eoin-full-adapter-one-time-execution-approval-v1.yml",
+        "execution_workflow": ".github/workflows/run-approved-eoin-full-adapter-once-v1.yml",
+        "request_id": "EOIN-FULL-ADAPTER-2026-07-19-001",
+        "formal_state": "ONE_TIME_EXECUTION_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH",
+        "validation_workflow_run_id": 29680234472,
+        "artifact_id": 8440335771,
+        "artifact_digest": "sha256:06b850edbad49ac55136ead2572b117743da4b0521d98ae2786fa6bbaaedbeeb",
+        "approval_checks_failed": 0,
+        "approval_granted": true,
+        "manual_dispatch_ready": true,
+        "maximum_execution_count": 1,
+        "full_bundle_execution_count": 0,
+        "network_download_performed": false,
+        "raw_eoin_rows_read": false,
+        "raw_rows_emitted": 0,
+        "raw_files_emitted": false,
+        "ready_for_repeat_execution": false,
+        "ready_for_silver_replacement": false,
+        "ready_for_gold_replacement": false,
+        "ready_for_model_retraining": false,
+        "ready_for_market_backtest": false,
+        "ready_for_betting_edge_claim": false,
+        "formal_stake": 0
+      },
+      "notes": "2023-24 deterministic audit passed against shufinskiy event-level reference. Player result is coverage-only, not independent player-stat parity. Explicit approval is valid and the manual one-time aggregate execution workflow is ready, but the true bundle execution count remains 0. Does not replace Historical Silver or Gold."
     },
     {
       "source_id": "basketball_reference",
       "name": "Basketball-Reference",
       "status": "manual",
       "mode": "manual_import",
-      "domains": [
-        "historical_crosscheck"
-      ],
+      "domains": ["historical_crosscheck"],
       "requires_secret": false,
       "notes": "只作人工核對與小量回填；自動化前先完成條款、robots 與保存權審查"
     }

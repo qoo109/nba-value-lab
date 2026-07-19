@@ -66,6 +66,16 @@ python3 scripts/validate_eoin_full_adapter_preflight_v1.py \
 
 CI uses the Parquet fixture path and uploads only aggregate JSON reports.
 
+## GitHub Actions Validation
+
+Run or inspect the workflow named:
+
+```text
+Validate Eoin full adapter preflight v1
+```
+
+The workflow must regenerate the aggregate-only adapter self-test report, validate the preflight policy, enforce every disabled-execution guardrail, and upload only the three aggregate JSON reports. A green workflow is not sufficient by itself; the Artifact must confirm the formal state below, `raw_rows_emitted = 0`, `raw_files_emitted = false`, `ready_for_full_adapter_execution = false`, and `formal_stake = 0`.
+
 ## Passing State
 
 ```text

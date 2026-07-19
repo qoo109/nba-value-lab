@@ -199,7 +199,7 @@ Primary bookmaker ranking is coverage-only：
 3. Minimum per-season complete count, descending
 4. Stable bookmaker key, ascending
 
-ROI、model edge 或價格高低不得參與 bookmaker 選擇。
+ROI、model edge 或市場賠率高低不得參與 bookmaker 選擇。
 
 ## Point-in-time rules
 

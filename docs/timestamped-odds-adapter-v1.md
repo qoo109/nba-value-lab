@@ -17,13 +17,13 @@ scripts/run_timestamped_odds_qualification_v1.py
 
 目前能力：
 
-1. 依 frozen 30-game sample 與 exact schedule rows 建立無價格 request manifest。
+1. 依 frozen 30-game sample 與 exact schedule rows 建立無市場賠率 request manifest。
 2. 解析已提供的 The Odds API Historical v4 response payload。
 3. 使用 deterministic NBA aliases，要求 home、away、scheduled tip-off 三者完全一致。
 4. 驗證 provider snapshot `<= requested_at` 與 frozen maximum lag。
 5. 驗證 bookmaker `last_update <= provider_snapshot < tipoff`。
 6. 分開保存 provider snapshot、bookmaker last-update 與 fetched-at。
-7. 只解析同 bookmaker、同 snapshot、唯一 h2h market 的兩側價格。
+7. 只解析同 bookmaker、同 snapshot、唯一 h2h market 的兩側市場賠率。
 8. 驗證 decimal price、two-way overround、duplicate keys、quota provenance 與 PIT。
 9. 按 coverage-only 規則彙總 bookmaker qualification。
 10. 在沒有付費核准與 secret 時輸出 `ACCESS_NOT_PROVIDED`。
@@ -203,7 +203,7 @@ bookmaker key asc
 
 Abnormal quote gate 只套用於 candidate selected bookmaker。非候選 bookmaker 的異常不會把另一個完整、合法、符合 coverage gate 的 bookmaker 一起判為 source-level blocked。
 
-ROI、model edge、價格高低或賽果不得參與排序。
+ROI、model edge、市場賠率高低或賽果不得參與排序。
 
 ## Synthetic validation
 
@@ -226,7 +226,7 @@ global PIT violation blocks qualification
 quota headers required
 ```
 
-Synthetic price 只在 process memory 中測試 parser，公開 Artifact 不保存 quote rows 或價格。
+Synthetic price 只在 process memory 中測試 parser，公開 Artifact 不保存 quote rows 或市場賠率。
 
 ## Aggregate-only Artifact
 

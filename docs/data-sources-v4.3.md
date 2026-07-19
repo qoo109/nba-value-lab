@@ -15,7 +15,7 @@
 
 | source_id | 來源 | 狀態 | 主要用途 | 取得模式 | 重要限制 |
 |---|---|---|---|---|---|
-| `user_odds` | 使用者手動雙邊盤口 | active | 21:00／T-60m／T-5m／Closing 價格快照 | manual | 必須同一莊家、同一市場、同一時間 |
+| `user_odds` | 使用者手動雙邊盤口 | active | 21:00／T-60m／T-5m／Closing 市場賠率快照 | manual | 必須同一莊家、同一市場、同一時間 |
 | `the_odds_api_historical` | The Odds API historical snapshots | disabled | 2020 年後 moneyline／spread／total 歷史快照 | paid API | 歷史端點需付費；API key 僅放 GitHub Secret；原始 JSON 不公開提交 |
 | `kaggle_christophertreasure_nba_odds` | Kaggle NBA Odds Data | pilot | 2008-2023 closing-market benchmark | manual download/import | 2023 不完整；授權為 Other；沒有精確 observed timestamp |
 | `kaggle_erichqiu_nba_odds_scores` | Kaggle NBA Odds and Scores | pilot | 比分與 moneyline 交叉驗證 | manual download/import | 須驗證 various sources provenance 與開收盤定義 |
@@ -61,7 +61,7 @@ away_price_decimal
 固定規則：
 
 - `observed_at_utc < commence_time_utc`
-- 同一列必須是同莊家、同市場、同時間的雙邊價格
+- 同一列必須是同莊家、同市場、同時間的雙邊市場賠率
 - Closing 只能做 CLV，不可回頭參與下注選擇
 - 賠率不得成為勝率模型的訓練特徵
 - 完整歷史賠率若無再發布權，不提交公開 repository

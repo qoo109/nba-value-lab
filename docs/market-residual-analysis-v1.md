@@ -66,7 +66,7 @@ Christopher Treasure 資料只有 Closing 標籤，沒有精確 observation time
 
 - ROI 回測
 - CLV 計算
-- 進場價模擬
+- 進場市場賠率模擬
 - 投注優勢宣稱
 - 將逐場模型／市場配對資料上傳為 Artifact
 

@@ -141,11 +141,29 @@ player boxscore candidate coverage: 100% coverage-only
 Next step:
 
 ```text
-Draft Eoin adapter predeclaration before importing derived data.
+Validate Eoin adapter predeclaration before importing derived data.
 Keep player-stat parity out of scope until an independent player boxscore
 reference exists.
 Keep existing Silver and Gold unchanged.
 ```
+
+Adapter predeclaration:
+
+```text
+data/eoin-adapter-predeclaration-v1.json
+docs/eoin-adapter-predeclaration-v1.md
+scripts/validate_eoin_adapter_predeclaration_v1.py
+```
+
+Passing state:
+
+```text
+ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION
+```
+
+This state authorizes adapter implementation only. It does not authorize
+adapter execution against the full Eoin bundle, raw-row artifacts, Silver/Gold
+replacement, model retraining, market metrics or betting decisions.
 
 ## Frozen Gates
 

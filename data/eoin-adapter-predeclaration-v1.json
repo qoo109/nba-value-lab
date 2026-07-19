@@ -1,0 +1,115 @@
+{
+  "schema_version": "eoin-adapter-predeclaration-v1",
+  "created_at": "2026-07-19T13:55:00+08:00",
+  "roadmap_parent": "eoin-role-limited-secondary-source",
+  "formal_state": "ADAPTER_PREDECLARED_EXECUTION_NOT_STARTED",
+  "source_id": "kaggle_eoinamoore_historical_nba",
+  "adapter_version": "eoin-role-limited-secondary-adapter-v1",
+  "predeclaration": {
+    "policy_committed_after_cross_source_audit": true,
+    "policy_committed_before_adapter_execution": true,
+    "policy_committed_before_derived_data_import": true,
+    "policy_committed_before_model_retraining": true,
+    "post_result_scope_or_gate_edits_allowed": false,
+    "raw_source_commit_allowed": false,
+    "raw_source_artifact_allowed": false
+  },
+  "upstream_evidence": {
+    "required_report": "data/eoin-cross-source-audit-v1.json",
+    "required_schema_version": "eoin-cross-source-audit-result-v1",
+    "required_formal_outcome": "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+    "required_all_core_gates_passed": true,
+    "required_deterministic_matching_only": true,
+    "required_existing_silver_replacement": false,
+    "required_existing_gold_replacement": false,
+    "required_formal_stake": 0,
+    "workflow_run": "https://github.com/qoo109/nba-value-lab/actions/runs/29672984966",
+    "artifact_id": 8437932113,
+    "artifact_digest": "sha256:96a87c6b52614ea6f7478e1bdbcc729c7c8eb2347490ca236475444ca5fcc63a"
+  },
+  "allowed_input_files": [
+    "Games.csv",
+    "TeamStatistics.csv",
+    "PlayerStatistics.csv",
+    "PlayByPlay.parquet"
+  ],
+  "required_input_contract": {
+    "game_id_column": "gameId",
+    "matching": "deterministic_game_id_only",
+    "fuzzy_matching": false,
+    "pilot_season": "2023-24",
+    "temporary_raw_files_only": true,
+    "read_only_source_access": true
+  },
+  "allowed_output_domains": [
+    "game_identity_crosscheck",
+    "final_score_crosscheck",
+    "team_boxscore_score_crosscheck",
+    "player_boxscore_candidate_coverage",
+    "play_by_play_game_coverage",
+    "aggregate_source_health"
+  ],
+  "allowed_public_outputs": {
+    "aggregate_json_reports": true,
+    "schema_metadata": true,
+    "row_counts": true,
+    "coverage_rates": true,
+    "hashes_and_file_sizes": true,
+    "small_derived_game_id_lists": false,
+    "raw_game_rows": false,
+    "raw_team_rows": false,
+    "raw_player_rows": false,
+    "raw_pbp_rows": false,
+    "full_csv_or_parquet_files": false,
+    "full_sqlite_or_duckdb_files": false
+  },
+  "adapter_outputs_v1": {
+    "aggregate_report": "eoin-role-limited-secondary-adapter-v1-report.json",
+    "run_status": "eoin-role-limited-secondary-adapter-v1-status.json",
+    "derived_tables_publicly_committed": [],
+    "raw_rows_emitted": 0
+  },
+  "frozen_gates": {
+    "minimum_reference_games": 1000,
+    "minimum_game_identity_match_rate": 0.98,
+    "minimum_final_score_match_rate": 0.98,
+    "minimum_team_boxscore_coverage": 0.98,
+    "minimum_player_boxscore_candidate_coverage": 0.95,
+    "minimum_pbp_game_coverage_when_claimed": 0.95,
+    "maximum_duplicate_eoin_game_id_groups": 0,
+    "maximum_fuzzy_matches": 0,
+    "maximum_raw_rows_emitted": 0
+  },
+  "role_limits": {
+    "secondary_source_only": true,
+    "historical_silver_replacement_allowed": false,
+    "historical_gold_replacement_allowed": false,
+    "model_training_input_allowed": false,
+    "model_retraining_allowed": false,
+    "market_backtest_allowed": false,
+    "betting_decision_layer_allowed": false,
+    "formal_stake": 0
+  },
+  "player_boxscore_boundary": {
+    "coverage_only_in_v1": true,
+    "player_stat_parity_approved": false,
+    "independent_player_boxscore_reference_required_before_stats": true,
+    "player_stat_feature_import_allowed": false
+  },
+  "decision_states": [
+    "ADAPTER_PREDECLARED_EXECUTION_NOT_STARTED",
+    "ADAPTER_EXECUTION_BLOCKED",
+    "ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION",
+    "ROLE_LIMITED_ADAPTER_VALIDATED"
+  ],
+  "post_decision_permissions": {
+    "ready_for_adapter_implementation": true,
+    "ready_for_adapter_execution": false,
+    "ready_for_silver_replacement": false,
+    "ready_for_gold_replacement": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  }
+}

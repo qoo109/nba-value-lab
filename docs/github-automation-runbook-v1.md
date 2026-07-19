@@ -92,7 +92,32 @@ SECONDARY_SOURCE_REJECTED
 `shufinskiy/nba_data` is not a complete independent player boxscore stat
 reference.
 
-### 3. NBA Free Data Refresh
+### 3. Eoin Adapter Predeclaration
+
+```text
+Actions -> Validate Eoin adapter predeclaration v1 -> Run workflow
+```
+
+What it does:
+
+```text
+validates data/eoin-adapter-predeclaration-v1.json
+requires the completed cross-source evidence file
+allows only role-limited adapter implementation
+does not execute the adapter
+does not read raw Eoin rows
+does not approve Silver/Gold replacement
+does not unlock model retraining or market backtest
+formal stake remains 0
+```
+
+Passing state:
+
+```text
+ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION
+```
+
+### 4. NBA Free Data Refresh
 
 ```text
 Actions -> Update NBA free data -> Run workflow
@@ -108,7 +133,7 @@ does not create model predictions
 does not unlock market backtest
 ```
 
-### 4. Model and UI Validation
+### 5. Model and UI Validation
 
 ```text
 Actions -> Validate model registry -> Run workflow
@@ -123,7 +148,7 @@ checks V5 UI module limits
 checks JavaScript syntax
 ```
 
-### 5. Closing Market Benchmark
+### 6. Closing Market Benchmark
 
 ```text
 Actions -> Build Kaggle closing market benchmark -> Run workflow
@@ -233,6 +258,7 @@ API secrets
 
 1. Keep the completed Eoin census and cross-source reports as aggregate-only evidence.
 2. Treat Eoin as `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE`.
-3. Draft the Eoin adapter predeclaration before importing any derived Eoin data.
-4. Keep player-stat parity out of scope until an independent player boxscore reference exists.
-5. Keep Wyatt blocked unless a materially new dataset bundle appears.
+3. Validate `Eoin Adapter Predeclaration v1`.
+4. Implement an offline synthetic-fixture Eoin adapter self-test next.
+5. Keep player-stat parity out of scope until an independent player boxscore reference exists.
+6. Keep Wyatt blocked unless a materially new dataset bundle appears.

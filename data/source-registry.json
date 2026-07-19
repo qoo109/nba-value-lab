@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.4.0",
+  "registry_version": "1.5.0",
   "site_version_policy": "follow_current_release",
-  "updated_at": "2026-07-19T12:30:00+08:00",
+  "updated_at": "2026-07-19T13:55:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -196,6 +196,13 @@
         "workflow_run": "https://github.com/qoo109/nba-value-lab/actions/runs/29672984966",
         "artifact_id": 8437932113,
         "artifact_digest": "sha256:96a87c6b52614ea6f7478e1bdbcc729c7c8eb2347490ca236475444ca5fcc63a"
+      },
+      "adapter_predeclaration": {
+        "policy": "data/eoin-adapter-predeclaration-v1.json",
+        "documentation": "docs/eoin-adapter-predeclaration-v1.md",
+        "validator": "scripts/validate_eoin_adapter_predeclaration_v1.py",
+        "formal_state": "ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION",
+        "execution_enabled": false
       },
       "notes": "2023-24 deterministic audit passed against shufinskiy event-level reference. Player result is coverage-only, not independent player-stat parity. Does not replace Historical Silver or Gold."
     },

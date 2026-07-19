@@ -11,7 +11,7 @@
 ### Latest Main SHA at this snapshot
 
 ```text
-2654873d9e823a1e392da55b4b08f0c702abf799
+bf9db74f5e6a5890904190be3a0c171d632c1c3c
 ```
 
 最新完成：
@@ -25,6 +25,7 @@ PR #74 — Wyatt SQLite operational size ceiling amendment to 3 GiB
 PR #75 — Wyatt SQLite Aggregate Audit v1
 Commit ce88b24 — Eoin data source automation
 Commit 2654873 — Eoin cross-source audit workflow
+Commit bf9db74 — Eoin cross-source audit result recorded
 ```
 
 ### Currently open research execution PRs
@@ -36,12 +37,14 @@ None
 ### Next unique mainline
 
 ```text
-EOIN_ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE_NEXT_ADAPTER_PREDECLARATION
+EOIN_ADAPTER_PREDECLARED_NEXT_SELF_TEST_IMPLEMENTATION
 ```
 
 使用者已提供真實 Wyatt Walsh `nba.sqlite`。檔案通過 SQLite header、唯讀開啟與 `integrity_check = ok`，但實際內容只有 16 tables、最晚到 2023-06-12、2023-24 pilot games 為 0，與上傳 metadata 所描述的 235-table current-season warehouse 不一致。
 
 使用者也提供 Eoin A Moore Kaggle 檔案組，並已在 GitHub Actions 完成 census、internal qualification 與 2023-24 cross-source audit。Eoin 正式結果為 `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE`，可做 game identity、final score、team boxscore 與 PBP coverage cross-check；player boxscore 目前只通過 coverage-only，不等於 player stat parity。
+
+Eoin adapter predeclaration v1 已建立。此政策只授權後續實作 role-limited adapter self-test，不授權 adapter execution、raw row artifact、Silver／Gold replacement、model retraining 或 market backtest。
 
 ### Parallel blocked line
 
@@ -61,6 +64,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 - `play_by_play` 有 7,360 個 duplicate `(game_id, eventnum)` groups。
 - Wyatt 的完整次要來源合格數仍為 0。
 - Eoin A Moore 已通過 role-limited secondary-source audit，但不是 Historical Silver／Gold replacement。
+- Eoin adapter v1 仍是 predeclaration；尚未實作或執行資料匯入。
 - Eoin player boxscore 只通過 coverage-only；尚未有獨立 player-stat parity reference。
 - 使用者已明確不核准付費 Historical Odds pilot。
 - 8 個零成本／既有 odds 候選中，合格 bookmaker-level point-in-time source 為 0。
@@ -71,6 +75,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 
 - 不把 PR #72 synthetic SQLite self-test 或 PR #75 integrity pass 寫成 Wyatt source qualification pass。
 - 不把 Eoin `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE` 寫成完整 player stat parity、model promotion 或 Silver／Gold replacement。
+- 不在 Eoin adapter predeclaration commit 中讀 raw rows、輸出 derived tables 或執行 adapter。
 - 不公開或 commit 完整第三方 SQLite、原始 PBP、球員列或大量來源資料。
 - 不以 fuzzy matching 連接 game、team、player 或 PBP。
 - 不替換目前已驗證的 `shufinskiy/nba_data` Silver／Gold 主路徑。
@@ -94,10 +99,11 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 7. Wyatt SQLite read-only census runner                     Completed / synthetic only
 8. Wyatt real file schema and 2023-24 cross-source audit     STRUCTURAL_BLOCKED
 9. Eoin census, internal qualification, cross-source audit   ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
-10. Eoin adapter predeclaration                             Next
-11. Point-in-time Odds Join and Market Backtest              Blocked
-12. CLV / EV / ROI / Drawdown                               Blocked
-13. Betting Decision Layer                                  Blocked
+10. Eoin adapter predeclaration                             Completed / implementation-ready
+11. Eoin adapter self-test implementation                   Next
+12. Point-in-time Odds Join and Market Backtest              Blocked
+13. CLV / EV / ROI / Drawdown                               Blocked
+14. Betting Decision Layer                                  Blocked
 ```
 
 ## Core Status
@@ -119,6 +125,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 | Wyatt SQLite Size Amendment | Completed | PR #74；operation ceiling 3 GiB，scientific gates 未改。 |
 | Wyatt SQLite Real-file Audit | **STRUCTURAL_BLOCKED** | PR #75；16 tables、latest 2023-06-12、2023-24 games 0。 |
 | Eoin Cross-source Audit v1 | **ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE** | Run 29672984966；1,230 / 1,230 games matched；score match 99.9187%；PBP coverage 100%。 |
+| Eoin Adapter Predeclaration v1 | **ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION** | Policy-only；禁止 raw rows、Silver/Gold replacement、model retraining 與 market metrics。 |
 | Market Backtest | Blocked | 尚無 executable PIT odds join。 |
 | Betting Decision Layer | Blocked | Stake = 0。 |
 
@@ -287,6 +294,16 @@ Eoin 下一步只可開啟 adapter predeclaration：
 5. emit only aggregate validation reports and small derived schema metadata.
 ```
 
+Eoin adapter predeclaration v1 已完成後，下一步只可開啟 adapter self-test implementation：
+
+```text
+1. implement a synthetic-fixture adapter self-test;
+2. read only temporary fixture rows in the test;
+3. emit aggregate adapter report only;
+4. keep raw Eoin files out of Git and public artifacts;
+5. keep Silver, Gold, model and market lines unchanged.
+```
+
 市場資料研究只在以下條件之一成立時重新開啟：
 
 ```text
@@ -313,4 +330,5 @@ Eoin 下一步只可開啟 adapter predeclaration：
 #75 Wyatt SQLite Aggregate Audit v1
 ce88b24 Eoin data source automation
 2654873 Eoin cross-source audit workflow
+bf9db74 Eoin cross-source audit result recorded
 ```

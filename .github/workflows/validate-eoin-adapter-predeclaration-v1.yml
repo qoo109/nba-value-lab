@@ -1,0 +1,84 @@
+name: Validate Eoin adapter predeclaration v1
+
+on:
+  pull_request:
+    paths:
+      - "data/eoin-adapter-predeclaration-v1.json"
+      - "data/eoin-cross-source-audit-v1.json"
+      - "docs/eoin-adapter-predeclaration-v1.md"
+      - "scripts/validate_eoin_adapter_predeclaration_v1.py"
+      - ".github/workflows/validate-eoin-adapter-predeclaration-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile Eoin adapter validator
+        run: python -m py_compile scripts/validate_eoin_adapter_predeclaration_v1.py
+
+      - name: Run deterministic mutation self-tests
+        run: |
+          python scripts/validate_eoin_adapter_predeclaration_v1.py \
+            --policy data/eoin-adapter-predeclaration-v1.json \
+            --evidence data/eoin-cross-source-audit-v1.json \
+            --self-test
+
+      - name: Validate frozen Eoin adapter predeclaration
+        run: |
+          rm -rf /tmp/nbavl-eoin-adapter-predeclaration-v1
+          mkdir -p /tmp/nbavl-eoin-adapter-predeclaration-v1
+          python scripts/validate_eoin_adapter_predeclaration_v1.py \
+            --policy data/eoin-adapter-predeclaration-v1.json \
+            --evidence data/eoin-cross-source-audit-v1.json \
+            --output /tmp/nbavl-eoin-adapter-predeclaration-v1/eoin-adapter-predeclaration-v1-validation.json
+
+      - name: Enforce policy-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path('/tmp/nbavl-eoin-adapter-predeclaration-v1/eoin-adapter-predeclaration-v1-validation.json').read_text()
+          )
+          quality = report['quality']
+          decision = report['decision']
+
+          assert report['formal_state'] == 'ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION', report
+          assert quality['failed_checks'] == [], report
+          assert quality['network_calls_made'] is False, report
+          assert quality['raw_rows_read'] is False, report
+          assert quality['raw_rows_emitted'] == 0, report
+          assert quality['model_metrics_calculated'] is False, report
+          assert quality['market_metrics_calculated'] is False, report
+          assert quality['formal_stake'] == 0, report
+
+          assert decision['ready_for_adapter_implementation'] is True, report
+          assert decision['ready_for_adapter_execution'] is False, report
+          assert decision['ready_for_silver_replacement'] is False, report
+          assert decision['ready_for_gold_replacement'] is False, report
+          assert decision['ready_for_model_retraining'] is False, report
+          assert decision['ready_for_market_backtest'] is False, report
+          assert decision['ready_for_betting_edge_claim'] is False, report
+          assert decision['formal_stake'] == 0, report
+          PY
+
+      - name: Upload policy validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-adapter-predeclaration-v1-validation
+          path: /tmp/nbavl-eoin-adapter-predeclaration-v1/eoin-adapter-predeclaration-v1-validation.json
+          retention-days: 14
+          if-no-files-found: error

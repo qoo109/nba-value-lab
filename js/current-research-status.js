@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.8",
+    appVersion: "V5.3.9",
     model: "V3.1 x G1.1",
     updated: "2026-07-19",
     state: "Research Candidate / Pre-Market-Backtest",
@@ -94,7 +94,7 @@
       <div>
         <span class="eyebrow">CURRENT CONTROL BLOCK</span>
         <h2>現在先做資料進件，不產生正式投注建議</h2>
-        <p>Wyatt 已完成真實檔 aggregate audit 並正式 blocked；Eoin 已通過 GitHub census、internal qualification 與 2023-24 cross-source audit，目前可作 role-limited secondary cross-check。市場 PIT odds 尚未解鎖，因此 CLV、EV、ROI、Drawdown 與投注決策層仍關閉。</p>
+        <p>Wyatt 已完成真實檔 aggregate audit 並正式 blocked；Eoin 已通過 GitHub census、internal qualification 與 2023-24 cross-source audit，adapter predeclaration 也已凍結。市場 PIT odds 尚未解鎖，因此 CLV、EV、ROI、Drawdown 與投注決策層仍關閉。</p>
       </div>
       <div class="current-status-pill"><span>STAKE</span><strong>${STATUS.stake}</strong></div>
     </div>
@@ -104,10 +104,10 @@
         "DuckDB: 12 KB empty shell",
         "2023-24 pilot games: 0",
       ])}
-      ${statusCard("EOIN", "Role-limited secondary source 已通過", "Eoin 與 shufinskiy 2023-24 event-level reference deterministic 對帳通過；下一步是 adapter predeclaration，不是取代 Silver / Gold。", "ready", [
+      ${statusCard("EOIN", "Adapter predeclaration 已凍結", "Eoin 只能作 role-limited secondary cross-check；下一步是離線 adapter self-test，不是執行完整資料匯入。", "ready", [
         "Matched games: 1,230 / 1,230",
         "Final score match: 99.9187%",
-        "Team boxscore + PBP coverage: 100%",
+        "Adapter execution: disabled",
         "Player boxscore: coverage-only",
       ])}
       ${statusCard("MARKET", "PIT odds line 暫停", "沒有合法且可核對 timestamp / bookmaker semantics 的 odds source 前，不做 market backtest。", "paused", [
@@ -316,11 +316,11 @@
       </article>
       <article class="registry-card licensed">
         <div><span>Eoin A Moore</span><em>ROLE_LIMITED_ELIGIBLE</em></div>
-        <h2>cross-source 通過，等待 adapter predeclaration</h2>
+        <h2>adapter predeclaration 已凍結</h2>
         <dl>
           <div><dt>已完成</dt><dd>census + internal + cross-source audit</dd></div>
-          <div><dt>可用角色</dt><dd>game / team / PBP coverage cross-check</dd></div>
-          <div><dt>限制</dt><dd>player stats 仍需獨立 parity audit</dd></div>
+          <div><dt>下一步</dt><dd>offline synthetic adapter self-test</dd></div>
+          <div><dt>限制</dt><dd>no raw rows / no Silver-Gold replacement</dd></div>
         </dl>
       </article>
       <article class="registry-card odds">

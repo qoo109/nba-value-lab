@@ -1,22 +1,22 @@
 # NBA Value Lab — Project Status
 
-更新日期：2026-07-19
+更新日期：2026-07-19  
 定位：**Research Candidate / Pre-Market-Backtest**  
 正式 Stake：**0**
 
-最新 `main`、已合併 PR、Actions 與 Artifact QA 是正式 Source of Truth。
+最新 `main`、已合併 PR、GitHub Actions 與 Artifact QA 是正式 Source of Truth。
 
 ## Current Control Block
 
 ### Latest feature SHA before this status snapshot
 
 ```text
-cbdb002b1256635e75e031be2a480168ba39d08b
+8bf32e20d40315d508f78ae50e6d919e591abdc7
 ```
 
-即時 `main` SHA 以 GitHub repository head 為準；本欄只記錄此次狀態快照所描述的最後功能 commit。
+即時 `main` SHA 以 GitHub repository head 為準；本欄記錄此次狀態快照所描述的最後功能 commit。
 
-最新完成：
+### 最新完成
 
 ```text
 PR #69 — Historical Secondary Source Qualification v1 predeclaration
@@ -31,10 +31,12 @@ Commit bf9db74 — Eoin cross-source audit result recorded
 Commit 9ba3873 — Eoin role-limited adapter predeclaration
 Commit 2b871e8 — Eoin role-limited adapter self-test
 Commit 2c23bb2 — Eoin lightweight adapter CI autorun
-Commit 736d0e5 — Website market odds terminology sync
-Commit de37c64 — Market odds terminology docs sync
 Commit 44467db — Eoin full adapter preflight gate
 Commit cbdb002 — Eoin preflight website status sync
+PR #77 — Eoin preflight Artifact validation documentation
+PR #78 — Eoin full adapter execution policy v1
+PR #79 — Disabled Eoin full adapter runner guardrails v1
+PR #80 — One-time Eoin full adapter execution request v1
 ```
 
 ### Currently open research execution PRs
@@ -46,56 +48,135 @@ None
 ### Next unique mainline
 
 ```text
-EOIN_FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED
+ONE_TIME_EXECUTION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL
 ```
 
-使用者已提供真實 Wyatt Walsh `nba.sqlite`。檔案通過 SQLite header、唯讀開啟與 `integrity_check = ok`，但實際內容只有 16 tables、最晚到 2023-06-12、2023-24 pilot games 為 0，與上傳 metadata 所描述的 235-table current-season warehouse 不一致。
-
-使用者也提供 Eoin A Moore Kaggle 檔案組，並已在 GitHub Actions 完成 census、internal qualification 與 2023-24 cross-source audit。Eoin 正式結果為 `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE`，可做 game identity、final score、team boxscore 與 PBP coverage cross-check；player boxscore 目前只通過 coverage-only，不等於 player stat parity。
-
-Eoin adapter predeclaration v1 已建立。此政策只授權後續實作 role-limited adapter self-test，不授權 adapter execution、raw row artifact、Silver／Gold replacement、model retraining 或 market backtest。
-
-Eoin role-limited adapter v1 self-test implementation 已建立。本機 synthetic fixture self-test 通過；輕量 Eoin policy / adapter workflows 現在會在相關 `main` push 自動跑，並可手動重跑。完整 Eoin bundle execution 仍關閉。
-
-Eoin full adapter execution preflight v1 已建立。本機 aggregate-only preflight validator 通過，GitHub Actions workflow 會重新產生 self-test report 並驗證 preflight policy；即使通過，完整 Eoin bundle execution、raw rows、Silver／Gold replacement、model retraining、market backtest 與非 0 stake 仍關閉。
-
-### Parallel blocked line
+Request ID：
 
 ```text
-PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
+EOIN-FULL-ADAPTER-2026-07-19-001
 ```
 
-市場資料線仍暫停；使用者已不核准付費 Historical Odds pilot。
+目前已完成 request packet 的結構與 Artifact 綁定驗證，但：
 
-## Known blockers
+```text
+approval_granted: false
+execution_enabled: false
+network calls made: 0
+full bundle executions: 0
+raw Eoin rows read: false
+raw rows emitted: 0
+formal stake: 0
+```
 
-- Wyatt 真實 SQLite 已完成 aggregate-only audit，正式結果為 `STRUCTURAL_BLOCKED`。
-- 真實檔案只有 16 tables，並非 metadata 所描述的 235-table warehouse。
-- `game` 最晚日期為 2023-06-12；2023-24 pilot games = 0，因此凍結的 1,000-game cross-source audit 無法執行。
-- supplied schema 沒有 player game boxscore candidate table。
-- `game` 有 56 個 duplicate `game_id` groups。
-- `play_by_play` 有 7,360 個 duplicate `(game_id, eventnum)` groups。
-- Wyatt 的完整次要來源合格數仍為 0。
-- Eoin A Moore 已通過 role-limited secondary-source audit，但不是 Historical Silver／Gold replacement。
-- Eoin adapter v1 目前只有 synthetic-fixture self-test 與 full-execution preflight policy；尚未允許 full Eoin bundle execution 或資料匯入。
-- Eoin player boxscore 只通過 coverage-only；尚未有獨立 player-stat parity reference。
-- 使用者已明確不核准付費 Historical Odds pilot。
-- 8 個零成本／既有 odds 候選中，合格 bookmaker-level point-in-time source 為 0。
+沒有收到使用者對上述 request ID 的明確核准前，不得執行完整 Eoin bundle。
+
+## Current Research Position
+
+使用者提供的真實 Wyatt Walsh `nba.sqlite` 已通過 SQLite header、唯讀開啟與 `integrity_check = ok`，但實際內容只有 16 tables、最晚到 2023-06-12、2023-24 pilot games 為 0，與上傳 metadata 所描述的 235-table current-season warehouse 不一致。
+
+Eoin A Moore Kaggle 檔案組已完成 census、internal qualification 與 2023-24 deterministic cross-source audit。正式結果為 `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE`；可以作 game identity、final score、team boxscore、player candidate coverage 與 PBP coverage cross-check。Player 結果仍是 coverage-only，不等於 independent player-stat parity。
+
+Eoin role-limited adapter self-test、full adapter preflight、separate execution policy、disabled runner guardrails 與 one-time execution request packet 都已建立並通過 aggregate-only CI。這些階段都沒有執行完整 bundle，也沒有匯入或公開 raw rows。
+
+市場資料線仍暫停。使用者未核准付費 Historical Odds pilot；目前零成本或既有來源中，合格 bookmaker-level point-in-time odds source 仍為 0。
+
+## Eoin Execution Chain
+
+### 1. Cross-source Audit
+
+```text
+formal outcome: ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
+workflow run: 29672984966
+artifact id: 8437932113
+artifact digest: sha256:96a87c6b52614ea6f7478e1bdbcc729c7c8eb2347490ca236475444ca5fcc63a
+```
+
+### 2. Full Adapter Preflight
+
+```text
+formal state: FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED
+workflow run: 29677698906
+artifact id: 8439486695
+artifact digest: sha256:39dd80ca107e2dc65f6bbba8012ba8b9ac40b60bd6a44db6f05cacb05a27d311
+```
+
+### 3. Separate Execution Policy
+
+```text
+formal state: FULL_ADAPTER_EXECUTION_POLICY_READY_FOR_IMPLEMENTATION_BUT_EXECUTION_DISABLED
+workflow run: 29677971194
+artifact id: 8439578942
+artifact digest: sha256:9b81c9ef61f1f9d19453b9e04a8e42cd362700ac86e79a4377328f24fdfe25a2
+```
+
+### 4. Disabled Runner Guardrails
+
+```text
+formal state: FULL_ADAPTER_RUNNER_READY_FOR_ONE_TIME_EXECUTION_APPROVAL_BUT_DISABLED
+workflow run: 29679274470
+artifact id: 8440008401
+artifact digest: sha256:15032709922439d062108994b08bfec76e815fb42443572c36e7d5db51d10331
+blocked before data access: true
+```
+
+Frozen operational limits：
+
+```text
+runtime ceiling: 45 minutes
+concurrency: 1
+required files: Games.csv / TeamStatistics.csv / PlayerStatistics.csv / PlayByPlay.parquet
+maximum input file count: 4
+maximum total input size: 10 GiB
+maximum single input file size: 8 GiB
+maximum public output size: 10 MiB
+maximum public artifact files: 6
+```
+
+### 5. One-time Execution Request
+
+```text
+request id: EOIN-FULL-ADAPTER-2026-07-19-001
+formal state: ONE_TIME_EXECUTION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL
+workflow run: 29679511515
+artifact id: 8440091393
+artifact digest: sha256:a1c4a76c3d09f38a40121bbdc71c93ddeb8d6076482b649acab105eef2c52a61
+checks: 19 / 19
+approval granted: false
+execution enabled: false
+ready for execution: false
+```
+
+## Known Blockers
+
+- Wyatt real-file audit 正式結果為 `STRUCTURAL_BLOCKED`。
+- Wyatt 檔案只有 16 tables，不是 metadata 所描述的 235-table warehouse。
+- Wyatt `game` 最晚日期為 2023-06-12；2023-24 pilot games = 0。
+- Wyatt supplied schema 沒有 player game boxscore candidate table。
+- Wyatt `game` 有 56 個 duplicate `game_id` groups。
+- Wyatt `play_by_play` 有 7,360 個 duplicate `(game_id, eventnum)` groups。
+- Eoin player boxscore 仍只通過 coverage-only；尚無獨立 player-stat parity reference。
+- Eoin one-time request 尚未取得使用者明確核准。
+- 完整 Eoin bundle execution 尚未發生，執行次數仍為 0。
+- 使用者未核准付費 Historical Odds pilot。
+- 8 個零成本／既有 odds candidates 中，合格 point-in-time source 為 0。
 - Production Odds Backfill、PIT Odds Join、Market Backtest、CLV、EV、ROI、Drawdown 全部未解鎖。
 - Historical model 仍明顯輸給 Closing Market。
 
 ## Do Not Do
 
-- 不把 PR #72 synthetic SQLite self-test 或 PR #75 integrity pass 寫成 Wyatt source qualification pass。
-- 不把 Eoin `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE` 寫成完整 player stat parity、model promotion 或 Silver／Gold replacement。
-- 不在 Eoin adapter self-test 或 preflight 中讀完整 Eoin bundle、輸出 derived tables 或執行 Silver／Gold replacement。
-- 不公開或 commit 完整第三方 SQLite、原始 PBP、球員列或大量來源資料。
+- 不把 Wyatt synthetic self-test 或 integrity pass 寫成 source qualification pass。
+- 不把 Eoin `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE` 寫成完整 player-stat parity、model promotion 或 Silver／Gold replacement。
+- 不在沒有明確 approval record 時把 `approval_granted` 或 `execution_enabled` 改成 `true`。
+- 不以 main push、schedule 或 concurrent job 執行完整 Eoin bundle。
+- 不公開或 commit 完整第三方 SQLite、Kaggle archive、原始 PBP、球員列或大量來源資料。
+- 不把 raw CSV、Parquet、SQLite、DuckDB 或 source archive 上傳成 Artifact。
 - 不以 fuzzy matching 連接 game、team、player 或 PBP。
 - 不替換目前已驗證的 `shufinskiy/nba_data` Silver／Gold 主路徑。
-- 不降低 PR #71 固定的 coverage、identity、score、duplicate 或 integrity gates。
-- 不把 metadata 的 235-table 描述套用到實際只有 16 tables 的檔案。
+- 不降低既有 coverage、identity、score、duplicate、integrity 或 resource gates。
+- 不將 Eoin player coverage-only 結果用作 player model feature import。
 - 不重新開啟付費 odds 路徑，除非使用者未來另行明確改變決定。
-- 不建立帳號、訂閱、付款或呼叫付費歷史端點。
+- 不建立帳號、訂閱、付款或呼叫付費歷史 odds endpoint。
 - Closing-only benchmark 不得當 executable market backtest。
 - 未完成合格 PIT odds join 前，不宣稱 CLV、EV、ROI、Drawdown 或 betting edge。
 - 正式 Stake 維持 0。
@@ -110,14 +191,18 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 5. Real Timestamped Odds Acquisition                        NO_COST_METADATA_BLOCKED
 6. Historical Secondary Source Metadata Review              METADATA_READY_DOWNLOAD_NOT_AUTHORIZED
 7. Wyatt SQLite read-only census runner                     Completed / synthetic only
-8. Wyatt real file schema and 2023-24 cross-source audit     STRUCTURAL_BLOCKED
-9. Eoin census, internal qualification, cross-source audit   ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
-10. Eoin adapter predeclaration                             Completed / implementation-ready
-11. Eoin adapter self-test implementation                   Completed / main push autorun ready
-12. Eoin full adapter execution preflight                   Ready but execution disabled
-13. Point-in-time Odds Join and Market Backtest              Blocked
-14. CLV / EV / ROI / Drawdown                               Blocked
-15. Betting Decision Layer                                  Blocked
+8. Wyatt real-file schema and cross-source audit             STRUCTURAL_BLOCKED
+9. Eoin census and cross-source audit                        ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
+10. Eoin adapter predeclaration                              Completed
+11. Eoin adapter self-test                                   Completed
+12. Eoin full adapter preflight                              READY_BUT_DISABLED
+13. Eoin separate execution policy                           READY_FOR_IMPLEMENTATION_BUT_DISABLED
+14. Eoin disabled runner guardrails                          READY_FOR_APPROVAL_BUT_DISABLED
+15. Eoin one-time execution request                          AWAITING_EXPLICIT_USER_APPROVAL
+16. Eoin one-time full-bundle aggregate validation           NOT_STARTED
+17. Point-in-time Odds Join and Market Backtest              Blocked
+18. CLV / EV / ROI / Drawdown                                Blocked
+19. Betting Decision Layer                                   Blocked
 ```
 
 ## Core Status
@@ -132,16 +217,14 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 | Frozen Odds Pilot Manifest | Completed / no-price | 30 games、180 exact timestamps、Opening labels 0。 |
 | Paid Pilot Decision | **NOT APPROVED** | 付費、key 與 paid execution 均未授權。 |
 | No-cost Odds Metadata Census | **NO_COST_METADATA_BLOCKED** | 8 candidates；qualified 0。 |
-| Historical Secondary Source Policy | Completed | PR #69；Eoin 與 Wyatt 兩候選、固定 2023-24 gates。 |
-| Historical Secondary Source Metadata Census | **METADATA_READY_DOWNLOAD_NOT_AUTHORIZED** | PR #70；metadata-ready 2、full-qualified 0。 |
-| Wyatt SQLite Pilot Policy | Completed | PR #71；real-file gates 已凍結。 |
-| Wyatt SQLite Census Runner | Completed / synthetic only | PR #72；唯讀 runner 已驗證。 |
-| Wyatt SQLite Size Amendment | Completed | PR #74；operation ceiling 3 GiB，scientific gates 未改。 |
-| Wyatt SQLite Real-file Audit | **STRUCTURAL_BLOCKED** | PR #75；16 tables、latest 2023-06-12、2023-24 games 0。 |
-| Eoin Cross-source Audit v1 | **ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE** | Run 29672984966；1,230 / 1,230 games matched；score match 99.9187%；PBP coverage 100%。 |
-| Eoin Adapter Predeclaration v1 | **ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION** | Policy-only；禁止 raw rows、Silver/Gold replacement、model retraining 與 market metrics。 |
-| Eoin Role-limited Adapter v1 | **SELF_TEST_IMPLEMENTED** | Synthetic fixture only；full Eoin bundle execution disabled；main push autorun validates Parquet fixture path。 |
-| Eoin Full Adapter Preflight v1 | **READY_BUT_DISABLED** | Aggregate-only policy validator；full bundle execution、raw rows、Silver/Gold、model retraining 與 market backtest 仍關閉。 |
+| Historical Secondary Source Policy | Completed | Eoin 與 Wyatt 兩候選、固定 gates。 |
+| Wyatt SQLite Real-file Audit | **STRUCTURAL_BLOCKED** | 16 tables、latest 2023-06-12、2023-24 games 0。 |
+| Eoin Cross-source Audit v1 | **ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE** | 1,230 / 1,230 matched；score 99.9187%；PBP 100%。 |
+| Eoin Role-limited Adapter v1 | **SELF_TEST_IMPLEMENTED** | Synthetic fixture only。 |
+| Eoin Full Adapter Preflight v1 | **READY_BUT_DISABLED** | Aggregate-only preflight passed。 |
+| Eoin Execution Policy v1 | **READY_FOR_IMPLEMENTATION_BUT_DISABLED** | Separate policy passed；execution remains false。 |
+| Eoin Runner Implementation v1 | **READY_FOR_APPROVAL_BUT_DISABLED** | Runner blocks before data access。 |
+| Eoin One-time Request v1 | **AWAITING_EXPLICIT_USER_APPROVAL** | 19 / 19 checks；approval false；execution false。 |
 | Market Backtest | Blocked | 尚無 executable PIT odds join。 |
 | Betting Decision Layer | Blocked | Stake = 0。 |
 
@@ -192,23 +275,6 @@ Formal state：`VALID_NEGATIVE_RESULT`。
 
 ## Eoin Cross-source Evidence
 
-GitHub Actions aggregate-only audit：
-
-```text
-workflow run: 29672984966
-workflow URL: https://github.com/qoo109/nba-value-lab/actions/runs/29672984966
-commit SHA: 2654873d9e823a1e392da55b4b08f0c702abf799
-artifact id: 8437932113
-digest: sha256:96a87c6b52614ea6f7478e1bdbcc729c7c8eb2347490ca236475444ca5fcc63a
-formal outcome: ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
-all core gates passed: true
-raw rows in Artifact: 0
-raw files in Artifact: false
-formal stake: 0
-```
-
-2023-24 deterministic comparison against `shufinskiy/nba_data`：
-
 ```text
 reference games: 1,230
 matched games: 1,230
@@ -234,18 +300,6 @@ player boxscore 結果只代表 candidate row coverage，不代表 player stat p
 
 ## Wyatt Real-file Evidence
 
-PR #74 policy amendment：
-
-```text
-archive: nba.sqlite.zip
-archive size: 434,150,473 bytes
-SQLite member size: 2,349,588,480 bytes
-operational maximum: 3,221,225,472 bytes
-scientific gates changed: false
-```
-
-PR #75 aggregate audit：
-
 ```text
 workflow run: 29657039708
 artifact id: 8433179663
@@ -266,76 +320,18 @@ raw rows in Artifact: 0
 secondary source qualified: false
 ```
 
-## Wyatt Real-file Gates
+## Reopening and Approval Conditions
 
-```text
-accepted extensions: .sqlite / .sqlite3 / .db
-size: 1 MiB to 3 GiB
-SQLite header required
-read-only open required
-integrity_check = ok
-2023-24 reference games >= 1,000
-game identity match >= 98%
-final score match >= 98%
-team boxscore coverage >= 98%
-player boxscore coverage >= 95%
-PBP game coverage >= 95% when claimed
-exact duplicate games = 0
-fuzzy matching = false
-```
+Wyatt audit 只在 supplied bundle 實際包含 current schema、2023-24 games、player game boxscore table 與可驗證 provenance 時重新開啟；既有 gates 不得降低。
 
-真實檔案只可暫時處理；Repository 與 Artifact 不得保存完整 SQLite 或原始 rows。
-
-## Reopening Conditions
-
-Wyatt file-level audit 只在以下條件成立時重新開啟：
-
-```text
-1. a supplied SQLite or DuckDB bundle actually contains the advertised current schema;
-2. the actual file includes 2023-24 games and a player game boxscore table;
-3. provenance ties the file to the published dataset version;
-4. filename, size, SHA-256, read-only integrity, schema and date coverage are revalidated;
-5. all original identity, score, coverage and duplicate gates remain unchanged.
-```
-
-目前這份 16-table legacy file 可保留為 1946–2022-23 exploratory cross-check candidate，但不得升格為正式次要來源。
-
-Eoin 下一步只可開啟 adapter predeclaration：
-
-```text
-1. define role-limited Eoin adapter scope;
-2. map deterministic game/team/PBP identifiers only;
-3. keep player-stat parity out of scope until an independent boxscore reference exists;
-4. keep existing Silver and Gold unchanged;
-5. emit only aggregate validation reports and small derived schema metadata.
-```
-
-Eoin adapter predeclaration v1 已完成後，adapter self-test implementation 已建立：
-
-```text
-1. synthetic-fixture adapter self-test implemented;
-2. local self-test reads only temporary fixture rows;
-3. CI self-test validates Parquet fixture metadata path;
-4. aggregate adapter report only;
-5. raw Eoin files, Silver, Gold, model and market lines remain unchanged.
-```
-
-Eoin full adapter execution preflight v1 已建立後，下一步仍只能設計 separate execution policy：
-
-```text
-1. inspect CI artifact from Validate Eoin full adapter preflight v1;
-2. keep full Eoin bundle execution disabled until a separate execution policy;
-3. preserve raw-row and raw-file artifact ban;
-4. preserve player-stat parity block;
-5. preserve Stake 0.
-```
+Eoin 下一步只在使用者明確核准 request ID `EOIN-FULL-ADAPTER-2026-07-19-001` 後才可設計／建立一次性 approval record。核准前不得執行。核准即使成立，也只授權一次 aggregate-only validation，不授權 raw artifacts、Silver／Gold replacement、player parity、model retraining、market backtest 或非 0 Stake。
 
 市場資料研究只在以下條件之一成立時重新開啟：
 
 ```text
-1. a materially new lawful no-cost source appears;
+1. materially new lawful no-cost source appears;
 2. an existing candidate publishes explicit rights, bookmaker and timestamp semantics;
-3. the user supplies a file plus an explicit rights/provenance statement.
+3. the user supplies a timestamped odds file plus rights / provenance statement.
 ```
 
 ## Important Recent PRs
@@ -354,9 +350,8 @@ Eoin full adapter execution preflight v1 已建立後，下一步仍只能設計
 #72 Wyatt SQLite Census Runner v1 implementation
 #74 Wyatt SQLite operational size ceiling amendment
 #75 Wyatt SQLite Aggregate Audit v1
-ce88b24 Eoin data source automation
-2654873 Eoin cross-source audit workflow
-bf9db74 Eoin cross-source audit result recorded
-9ba3873 Eoin role-limited adapter predeclaration
-2b871e8 Eoin role-limited adapter self-test
+#77 Eoin preflight Artifact validation documentation
+#78 Eoin full adapter execution policy v1
+#79 Disabled Eoin full adapter runner guardrails v1
+#80 One-time Eoin full adapter execution request v1
 ```

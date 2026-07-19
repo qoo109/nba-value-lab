@@ -1,0 +1,110 @@
+{
+  "schema_version": "eoin-full-adapter-execution-policy-v1",
+  "created_at": "2026-07-19T15:30:00+08:00",
+  "formal_state": "FULL_ADAPTER_EXECUTION_POLICY_PREDECLARED_EXECUTION_DISABLED",
+  "source_id": "kaggle_eoinamoore_historical_nba",
+  "adapter_version": "eoin-role-limited-secondary-adapter-v1",
+  "upstream_requirements": {
+    "preflight_policy": "data/eoin-full-adapter-preflight-v1.json",
+    "preflight_workflow": ".github/workflows/validate-eoin-full-adapter-preflight-v1.yml",
+    "preflight_required_state": "FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED",
+    "preflight_artifact_required": true,
+    "preflight_artifact_digest_required": true,
+    "preflight_checks_failed_required": 0,
+    "preflight_raw_rows_read_required": false,
+    "preflight_raw_rows_emitted_required": 0,
+    "preflight_raw_files_emitted_required": false
+  },
+  "activation_boundary": {
+    "full_bundle_execution_enabled": false,
+    "requires_future_explicit_user_approval": true,
+    "requires_separate_execution_implementation_pr": true,
+    "requires_green_policy_validation": true,
+    "workflow_dispatch_only_when_later_enabled": true,
+    "automatic_main_push_execution_allowed": false,
+    "scheduled_execution_allowed": false,
+    "concurrent_execution_allowed": false,
+    "dataset_handle_locked": "eoinamoore/historical-nba-data-and-player-box-scores",
+    "read_only_source_access": true,
+    "temporary_actions_storage_only": true,
+    "safe_extract_required": true,
+    "deterministic_matching_only": true,
+    "fuzzy_matching_allowed": false,
+    "size_and_runtime_limits_must_be_frozen_before_implementation": true
+  },
+  "allowed_runtime_inputs_when_later_enabled": {
+    "Games.csv": true,
+    "TeamStatistics.csv": true,
+    "PlayerStatistics.csv": true,
+    "PlayByPlay.parquet": true,
+    "other_files": false
+  },
+  "allowed_runtime_operations_when_later_enabled": [
+    "download_public_dataset_to_temporary_storage",
+    "validate_archive_inventory",
+    "calculate_file_hashes_and_sizes",
+    "read_schema_and_parquet_metadata",
+    "calculate_aggregate_row_counts",
+    "calculate_duplicate_key_groups",
+    "calculate_deterministic_game_identity_coverage",
+    "calculate_final_score_match_rate",
+    "calculate_team_boxscore_coverage",
+    "calculate_player_boxscore_candidate_coverage_only",
+    "calculate_pbp_game_coverage",
+    "emit_aggregate_validation_reports"
+  ],
+  "temporary_private_material": {
+    "downloaded_archive_allowed_during_job": true,
+    "extracted_source_files_allowed_during_job": true,
+    "raw_source_rows_may_be_read_for_aggregate_calculation": true,
+    "temporary_material_must_be_deleted_with_runner": true,
+    "temporary_material_may_be_committed": false,
+    "temporary_material_may_be_uploaded_as_artifact": false
+  },
+  "allowed_public_outputs": {
+    "aggregate_json_reports": true,
+    "schema_metadata": true,
+    "row_counts": true,
+    "coverage_rates": true,
+    "duplicate_group_counts": true,
+    "hashes_and_file_sizes": true,
+    "source_health_status": true,
+    "raw_game_rows": false,
+    "raw_team_rows": false,
+    "raw_player_rows": false,
+    "raw_pbp_rows": false,
+    "derived_game_id_lists": false,
+    "full_csv_or_parquet_files": false,
+    "full_sqlite_or_duckdb_files": false,
+    "downloaded_archives": false
+  },
+  "forbidden_promotions": {
+    "historical_silver_replacement_allowed": false,
+    "historical_gold_replacement_allowed": false,
+    "player_stat_parity_claim_allowed": false,
+    "player_stat_feature_import_allowed": false,
+    "model_training_input_allowed": false,
+    "model_retraining_allowed": false,
+    "market_backtest_allowed": false,
+    "clv_ev_roi_drawdown_allowed": false,
+    "betting_decision_layer_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_state_if_policy_validation_passes": {
+    "formal_state": "FULL_ADAPTER_EXECUTION_POLICY_READY_FOR_IMPLEMENTATION_BUT_EXECUTION_DISABLED",
+    "ready_for_execution_implementation": true,
+    "ready_for_full_adapter_execution": false,
+    "ready_for_silver_replacement": false,
+    "ready_for_gold_replacement": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "decision_states": [
+    "FULL_ADAPTER_EXECUTION_POLICY_PREDECLARED_EXECUTION_DISABLED",
+    "FULL_ADAPTER_EXECUTION_POLICY_BLOCKED",
+    "FULL_ADAPTER_EXECUTION_POLICY_READY_FOR_IMPLEMENTATION_BUT_EXECUTION_DISABLED"
+  ]
+}

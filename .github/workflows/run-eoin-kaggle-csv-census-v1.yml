@@ -1,0 +1,163 @@
+name: Run Eoin Kaggle CSV census v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      dataset_handle:
+        description: "Public Kaggle dataset handle"
+        required: true
+        default: "eoinamoore/historical-nba-data-and-player-box-scores"
+  pull_request:
+    paths:
+      - "scripts/run_eoin_csv_census_v1.py"
+      - "scripts/run_eoin_kaggle_census_v1.py"
+      - "docs/eoin-csv-census-v1.md"
+      - "docs/source-intake-sop-v1.md"
+      - "docs/wyatt-notebook-api-triage-v1.md"
+      - ".github/workflows/run-eoin-kaggle-csv-census-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile Eoin census modules
+        run: |
+          python -m py_compile scripts/run_eoin_csv_census_v1.py
+          python -m py_compile scripts/run_eoin_internal_qualification_v1.py
+          python -m py_compile scripts/run_eoin_kaggle_census_v1.py
+
+      - name: Run local synthetic census tests
+        run: |
+          rm -rf /tmp/nbavl-eoin-self-test
+          python scripts/run_eoin_csv_census_v1.py \
+            --self-test \
+            --output-dir /tmp/nbavl-eoin-self-test/csv
+          python scripts/run_eoin_kaggle_census_v1.py \
+            --self-test \
+            --output-dir /tmp/nbavl-eoin-self-test/kaggle
+
+      - name: Validate synthetic guardrails
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("/tmp/nbavl-eoin-self-test/kaggle")
+          status = json.loads((root / "eoin-kaggle-run-status.json").read_text())
+          schema = json.loads((root / "aggregate_schema_report.json").read_text())
+          coverage = json.loads((root / "aggregate_coverage_report.json").read_text())
+          sample = json.loads((root / "privacy_safe_schema_sample.json").read_text())
+
+          assert status["census_complete"] is True, status
+          assert status["internal_qualification_complete"] is True, status
+          assert status["boundary_validation"]["all_passed"] is True, status
+          assert schema["qualification_evaluated"] is False, schema
+          assert schema["cross_source_audit_executed"] is False, schema
+          assert schema["aggregate"]["raw_rows_emitted"] == 0, schema
+          assert schema["aggregate"]["raw_files_emitted"] is False, schema
+          assert coverage["raw_rows_emitted"] == 0, coverage
+          assert sample["raw_rows_emitted"] == 0, sample
+          assert schema["boundaries"]["formal_stake"] == 0, schema
+          PY
+
+  live-census:
+    if: github.event_name == 'workflow_dispatch'
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATASET_HANDLE: ${{ inputs.dataset_handle }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Kaggle download and Parquet metadata dependencies
+        run: python -m pip install --disable-pip-version-check kagglehub pyarrow
+
+      - name: Download Kaggle dataset and run aggregate-only census
+        run: |
+          rm -rf /tmp/nbavl-eoin-kaggle-census
+          python scripts/run_eoin_kaggle_census_v1.py \
+            --dataset-handle "$DATASET_HANDLE" \
+            --output-dir /tmp/nbavl-eoin-kaggle-census
+
+      - name: Validate live census guardrails
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("/tmp/nbavl-eoin-kaggle-census")
+          status_path = root / "eoin-kaggle-run-status.json"
+          if not status_path.exists():
+              raise SystemExit("missing run status")
+          status = json.loads(status_path.read_text())
+          if "error" in status:
+              print(json.dumps(status, indent=2, sort_keys=True))
+              raise SystemExit("Eoin live census failed")
+
+          schema = json.loads((root / "aggregate_schema_report.json").read_text())
+          coverage = json.loads((root / "aggregate_coverage_report.json").read_text())
+          sample = json.loads((root / "privacy_safe_schema_sample.json").read_text())
+          inventory = json.loads((root / "download-inventory-report.json").read_text())
+          internal = json.loads((root / "internal_qualification_report.json").read_text())
+
+          assert status["census_complete"] is True, status
+          assert status["internal_qualification_complete"] is True, status
+          assert status["temporary_raw_files_deleted"] is True, status
+          assert status["raw_files_uploaded_as_artifact"] is False, status
+          assert status["raw_rows_uploaded_as_artifact"] is False, status
+          assert status["boundary_validation"]["all_passed"] is True, status
+          assert schema["qualification_evaluated"] is False, schema
+          assert schema["cross_source_audit_executed"] is False, schema
+          assert schema["aggregate"]["raw_rows_emitted"] == 0, schema
+          assert schema["aggregate"]["raw_files_emitted"] is False, schema
+          assert coverage["raw_rows_emitted"] == 0, coverage
+          assert sample["raw_rows_emitted"] == 0, sample
+          assert inventory["raw_rows_emitted"] == 0, inventory
+          assert schema["boundaries"]["formal_stake"] == 0, schema
+          assert internal["boundaries"]["raw_rows_emitted"] == 0, internal
+          assert internal["boundaries"]["raw_files_emitted"] is False, internal
+          assert internal["formal_cross_source_qualification_executed"] is False, internal
+          assert internal["formal_source_replacement_approved"] is False, internal
+          assert internal["formal_stake"] == 0, internal
+
+          print(json.dumps({
+              "file_count": status["file_count"],
+              "total_rows": status["total_rows"],
+              "missing_expected_files": status["missing_expected_files"],
+              "present_expected_files": inventory["present_expected_files"],
+              "internal_qualification_outcome": status["internal_qualification_outcome"],
+              "internal_gates_passed": status["internal_gates_passed"],
+          }, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload aggregate-only census artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-kaggle-csv-census-v1
+          path: |
+            /tmp/nbavl-eoin-kaggle-census/eoin-kaggle-run-status.json
+            /tmp/nbavl-eoin-kaggle-census/download-inventory-report.json
+            /tmp/nbavl-eoin-kaggle-census/aggregate_schema_report.json
+            /tmp/nbavl-eoin-kaggle-census/aggregate_coverage_report.json
+            /tmp/nbavl-eoin-kaggle-census/privacy_safe_schema_sample.json
+            /tmp/nbavl-eoin-kaggle-census/internal_qualification_report.json
+          retention-days: 14
+          if-no-files-found: warn

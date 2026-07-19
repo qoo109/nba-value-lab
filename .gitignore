@@ -1,0 +1,9 @@
+out/
+archive/
+eoin/
+*.zip
+*.sqlite
+*.sqlite3
+*.duckdb
+*.db
+.DS_Store

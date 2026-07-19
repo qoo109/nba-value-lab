@@ -82,6 +82,14 @@ function loadV49LockStatus() {
   return loadScriptOnce("./js/v4-8-lock-status.js?v=5.2", "data-v49-lock-status", () => typeof initT60LockStatus === "function");
 }
 
+function loadCurrentResearchStatus() {
+  return loadScriptOnce(
+    "./js/current-research-status.js?v=20260719b",
+    "data-current-research-status",
+    () => document.documentElement.dataset.currentResearchStatus === "applied",
+  );
+}
+
 async function loadV5Ui() {
   await Promise.all([
     loadStylesheetOnce("./css/v5-tokens.css?v=5.2", "data-v5-tokens"),
@@ -150,6 +158,7 @@ async function init() {
   if (v5Ready) window.NBAVL.v5.afterRender();
   bindEvents();
   updateCalculator(true);
+  await loadCurrentResearchStatus();
   document.documentElement.dataset.modelVersion = activeModelLabel();
   document.documentElement.dataset.appVersion = v5Ready ? "V5.3.4" : "V4.10";
 }

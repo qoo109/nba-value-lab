@@ -1,0 +1,90 @@
+{
+  "schema_version": "eoin-full-adapter-runner-implementation-v1",
+  "created_at": "2026-07-19T16:20:00+08:00",
+  "formal_state": "FULL_ADAPTER_RUNNER_IMPLEMENTED_EXECUTION_DISABLED",
+  "source_id": "kaggle_eoinamoore_historical_nba",
+  "adapter_version": "eoin-role-limited-secondary-adapter-v1",
+  "upstream_requirements": {
+    "execution_policy": "data/eoin-full-adapter-execution-policy-v1.json",
+    "execution_policy_required_state": "FULL_ADAPTER_EXECUTION_POLICY_READY_FOR_IMPLEMENTATION_BUT_EXECUTION_DISABLED",
+    "execution_policy_validation_required": true,
+    "execution_policy_checks_failed_required": 0,
+    "preflight_required_state": "FULL_ADAPTER_EXECUTION_PREFLIGHT_READY_BUT_DISABLED"
+  },
+  "operational_limits": {
+    "max_runtime_minutes": 45,
+    "max_concurrent_runs": 1,
+    "required_input_files": [
+      "Games.csv",
+      "TeamStatistics.csv",
+      "PlayerStatistics.csv",
+      "PlayByPlay.parquet"
+    ],
+    "max_input_file_count": 4,
+    "max_total_input_bytes": 10737418240,
+    "max_single_input_file_bytes": 8589934592,
+    "max_public_output_bytes": 10485760,
+    "max_public_artifact_file_count": 6
+  },
+  "execution_switches": {
+    "full_bundle_execution_enabled": false,
+    "network_download_enabled": false,
+    "dataset_root_execution_enabled": false,
+    "workflow_dispatch_only_when_later_enabled": true,
+    "automatic_main_push_execution_allowed": false,
+    "scheduled_execution_allowed": false,
+    "explicit_user_approval_required": true,
+    "approval_record_required": true
+  },
+  "allowed_self_test_operations": [
+    "create_synthetic_inventory_fixture",
+    "validate_required_file_allowlist",
+    "validate_size_limits",
+    "validate_hash_generation",
+    "validate_execution_blocker",
+    "emit_aggregate_runner_report"
+  ],
+  "allowed_public_outputs": {
+    "runner_validation_report": true,
+    "execution_policy_validation_report": true,
+    "preflight_validation_report": true,
+    "aggregate_inventory_metadata": true,
+    "hashes_and_file_sizes": true,
+    "raw_game_rows": false,
+    "raw_team_rows": false,
+    "raw_player_rows": false,
+    "raw_pbp_rows": false,
+    "full_csv_or_parquet_files": false,
+    "downloaded_archives": false,
+    "full_sqlite_or_duckdb_files": false
+  },
+  "forbidden_promotions": {
+    "historical_silver_replacement_allowed": false,
+    "historical_gold_replacement_allowed": false,
+    "player_stat_parity_claim_allowed": false,
+    "player_stat_feature_import_allowed": false,
+    "model_training_input_allowed": false,
+    "model_retraining_allowed": false,
+    "market_backtest_allowed": false,
+    "clv_ev_roi_drawdown_allowed": false,
+    "betting_decision_layer_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_state_if_runner_validation_passes": {
+    "formal_state": "FULL_ADAPTER_RUNNER_READY_FOR_ONE_TIME_EXECUTION_APPROVAL_BUT_DISABLED",
+    "ready_for_one_time_execution_request_design": true,
+    "ready_for_full_bundle_execution": false,
+    "ready_for_silver_replacement": false,
+    "ready_for_gold_replacement": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "decision_states": [
+    "FULL_ADAPTER_RUNNER_IMPLEMENTED_EXECUTION_DISABLED",
+    "FULL_ADAPTER_RUNNER_VALIDATION_BLOCKED",
+    "FULL_ADAPTER_RUNNER_READY_FOR_ONE_TIME_EXECUTION_APPROVAL_BUT_DISABLED"
+  ]
+}

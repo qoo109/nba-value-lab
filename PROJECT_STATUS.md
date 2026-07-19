@@ -11,7 +11,7 @@
 ### Latest Main SHA at this snapshot
 
 ```text
-bf9db74f5e6a5890904190be3a0c171d632c1c3c
+9ba38738ef26c8040897dd06d683da2bbb285a9d
 ```
 
 最新完成：
@@ -26,6 +26,7 @@ PR #75 — Wyatt SQLite Aggregate Audit v1
 Commit ce88b24 — Eoin data source automation
 Commit 2654873 — Eoin cross-source audit workflow
 Commit bf9db74 — Eoin cross-source audit result recorded
+Commit 9ba3873 — Eoin role-limited adapter predeclaration
 ```
 
 ### Currently open research execution PRs
@@ -37,7 +38,7 @@ None
 ### Next unique mainline
 
 ```text
-EOIN_ADAPTER_PREDECLARED_NEXT_SELF_TEST_IMPLEMENTATION
+EOIN_ROLE_LIMITED_ADAPTER_SELF_TEST_READY_FOR_CI_VALIDATION
 ```
 
 使用者已提供真實 Wyatt Walsh `nba.sqlite`。檔案通過 SQLite header、唯讀開啟與 `integrity_check = ok`，但實際內容只有 16 tables、最晚到 2023-06-12、2023-24 pilot games 為 0，與上傳 metadata 所描述的 235-table current-season warehouse 不一致。
@@ -45,6 +46,8 @@ EOIN_ADAPTER_PREDECLARED_NEXT_SELF_TEST_IMPLEMENTATION
 使用者也提供 Eoin A Moore Kaggle 檔案組，並已在 GitHub Actions 完成 census、internal qualification 與 2023-24 cross-source audit。Eoin 正式結果為 `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE`，可做 game identity、final score、team boxscore 與 PBP coverage cross-check；player boxscore 目前只通過 coverage-only，不等於 player stat parity。
 
 Eoin adapter predeclaration v1 已建立。此政策只授權後續實作 role-limited adapter self-test，不授權 adapter execution、raw row artifact、Silver／Gold replacement、model retraining 或 market backtest。
+
+Eoin role-limited adapter v1 self-test implementation 已建立。本機 synthetic fixture self-test 通過；GitHub Actions 將跑含 Parquet fixture 的 CI self-test。完整 Eoin bundle execution 仍關閉。
 
 ### Parallel blocked line
 
@@ -64,7 +67,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 - `play_by_play` 有 7,360 個 duplicate `(game_id, eventnum)` groups。
 - Wyatt 的完整次要來源合格數仍為 0。
 - Eoin A Moore 已通過 role-limited secondary-source audit，但不是 Historical Silver／Gold replacement。
-- Eoin adapter v1 仍是 predeclaration；尚未實作或執行資料匯入。
+- Eoin adapter v1 目前只有 synthetic-fixture self-test；尚未允許 full Eoin bundle execution 或資料匯入。
 - Eoin player boxscore 只通過 coverage-only；尚未有獨立 player-stat parity reference。
 - 使用者已明確不核准付費 Historical Odds pilot。
 - 8 個零成本／既有 odds 候選中，合格 bookmaker-level point-in-time source 為 0。
@@ -75,7 +78,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 
 - 不把 PR #72 synthetic SQLite self-test 或 PR #75 integrity pass 寫成 Wyatt source qualification pass。
 - 不把 Eoin `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE` 寫成完整 player stat parity、model promotion 或 Silver／Gold replacement。
-- 不在 Eoin adapter predeclaration commit 中讀 raw rows、輸出 derived tables 或執行 adapter。
+- 不在 Eoin adapter self-test 中讀完整 Eoin bundle、輸出 derived tables 或執行 Silver／Gold replacement。
 - 不公開或 commit 完整第三方 SQLite、原始 PBP、球員列或大量來源資料。
 - 不以 fuzzy matching 連接 game、team、player 或 PBP。
 - 不替換目前已驗證的 `shufinskiy/nba_data` Silver／Gold 主路徑。
@@ -100,10 +103,11 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 8. Wyatt real file schema and 2023-24 cross-source audit     STRUCTURAL_BLOCKED
 9. Eoin census, internal qualification, cross-source audit   ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
 10. Eoin adapter predeclaration                             Completed / implementation-ready
-11. Eoin adapter self-test implementation                   Next
-12. Point-in-time Odds Join and Market Backtest              Blocked
-13. CLV / EV / ROI / Drawdown                               Blocked
-14. Betting Decision Layer                                  Blocked
+11. Eoin adapter self-test implementation                   Completed / CI validation pending
+12. Eoin full adapter execution preflight                   Next after CI pass
+13. Point-in-time Odds Join and Market Backtest              Blocked
+14. CLV / EV / ROI / Drawdown                               Blocked
+15. Betting Decision Layer                                  Blocked
 ```
 
 ## Core Status
@@ -126,6 +130,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 | Wyatt SQLite Real-file Audit | **STRUCTURAL_BLOCKED** | PR #75；16 tables、latest 2023-06-12、2023-24 games 0。 |
 | Eoin Cross-source Audit v1 | **ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE** | Run 29672984966；1,230 / 1,230 games matched；score match 99.9187%；PBP coverage 100%。 |
 | Eoin Adapter Predeclaration v1 | **ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION** | Policy-only；禁止 raw rows、Silver/Gold replacement、model retraining 與 market metrics。 |
+| Eoin Role-limited Adapter v1 | **SELF_TEST_IMPLEMENTED** | Synthetic fixture only；full Eoin bundle execution disabled；CI validates Parquet fixture path。 |
 | Market Backtest | Blocked | 尚無 executable PIT odds join。 |
 | Betting Decision Layer | Blocked | Stake = 0。 |
 
@@ -294,14 +299,24 @@ Eoin 下一步只可開啟 adapter predeclaration：
 5. emit only aggregate validation reports and small derived schema metadata.
 ```
 
-Eoin adapter predeclaration v1 已完成後，下一步只可開啟 adapter self-test implementation：
+Eoin adapter predeclaration v1 已完成後，adapter self-test implementation 已建立：
 
 ```text
-1. implement a synthetic-fixture adapter self-test;
-2. read only temporary fixture rows in the test;
-3. emit aggregate adapter report only;
-4. keep raw Eoin files out of Git and public artifacts;
-5. keep Silver, Gold, model and market lines unchanged.
+1. synthetic-fixture adapter self-test implemented;
+2. local self-test reads only temporary fixture rows;
+3. CI self-test validates Parquet fixture metadata path;
+4. aggregate adapter report only;
+5. raw Eoin files, Silver, Gold, model and market lines remain unchanged.
+```
+
+Eoin 下一步只可開啟 full adapter execution preflight，且必須先等 GitHub CI 通過：
+
+```text
+1. inspect CI artifact from Validate Eoin role-limited adapter v1;
+2. keep full Eoin bundle execution disabled until a separate preflight policy;
+3. preserve raw-row and raw-file artifact ban;
+4. preserve player-stat parity block;
+5. preserve Stake 0.
 ```
 
 市場資料研究只在以下條件之一成立時重新開啟：
@@ -331,4 +346,5 @@ Eoin adapter predeclaration v1 已完成後，下一步只可開啟 adapter self
 ce88b24 Eoin data source automation
 2654873 Eoin cross-source audit workflow
 bf9db74 Eoin cross-source audit result recorded
+9ba3873 Eoin role-limited adapter predeclaration
 ```

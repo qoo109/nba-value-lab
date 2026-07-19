@@ -117,7 +117,33 @@ Passing state:
 ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION
 ```
 
-### 4. NBA Free Data Refresh
+### 4. Eoin Role-limited Adapter Self-test
+
+```text
+Actions -> Validate Eoin role-limited adapter v1 -> Run workflow
+```
+
+What it does:
+
+```text
+runs only synthetic fixtures
+validates deterministic gameId normalization
+validates team score and player candidate coverage aggregates
+validates PBP Parquet metadata path in CI
+uploads aggregate-only self-test reports
+does not execute against the full Eoin bundle
+does not approve Silver/Gold replacement
+does not unlock model retraining or market backtest
+formal stake remains 0
+```
+
+Passing state:
+
+```text
+ROLE_LIMITED_ADAPTER_SELF_TEST_PASS
+```
+
+### 5. NBA Free Data Refresh
 
 ```text
 Actions -> Update NBA free data -> Run workflow
@@ -133,7 +159,7 @@ does not create model predictions
 does not unlock market backtest
 ```
 
-### 5. Model and UI Validation
+### 6. Model and UI Validation
 
 ```text
 Actions -> Validate model registry -> Run workflow
@@ -148,7 +174,7 @@ checks V5 UI module limits
 checks JavaScript syntax
 ```
 
-### 6. Closing Market Benchmark
+### 7. Closing Market Benchmark
 
 ```text
 Actions -> Build Kaggle closing market benchmark -> Run workflow
@@ -259,6 +285,7 @@ API secrets
 1. Keep the completed Eoin census and cross-source reports as aggregate-only evidence.
 2. Treat Eoin as `ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE`.
 3. Validate `Eoin Adapter Predeclaration v1`.
-4. Implement an offline synthetic-fixture Eoin adapter self-test next.
-5. Keep player-stat parity out of scope until an independent player boxscore reference exists.
-6. Keep Wyatt blocked unless a materially new dataset bundle appears.
+4. Run `Validate Eoin role-limited adapter v1`.
+5. Inspect the aggregate-only CI artifact before any full adapter execution preflight.
+6. Keep player-stat parity out of scope until an independent player boxscore reference exists.
+7. Keep Wyatt blocked unless a materially new dataset bundle appears.

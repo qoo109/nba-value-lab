@@ -1,0 +1,89 @@
+name: Validate Eoin role-limited adapter v1
+
+on:
+  pull_request:
+    paths:
+      - "data/eoin-adapter-predeclaration-v1.json"
+      - "data/eoin-cross-source-audit-v1.json"
+      - "docs/eoin-adapter-predeclaration-v1.md"
+      - "docs/eoin-role-limited-adapter-v1.md"
+      - "scripts/validate_eoin_adapter_predeclaration_v1.py"
+      - "scripts/run_eoin_role_limited_adapter_v1.py"
+      - ".github/workflows/validate-eoin-role-limited-adapter-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  adapter-self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Parquet fixture dependency
+        run: python -m pip install --disable-pip-version-check pyarrow
+
+      - name: Compile Eoin adapter modules
+        run: |
+          python -m py_compile \
+            scripts/validate_eoin_adapter_predeclaration_v1.py \
+            scripts/run_eoin_role_limited_adapter_v1.py
+
+      - name: Run role-limited adapter self-test
+        run: |
+          rm -rf /tmp/nbavl-eoin-role-limited-adapter-v1
+          python scripts/run_eoin_role_limited_adapter_v1.py \
+            --self-test \
+            --require-parquet-fixture \
+            --output-dir /tmp/nbavl-eoin-role-limited-adapter-v1
+          python -m json.tool /tmp/nbavl-eoin-role-limited-adapter-v1/eoin-role-limited-secondary-adapter-v1-report.json >/dev/null
+
+      - name: Enforce adapter guardrails
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-eoin-role-limited-adapter-v1')
+          report = json.loads((root / 'eoin-role-limited-secondary-adapter-v1-report.json').read_text())
+          status = json.loads((root / 'eoin-role-limited-secondary-adapter-v1-status.json').read_text())
+
+          assert report['formal_state'] == 'ROLE_LIMITED_ADAPTER_SELF_TEST_PASS', report
+          assert report['all_adapter_gates_passed'] is True, report
+          assert report['fixture_only'] is True, report
+          assert report['full_eoin_bundle_execution'] is False, report
+          assert report['deterministic_matching_only'] is True, report
+          assert report['fuzzy_matching'] is False, report
+          assert report['inputs']['play_by_play']['metadata_rows_read'] is True, report
+          assert report['aggregate']['pbp_game_coverage_rate'] == 1.0, report
+          assert report['boundaries']['raw_eoin_rows_read'] is False, report
+          assert report['boundaries']['raw_rows_emitted'] == 0, report
+          assert report['boundaries']['raw_files_emitted'] is False, report
+          assert report['boundaries']['existing_silver_replacement'] is False, report
+          assert report['boundaries']['existing_gold_replacement'] is False, report
+          assert report['boundaries']['model_retraining'] is False, report
+          assert report['boundaries']['market_metrics'] is False, report
+          assert report['boundaries']['formal_stake'] == 0, report
+          assert report['permissions']['ready_for_full_adapter_execution'] is False, report
+          assert report['permissions']['ready_for_silver_replacement'] is False, report
+          assert report['permissions']['ready_for_betting_edge_claim'] is False, report
+          assert status['raw_files_uploaded_as_artifact'] is False, status
+          assert status['raw_rows_uploaded_as_artifact'] is False, status
+          PY
+
+      - name: Upload aggregate-only adapter self-test artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-role-limited-adapter-v1-self-test
+          path: |
+            /tmp/nbavl-eoin-role-limited-adapter-v1/eoin-role-limited-secondary-adapter-v1-report.json
+            /tmp/nbavl-eoin-role-limited-adapter-v1/eoin-role-limited-secondary-adapter-v1-status.json
+          retention-days: 14
+          if-no-files-found: error

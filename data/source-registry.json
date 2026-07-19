@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.5.0",
+  "registry_version": "1.6.0",
   "site_version_policy": "follow_current_release",
-  "updated_at": "2026-07-19T13:55:00+08:00",
+  "updated_at": "2026-07-19T14:20:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -203,6 +203,14 @@
         "validator": "scripts/validate_eoin_adapter_predeclaration_v1.py",
         "formal_state": "ROLE_LIMITED_ADAPTER_READY_FOR_IMPLEMENTATION",
         "execution_enabled": false
+      },
+      "adapter_implementation": {
+        "runner": "scripts/run_eoin_role_limited_adapter_v1.py",
+        "documentation": "docs/eoin-role-limited-adapter-v1.md",
+        "workflow": ".github/workflows/validate-eoin-role-limited-adapter-v1.yml",
+        "formal_state": "SELF_TEST_IMPLEMENTED",
+        "fixture_only": true,
+        "full_bundle_execution_enabled": false
       },
       "notes": "2023-24 deterministic audit passed against shufinskiy event-level reference. Player result is coverage-only, not independent player-stat parity. Does not replace Historical Silver or Gold."
     },

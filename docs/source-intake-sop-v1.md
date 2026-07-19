@@ -165,6 +165,25 @@ This state authorizes adapter implementation only. It does not authorize
 adapter execution against the full Eoin bundle, raw-row artifacts, Silver/Gold
 replacement, model retraining, market metrics or betting decisions.
 
+Adapter self-test implementation:
+
+```text
+scripts/run_eoin_role_limited_adapter_v1.py
+docs/eoin-role-limited-adapter-v1.md
+.github/workflows/validate-eoin-role-limited-adapter-v1.yml
+```
+
+Passing state:
+
+```text
+ROLE_LIMITED_ADAPTER_SELF_TEST_PASS
+```
+
+The self-test is fixture-only. It does not execute against the full Eoin bundle,
+does not read raw Eoin rows and does not permit public derived tables. After CI
+passes, the next step is a separate full adapter execution preflight, not direct
+Silver/Gold replacement.
+
 ## Frozen Gates
 
 ```text

@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.9",
+    appVersion: "V5.3.10",
     model: "V3.1 x G1.1",
     updated: "2026-07-19",
     state: "Research Candidate / Pre-Market-Backtest",
@@ -59,7 +59,7 @@
     if (!rail) return;
     const cells = qsa(":scope > div", rail);
     if (cells[0]) cells[0].innerHTML = '<span class="rail-code">STATE</span><span><strong>Research Candidate</strong>・Pre-Market-Backtest</span>';
-    if (cells[1]) cells[1].innerHTML = '<span class="rail-code">QUEUE</span><span>Wyatt blocked・Eoin role-limited eligible・Market odds 暫停</span>';
+    if (cells[1]) cells[1].innerHTML = '<span class="rail-code">QUEUE</span><span>Wyatt blocked・Eoin adapter self-test・Market odds 暫停</span>';
     if (cells[2]) cells[2].innerHTML = '<span class="rail-code">STAKE</span><span>正式投注額 0・不宣稱 edge / ROI / CLV</span>';
   }
 
@@ -94,7 +94,7 @@
       <div>
         <span class="eyebrow">CURRENT CONTROL BLOCK</span>
         <h2>現在先做資料進件，不產生正式投注建議</h2>
-        <p>Wyatt 已完成真實檔 aggregate audit 並正式 blocked；Eoin 已通過 GitHub census、internal qualification 與 2023-24 cross-source audit，adapter predeclaration 也已凍結。市場 PIT odds 尚未解鎖，因此 CLV、EV、ROI、Drawdown 與投注決策層仍關閉。</p>
+        <p>Wyatt 已完成真實檔 aggregate audit 並正式 blocked；Eoin 已通過 cross-source audit，adapter predeclaration 已凍結，且 role-limited adapter self-test implementation 已建立。市場 PIT odds 尚未解鎖，因此 CLV、EV、ROI、Drawdown 與投注決策層仍關閉。</p>
       </div>
       <div class="current-status-pill"><span>STAKE</span><strong>${STATUS.stake}</strong></div>
     </div>
@@ -104,10 +104,10 @@
         "DuckDB: 12 KB empty shell",
         "2023-24 pilot games: 0",
       ])}
-      ${statusCard("EOIN", "Adapter predeclaration 已凍結", "Eoin 只能作 role-limited secondary cross-check；下一步是離線 adapter self-test，不是執行完整資料匯入。", "ready", [
+      ${statusCard("EOIN", "Adapter self-test 已建立", "Eoin adapter 目前只跑 synthetic fixture；完整 bundle execution 仍關閉，需等 CI artifact 通過後再開 preflight。", "ready", [
         "Matched games: 1,230 / 1,230",
-        "Final score match: 99.9187%",
-        "Adapter execution: disabled",
+        "Local self-test: passed",
+        "CI: Parquet fixture validation",
         "Player boxscore: coverage-only",
       ])}
       ${statusCard("MARKET", "PIT odds line 暫停", "沒有合法且可核對 timestamp / bookmaker semantics 的 odds source 前，不做 market backtest。", "paused", [
@@ -316,11 +316,11 @@
       </article>
       <article class="registry-card licensed">
         <div><span>Eoin A Moore</span><em>ROLE_LIMITED_ELIGIBLE</em></div>
-        <h2>adapter predeclaration 已凍結</h2>
+        <h2>adapter self-test implementation 已建立</h2>
         <dl>
-          <div><dt>已完成</dt><dd>census + internal + cross-source audit</dd></div>
-          <div><dt>下一步</dt><dd>offline synthetic adapter self-test</dd></div>
-          <div><dt>限制</dt><dd>no raw rows / no Silver-Gold replacement</dd></div>
+          <div><dt>已完成</dt><dd>predeclaration + local synthetic self-test</dd></div>
+          <div><dt>下一步</dt><dd>GitHub CI artifact review</dd></div>
+          <div><dt>限制</dt><dd>full adapter execution disabled</dd></div>
         </dl>
       </article>
       <article class="registry-card odds">

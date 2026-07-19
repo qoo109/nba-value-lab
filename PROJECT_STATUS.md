@@ -8,11 +8,13 @@
 
 ## Current Control Block
 
-### Latest Main SHA at this snapshot
+### Latest feature SHA before this status snapshot
 
 ```text
-2b871e81d3d716342dab85b3ca4bce6d76a07cd9
+cbdb002b1256635e75e031be2a480168ba39d08b
 ```
+
+即時 `main` SHA 以 GitHub repository head 為準；本欄只記錄此次狀態快照所描述的最後功能 commit。
 
 最新完成：
 
@@ -29,7 +31,10 @@ Commit bf9db74 — Eoin cross-source audit result recorded
 Commit 9ba3873 — Eoin role-limited adapter predeclaration
 Commit 2b871e8 — Eoin role-limited adapter self-test
 Commit 2c23bb2 — Eoin lightweight adapter CI autorun
+Commit 736d0e5 — Website market odds terminology sync
 Commit de37c64 — Market odds terminology docs sync
+Commit 44467db — Eoin full adapter preflight gate
+Commit cbdb002 — Eoin preflight website status sync
 ```
 
 ### Currently open research execution PRs

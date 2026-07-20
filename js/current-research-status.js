@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.17",
+    appVersion: "V5.3.18",
     model: "V3.1 x G1.1",
     updated: "2026-07-20",
     state: "Research Candidate / Pre-Market-Backtest",
@@ -93,6 +93,17 @@
     });
 
     table.dataset.engineColumnRemoved = "true";
+  }
+
+  function removeMarketDisclosure() {
+    const market = qs(".market-table-section");
+    if (!market) return;
+    const disclosure = market.closest(".v5-market-disclosure");
+    if (disclosure) {
+      disclosure.parentNode.insertBefore(market, disclosure);
+      disclosure.remove();
+    }
+    market.dataset.disclosureRemoved = "true";
   }
 
   function updateRail() {
@@ -228,6 +239,7 @@
     ensureStylesheet();
     simplifyNavigation();
     removeMarketEngineColumn();
+    removeMarketDisclosure();
     ensureMarketTableSorting();
     ensureHeader();
     updateRail();

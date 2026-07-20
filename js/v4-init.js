@@ -83,7 +83,7 @@ function loadV49LockStatus() {
 
 function loadCurrentResearchStatus() {
   return loadScriptOnce(
-    "./js/current-research-status.js?v=20260720i",
+    "./js/current-research-status.js?v=20260720j",
     "data-current-research-status",
     () => document.documentElement.dataset.currentResearchStatus === "applied",
   );
@@ -161,7 +161,7 @@ async function init() {
   updateCalculator(true);
   await loadCurrentResearchStatus();
   document.documentElement.dataset.modelVersion = activeModelLabel();
-  document.documentElement.dataset.appVersion = v5Ready ? "V5.3.4" : "V4.10";
+  document.documentElement.dataset.appVersion = v5Ready ? "V5.3.16" : "V4.10";
 }
 
 init().catch((error) => {

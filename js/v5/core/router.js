@@ -4,7 +4,6 @@
   const v5 = window.NBAVL.v5;
   const routes = {
     dashboard: { tab: "analysis", title: "今日分析" },
-    picks: { tab: "candidates", title: "主要場次" },
     validation: { tab: "validation", title: "模型驗證" },
     sources: { tab: "sources", title: "資料來源" },
     research: { tab: "research", title: "研究紀錄" },
@@ -31,7 +30,7 @@
       panel.hidden = panel.dataset.panel !== config.tab;
     });
     document.documentElement.dataset.route = resolved;
-    document.title = `${config.title}｜NBA Value Lab V5.2`;
+    document.title = `${config.title}｜NBA Value Lab V5.3.17`;
     if (options.scroll !== false) window.scrollTo({ top: 0, behavior: options.instant ? "auto" : "smooth" });
     window.dispatchEvent(new CustomEvent("nbavl:route", { detail: { route: resolved, tab: config.tab } }));
     return resolved;
@@ -61,7 +60,7 @@
   function init() {
     bind();
     const route = routeFromLocation();
-    navigate(route, { replace: !location.hash, instant: true, scroll: false });
+    navigate(route, { replace: !location.hash || !routes[route], instant: true, scroll: false });
   }
 
   v5.modules.router = { routes, init, apply, navigate, routeFromLocation };

@@ -38,6 +38,18 @@
     return section.closest(".v5-disclosure") || section.closest(".v5-model-disclosure") || section;
   }
 
+  function unwrapMarketDisclosure(analysis) {
+    const market = analysis.querySelector(".market-table-section");
+    if (!market) return null;
+    const disclosure = market.closest(".v5-market-disclosure");
+    if (disclosure) {
+      disclosure.parentNode.insertBefore(market, disclosure);
+      disclosure.remove();
+    }
+    market.dataset.disclosureRemoved = "true";
+    return market;
+  }
+
   function ensureDecisionStrip(analysis) {
     const board = selectionBoard();
     const formal = board.mains.length > 0;
@@ -137,9 +149,8 @@
 
   function reorderAnalysis(analysis) {
     const decisionGroup = ensureDecisionGroup(analysis);
-    const market = sectionShell(analysis.querySelector(".market-table-section"));
+    const market = unwrapMarketDisclosure(analysis);
     const explanationGroup = syncExplanationGroup(analysis);
-    if (market?.matches("details")) market.open = true;
 
     const priorityOrder = [
       analysis.querySelector(".date-rail"),
@@ -164,6 +175,7 @@
         syncExplanationGroup(analysis);
         document.documentElement.dataset.explanationGroupRepaired = "true";
       }
+      unwrapMarketDisclosure(analysis);
     });
     observer.observe(analysis, { childList: true, subtree: true });
     analysis.__v534ExplanationObserver = observer;
@@ -180,11 +192,7 @@
     }
 
     ensureModelDisclosure(analysis);
-    wrapSection(analysis.querySelector(".market-table-section"), "完整市場總表", {
-      hint: "Gap、EV、Coverage 與全部雙向候選",
-      open: true,
-      className: "v5-market-disclosure",
-    });
+    unwrapMarketDisclosure(analysis);
     wrapSection(analysis.querySelector(".calculator"), "市場賠率即時試算", { hint: "只重算市場賠率，不改模型勝率" });
     wrapSection(analysis.querySelector(".source-card"), "資料來源策略", { hint: "目標莊家、比較來源與快照" });
     wrapSection(analysis.querySelector(".weights-card"), "證據覆蓋權重", { hint: "資料完整度，不是直接勝率係數" });
@@ -193,6 +201,7 @@
     watchExplanationGroup(analysis);
 
     requestAnimationFrame(() => {
+      unwrapMarketDisclosure(analysis);
       syncExplanationGroup(analysis);
       reorderAnalysis(analysis);
       document.documentElement.dataset.explanationGroupVerified = "true";
@@ -212,13 +221,13 @@
 
   function updateShell() {
     document.documentElement.classList.add("v5-ui");
-    document.documentElement.dataset.uiVersion = "5.3.17";
+    document.documentElement.dataset.uiVersion = "5.3.18";
     document.documentElement.dataset.visualDensity = "balanced";
-    document.title = `NBA Value Lab V5.3.17｜${activeModelLabel()}`;
+    document.title = `NBA Value Lab V5.3.18｜${activeModelLabel()}`;
     const header = document.querySelector(".header-status");
-    if (header) header.innerHTML = `<span class="status-dot"></span>V5.3.17・${activeModelLabel()}・主要 2／最多 3`;
+    if (header) header.innerHTML = `<span class="status-dot"></span>V5.3.18・${activeModelLabel()}・主要 2／最多 3`;
     const footer = document.querySelector("footer > span:first-child");
-    if (footer) footer.textContent = "NBA VALUE LAB V5.3.17";
+    if (footer) footer.textContent = "NBA VALUE LAB V5.3.18";
   }
 
   function afterRender() {
@@ -236,5 +245,6 @@
     ensureDecisionStrip,
     ensureDecisionGroup,
     syncExplanationGroup,
+    unwrapMarketDisclosure,
   };
 }());

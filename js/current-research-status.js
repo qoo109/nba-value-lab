@@ -2,9 +2,9 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.13",
+    appVersion: "V5.3.14",
     model: "V3.1 x G1.1",
-    updated: "2026-07-19",
+    updated: "2026-07-20",
     state: "Research Candidate / Pre-Market-Backtest",
     stake: "0",
   };
@@ -28,6 +28,16 @@
     link.href = "./css/current-research-status.css?v=20260719h";
     link.setAttribute("data-current-research-status-css", "true");
     document.head.appendChild(link);
+  }
+
+  function ensureMarketTableSorting() {
+    if (qs('script[data-market-table-sort]')) return;
+    const script = document.createElement("script");
+    script.src = "./js/market-table-sort.js?v=20260720b";
+    script.defer = true;
+    script.setAttribute("data-market-table-sort", "true");
+    document.head.appendChild(script);
+    document.documentElement.dataset.marketTableSortLoader = "requested";
   }
 
   function ensureHeader() {
@@ -177,6 +187,7 @@
 
   function apply() {
     ensureStylesheet();
+    ensureMarketTableSorting();
     ensureHeader();
     updateRail();
     ensureAnalysisStatus();

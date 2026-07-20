@@ -1,3 +1,18 @@
+.v5-market-disclosure {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.v5-market-disclosure > summary {
+  display: none;
+}
+
+.v5-market-disclosure > .market-table-section {
+  margin-top: 0;
+}
+
 .market-table-section .table-scroll {
   border: 0;
   border-radius: 0;

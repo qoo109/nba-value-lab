@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.16",
+    appVersion: "V5.3.17",
     model: "V3.1 x G1.1",
     updated: "2026-07-20",
     state: "Research Candidate / Pre-Market-Backtest",
@@ -38,6 +38,31 @@
     script.setAttribute("data-market-table-sort", "true");
     document.head.appendChild(script);
     document.documentElement.dataset.marketTableSortLoader = "requested";
+  }
+
+  function simplifyNavigation() {
+    qs('.tab-button[data-tab="candidates"]')?.remove();
+    const candidatesPanel = qs('[data-panel="candidates"]');
+    if (candidatesPanel) {
+      candidatesPanel.hidden = true;
+      candidatesPanel.setAttribute("aria-hidden", "true");
+    }
+
+    if (/^#\/?picks(?:[?&]|$)/.test(location.hash)) {
+      history.replaceState({ route: "dashboard" }, "", "#/dashboard");
+      qsa("[data-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== "analysis";
+      });
+      qsa(".tab-button").forEach((button) => {
+        const active = button.dataset.tab === "analysis";
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", String(active));
+        if (active) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      });
+    }
+
+    document.documentElement.dataset.mainPicksTab = "removed";
   }
 
   function ensureHeader() {
@@ -201,6 +226,7 @@
 
   function apply() {
     ensureStylesheet();
+    simplifyNavigation();
     removeMarketEngineColumn();
     ensureMarketTableSorting();
     ensureHeader();

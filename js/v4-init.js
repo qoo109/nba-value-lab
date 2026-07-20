@@ -84,7 +84,7 @@ function loadV49LockStatus() {
 
 function loadCurrentResearchStatus() {
   return loadScriptOnce(
-    "./js/current-research-status.js?v=20260719h",
+    "./js/current-research-status.js?v=20260720i",
     "data-current-research-status",
     () => document.documentElement.dataset.currentResearchStatus === "applied",
   );

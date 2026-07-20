@@ -97,7 +97,7 @@ function updateCalculator(resetOdds = false) {
   $("#calcGap").textContent = signed(gap);
   $("#calcGap").className = gap !== null && gap >= 0 ? "positive" : gap !== null && gap < -(band.margin ?? 0) ? "negative" : "";
   $("#calcEv").textContent = signed(ev, "%");
-  $("#calcStatus").textContent = `${$("#bookmakerInput").value || "我的莊家"}：${gradeInfo[grade].label}`;
+  $("#calcStatus").textContent = gradeInfo[grade].label;
   $("#calcStatus").classList.toggle("pass", grade === "ㄅ");
   const marginText = band.margin === null ? "未開放研究邊際" : `${band.margin.toFixed(1)}pp 安全邊際`;
   $("#calcNote").textContent = `${engineLabel(candidate)}・${candidateTier(candidate)}・${band.label}・最低接受賠率 ${oddsText(minimumOdds(candidate, odds), 3)}・${marginText}・正式投注額固定為 0。`;

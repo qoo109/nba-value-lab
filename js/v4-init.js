@@ -22,7 +22,6 @@ function bindEvents() {
   });
   $("#calculatorGame").addEventListener("change", () => updateCalculator(true));
   $("#oddsInput").addEventListener("input", () => updateCalculator(false));
-  $("#bookmakerInput").addEventListener("input", () => updateCalculator(false));
   $("#themeToggle").addEventListener("click", toggleTheme);
   $("#closeModal").addEventListener("click", () => $("#detailModal").close());
   $("#detailModal").addEventListener("click", (event) => { if (event.target === $("#detailModal")) $("#detailModal").close(); });
@@ -156,6 +155,8 @@ async function init() {
   await initResearchLog();
   await initT60LockStatus();
   if (v5Ready) window.NBAVL.v5.afterRender();
+  const bookmakerInput = $("#bookmakerInput");
+  bookmakerInput?.closest("label")?.remove();
   bindEvents();
   updateCalculator(true);
   await loadCurrentResearchStatus();

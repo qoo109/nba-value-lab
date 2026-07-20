@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.14",
+    appVersion: "V5.3.15",
     model: "V3.1 x G1.1",
     updated: "2026-07-20",
     state: "Research Candidate / Pre-Market-Backtest",
@@ -52,6 +52,22 @@
     setText(footerVersion, `NBA VALUE LAB ${STATUS.appVersion}`);
     const footerMode = qs("footer > span:last-child");
     setText(footerMode, `台灣時間・${STATUS.model}・正式投注額 ${STATUS.stake}`);
+  }
+
+  function removeMarketEngineColumn() {
+    const table = qs(".market-table");
+    if (!table) return;
+
+    const engineHeader = Array.from(table.querySelectorAll("thead th")).find(
+      (header) => (header.textContent || "").trim() === "引擎",
+    );
+    if (engineHeader) engineHeader.remove();
+
+    table.querySelectorAll("tbody .engine-pill").forEach((pill) => {
+      pill.closest("td")?.remove();
+    });
+
+    table.dataset.engineColumnRemoved = "true";
   }
 
   function updateRail() {
@@ -137,7 +153,7 @@
     <div class="registry-grid">
       <article class="registry-card restricted">
         <div><span>Wyatt Walsh</span><em>STRUCTURAL_BLOCKED</em></div>
-        <h2>同一份 SQLite / DuckDB 停止重試</h2>
+        <h2>同一份 SQLite / DuckDB 不再重跑</h2>
         <dl>
           <div><dt>SQLite</dt><dd>16 tables, ends 2023-06-12</dd></div>
           <div><dt>DuckDB</dt><dd>12 KB empty shell</dd></div>
@@ -187,6 +203,7 @@
 
   function apply() {
     ensureStylesheet();
+    removeMarketEngineColumn();
     ensureMarketTableSorting();
     ensureHeader();
     updateRail();

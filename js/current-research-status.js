@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.15",
+    appVersion: "V5.3.16",
     model: "V3.1 x G1.1",
     updated: "2026-07-20",
     state: "Research Candidate / Pre-Market-Backtest",
@@ -100,7 +100,6 @@
 
   function ensureAnalysisStatus() {
     const panel = qs('[data-panel="analysis"]');
-    const timing = panel?.querySelector(".timing-strip");
     if (!panel || qs("#currentResearchStatus")) return;
 
     const section = document.createElement("section");
@@ -133,8 +132,7 @@
       ])}
     </div>`;
 
-    if (timing) timing.insertAdjacentElement("afterend", section);
-    else panel.prepend(section);
+    panel.appendChild(section);
   }
 
   function ensureSourceQueue() {

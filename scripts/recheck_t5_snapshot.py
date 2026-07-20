@@ -29,7 +29,7 @@ from lock_t60_snapshot import (
     PROBABILITY_KEYS,
     ROOT,
     canonical_hash,
-    coordination_label,
+    coordination_decision,
     gate_results,
     g_decision,
     load_active_configs,
@@ -182,6 +182,7 @@ def make_record(
     previous = item["previous"]
     v = item["v"]
     g = item["g"]
+    combined = item["coordination"]
     prediction_id = item["prediction_id"]
     price_id = item["price_evaluation_id"]
     is_main = prediction_id == main_id
@@ -259,7 +260,8 @@ def make_record(
         "g_grade": g["grade"],
         "v_conclusion": v["conclusion"],
         "g_conclusion": g["conclusion"],
-        "coordination_label": coordination_label(v, g, item["dual_conflict"]),
+        "coordination_grade": combined["grade"],
+        "coordination_label": combined["label"],
         "dual_side_conflict": item["dual_conflict"],
         "main_candidate": is_main,
         "main_status": "最終主要場次" if is_main else "不通過",
@@ -355,6 +357,7 @@ def run(
         g = g_decision(candidate, g_config)
         dual_conflict = sorted(game_g_grades[candidate["game_id"]]) == ["ㄅ", "ㄅ"]
         gates = gate_results(candidate, g_config, g, dual_conflict)
+        combined = coordination_decision(v, g, dual_conflict, coordination)
         prediction_id, price_id = build_t5_ids(candidate, top, manifest, previous, change_type, current_state)
         items.append(
             {
@@ -365,6 +368,7 @@ def run(
                 "change_reasons": changes,
                 "v": v,
                 "g": g,
+                "coordination": combined,
                 "dual_conflict": dual_conflict,
                 "gates": gates,
                 "prediction_id": prediction_id,

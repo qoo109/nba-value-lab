@@ -1,0 +1,45 @@
+{
+  "coordination_id": "V3.1.1_X_G1.1.1-20260719",
+  "version": "1.2.0",
+  "status": "research",
+  "engine_versions": {
+    "V": "3.1.1",
+    "G": "1.1.1"
+  },
+  "no_probability_blending": true,
+  "no_engine_weighting_without_validation": true,
+  "same_analysis_cutoff_required": true,
+  "same_data_version_required": true,
+  "independent_engine_outputs_required": true,
+  "combined_policy": {
+    "data_insufficient_has_priority": true,
+    "dual_side_conflict_blocks_combined_b": true,
+    "dual_side_conflict_grade": "ㄆ",
+    "dual_side_conflict_label": "雙邊價值衝突・停止主要場次",
+    "v_core_and_g_core_requires_both_pass": true,
+    "v_extension_caps_combined_at_watch": true,
+    "g_only_research_allowed_outside_v_core": true,
+    "g_only_maximum_combined_grade": "ㄆ",
+    "g_only_label": "G1.1.1 單引擎研究候選",
+    "v_only_maximum_combined_grade": "ㄆ",
+    "v_only_label": "V3.1.1 通過・G1.1.1 Gate 未通過",
+    "v_and_g_label": "V3.1.1 × G1.1.1 雙引擎候選",
+    "formal_stake_fraction": 0
+  },
+  "ui_policy": {
+    "official_main_target": 2,
+    "official_main_max": 3,
+    "priority_display_max": 2,
+    "priority_display_is_not_official_g1_grade": true,
+    "show_v_grade": true,
+    "show_g_grade": true,
+    "show_combined_conclusion": true,
+    "show_revision_ids": true
+  },
+  "spec_integrity": {
+    "algorithm": "sha256",
+    "subject": "models/coordination/v3.1.1-g1.1.1/spec.md",
+    "canonicalization": "none_exact_file_bytes",
+    "digest": "27423d31e65ec4632d94533e17495a54b91c6b9f12815155b9934564a698313e"
+  }
+}

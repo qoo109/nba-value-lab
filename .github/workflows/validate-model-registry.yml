@@ -11,6 +11,8 @@ on:
       - "scripts/validate_v5_ui.py"
       - "scripts/multi_main_policy.py"
       - "scripts/test_multi_main_policy.py"
+      - "scripts/test_model_decisions.py"
+      - "scripts/test_frontend_model_decisions.js"
       - "js/v4-*.js"
       - "js/v5/**"
       - "css/v5-*.css"
@@ -23,6 +25,8 @@ on:
       - "scripts/validate_v5_ui.py"
       - "scripts/multi_main_policy.py"
       - "scripts/test_multi_main_policy.py"
+      - "scripts/test_model_decisions.py"
+      - "scripts/test_frontend_model_decisions.js"
       - "js/v4-*.js"
       - "js/v5/**"
       - "css/v5-*.css"
@@ -46,8 +50,9 @@ jobs:
 
       - name: Test G1.1 multi-main policy
         run: |
-          python -m py_compile scripts/multi_main_policy.py scripts/test_multi_main_policy.py
+          python -m py_compile scripts/multi_main_policy.py scripts/test_multi_main_policy.py scripts/test_model_decisions.py scripts/lock_t60_snapshot.py scripts/recheck_t5_snapshot.py
           PYTHONPATH=scripts python scripts/test_multi_main_policy.py
+          PYTHONPATH=scripts python scripts/test_model_decisions.py
 
       - name: Validate V5 UI modules and file sizes
         run: |
@@ -65,6 +70,7 @@ jobs:
           node --check js/v4-10-multi-main.js
           node --check js/v4-init.js
           node --check js/v4-live-data.js
+          node scripts/test_frontend_model_decisions.js
           node --check js/v5/core/namespace.js
           node --check js/v5/core/router.js
           node --check js/v5/utils/format.js

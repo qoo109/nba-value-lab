@@ -105,7 +105,7 @@ function toggleTheme() {
 
 function engineLabel(candidate) {
   const odds = candidate.target.odds;
-  const scope = modelV().odds_scope;
+  const scope = modelV().core_odds_scope || modelV().odds_scope;
   return Number.isFinite(odds) && odds >= scope.min && odds <= scope.max ? `V${modelV().version}＋G${modelG().version}` : `G${modelG().version}`;
 }
 

@@ -86,19 +86,19 @@ const DEFAULT_MODEL_REGISTRY = {
   manifest: {
     schema_version: 2,
     active: {
-      V: { engine_id: "V", version: "3.1", config: "models/v3/3.1/config.json", spec: "models/v3/3.1/spec.md" },
-      G: { engine_id: "G", version: "1.0", config: "models/g1/1.0-final-20260716/config.json", spec: "models/g1/1.0-final-20260716/spec.md" },
+      V: { engine_id: "V", version: "3.1.1", config: "models/v3/3.1.1/config.json", spec: "models/v3/3.1.1/spec.md" },
+      G: { engine_id: "G", version: "1.1.1", config: "models/g1/1.1.1/config.json", spec: "models/g1/1.1.1/spec.md" },
     },
-    coordination: { config: "models/coordination/v3.1-g1-final/config.json" },
+    coordination: { config: "models/coordination/v3.1.1-g1.1.1/config.json" },
   },
   V: {
-    engine_id: "V", version: "3.1",
-    odds_scope: { min: 1.40, max: 1.60 },
+    engine_id: "V", version: "3.1.1",
+    core_odds_scope: { min: 1.40, max: 1.60, semantics: "b_eligible_core_range_only" },
     required_margin_pp: 5,
     early_preview_extra_margin_pp: 0,
   },
   G: {
-    engine_id: "G", version: "1.0",
+    engine_id: "G", version: "1.1.1",
     price_bands: [
       { min: 1.01, max: 1.20, min_inclusive: true, max_inclusive: false, label: "極低市場賠率層", required_margin_pp: 5, eligible: false },
       { min: 1.20, max: 1.35, min_inclusive: true, max_inclusive: false, label: "低市場賠率研究層", required_margin_pp: 7, eligible: false },
@@ -107,7 +107,7 @@ const DEFAULT_MODEL_REGISTRY = {
       { min: 2.20, max: 3.50, min_inclusive: false, max_inclusive: true, label: "中高市場賠率研究層", required_margin_pp: 8, eligible: false },
       { min: 3.50, max: 100, min_inclusive: false, max_inclusive: true, label: "高波動研究層", required_margin_pp: 99, eligible: false },
     ],
-    grading: { watch_gap_min_pp: -3 },
+    grading: { edge_support_min_pp: 0, b_gap_min_pp: 0, watch_gap_min_pp: -3 },
     core_gate: {
       coverage_min_pct: 85,
       interval_width_max_pp: 6,
@@ -116,7 +116,7 @@ const DEFAULT_MODEL_REGISTRY = {
       confidence_required: "高",
       comparison_sources_min: 3,
       model_market_gap_review_pp: 5,
-      core_max: 1,
+      core_max: 3,
       priority_max: 2,
     },
   },
@@ -189,7 +189,7 @@ function renderModelRegistryStatus() {
         <div><span>V ENGINE</span><em>V${modelV().version}</em></div>
         <h2>市場賠率價值與最低接受賠率</h2>
         <dl>
-          <div><dt>核心市場賠率範圍</dt><dd>${modelV().odds_scope.min.toFixed(2)}～${modelV().odds_scope.max.toFixed(2)}</dd></div>
+          <div><dt>核心市場賠率範圍</dt><dd>${(modelV().core_odds_scope || modelV().odds_scope).min.toFixed(2)}～${(modelV().core_odds_scope || modelV().odds_scope).max.toFixed(2)}</dd></div>
           <div><dt>安全邊際</dt><dd>${modelV().required_margin_pp.toFixed(1)}pp</dd></div>
           <div><dt>預覽限制</dt><dd>T−24h 原則最高 ㄆ級</dd></div>
         </dl>

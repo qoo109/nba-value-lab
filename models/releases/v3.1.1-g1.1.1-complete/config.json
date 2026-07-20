@@ -1,0 +1,40 @@
+{
+  "release_id": "NVL-RULES-V3.1.1-G1.1.1-C1.2.0-20260719",
+  "version": "1.0.0",
+  "status": "research",
+  "published_at": "2026-07-19T22:20:00+08:00",
+  "spec": "models/releases/v3.1.1-g1.1.1-complete/spec.md",
+  "components": {
+    "V": {
+      "version": "3.1.1",
+      "revision_id": "V3.1.1-20260719",
+      "spec": "models/v3/3.1.1/spec.md",
+      "config": "models/v3/3.1.1/config.json"
+    },
+    "G": {
+      "version": "1.1.1",
+      "revision_id": "G1.1.1-20260719",
+      "spec": "models/g1/1.1.1/spec.md",
+      "config": "models/g1/1.1.1/config.json"
+    },
+    "coordination": {
+      "version": "1.2.0",
+      "coordination_id": "V3.1.1_X_G1.1.1-20260719",
+      "spec": "models/coordination/v3.1.1-g1.1.1/spec.md",
+      "config": "models/coordination/v3.1.1-g1.1.1/config.json"
+    }
+  },
+  "publication_guardrails": {
+    "formal_stake_fraction": 0,
+    "research_only_until_stage_2": true,
+    "no_probability_blending": true,
+    "no_unverified_engine_weighting": true,
+    "manual_or_compliant_odds_only": true
+  },
+  "spec_integrity": {
+    "algorithm": "sha256",
+    "subject": "models/releases/v3.1.1-g1.1.1-complete/spec.md",
+    "canonicalization": "none_exact_file_bytes",
+    "digest": "f239df3ba34fef22d1b07b3e2fda978f75e68592ae833960e675484cac2dcf7a"
+  }
+}

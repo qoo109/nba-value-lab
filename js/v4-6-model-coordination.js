@@ -5,8 +5,8 @@
 let runtimeCoordination = null;
 
 const FALLBACK_V31 = {
-  engine_id: "V", version: "3.1", revision_id: "V3.1-20260716",
-  odds_scope: { min: 1.40, max: 1.60 }, required_margin_pp: 5,
+  engine_id: "V", version: "3.1.1", revision_id: "V3.1.1-20260719",
+  core_odds_scope: { min: 1.40, max: 1.60, semantics: "b_eligible_core_range_only" }, required_margin_pp: 5,
   preview_policy: { snapshot: "T-24h", maximum_grade: "ㄆ", extra_margin_pp: null },
   price_policy: {
     price_segments: [
@@ -18,11 +18,11 @@ const FALLBACK_V31 = {
     ],
     outside_conclusion: "範圍外",
   },
-  grading: { watch_gap_min_pp: -3, risk_2_maximum_grade: "ㄆ", low_confidence_maximum_grade: "ㄆ" },
+  grading: { edge_support_min_pp: 0, b_gap_min_pp: 0, watch_gap_min_pp: -3, risk_2_maximum_grade: "ㄆ", low_confidence_maximum_grade: "ㄆ" },
 };
 
 const FALLBACK_G1_FINAL = {
-  engine_id: "G", version: "1.0", revision_id: "G1-FINAL-20260716",
+  engine_id: "G", version: "1.1.1", revision_id: "G1.1.1-20260719",
   price_bands: [
     { id: "extreme_low", min: 1.01, max: 1.20, min_inclusive: true, max_inclusive: false, label: "極低市場賠率層", required_margin_pp: null, eligible: false, maximum_conclusion: "只記錄" },
     { id: "low_research", min: 1.20, max: 1.35, min_inclusive: true, max_inclusive: false, label: "低市場賠率研究層", required_margin_pp: 7, eligible: false, maximum_conclusion: "ㄆ級・延伸研究" },
@@ -31,37 +31,64 @@ const FALLBACK_G1_FINAL = {
     { id: "medium_high_extension", min: 2.20, max: 3.50, min_inclusive: false, max_inclusive: true, label: "中高市場賠率研究層", required_margin_pp: 8, eligible: false, maximum_conclusion: "ㄆ級・延伸研究" },
     { id: "high_volatility", min: 3.50, max: null, min_inclusive: false, max_inclusive: false, label: "高波動研究層", required_margin_pp: null, eligible: false, maximum_conclusion: "只記錄" },
   ],
-  grading: { watch_gap_min_pp: -3 },
+  grading: { edge_support_min_pp: 0, b_gap_min_pp: 0, watch_gap_min_pp: -3 },
   core_gate: {
     coverage_min_pct: 85, interval_width_max_pp: 6, comparison_sources_min: 3,
     threshold_buffer_min_pp: 1, model_market_gap_max_pp: 5,
     independent_evidence_min_if_gap_exceeded: 2, news_risk_max: 1,
-    confidence_required: "高", core_max: 1,
+    confidence_required: "高", core_max: 3,
   },
-  selection: { official_main_max: 1, allow_zero_main: true, ui_priority_candidates_max: 2, ui_priority_is_official_g1_grade: false },
+  selection: { official_main_target: 2, official_main_max: 3, allow_zero_main: true, ui_priority_candidates_max: 2, ui_priority_is_official_g1_grade: false },
 };
 
 const FALLBACK_COORDINATION = {
-  coordination_id: "V3.1_X_G1-FINAL-20260716", version: "1.0.0",
+  coordination_id: "V3.1.1_X_G1.1.1-20260719", version: "1.2.0",
   no_probability_blending: true,
   combined_policy: {
+    data_insufficient_has_priority: true,
     v_core_and_g_core_requires_both_pass: true,
+    v_extension_caps_combined_at_watch: true,
+    g_only_research_allowed_outside_v_core: true,
+    g_only_maximum_combined_grade: "ㄆ",
+    g_only_label: "G1.1.1 單引擎研究候選",
+    v_only_maximum_combined_grade: "ㄆ",
+    v_only_label: "V3.1.1 通過・G1.1.1 Gate 未通過",
+    v_and_g_label: "V3.1.1 × G1.1.1 雙引擎候選",
     dual_side_conflict_blocks_combined_b: true,
+    dual_side_conflict_grade: "ㄆ",
+    dual_side_conflict_label: "雙邊價值衝突・停止主要場次",
     formal_stake_fraction: 0,
   },
-  ui_policy: { official_main_max: 1, priority_display_max: 2, priority_display_is_not_official_g1_grade: true },
+  ui_policy: { official_main_target: 2, official_main_max: 3, priority_display_max: 2, priority_display_is_not_official_g1_grade: true },
 };
 
 function coordinationPolicy() { return runtimeCoordination || FALLBACK_COORDINATION; }
 function activeModelLabel() { return `V${modelV().version} × G${modelG().version}`; }
 function activeRevisionLabel() { return `${modelV().revision_id || `V${modelV().version}`}・${modelG().revision_id || `G${modelG().version}`}`; }
+function vCoreOddsScope() { return modelV().core_odds_scope || modelV().odds_scope; }
 
-function validateLoadedModelConfig(engine, config) {
+function validateLoadedModelConfig(engine, config, entry) {
   if (!config || typeof config !== "object") throw new Error(`${engine} config must be an object`);
   if (config.engine_id !== engine) throw new Error(`${engine} config engine_id mismatch`);
   if (!config.version) throw new Error(`${engine} config missing version`);
-  if (engine === "V" && !Array.isArray(config.price_policy?.price_segments)) throw new Error("V3.1 config missing price segments");
+  if (String(config.version) !== String(entry?.version)) throw new Error(`${engine} config version mismatch`);
+  if (entry?.revision_id && config.revision_id !== entry.revision_id) throw new Error(`${engine} config revision mismatch`);
+  if (engine === "V" && !Array.isArray(config.price_policy?.price_segments)) throw new Error("V config missing price segments");
+  if (engine === "V" && !config.core_odds_scope && !config.odds_scope) throw new Error("V config missing core odds scope");
   if (engine === "G" && !Array.isArray(config.price_bands)) throw new Error("G1 config missing price bands");
+  return config;
+}
+
+function validateLoadedCoordinationConfig(config, entry, vEntry, gEntry) {
+  if (!config || typeof config !== "object") throw new Error("coordination config must be an object");
+  if (config.coordination_id !== entry?.coordination_id) throw new Error("coordination id mismatch");
+  if (String(config.version) !== String(entry?.version)) throw new Error("coordination version mismatch");
+  if (String(config.engine_versions?.V) !== String(vEntry?.version)) throw new Error("coordination V version mismatch");
+  if (String(config.engine_versions?.G) !== String(gEntry?.version)) throw new Error("coordination G version mismatch");
+  const policy = config.combined_policy || {};
+  if (policy.v_core_and_g_core_requires_both_pass !== true) throw new Error("coordination must require both engines for combined B");
+  if (policy.v_extension_caps_combined_at_watch !== true) throw new Error("coordination must cap V extensions at watch");
+  if (policy.formal_stake_fraction !== 0) throw new Error("formal stake must remain zero");
   return config;
 }
 
@@ -80,10 +107,10 @@ async function loadModelRegistry() {
     const [vConfig, gConfig, coordinationConfig] = await Promise.all(requests);
     runtimeModelRegistry = {
       manifest,
-      V: validateLoadedModelConfig("V", vConfig),
-      G: validateLoadedModelConfig("G", gConfig),
+      V: validateLoadedModelConfig("V", vConfig, vEntry),
+      G: validateLoadedModelConfig("G", gConfig, gEntry),
     };
-    runtimeCoordination = coordinationConfig;
+    runtimeCoordination = validateLoadedCoordinationConfig(coordinationConfig, coordinationEntry, vEntry, gEntry);
     modelRegistryLoadState = { status: "loaded", error: null, loaded_at: new Date().toISOString() };
   } catch (error) {
     runtimeModelRegistry = { manifest: {}, V: FALLBACK_V31, G: FALLBACK_G1_FINAL };
@@ -135,15 +162,15 @@ function engineMinimumOdds(candidate, margin) {
     : null;
 }
 
-function baseGradeFromGap(candidate, odds, margin, watchMin = -3) {
+function baseGradeFromGap(candidate, odds, margin, grading = {}) {
   if (candidate.game.confidence === "不足" || candidate.game.newsRisk >= 3 || candidate.target.conservative === null) return "資料不足";
   const value = edge(candidate, odds);
   if (value === null) return "資料不足";
-  if (value < 0) return "不支持";
+  if (value < (grading.edge_support_min_pp ?? 0)) return "不支持";
   const gap = engineGap(candidate, odds, margin);
   if (margin == null) return "ㄆ";
-  if (gap >= 0) return "ㄅ";
-  if (gap >= watchMin) return "ㄆ";
+  if (gap >= (grading.b_gap_min_pp ?? 0)) return "ㄅ";
+  if (gap >= (grading.watch_gap_min_pp ?? -3)) return "ㄆ";
   return "ㄇ";
 }
 
@@ -156,7 +183,7 @@ function applyRiskCap(candidate, grade) {
 
 function vDecision(candidate, odds = candidate.target.odds) {
   const segment = vPriceSegment(odds);
-  let grade = baseGradeFromGap(candidate, odds, segment.required_margin_pp, modelV().grading?.watch_gap_min_pp ?? -3);
+  let grade = baseGradeFromGap(candidate, odds, segment.required_margin_pp, modelV().grading);
   grade = applyRiskCap(candidate, grade);
   let conclusion = gradeInfo[grade]?.label || grade;
   if (grade !== "資料不足" && grade !== "不支持") {
@@ -176,7 +203,7 @@ function vDecision(candidate, odds = candidate.target.odds) {
 
 function gDecision(candidate, odds = candidate.target.odds) {
   const segment = gPriceSegment(odds);
-  let grade = baseGradeFromGap(candidate, odds, segment.required_margin_pp, modelG().grading?.watch_gap_min_pp ?? -3);
+  let grade = baseGradeFromGap(candidate, odds, segment.required_margin_pp, modelG().grading);
   grade = applyRiskCap(candidate, grade);
   let conclusion = gradeInfo[grade]?.label || grade;
   if (grade !== "資料不足" && grade !== "不支持") {
@@ -201,11 +228,25 @@ function dualSideConflict(candidate) {
 function coordinationDecision(candidate, odds = candidate.target.odds) {
   const v = vDecision(candidate, odds);
   const g = gDecision(candidate, odds);
-  if (dualSideConflict(candidate)) return { grade: "ㄆ", label: "雙邊價值衝突・停止主要場次", tone: "watch", v, g };
-  if (v.segment.id === "core" && v.grade === "ㄅ" && g.grade === "ㄅ") return { grade: "ㄅ", label: "V3.1 × G1 雙引擎通過", tone: "qualified", v, g };
-  if (g.grade === "ㄅ") return { grade: "ㄅ", label: "G1 通過・V3.1 獨立顯示", tone: "qualified", v, g };
-  if (v.grade === "ㄅ") return { grade: "ㄆ", label: "V3.1 通過・G1 Gate 未通過", tone: "watch", v, g };
-  if (g.grade === "資料不足" || v.grade === "資料不足") return { grade: "資料不足", label: "資料不足", tone: "insufficient", v, g };
+  const policy = coordinationPolicy().combined_policy || {};
+  if (policy.data_insufficient_has_priority !== false && (g.grade === "資料不足" || v.grade === "資料不足")) {
+    return { grade: "資料不足", label: "資料不足", tone: "insufficient", v, g };
+  }
+  if (dualSideConflict(candidate)) {
+    const grade = policy.dual_side_conflict_grade || "ㄆ";
+    return { grade, label: policy.dual_side_conflict_label || "雙邊價值衝突・停止主要場次", tone: gradeInfo[grade]?.tone || "watch", v, g };
+  }
+  if (v.segment.id === "core" && v.grade === "ㄅ" && g.grade === "ㄅ") {
+    return { grade: "ㄅ", label: policy.v_and_g_label || `${activeModelLabel()} 雙引擎候選`, tone: "qualified", v, g };
+  }
+  if (g.grade === "ㄅ") {
+    const grade = policy.g_only_maximum_combined_grade || "ㄆ";
+    return { grade, label: policy.g_only_label || `G${modelG().version} 單引擎研究候選`, tone: gradeInfo[grade]?.tone || "watch", v, g };
+  }
+  if (v.grade === "ㄅ") {
+    const grade = policy.v_only_maximum_combined_grade || "ㄆ";
+    return { grade, label: policy.v_only_label || `V${modelV().version} 通過・G Gate 未通過`, tone: gradeInfo[grade]?.tone || "watch", v, g };
+  }
   if (g.grade === "不支持" && v.grade === "不支持") return { grade: "不支持", label: "雙引擎皆不支持", tone: "reject", v, g };
   const order = { "ㄅ": 4, "ㄆ": 3, "ㄇ": 2, "不支持": 1, "資料不足": 0 };
   const grade = order[g.grade] <= order[v.grade] ? g.grade : v.grade;
@@ -399,6 +440,37 @@ function showDetail(candidate) {
   $("#detailModal").showModal();
 }
 
+function upsertDownloadLink(container, id, text, href, beforeNode = null) {
+  let link = container.querySelector(`a[data-download-id="${id}"]`);
+  if (!link) {
+    link = document.createElement("a");
+    link.dataset.downloadId = id;
+    link.setAttribute("download", "");
+    if (beforeNode) container.insertBefore(link, beforeNode);
+    else container.append(link);
+  }
+  link.href = href;
+  link.textContent = text;
+  return link;
+}
+
+function refreshRuleDownloads(panel, manifest) {
+  const container = panel.querySelector(".downloads");
+  if (!container) return;
+  const legacyLinks = Array.from(container.querySelectorAll("a:not([data-download-id])"));
+  if (legacyLinks[0]) legacyLinks[0].dataset.downloadId = "v-spec";
+  if (legacyLinks[1]) legacyLinks[1].dataset.downloadId = "g-spec";
+  if (legacyLinks[2]) legacyLinks[2].dataset.downloadId = "source-registry";
+  if (legacyLinks[3]) legacyLinks[3].dataset.downloadId = "source-json";
+
+  const firstLink = container.querySelector("a");
+  const completeSpec = manifest.release?.complete_rules?.spec || "models/releases/v3.1.1-g1.1.1-complete/spec.md";
+  upsertDownloadLink(container, "complete-rules", "下載完整統整規則", `./${completeSpec}`, firstLink);
+  upsertDownloadLink(container, "v-spec", `下載 V${modelV().version} 規格`, `./${manifest.active?.V?.spec || "models/v3/3.1.1/spec.md"}`);
+  upsertDownloadLink(container, "g-spec", `下載 G${modelG().version} 規格`, `./${manifest.active?.G?.spec || "models/g1/1.1.1/spec.md"}`);
+  upsertDownloadLink(container, "coordination-spec", "下載協調層規格", `./${manifest.coordination?.spec || "models/coordination/v3.1.1-g1.1.1/spec.md"}`);
+}
+
 function renderModelRegistryStatus() {
   const panel = document.querySelector('[data-panel="sources"]');
   if (!panel || document.querySelector("#modelRegistryStatus")) return;
@@ -407,24 +479,26 @@ function renderModelRegistryStatus() {
   section.id = "modelRegistryStatus";
   section.className = "storage-card";
   const loaded = modelRegistryLoadState.status === "loaded";
+  const manifest = runtimeModelRegistry.manifest || {};
+  refreshRuleDownloads(panel, manifest);
   section.innerHTML = `
     <div><span class="eyebrow">MODEL REGISTRY V4.6</span><h2>${activeModelLabel()}・${loaded ? "已載入新版 Registry" : "使用安全預設"}</h2>
     <p>${activeRevisionLabel()}。兩套引擎分開判定，不做未驗證的勝率平均；網站協調層只負責顯示與候選分類。</p></div>
     <div class="registry-grid">
       <article class="registry-card ${loaded ? "licensed" : "restricted"}"><div><span>V ENGINE</span><em>V${modelV().version}</em></div><h2>Prediction／Odds Evaluation 分離</h2><dl>
-        <div><dt>核心區</dt><dd>${modelV().odds_scope.min.toFixed(2)}～${modelV().odds_scope.max.toFixed(2)}</dd></div>
+        <div><dt>核心區</dt><dd>${vCoreOddsScope().min.toFixed(2)}～${vCoreOddsScope().max.toFixed(2)}</dd></div>
         <div><dt>Stage 0～2 邊際</dt><dd>${modelV().required_margin_pp.toFixed(1)}pp</dd></div>
         <div><dt>T-24h</dt><dd>最高 ㄆ級</dd></div>
         <div><dt>修訂</dt><dd>${modelV().revision_id || "—"}</dd></div>
       </dl></article>
-      <article class="registry-card ${loaded ? "licensed" : "restricted"}"><div><span>G ENGINE</span><em>G${modelG().version}</em></div><h2>雙向 Gate 與 0～1 場主要場次</h2><dl>
+      <article class="registry-card ${loaded ? "licensed" : "restricted"}"><div><span>G ENGINE</span><em>G${modelG().version}</em></div><h2>雙向 Gate 與多主要場次</h2><dl>
         <div><dt>核心研究區</dt><dd>1.35～2.20</dd></div>
         <div><dt>主要覆蓋率</dt><dd>≥ ${modelG().core_gate.coverage_min_pct}%</dd></div>
         <div><dt>比較來源</dt><dd>≥ ${modelG().core_gate.comparison_sources_min} 家</dd></div>
         <div><dt>修訂</dt><dd>${modelG().revision_id || "—"}</dd></div>
       </dl></article>
       <article class="registry-card licensed"><div><span>COORDINATION</span><em>${coordinationPolicy().version}</em></div><h2>不混合勝率，只協調顯示</h2><dl>
-        <div><dt>正式主要場次</dt><dd>0～1 場</dd></div>
+        <div><dt>正式主要場次</dt><dd>目標 ${coordinationPolicy().ui_policy?.official_main_target ?? 2}・最多 ${coordinationPolicy().ui_policy?.official_main_max ?? 3} 場</dd></div>
         <div><dt>網站優先候選</dt><dd>最多 ${coordinationPolicy().ui_policy?.priority_display_max ?? 2} 場</dd></div>
         <div><dt>正式投注額</dt><dd>0</dd></div>
       </dl></article>

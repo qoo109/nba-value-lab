@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V4.10 history writer supporting immutable G1.0 and new G1.1 records."""
+"""V4.10 history writer for registered V3.1 and G1 family records."""
 
 from __future__ import annotations
 
@@ -15,12 +15,7 @@ _ORIGINAL_VALIDATE = base.validate
 
 
 def validate(record: dict[str, Any]) -> None:
-    version = str(record.get("model_g"))
-    if version not in {"1.0", "1.1"}:
-        raise ValueError("model_g must be a registered G1.0 or G1.1 version")
-    compatible = dict(record)
-    compatible["model_g"] = "1.0"
-    _ORIGINAL_VALIDATE(compatible)
+    _ORIGINAL_VALIDATE(record)
 
 
 base.validate = validate
@@ -36,15 +31,17 @@ def evaluation_time(record: dict[str, Any]) -> str:
 def rebuild_index(records: list[dict[str, Any]]) -> None:
     ordered = sorted(records, key=evaluation_time, reverse=True)
     approximate_bytes = sum(len(json.dumps(item, ensure_ascii=False).encode("utf-8")) + 1 for item in records)
+    manifest = json.loads((ROOT / "models" / "manifest.json").read_text(encoding="utf-8"))
     payload = {
-        "schema_version": "1.3.0",
+        "schema_version": manifest["compatibility"]["prediction_record_schema"],
         "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "storage_policy": "compact_append_only",
         "active_models": {
-            "V": "3.1",
-            "G": "1.1",
-            "G_revision": "G1.1-MAIN2-MAX3-20260716",
-            "coordination": "V3.1_X_G1.1-MAIN2-MAX3-20260716",
+            "V": str(manifest["active"]["V"]["version"]),
+            "V_revision": manifest["active"]["V"]["revision_id"],
+            "G": str(manifest["active"]["G"]["version"]),
+            "G_revision": manifest["active"]["G"]["revision_id"],
+            "coordination": manifest["coordination"]["coordination_id"],
         },
         "record_count": len({item["prediction_id"] for item in records}),
         "price_evaluation_count": len({item["price_evaluation_id"] for item in records}),

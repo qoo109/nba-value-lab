@@ -82,7 +82,7 @@ def find_segment(segments: list[dict[str, Any]], odds: float, outside_label: str
     }
 
 
-def base_grade(candidate: dict[str, Any], margin_pp: float | None, watch_gap_min_pp: float) -> tuple[str, float | None, float | None]:
+def base_grade(candidate: dict[str, Any], margin_pp: float | None, grading: dict[str, Any]) -> tuple[str, float | None, float | None]:
     if (
         candidate["analysis_gate_status"] == "資料不足"
         or candidate["confidence"] == "資料不足"
@@ -94,12 +94,15 @@ def base_grade(candidate: dict[str, Any], margin_pp: float | None, watch_gap_min
     odds = candidate["target_odds"]
     break_even = 1 / odds
     edge_pp = (p_c - break_even) * 100
-    if edge_pp < 0:
+    edge_support_min_pp = float(grading.get("edge_support_min_pp", 0))
+    b_gap_min_pp = float(grading.get("b_gap_min_pp", 0))
+    watch_gap_min_pp = float(grading.get("watch_gap_min_pp", -3))
+    if edge_pp < edge_support_min_pp:
         return "不支持", edge_pp, None if margin_pp is None else edge_pp - margin_pp
     if margin_pp is None:
         return "ㄆ", edge_pp, None
     gap_pp = edge_pp - margin_pp
-    if gap_pp >= 0:
+    if gap_pp >= b_gap_min_pp:
         grade = "ㄅ"
     elif gap_pp >= watch_gap_min_pp:
         grade = "ㄆ"
@@ -113,7 +116,7 @@ def base_grade(candidate: dict[str, Any], margin_pp: float | None, watch_gap_min
 
 def v_decision(candidate: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     segment = find_segment(config["price_policy"]["price_segments"], candidate["target_odds"], config["price_policy"].get("outside_conclusion", "範圍外"))
-    grade, edge_pp, gap_pp = base_grade(candidate, segment.get("required_margin_pp"), config["grading"].get("watch_gap_min_pp", -3))
+    grade, edge_pp, gap_pp = base_grade(candidate, segment.get("required_margin_pp"), config["grading"])
     conclusion = grade
     if grade not in {"資料不足", "不支持"}:
         if segment["id"] == "extreme_low_excluded":
@@ -145,7 +148,7 @@ def v_decision(candidate: dict[str, Any], config: dict[str, Any]) -> dict[str, A
 
 def g_decision(candidate: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     segment = find_segment(config["price_bands"], candidate["target_odds"], "只記錄")
-    grade, edge_pp, gap_pp = base_grade(candidate, segment.get("required_margin_pp"), config["grading"].get("watch_gap_min_pp", -3))
+    grade, edge_pp, gap_pp = base_grade(candidate, segment.get("required_margin_pp"), config["grading"])
     conclusion = grade
     if grade not in {"資料不足", "不支持"}:
         if segment.get("required_margin_pp") is None:
@@ -176,8 +179,11 @@ def load_active_configs() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any
     v_config = load_json(ROOT / v_entry["config"])
     g_config = load_json(ROOT / g_entry["config"])
     coordination = load_json(ROOT / coordination_entry["config"])
-    require(str(v_config["version"]) == "3.1", "active V model must be 3.1")
-    require(str(g_config["version"]) == "1.0", "active G model must be 1.0")
+    require(str(v_config.get("version")) == str(v_entry.get("version")), "active V config version mismatch")
+    require(str(g_config.get("version")) == str(g_entry.get("version")), "active G config version mismatch")
+    require(v_config.get("revision_id") == v_entry.get("revision_id"), "active V revision mismatch")
+    require(g_config.get("revision_id") == g_entry.get("revision_id"), "active G revision mismatch")
+    require(coordination.get("coordination_id") == coordination_entry.get("coordination_id"), "active coordination config mismatch")
     return manifest, v_config, g_config, coordination
 
 
@@ -286,20 +292,41 @@ def ranking_key(item: dict[str, Any]) -> tuple[Any, ...]:
     )
 
 
-def coordination_label(v: dict[str, Any], g: dict[str, Any], dual_conflict: bool) -> str:
+def coordination_decision(
+    v: dict[str, Any],
+    g: dict[str, Any],
+    dual_conflict: bool,
+    coordination: dict[str, Any],
+) -> dict[str, str]:
+    policy = coordination.get("combined_policy", {})
+    if policy.get("data_insufficient_has_priority", True) and (g["grade"] == "資料不足" or v["grade"] == "資料不足"):
+        return {"grade": "資料不足", "label": "資料不足"}
     if dual_conflict:
-        return "雙邊價值衝突・停止主要場次"
+        return {
+            "grade": policy.get("dual_side_conflict_grade", "ㄆ"),
+            "label": policy.get("dual_side_conflict_label", "雙邊價值衝突・停止主要場次"),
+        }
     if v["segment"]["id"] == "core" and v["grade"] == "ㄅ" and g["grade"] == "ㄅ":
-        return "V3.1 × G1 雙引擎通過"
+        return {"grade": "ㄅ", "label": policy.get("v_and_g_label", "V × G 雙引擎候選")}
     if g["grade"] == "ㄅ":
-        return "G1 通過・V3.1 獨立顯示"
+        return {
+            "grade": policy.get("g_only_maximum_combined_grade", "ㄆ"),
+            "label": policy.get("g_only_label", "G 單引擎研究候選"),
+        }
     if v["grade"] == "ㄅ":
-        return "V3.1 通過・G1 Gate 未通過"
-    if g["grade"] == "資料不足" or v["grade"] == "資料不足":
-        return "資料不足"
+        return {
+            "grade": policy.get("v_only_maximum_combined_grade", "ㄆ"),
+            "label": policy.get("v_only_label", "V 通過・G Gate 未通過"),
+        }
     if g["grade"] == "不支持" and v["grade"] == "不支持":
-        return "雙引擎皆不支持"
-    return f"V：{v['conclusion']}・G：{g['conclusion']}"
+        return {"grade": "不支持", "label": "雙引擎皆不支持"}
+    order = {"ㄅ": 4, "ㄆ": 3, "ㄇ": 2, "不支持": 1, "資料不足": 0}
+    grade = g["grade"] if order[g["grade"]] <= order[v["grade"]] else v["grade"]
+    return {"grade": grade, "label": f"V：{v['conclusion']}・G：{g['conclusion']}"}
+
+
+def coordination_label(v: dict[str, Any], g: dict[str, Any], dual_conflict: bool, coordination: dict[str, Any]) -> str:
+    return coordination_decision(v, g, dual_conflict, coordination)["label"]
 
 
 def build_ids(candidate: dict[str, Any], top: dict[str, Any], manifest: dict[str, Any]) -> tuple[str, str]:
@@ -334,6 +361,7 @@ def make_record(item: dict[str, Any], top: dict[str, Any], manifest: dict[str, A
     candidate = item["candidate"]
     v = item["v"]
     g = item["g"]
+    combined = item["coordination"]
     prediction_id, price_id = build_ids(candidate, top, manifest)
     is_main = prediction_id == main_id
     no_vig = (1 / candidate["target_odds"]) / ((1 / candidate["target_odds"]) + (1 / candidate["opponent_odds"]))
@@ -385,7 +413,8 @@ def make_record(item: dict[str, Any], top: dict[str, Any], manifest: dict[str, A
         "g_grade": g["grade"],
         "v_conclusion": v["conclusion"],
         "g_conclusion": g["conclusion"],
-        "coordination_label": coordination_label(v, g, item["dual_conflict"]),
+        "coordination_grade": combined["grade"],
+        "coordination_label": combined["label"],
         "dual_side_conflict": item["dual_conflict"],
         "main_candidate": is_main,
         "main_status": main_status,
@@ -478,7 +507,8 @@ def run(input_path: Path, *, dry_run: bool, output_path: Path | None = None) -> 
         g = g_decision(candidate, g_config)
         dual_conflict = game_g_grades[candidate["game_id"]] == ["ㄅ", "ㄅ"] or sorted(game_g_grades[candidate["game_id"]]) == ["ㄅ", "ㄅ"]
         gates = gate_results(candidate, g_config, g, dual_conflict)
-        items.append({"candidate": candidate, "v": v, "g": g, "dual_conflict": dual_conflict, "gates": gates})
+        combined = coordination_decision(v, g, dual_conflict, coordination)
+        items.append({"candidate": candidate, "v": v, "g": g, "coordination": combined, "dual_conflict": dual_conflict, "gates": gates})
 
     qualified = [item for item in items if item["g"]["grade"] == "ㄅ" and not item["dual_conflict"]]
     main_eligible = [item for item in qualified if all(item["gates"].values())]

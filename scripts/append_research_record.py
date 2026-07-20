@@ -65,10 +65,10 @@ def validate(record: dict[str, Any]) -> None:
     missing = sorted(REQUIRED - record.keys())
     if missing:
         raise ValueError(f"missing required fields: {', '.join(missing)}")
-    if str(record["model_v"]) != "3.1":
-        raise ValueError("model_v must be 3.1 for the active compact schema")
-    if str(record["model_g"]) != "1.0":
-        raise ValueError("model_g must be 1.0 for the active compact schema")
+    if str(record["model_v"]) not in {"3.1", "3.1.1"}:
+        raise ValueError("model_v must be a registered V3.1 family version")
+    if str(record["model_g"]) not in {"1.0", "1.1", "1.1.1"}:
+        raise ValueError("model_g must be a registered G1 family version")
     if record["evaluation_stage"] not in VALID_STAGES:
         raise ValueError("invalid evaluation_stage")
     if record["v_grade"] not in VALID_GRADES or record["g_grade"] not in VALID_GRADES:

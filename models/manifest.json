@@ -1,31 +1,45 @@
 {
   "schema_version": 2,
-  "registry_version": "1.2.0",
-  "updated_at": "2026-07-16T15:30:00+08:00",
+  "registry_version": "1.3.0",
+  "updated_at": "2026-07-19T22:20:00+08:00",
   "active": {
     "V": {
       "engine_id": "V",
-      "version": "3.1",
-      "revision_id": "V3.1-20260716",
-      "config": "models/v3/3.1/config.json",
-      "spec": "models/v3/3.1/spec.md"
+      "version": "3.1.1",
+      "revision_id": "V3.1.1-20260719",
+      "config": "models/v3/3.1.1/config.json",
+      "spec": "models/v3/3.1.1/spec.md"
     },
     "G": {
       "engine_id": "G",
-      "version": "1.1",
-      "revision_id": "G1.1-MAIN2-MAX3-20260716",
-      "config": "models/g1/1.1-main-2-max-3/config.json",
-      "spec": "models/g1/1.1-main-2-max-3/spec.md"
+      "version": "1.1.1",
+      "revision_id": "G1.1.1-20260719",
+      "config": "models/g1/1.1.1/config.json",
+      "spec": "models/g1/1.1.1/spec.md"
     }
   },
   "coordination": {
-    "coordination_id": "V3.1_X_G1.1-MAIN2-MAX3-20260716",
-    "version": "1.1.0",
-    "config": "models/coordination/v3.1-g1.1-main-2-max-3/config.json"
+    "coordination_id": "V3.1.1_X_G1.1.1-20260719",
+    "version": "1.2.0",
+    "config": "models/coordination/v3.1.1-g1.1.1/config.json",
+    "spec": "models/coordination/v3.1.1-g1.1.1/spec.md"
+  },
+  "release": {
+    "complete_rules": {
+      "release_id": "NVL-RULES-V3.1.1-G1.1.1-C1.2.0-20260719",
+      "version": "1.0.0",
+      "config": "models/releases/v3.1.1-g1.1.1-complete/config.json",
+      "spec": "models/releases/v3.1.1-g1.1.1-complete/spec.md",
+      "includes": [
+        "models/v3/3.1.1/spec.md",
+        "models/g1/1.1.1/spec.md",
+        "models/coordination/v3.1.1-g1.1.1/spec.md"
+      ]
+    }
   },
   "compatibility": {
     "frontend_min": "4.10.0",
-    "prediction_record_schema": "1.2.0",
+    "prediction_record_schema": "1.3.0",
     "requires_separate_engine_grades": true,
     "supports_multiple_main_selections": true
   },

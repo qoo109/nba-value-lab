@@ -33,7 +33,7 @@
   function ensureMarketTableSorting() {
     if (qs('script[data-market-table-sort]')) return;
     const script = document.createElement("script");
-    script.src = "./js/market-table-sort.js?v=20260720a";
+    script.src = "./js/market-table-sort.js?v=20260720b";
     script.defer = true;
     script.setAttribute("data-market-table-sort", "true");
     document.head.appendChild(script);

@@ -156,7 +156,11 @@ async function init() {
   await initT60LockStatus();
   if (v5Ready) window.NBAVL.v5.afterRender();
   const bookmakerInput = $("#bookmakerInput");
-  bookmakerInput?.closest("label")?.remove();
+  const bookmakerLabel = bookmakerInput?.closest("label");
+  if (bookmakerLabel) {
+    bookmakerLabel.hidden = true;
+    bookmakerLabel.setAttribute("aria-hidden", "true");
+  }
   bindEvents();
   updateCalculator(true);
   await loadCurrentResearchStatus();

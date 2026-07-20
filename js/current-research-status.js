@@ -2,7 +2,7 @@
 
 (function () {
   const STATUS = {
-    appVersion: "V5.3.18",
+    appVersion: "V5.3.20",
     model: "V3.1 x G1.1",
     updated: "2026-07-20",
     state: "Research Candidate / Pre-Market-Backtest",

@@ -83,7 +83,7 @@ function loadV49LockStatus() {
 
 function loadCurrentResearchStatus() {
   return loadScriptOnce(
-    "./js/current-research-status.js?v=20260720m",
+    "./js/current-research-status.js?v=20260720n",
     "data-current-research-status",
     () => document.documentElement.dataset.currentResearchStatus === "applied",
   );
@@ -103,7 +103,7 @@ async function loadV5Ui() {
     loadStylesheetOnce("./css/v5-density-v53.css?v=5.3", "data-v53-density"),
     loadStylesheetOnce("./css/v5-decision-group-v532.css?v=5.3.2", "data-v532-decision-group"),
     loadStylesheetOnce("./css/v5-explanations-v533.css?v=5.3.3", "data-v533-explanations"),
-    loadStylesheetOnce("./css/market-table-flat.css?v=5.3.19", "data-v5319-market-table-flat"),
+    loadStylesheetOnce("./css/market-table-flat.css?v=5.3.20", "data-v5320-market-table-flat"),
   ]);
   await loadScriptOnce("./js/v5/core/namespace.js?v=5.2", "data-v5-namespace", () => Boolean(window.NBAVL?.v5));
   await loadScriptOnce("./js/v5/utils/format.js?v=5.2", "data-v5-format", () => Boolean(window.NBAVL?.v5?.modules?.format));
@@ -166,7 +166,7 @@ async function init() {
   updateCalculator(true);
   await loadCurrentResearchStatus();
   document.documentElement.dataset.modelVersion = activeModelLabel();
-  document.documentElement.dataset.appVersion = v5Ready ? "V5.3.18" : "V4.10";
+  document.documentElement.dataset.appVersion = v5Ready ? "V5.3.20" : "V4.10";
 }
 
 init().catch((error) => {

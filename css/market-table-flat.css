@@ -31,17 +31,34 @@
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--v5-shadow-sm, 0 8px 24px rgba(19, 36, 60, .06));
+  background-clip: padding-box;
   -webkit-overflow-scrolling: touch;
 }
 
 .market-table-section .market-table {
   max-width: none;
-  border-top: 1px solid var(--line-strong);
-  border-bottom: 1px solid var(--line);
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.market-table-section .market-table thead th:first-child {
+  border-top-left-radius: 17px;
+}
+
+.market-table-section .market-table thead th:last-child {
+  border-top-right-radius: 17px;
+}
+
+.market-table-section .market-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 17px;
+}
+
+.market-table-section .market-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 17px;
 }
 
 .market-table-section .market-table tbody tr:last-child td {

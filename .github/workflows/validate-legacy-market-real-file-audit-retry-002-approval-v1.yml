@@ -1,0 +1,109 @@
+name: Validate legacy market real-file audit retry 002 approval v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/legacy-market-real-file-audit-retry-request-002-v1.json"
+      - "data/research/legacy-market-real-file-audit-retry-002-approval-v1.json"
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json"
+      - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
+      - "scripts/validate_legacy_market_real_file_audit_retry_002_approval_v1.py"
+      - "scripts/run_legacy_market_real_file_audit_retry_002_v1.py"
+      - "scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py"
+      - "scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py"
+      - ".github/workflows/validate-legacy-market-real-file-audit-retry-002-approval-v1.yml"
+      - ".github/workflows/run-approved-legacy-market-real-file-audit-retry-002-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-legacy-market-real-file-audit-retry-002-approval-v1-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  approval-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile retry approval and execution path
+        run: |
+          python -m py_compile \
+            scripts/validate_legacy_market_real_file_audit_retry_002_approval_v1.py \
+            scripts/run_legacy_market_real_file_audit_retry_002_v1.py \
+            scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py \
+            scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py \
+            scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py
+
+      - name: Validate explicit approval and negative tests
+        run: |
+          rm -rf /tmp/nbavl-legacy-market-retry-002-approval
+          mkdir -p /tmp/nbavl-legacy-market-retry-002-approval
+          python scripts/validate_legacy_market_real_file_audit_retry_002_approval_v1.py \
+            --request data/research/legacy-market-real-file-audit-retry-request-002-v1.json \
+            --approval data/research/legacy-market-real-file-audit-retry-002-approval-v1.json \
+            --implementation data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json \
+            --current-status data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json \
+            --self-test \
+            --output /tmp/nbavl-legacy-market-retry-002-approval/approval-validation-report.json
+
+      - name: Run repaired executor synthetic-only self-test
+        run: |
+          python scripts/run_legacy_market_real_file_audit_retry_002_v1.py \
+            --request data/research/legacy-market-real-file-audit-retry-request-002-v1.json \
+            --approval data/research/legacy-market-real-file-audit-retry-002-approval-v1.json \
+            --implementation data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json \
+            --current-status data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json \
+            --policy data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json \
+            --self-test \
+            --output /tmp/nbavl-legacy-market-retry-002-approval/executor-self-test.json
+
+      - name: Enforce approval-only and aggregate-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-legacy-market-retry-002-approval')
+          approval = json.loads((root / 'approval-validation-report.json').read_text())
+          executor = json.loads((root / 'executor-self-test.json').read_text())
+          assert approval['formal_state'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_002_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH', approval
+          assert approval['checks_failed'] == 0, approval
+          assert all(approval['self_tests'].values()), approval
+          assert approval['ready_for_one_time_aggregate_execution'] is True, approval
+          assert approval['ready_for_repeat_execution'] is False, approval
+          assert approval['network_calls_made'] is False, approval
+          assert approval['real_candidate_csv_read'] is False, approval
+          assert approval['real_reference_database_read'] is False, approval
+          assert approval['raw_rows_emitted'] == 0, approval
+          assert approval['raw_files_emitted'] is False, approval
+          assert approval['formal_stake'] == 0, approval
+          assert executor['formal_state'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_002_EXECUTOR_SELF_TEST_PASS', executor
+          assert executor['request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002', executor
+          assert executor['reference_root_regression_test'] is True, executor
+          assert executor['network_calls_made'] is False, executor
+          assert executor['real_file_audit_executed'] is False, executor
+          assert executor['boundaries']['raw_rows_emitted'] == 0, executor
+          assert executor['boundaries']['raw_files_emitted'] is False, executor
+          assert executor['boundaries']['point_in_time_market_backtest'] is False, executor
+          assert executor['boundaries']['model_training_or_retraining'] is False, executor
+          assert executor['boundaries']['formal_stake'] == 0, executor
+          PY
+
+      - name: Upload aggregate-only retry approval evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-market-real-file-audit-retry-002-approval-v1
+          path: |
+            /tmp/nbavl-legacy-market-retry-002-approval/approval-validation-report.json
+            /tmp/nbavl-legacy-market-retry-002-approval/executor-self-test.json
+          retention-days: 14
+          if-no-files-found: error

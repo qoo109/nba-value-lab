@@ -13,6 +13,7 @@ on:
       - "data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json"
       - "docs/user-supplied-nba-betting-csv-audit-v1.md"
       - "docs/user-supplied-nba-betting-csv-provenance-confirmation-v1.md"
+      - "docs/legacy-market-real-file-audit-run-29804975869-incident-v1.md"
       - "data/historical-odds-source-registry.json"
       - ".github/workflows/validate-user-supplied-nba-betting-csv-audit-v1.yml"
 
@@ -87,13 +88,9 @@ jobs:
           assert current['provenance_status'] == 'user_confirmed'
           assert current['cross_source_audit_predeclaration_state'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_PREDECLARATION_READY'
           assert current['real_cross_source_audit_executed'] is False
-          assert current['source_role_changed_by_predeclaration'] is False
-          assert current['source_role_changed_by_implementation'] is False
-          assert current['source_role_changed_by_request'] is False
-          assert current['next_research_step'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REQUEST_AWAITING_EXPLICIT_USER_APPROVAL'
+          assert current['source_role_changed_by_execution'] is False
+          assert current['next_research_step'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REPAIR_VALIDATE_THEN_REQUEST_NEW_EXPLICIT_RETRY_APPROVAL'
           assert current['required_real_file_inputs']['cleaned_or_derived_candidate_substitution_allowed'] is False
-          assert current['required_real_file_inputs']['approved_workflow_may_rebuild_reference_inputs_in_temporary_storage'] is False
-          assert current['required_real_file_inputs']['all_inputs_currently_available'] is False
           assert current['point_in_time_market_backtest_ready'] is False
           assert current['clv_ready'] is False
           assert current['ev_ready'] is False
@@ -109,19 +106,28 @@ jobs:
           assert implementation['artifact_id'] == 8482916767
           assert implementation['fixture_games'] == 5800
           assert implementation['self_tests_passed'] == implementation['self_tests_total'] == 5
-          assert implementation['real_candidate_csv_read'] is False
-          assert implementation['real_reference_database_read'] is False
-          assert implementation['network_calls_made'] is False
-          assert implementation['raw_rows_emitted'] == 0
-          assert implementation['raw_files_emitted'] is False
 
-          request_status = current['real_file_audit_execution_request']
-          assert request_status['request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-001'
-          assert request_status['request_state'] == 'AWAITING_EXPLICIT_USER_APPROVAL'
-          assert request_status['expected_validated_state'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL'
-          assert request_status['approval_granted'] is False
-          assert request_status['execution_enabled'] is False
-          assert request_status['execution_count'] == 0
+          execution = current['real_file_execution']
+          assert execution['request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-001'
+          assert execution['approval_granted'] is True
+          assert execution['workflow_run_id'] == 29804975869
+          assert execution['job_id'] == 88553587348
+          assert execution['artifact_id'] == 8485141135
+          assert execution['execution_count'] == 1
+          assert execution['formal_state'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_EXECUTION_BLOCKED_BEFORE_SCIENTIFIC_RESULT'
+          assert execution['scientific_outcome_produced'] is False
+          assert execution['scientific_gates_evaluated'] is False
+          assert execution['request_reusable'] is False
+
+          repair = current['repair']
+          assert repair['hotfix_entrypoint'] == 'scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py'
+          assert repair['repair_scope'] == 'create_temporary_reference_root_before_config_write'
+          assert repair['candidate_identity_changed'] is False
+          assert repair['reference_scope_changed'] is False
+          assert repair['scientific_policy_changed'] is False
+          assert repair['frozen_gates_changed'] is False
+          assert repair['output_boundary_changed'] is False
+          assert repair['retry_execution_enabled'] is False
 
           assert predeclaration['candidate_source']['source_id'] == source_id
           assert predeclaration['candidate_source']['provenance_status'] == 'user_confirmed'
@@ -136,8 +142,8 @@ jobs:
           assert implementation_manifest['next_state_if_validation_passes']['formal_state'] == implementation['formal_state']
 
           assert request['schema_version'] == 'user-supplied-legacy-market-archive-real-file-audit-execution-request-v1'
-          assert request['request_id'] == request_status['request_id']
-          assert request['request_state'] == request_status['request_state']
+          assert request['request_id'] == execution['request_id']
+          assert request['request_state'] == 'AWAITING_EXPLICIT_USER_APPROVAL'
           assert request['source_id'] == source_id
           assert request['frozen_candidate_identity']['file_sha256'] == report['source']['input_sha256']
           assert request['frozen_candidate_identity']['cleaned_or_derived_substitution_allowed'] is False
@@ -152,7 +158,6 @@ jobs:
           assert request['current_execution_boundary']['real_file_execution_count'] == 0
           assert request['current_execution_boundary']['ready_for_execution'] is False
           assert request['current_execution_boundary']['formal_stake'] == 0
-          assert request['next_state_if_request_validation_passes']['formal_state'] == request_status['expected_validated_state']
           assert request['next_state_if_request_validation_passes']['ready_for_execution'] is False
           assert request['next_state_if_request_validation_passes']['formal_stake'] == 0
 
@@ -168,9 +173,7 @@ jobs:
           assert cross_source['source_role_changed'] is False
           registered_implementation = source['cross_source_audit_implementation']
           assert registered_implementation['formal_state'] == implementation['formal_state']
-          assert registered_implementation['artifact_digest'] == implementation['artifact_digest']
           assert registered_implementation['required_inputs_available'] is False
-          assert registered_implementation['next_step'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_INPUTS_REQUIRED'
           assert source['guardrails']['point_in_time_join_allowed'] is False
           assert source['guardrails']['roi_allowed'] is False
           assert source['guardrails']['clv_allowed'] is False

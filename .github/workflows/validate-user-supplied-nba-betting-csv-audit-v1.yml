@@ -123,11 +123,23 @@ jobs:
           assert reconciliation['downstream_permissions']['ready_for_cross_source_audit_rerun'] is False, reconciliation
           assert reconciliation['downstream_permissions']['formal_stake'] == 0, reconciliation
 
-          assert registry['registry_version'] == '1.5.0', registry
+          assert registry['registry_version'] == '1.6.0', registry
           assert source['status'] == 'role_limited_legacy_market_archive_eligible', source
           assert source['provenance_status'] == 'user_confirmed', source
           assert source['file_evidence']['sha256'] == audit['source']['input_sha256'], source
           assert source['opening_closing_classified'] is False, source
+          registered_execution = source['cross_source_audit_execution']
+          assert registered_execution['workflow_run_id'] == 29810347326, registered_execution
+          assert registered_execution['real_file_audit_executed'] is True, registered_execution
+          assert registered_execution['all_scientific_gates_passed'] is True, registered_execution
+          assert registered_execution['formal_outcome'] == execution['formal_outcome'], registered_execution
+          assert registered_execution['missing_gold_for_silver'] == 2, registered_execution
+          assert registered_execution['request_consumed'] is True, registered_execution
+          assert registered_execution['repeat_execution_allowed'] is False, registered_execution
+          registered_coverage = source['coverage_reconciliation']
+          assert registered_coverage['formal_state'] == coverage['formal_state'], registered_coverage
+          assert registered_coverage['real_reference_rows_read'] is False, registered_coverage
+          assert registered_coverage['real_reconciliation_executed'] is False, registered_coverage
           assert source['guardrails']['point_in_time_join_allowed'] is False, source
           assert source['guardrails']['roi_allowed'] is False, source
           assert source['guardrails']['clv_allowed'] is False, source

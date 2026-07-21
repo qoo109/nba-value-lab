@@ -1,6 +1,6 @@
 {
   "schema_version": "user-supplied-nba-betting-csv-provenance-current-status-v1",
-  "updated_at": "2026-07-21T14:20:00+08:00",
+  "updated_at": "2026-07-21T14:25:00+08:00",
   "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
   "current_formal_outcome": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
   "provenance_status": "user_confirmed",
@@ -12,7 +12,7 @@
   "cross_source_audit_implementation": {
     "manifest": "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json",
     "runner": "scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py",
-    "formal_state": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_READY",
+    "formal_state": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_READY_BUT_REAL_FILE_EXECUTION_DISABLED",
     "workflow_run_id": 29798628467,
     "artifact_id": 8482916767,
     "fixture_games": 5800,

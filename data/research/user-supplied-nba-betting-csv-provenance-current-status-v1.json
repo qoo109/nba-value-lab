@@ -1,6 +1,6 @@
 {
   "schema_version": "user-supplied-nba-betting-csv-provenance-current-status-v1",
-  "updated_at": "2026-07-21T11:45:00+08:00",
+  "updated_at": "2026-07-21T19:55:00+08:00",
   "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
   "current_formal_outcome": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
   "provenance_status": "user_confirmed",
@@ -29,6 +29,18 @@
     "raw_files_emitted": false,
     "ready_for_separate_real_file_execution_request": true
   },
+  "real_file_audit_execution_request": {
+    "request": "data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json",
+    "documentation": "docs/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.md",
+    "validator": "scripts/validate_user_supplied_legacy_market_archive_real_file_audit_execution_request_v1.py",
+    "validation_workflow": ".github/workflows/validate-user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.yml",
+    "request_id": "LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-001",
+    "request_state": "AWAITING_EXPLICIT_USER_APPROVAL",
+    "expected_validated_state": "LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL",
+    "approval_granted": false,
+    "execution_enabled": false,
+    "execution_count": 0
+  },
   "required_real_file_inputs": {
     "exact_candidate_file": "nba_2008-2026.csv",
     "candidate_file_sha256": "729eb2ead85c14affbb81ae9a4c611fee9790b8dd3d1d7824e1ddba14410a8c4",
@@ -36,12 +48,14 @@
     "historical_gold_multiseason_database": "required",
     "combined_historical_silver_database_with_games_table": "required",
     "cleaned_or_derived_candidate_substitution_allowed": false,
+    "approved_workflow_may_rebuild_reference_inputs_in_temporary_storage": false,
     "all_inputs_currently_available": false
   },
   "real_cross_source_audit_executed": false,
   "source_role_changed_by_predeclaration": false,
   "source_role_changed_by_implementation": false,
-  "next_research_step": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_INPUTS_REQUIRED",
+  "source_role_changed_by_request": false,
+  "next_research_step": "LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REQUEST_AWAITING_EXPLICIT_USER_APPROVAL",
   "offseason_live_odds_capture_required": false,
   "point_in_time_market_backtest_ready": false,
   "clv_ready": false,

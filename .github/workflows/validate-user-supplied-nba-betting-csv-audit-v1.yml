@@ -9,6 +9,7 @@ on:
       - "data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json"
       - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
       - "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json"
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json"
       - "docs/user-supplied-nba-betting-csv-audit-v1.md"
       - "docs/user-supplied-nba-betting-csv-provenance-confirmation-v1.md"
       - "data/historical-odds-source-registry.json"
@@ -37,12 +38,13 @@ jobs:
             --self-test \
             --output /tmp/user-supplied-nba-betting-csv-audit-self-test.json
           python -m json.tool /tmp/user-supplied-nba-betting-csv-audit-self-test.json >/dev/null
-      - name: Validate audit, confirmation, current status, predeclaration, and registry
+      - name: Validate audit, confirmation, current status, predeclaration, implementation, and registry
         run: |
           python -m json.tool data/research/user-supplied-nba-betting-csv-audit-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json >/dev/null
+          python -m json.tool data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json >/dev/null
           python -m json.tool data/historical-odds-source-registry.json >/dev/null
           python - <<'PY'
           import json
@@ -59,6 +61,9 @@ jobs:
           )
           predeclaration = json.loads(
               Path('data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json').read_text()
+          )
+          implementation = json.loads(
+              Path('data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json').read_text()
           )
           registry = json.loads(
               Path('data/historical-odds-source-registry.json').read_text()
@@ -97,10 +102,16 @@ jobs:
               'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_'
               'PREDECLARATION_READY'
           )
+          assert current['cross_source_audit_implementation_state'] == (
+              'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_'
+              'IMPLEMENTATION_READY_BUT_REAL_FILE_EXECUTION_DISABLED'
+          )
           assert current['real_cross_source_audit_executed'] is False
           assert current['source_role_changed_by_predeclaration'] is False
+          assert current['source_role_changed_by_implementation'] is False
           assert current['next_research_step'] == (
-              'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION'
+              'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_'
+              'REAL_FILE_EXECUTION_REQUEST'
           )
           assert current['point_in_time_market_backtest_ready'] is False
           assert current['clv_ready'] is False
@@ -113,6 +124,29 @@ jobs:
           assert predeclaration['deterministic_join_contract']['fuzzy_matching_allowed'] is False
           assert predeclaration['next_state_if_validation_passes']['real_file_audit_executed'] is False
           assert predeclaration['next_state_if_validation_passes']['source_role_changed'] is False
+
+          assert implementation['source_id'] == source_id
+          assert implementation['formal_state'] == (
+              'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_'
+              'IMPLEMENTATION_PREDECLARED'
+          )
+          assert implementation['validation_mode']['synthetic_fixture_only'] is True
+          assert implementation['validation_mode']['real_file_audit_executed'] is False
+          assert implementation['output_boundary']['aggregate_report_only'] is True
+          assert implementation['output_boundary']['raw_rows_emitted'] == 0
+          assert implementation['output_boundary']['raw_files_emitted'] is False
+          assert implementation['next_state_if_validation_passes']['formal_state'] == (
+              'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_'
+              'IMPLEMENTATION_READY_BUT_REAL_FILE_EXECUTION_DISABLED'
+          )
+          assert implementation['next_state_if_validation_passes'][
+              'ready_for_separate_real_file_execution_request'
+          ] is True
+          assert implementation['next_state_if_validation_passes']['source_role_changed'] is False
+          assert implementation['downstream_permissions']['ready_for_real_file_audit_execution'] is False
+          assert implementation['downstream_permissions']['ready_for_market_backtest'] is False
+          assert implementation['downstream_permissions']['ready_for_model_retraining'] is False
+          assert implementation['downstream_permissions']['formal_stake'] == 0
 
           assert registry['registry_version'] == '1.4.0'
           assert source['status'] == 'role_limited_legacy_market_archive_eligible'

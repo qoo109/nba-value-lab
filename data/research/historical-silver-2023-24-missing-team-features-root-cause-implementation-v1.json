@@ -1,0 +1,59 @@
+{
+  "schema_version": "historical-silver-2023-24-missing-team-features-root-cause-implementation-v1",
+  "created_at": "2026-07-21T18:05:00+08:00",
+  "formal_state": "HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_IMPLEMENTATION_READY_REAL_EXECUTION_DISABLED",
+  "triggering_result": "data/research/historical-gold-silver-coverage-real-reference-result-v1.json",
+  "triggering_workflow_run_id": 29819457942,
+  "observed_gap": {
+    "season_label": "2023-24",
+    "silver_games": 1230,
+    "games_without_team_features": 2,
+    "missing_both_team_features": 2,
+    "other_reason_count": 0
+  },
+  "analyzer": "scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py",
+  "validation_workflow": ".github/workflows/validate-historical-silver-missing-team-features-root-cause-v1.yml",
+  "validation_mode": {
+    "synthetic_fixture_only": true,
+    "network_calls": false,
+    "real_reference_rows_read": false,
+    "real_root_cause_audit_executed": false
+  },
+  "classification_categories": [
+    "nbastats_game_present_pbpstats_game_absent",
+    "no_event_or_possession_source_rows",
+    "pbpstats_possessions_all_offense_unresolved",
+    "pbpstats_single_expected_offense_team_coverage",
+    "pbpstats_offense_team_identity_mismatch",
+    "possession_metadata_count_mismatch",
+    "feature_aggregation_omission_after_valid_possessions",
+    "silver_game_identity_unresolved",
+    "unclassified"
+  ],
+  "output_boundary": {
+    "aggregate_json_only": true,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "game_ids_emitted": false,
+    "dates_emitted": false,
+    "team_codes_emitted": false,
+    "row_key_hashes_emitted": false,
+    "candidate_csv_downloaded_or_read": false,
+    "maximum_output_bytes": 1048576
+  },
+  "downstream_permissions": {
+    "ready_for_real_2023_24_silver_root_cause_audit": false,
+    "ready_for_silver_builder_change": false,
+    "ready_for_gold_rebuild": false,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_historical_silver_replacement": false,
+    "ready_for_historical_gold_replacement": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "source_role_changed_by_implementation": false,
+  "current_formal_role": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+  "next_research_step": "HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_REAL_EXECUTION_REQUEST"
+}

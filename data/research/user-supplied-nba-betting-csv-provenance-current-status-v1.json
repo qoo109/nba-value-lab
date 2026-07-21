@@ -1,0 +1,16 @@
+{
+  "schema_version": "user-supplied-nba-betting-csv-provenance-current-status-v1",
+  "updated_at": "2026-07-21T10:08:31+08:00",
+  "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
+  "current_formal_outcome": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+  "provenance_status": "user_confirmed",
+  "audit_report": "data/research/user-supplied-nba-betting-csv-audit-v1.json",
+  "confirmation_record": "data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json",
+  "source_registry": "data/historical-odds-source-registry.json",
+  "next_research_step": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_PREDECLARATION",
+  "point_in_time_market_backtest_ready": false,
+  "clv_ready": false,
+  "roi_ready": false,
+  "model_retraining_authorized": false,
+  "formal_stake": 0
+}

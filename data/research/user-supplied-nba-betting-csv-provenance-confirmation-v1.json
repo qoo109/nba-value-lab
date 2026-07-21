@@ -1,0 +1,52 @@
+{
+  "schema_version": "user-supplied-nba-betting-csv-provenance-confirmation-v1",
+  "confirmed_at": "2026-07-21T10:08:31+08:00",
+  "confirmation_method": "explicit_user_confirmation",
+  "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
+  "source_url": "https://www.kaggle.com/datasets/cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024",
+  "dataset_handle": "cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024",
+  "file_evidence": {
+    "file_name": "nba_2008-2026.csv",
+    "bytes": 2493308,
+    "sha256": "729eb2ead85c14affbb81ae9a4c611fee9790b8dd3d1d7824e1ddba14410a8c4",
+    "rows": 24440,
+    "columns": 27,
+    "date_min": "2007-10-30",
+    "date_max": "2026-06-13",
+    "season_labels": "2008-2026"
+  },
+  "prior_audit": "data/research/user-supplied-nba-betting-csv-audit-v1.json",
+  "prior_formal_outcome": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE_PROVENANCE_PENDING",
+  "provenance_status": "user_confirmed",
+  "formal_outcome": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+  "confirmed_statement": "The repository owner explicitly confirmed that the supplied local CSV came from the linked Kaggle dataset.",
+  "allowed_roles": [
+    "deterministic_game_identity_crosscheck",
+    "final_score_crosscheck",
+    "spread_total_descriptive_research",
+    "moneyline_forecast_benchmark_pilot",
+    "predeclared_cross_source_audit_against_verified_historical_gold"
+  ],
+  "still_blocked": {
+    "opening_label_allowed": false,
+    "closing_label_allowed": false,
+    "bookmaker_identity_available": false,
+    "exact_observed_at_available": false,
+    "point_in_time_odds_join_allowed": false,
+    "t60_t5_entry_backtest_allowed": false,
+    "clv_allowed": false,
+    "entry_price_roi_allowed": false,
+    "drawdown_claim_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "historical_silver_replacement_allowed": false,
+    "historical_gold_replacement_allowed": false,
+    "model_retraining_allowed": false,
+    "formal_stake": 0
+  },
+  "data_boundary": {
+    "raw_csv_committed": false,
+    "raw_rows_emitted": 0,
+    "raw_file_artifact_allowed": false
+  },
+  "next_step": "Predeclare a deterministic overlap audit against verified Historical Gold before any derived-data or model use."
+}

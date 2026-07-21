@@ -1,0 +1,123 @@
+name: Run Eoin secondary QA contract monitor v1
+
+on:
+  pull_request:
+    paths:
+      - "PROJECT_STATUS.md"
+      - "data/source-registry.json"
+      - "data/eoin-cross-source-audit-v1.json"
+      - "data/eoin-post-execution-role-review-policy-v1.json"
+      - "data/eoin-post-execution-role-review-evaluation-v1.json"
+      - "data/eoin-secondary-qa-integration-policy-v1.json"
+      - "data/eoin-secondary-qa-contract-monitor-v1.json"
+      - "scripts/validate_eoin_secondary_qa_integration_policy_v1.py"
+      - "scripts/run_eoin_secondary_qa_contract_monitor_v1.py"
+      - "docs/eoin-secondary-qa-contract-monitor-v1.md"
+      - ".github/workflows/run-eoin-secondary-qa-contract-monitor-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "PROJECT_STATUS.md"
+      - "data/source-registry.json"
+      - "data/eoin-cross-source-audit-v1.json"
+      - "data/eoin-post-execution-role-review-policy-v1.json"
+      - "data/eoin-post-execution-role-review-evaluation-v1.json"
+      - "data/eoin-secondary-qa-integration-policy-v1.json"
+      - "data/eoin-secondary-qa-contract-monitor-v1.json"
+      - "scripts/validate_eoin_secondary_qa_integration_policy_v1.py"
+      - "scripts/run_eoin_secondary_qa_contract_monitor_v1.py"
+      - "docs/eoin-secondary-qa-contract-monitor-v1.md"
+      - ".github/workflows/run-eoin-secondary-qa-contract-monitor-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile policy validator and monitor
+        run: |
+          python -m py_compile scripts/validate_eoin_secondary_qa_integration_policy_v1.py
+          python -m py_compile scripts/run_eoin_secondary_qa_contract_monitor_v1.py
+
+      - name: Run contract monitor and self-tests
+        run: |
+          mkdir -p artifacts/eoin-secondary-qa-contract-monitor-v1
+          python scripts/run_eoin_secondary_qa_contract_monitor_v1.py \
+            --manifest data/eoin-secondary-qa-contract-monitor-v1.json \
+            --policy data/eoin-secondary-qa-integration-policy-v1.json \
+            --cross-report data/eoin-cross-source-audit-v1.json \
+            --role-policy data/eoin-post-execution-role-review-policy-v1.json \
+            --evaluation-manifest data/eoin-post-execution-role-review-evaluation-v1.json \
+            --source-registry data/source-registry.json \
+            --project-status PROJECT_STATUS.md \
+            --output artifacts/eoin-secondary-qa-contract-monitor-v1/eoin-secondary-qa-contract-monitor-v1-report.json \
+            --self-test
+
+      - name: Enforce healthy alert-only contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path(
+              "artifacts/eoin-secondary-qa-contract-monitor-v1/"
+              "eoin-secondary-qa-contract-monitor-v1-report.json"
+          )
+          report = json.loads(path.read_text(encoding="utf-8"))
+          assert report["formal_state"] == "EOIN_SECONDARY_QA_CONTRACT_HEALTHY", report
+          assert report["formal_role"] == "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED", report
+          assert report["integration_mode"] == "alert_only_evidence_contract_monitor", report
+          assert report["integration_active_for_alerts_only"] is True, report
+          assert report["source_data_integration_active"] is False, report
+          assert report["alerts"] == [], report
+          assert report["blocking_failures"] == [], report
+          assert report["all_contract_checks_passed"] is True, report
+          assert report["evidence_freshness"]["stale"] is False, report
+
+          quality = report["quality"]
+          assert quality["network_calls_made"] is False, report
+          assert quality["external_artifacts_downloaded"] is False, report
+          assert quality["new_bundle_execution_performed"] is False, report
+          assert quality["raw_eoin_rows_read"] is False, report
+          assert quality["raw_rows_emitted"] == 0, report
+          assert quality["raw_files_emitted"] is False, report
+          assert quality["derived_tables_emitted"] is False, report
+          assert quality["data_or_model_mutation_performed"] is False, report
+          assert quality["formal_stake"] == 0, report
+
+          permissions = report["permissions"]
+          assert permissions["alert_metadata_only"] is True, report
+          for key, value in permissions.items():
+              if key == "alert_metadata_only":
+                  assert value is True, report
+              elif key == "formal_stake":
+                  assert value == 0, report
+              else:
+                  assert value is False, (key, report)
+
+          files = [item for item in path.parent.iterdir() if item.is_file()]
+          assert files == [path], files
+          assert path.stat().st_size <= 1024 * 1024, path.stat().st_size
+          PY
+
+      - name: Upload aggregate-only monitor artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-secondary-qa-contract-monitor-v1
+          path: artifacts/eoin-secondary-qa-contract-monitor-v1/eoin-secondary-qa-contract-monitor-v1-report.json
+          if-no-files-found: error
+          retention-days: 14

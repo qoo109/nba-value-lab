@@ -1,0 +1,89 @@
+{
+  "schema_version": "eoin-secondary-qa-contract-monitor-v1",
+  "created_at": "2026-07-21T11:00:00+08:00",
+  "source_id": "kaggle_eoinamoore_historical_nba",
+  "monitor_state": "SECONDARY_QA_CONTRACT_MONITOR_PREDECLARED",
+  "integration_policy": "data/eoin-secondary-qa-integration-policy-v1.json",
+  "integration_policy_required_state": "EOIN_SECONDARY_QA_INTEGRATION_POLICY_READY_FOR_IMPLEMENTATION",
+  "expected_formal_role": "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+  "expected_registry_status": "role_limited_secondary_qa_validated",
+  "monitored_files": [
+    "PROJECT_STATUS.md",
+    "data/source-registry.json",
+    "data/eoin-cross-source-audit-v1.json",
+    "data/eoin-post-execution-role-review-policy-v1.json",
+    "data/eoin-post-execution-role-review-evaluation-v1.json",
+    "data/eoin-secondary-qa-integration-policy-v1.json"
+  ],
+  "contract_checks": [
+    "integration_policy_validation",
+    "formal_role_consistency",
+    "source_registry_status_consistency",
+    "source_registry_evaluation_evidence_consistency",
+    "project_status_role_consistency",
+    "request_consumed_and_repeat_disabled",
+    "artifact_identity_and_digest_consistency",
+    "forbidden_permission_regression",
+    "evidence_freshness",
+    "allowed_qa_domain_consistency"
+  ],
+  "state_rules": {
+    "healthy": "EOIN_SECONDARY_QA_CONTRACT_HEALTHY",
+    "alert_disabled": "EOIN_SECONDARY_QA_CONTRACT_ALERT_DISABLED",
+    "blocked": "EOIN_SECONDARY_QA_CONTRACT_BLOCKED",
+    "stale_evidence": "EOIN_SECONDARY_QA_CONTRACT_ALERT_DISABLED",
+    "role_or_artifact_drift": "EOIN_SECONDARY_QA_CONTRACT_ALERT_DISABLED",
+    "forbidden_permission_or_missing_evidence": "EOIN_SECONDARY_QA_CONTRACT_BLOCKED"
+  },
+  "execution_boundary": {
+    "network_calls_allowed": false,
+    "external_artifact_download_allowed": false,
+    "new_bundle_execution_allowed": false,
+    "raw_source_rows_read_allowed": false,
+    "source_archive_read_allowed": false,
+    "database_read_allowed": false,
+    "fuzzy_matching_allowed": false,
+    "scheduled_execution_allowed": false,
+    "automatic_data_mutation_allowed": false,
+    "alert_only": true
+  },
+  "output_boundary": {
+    "aggregate_contract_report_only": true,
+    "maximum_output_files": 1,
+    "maximum_output_bytes": 1048576,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "derived_tables_emitted": false,
+    "archives_or_databases_emitted": false
+  },
+  "forbidden_permissions": {
+    "primary_source_use": false,
+    "historical_silver_replacement": false,
+    "historical_gold_replacement": false,
+    "player_stat_parity": false,
+    "player_feature_import": false,
+    "model_training_or_retraining": false,
+    "market_backtest": false,
+    "clv_ev_roi_drawdown": false,
+    "betting_decision_layer": false,
+    "betting_edge_claim": false,
+    "repeat_full_bundle_execution": false,
+    "formal_stake": 0
+  },
+  "expected_current_state": {
+    "formal_state": "EOIN_SECONDARY_QA_CONTRACT_HEALTHY",
+    "integration_active_for_alerts_only": true,
+    "source_data_integration_active": false,
+    "current_formal_role_unchanged": true,
+    "ready_for_primary_source_use": false,
+    "ready_for_silver_replacement": false,
+    "ready_for_gold_replacement": false,
+    "ready_for_player_stat_parity": false,
+    "ready_for_player_feature_import": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "ready_for_repeat_full_bundle_execution": false,
+    "formal_stake": 0
+  }
+}

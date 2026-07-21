@@ -1,0 +1,132 @@
+{
+  "schema_version": "historical-gold-silver-coverage-real-reference-execution-request-v1",
+  "created_at": "2026-07-21T16:20:00+08:00",
+  "request_id": "HISTORICAL-GOLD-SILVER-COVERAGE-RECONCILIATION-2026-07-21-001",
+  "request_state": "AWAITING_EXPLICIT_USER_APPROVAL",
+  "purpose": "Request one aggregate-only real-reference reconciliation run to classify why two games present in the frozen five-season Historical Silver scope did not produce Historical Gold matchup rows.",
+  "upstream_evidence": {
+    "real_audit_result": "data/research/legacy-market-real-file-audit-retry-002-result-v1.json",
+    "real_audit_workflow_run_id": 29810347326,
+    "real_audit_workflow_sha": "78ac0931cd28b2315b6e24954dc9ad1af9caf4f0",
+    "real_audit_formal_outcome": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED",
+    "all_scientific_gates_passed": true,
+    "blocking_boundary": "reference_missing_gold_for_silver",
+    "silver_rows_in_scope": 5826,
+    "gold_matchup_rows": 5824,
+    "missing_gold_for_silver": 2,
+    "reconciliation_implementation": "data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json",
+    "reconciliation_analyzer": "scripts/analyze_historical_gold_silver_coverage_v1.py",
+    "implementation_merge_commit": "0d8d0134e05d00fb8e41220cc0621df24a275257"
+  },
+  "frozen_reference_scope": {
+    "season_start_years": [2019, 2020, 2021, 2022, 2023],
+    "season_labels": ["2019-20", "2020-21", "2021-22", "2022-23", "2023-24"],
+    "reference_source_path": "shufinskiy/nba_data",
+    "silver_table": "games",
+    "silver_team_feature_table": "team_game_features",
+    "gold_matchup_table": "gold_matchup_features",
+    "gold_team_feature_table": "gold_team_game_features",
+    "identity_key": "game_id",
+    "reference_scope_change_allowed": false
+  },
+  "one_time_execution_scope": {
+    "one_time_only": true,
+    "maximum_execution_count": 1,
+    "workflow_dispatch_only": true,
+    "automatic_main_push_execution_allowed": false,
+    "pull_request_execution_allowed": false,
+    "scheduled_execution_allowed": false,
+    "concurrent_execution_allowed": false,
+    "candidate_csv_required": false,
+    "candidate_csv_download_allowed": false,
+    "temporary_reference_archive_download_allowed_after_approval": true,
+    "temporary_reference_rows_may_be_read_after_approval": true,
+    "temporary_reference_rebuild_allowed_after_approval": true,
+    "temporary_row_level_diagnostics_may_be_computed_after_approval": true,
+    "gold_builder_code_change_during_execution_allowed": false,
+    "historical_silver_or_gold_replacement_allowed": false,
+    "manual_row_insertion_or_override_allowed": false,
+    "fuzzy_matching_allowed": false,
+    "score_assisted_identity_repair_allowed": false
+  },
+  "diagnostic_contract": {
+    "classification_categories": [
+      "missing_home_team_feature",
+      "missing_away_team_feature",
+      "missing_both_team_features",
+      "silver_feature_pair_identity_mismatch",
+      "gold_team_feature_transfer_mismatch",
+      "gold_matchup_builder_omission",
+      "silver_game_outside_gold_identity_contract",
+      "unclassified"
+    ],
+    "required_aggregate_outputs": [
+      "silver_game_rows",
+      "gold_matchup_rows",
+      "covered_games",
+      "missing_gold_for_silver",
+      "missing_by_season",
+      "missing_by_reason",
+      "missing_by_season_and_reason",
+      "silver_feature_count_histogram",
+      "gold_feature_count_histogram",
+      "builder_repair_required",
+      "source_data_reconciliation_required",
+      "unclassified_missing_games"
+    ],
+    "individual_game_ids_may_be_emitted": false,
+    "individual_dates_may_be_emitted": false,
+    "individual_team_codes_may_be_emitted": false,
+    "row_level_records_may_be_emitted": false,
+    "row_key_hashes_may_be_emitted": false
+  },
+  "output_boundary": {
+    "aggregate_json_only": true,
+    "maximum_public_output_files": 1,
+    "maximum_public_output_bytes": 1048576,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "reference_databases_uploaded_as_artifact": false,
+    "source_archives_uploaded_as_artifact": false,
+    "temporary_material_deleted_before_artifact_upload": true
+  },
+  "operational_limits": {
+    "maximum_runtime_minutes": 300,
+    "maximum_concurrent_runs": 1,
+    "maximum_reference_seasons": 5,
+    "maximum_source_archive_bytes_each": 629145600,
+    "maximum_total_temporary_input_bytes": 10737418240,
+    "artifact_retention_days": 14
+  },
+  "approval_boundary": {
+    "explicit_user_approval_required": true,
+    "approval_granted": false,
+    "approved_by": null,
+    "approved_at": null,
+    "approval_record": null,
+    "execution_enabled": false,
+    "approval_text_template": "我核准 request HISTORICAL-GOLD-SILVER-COVERAGE-RECONCILIATION-2026-07-21-001 執行一次 workflow_dispatch 的 aggregate-only Historical Gold／Silver coverage reconciliation。核准範圍只包含在暫存空間重建 2019-20 至 2023-24 Historical Silver／Gold、讀取暫存 reference rows、診斷 Silver 5,826 場與 Gold 5,824 場之間缺少 2 場的原因並輸出按賽季與原因分類的彙總 JSON；不得下載或讀取 candidate CSV，不得上傳原始資料、資料庫、來源 archive、game IDs、日期、隊伍代碼、逐場資料或 row-key hashes，不得在診斷執行中修改 Gold builder、人工補列、模糊配對或以比分修補 identity，不得解鎖 Opening／Closing、PIT market backtest、CLV、EV、ROI、Drawdown、模型重訓、betting edge 或非 0 Stake。"
+  },
+  "current_execution_boundary": {
+    "network_calls_made": 0,
+    "real_reference_rows_read": false,
+    "real_reconciliation_executed": false,
+    "execution_count": 0,
+    "execution_enabled": false,
+    "source_role_changed": false,
+    "ready_for_gold_builder_change": false,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_state_if_request_validation_passes": {
+    "formal_state": "HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL",
+    "ready_for_user_approval": true,
+    "ready_for_execution": false,
+    "real_reconciliation_executed": false,
+    "source_role_changed": false,
+    "formal_stake": 0
+  }
+}

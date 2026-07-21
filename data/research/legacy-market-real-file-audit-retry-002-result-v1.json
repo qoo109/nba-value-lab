@@ -1,0 +1,98 @@
+{
+  "schema_version": "legacy-market-real-file-audit-retry-002-result-v1",
+  "recorded_at": "2026-07-21T15:40:00+08:00",
+  "request_id": "LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002",
+  "workflow_run_id": 29810347326,
+  "workflow_run_attempt": 1,
+  "workflow_ref": "refs/heads/main",
+  "workflow_sha": "78ac0931cd28b2315b6e24954dc9ad1af9caf4f0",
+  "real_file_audit_executed": true,
+  "formal_outcome": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED",
+  "previous_formal_role": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+  "reviewed_formal_role": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+  "all_scientific_gates_passed": true,
+  "failed_scientific_gates": [],
+  "boundary_failures": [
+    "reference_missing_gold_for_silver"
+  ],
+  "candidate_file_identity": {
+    "file_name": "nba_2008-2026.csv",
+    "file_bytes": 2493308,
+    "file_sha256": "729eb2ead85c14affbb81ae9a4c611fee9790b8dd3d1d7824e1ddba14410a8c4",
+    "row_count": 24440,
+    "column_count": 27,
+    "all_checks_passed": true
+  },
+  "candidate_counts": {
+    "eligible_rows": 5829,
+    "normalized_rows": 5829,
+    "duplicate_key_groups": 0,
+    "invalid_dates": 0,
+    "missing_scores": 0,
+    "unresolved_team_code_occurrences": 0
+  },
+  "reference_counts": {
+    "silver_rows_in_scope": 5826,
+    "gold_rows": 5824,
+    "reference_rows": 5824,
+    "gold_silver_intersection_ids": 5824,
+    "missing_gold_for_silver": 2,
+    "missing_silver_for_gold": 0,
+    "gold_silver_identity_mismatches": 0,
+    "duplicate_silver_game_ids": 0,
+    "duplicate_gold_game_ids": 0,
+    "duplicate_reference_key_groups": 0,
+    "invalid_dates": 0,
+    "missing_scores": 0
+  },
+  "comparison": {
+    "matched_games": 5824,
+    "candidate_only_games": 5,
+    "reference_only_games": 0,
+    "ambiguous_join_keys": 0,
+    "candidate_match_rate": 0.99914222,
+    "reference_match_rate": 0.999656711,
+    "score_comparable_games": 5824,
+    "score_pair_matches": 5820,
+    "score_pair_match_rate": 0.999313187,
+    "reference_match_rate_by_season": {
+      "2019-20": 1.0,
+      "2020-21": 1.0,
+      "2021-22": 1.0,
+      "2022-23": 1.0,
+      "2023-24": 1.0
+    }
+  },
+  "reference_rebuild": {
+    "season_silver_games": {
+      "2019-20": 1056,
+      "2020-21": 1080,
+      "2021-22": 1230,
+      "2022-23": 1230,
+      "2023-24": 1230
+    },
+    "combined_silver_games": 5826,
+    "historical_gold_matchup_rows": 5824,
+    "historical_gold_team_feature_rows": 11648,
+    "strict_point_in_time_violations": 0
+  },
+  "boundaries": {
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "candidate_csv_uploaded_as_artifact": false,
+    "reference_databases_uploaded_as_artifact": false,
+    "source_archives_uploaded_as_artifact": false,
+    "unmatched_keys_or_game_ids_emitted": false,
+    "opening_or_closing_labels": false,
+    "point_in_time_market_backtest": false,
+    "clv_ev_roi_drawdown": false,
+    "historical_silver_replacement": false,
+    "historical_gold_replacement": false,
+    "model_training_or_retraining": false,
+    "betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "request_consumed": true,
+  "repeat_execution_allowed": false,
+  "next_research_step": "HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_REQUEST"
+}

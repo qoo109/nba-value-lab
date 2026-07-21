@@ -1,0 +1,85 @@
+name: Validate Eoin post-execution role review policy v1
+
+on:
+  pull_request:
+    paths:
+      - "data/eoin-post-execution-role-review-policy-v1.json"
+      - "docs/eoin-post-execution-role-review-policy-v1.md"
+      - "scripts/validate_eoin_post_execution_role_review_policy_v1.py"
+      - ".github/workflows/validate-eoin-post-execution-role-review-policy-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/eoin-post-execution-role-review-policy-v1.json"
+      - "docs/eoin-post-execution-role-review-policy-v1.md"
+      - "scripts/validate_eoin_post_execution_role_review_policy_v1.py"
+      - ".github/workflows/validate-eoin-post-execution-role-review-policy-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: |
+          python -m py_compile scripts/validate_eoin_post_execution_role_review_policy_v1.py
+
+      - name: Validate policy and self-test
+        run: |
+          mkdir -p artifacts/eoin-post-execution-role-review-policy-v1
+          python scripts/validate_eoin_post_execution_role_review_policy_v1.py \
+            --policy data/eoin-post-execution-role-review-policy-v1.json \
+            --output artifacts/eoin-post-execution-role-review-policy-v1/eoin-post-execution-role-review-policy-v1-report.json \
+            --self-test
+
+      - name: Enforce aggregate-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("artifacts/eoin-post-execution-role-review-policy-v1/eoin-post-execution-role-review-policy-v1-report.json")
+              .read_text(encoding="utf-8")
+          )
+          assert report["formal_state"] == "EOIN_POST_EXECUTION_ROLE_REVIEW_POLICY_READY", report
+          assert report["checks_failed"] == 0, report
+          quality = report["quality"]
+          assert quality["network_calls_made"] is False, report
+          assert quality["new_bundle_execution_performed"] is False, report
+          assert quality["raw_eoin_rows_read"] is False, report
+          assert quality["raw_rows_emitted"] == 0, report
+          assert quality["raw_files_emitted"] is False, report
+          assert quality["role_promotion_completed"] is False, report
+          assert quality["formal_stake"] == 0, report
+          decision = report["decision"]
+          assert decision["current_role_unchanged"] is True, report
+          assert decision["ready_for_silver_replacement"] is False, report
+          assert decision["ready_for_gold_replacement"] is False, report
+          assert decision["ready_for_player_stat_parity"] is False, report
+          assert decision["ready_for_model_retraining"] is False, report
+          assert decision["ready_for_market_backtest"] is False, report
+          assert decision["ready_for_betting_edge_claim"] is False, report
+          assert decision["formal_stake"] == 0, report
+          PY
+
+      - name: Upload aggregate-only policy artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-post-execution-role-review-policy-v1
+          path: artifacts/eoin-post-execution-role-review-policy-v1/eoin-post-execution-role-review-policy-v1-report.json
+          if-no-files-found: error
+          retention-days: 14

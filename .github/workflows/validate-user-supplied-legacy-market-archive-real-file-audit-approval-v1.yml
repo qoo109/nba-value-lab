@@ -10,6 +10,8 @@ on:
       - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
       - "scripts/validate_user_supplied_legacy_market_archive_real_file_audit_approval_v1.py"
       - "scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py"
+      - "scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py"
+      - "docs/legacy-market-real-file-audit-run-29804975869-incident-v1.md"
       - ".github/workflows/validate-user-supplied-legacy-market-archive-real-file-audit-approval-v1.yml"
       - ".github/workflows/run-approved-legacy-market-real-file-audit-once-v1.yml"
       - "PROJECT_STATUS.md"
@@ -32,11 +34,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Compile approval validator and executor
+      - name: Compile approval validator and executors
         run: |
           python -m py_compile \
             scripts/validate_user_supplied_legacy_market_archive_real_file_audit_approval_v1.py \
             scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py \
+            scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py \
             scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py
 
       - name: Validate approval and negative tests
@@ -61,6 +64,33 @@ jobs:
             --policy data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json \
             --self-test \
             --output /tmp/nbavl-legacy-market-approval-v1/executor-self-test.json
+
+      - name: Reproduce and verify reference-root hotfix
+        run: |
+          PYTHONPATH=scripts python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          import run_user_supplied_legacy_market_archive_real_file_audit_once_v1 as base
+          import run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1 as hotfix
+
+          with tempfile.TemporaryDirectory() as temp_name:
+              root = Path(temp_name) / 'reference'
+              assert not root.exists()
+              assert hotfix.prepare_reference_root(root) == root
+              assert root.is_dir()
+              path = root / 'config-2019.json'
+              path.write_text('{"ok": true}\n', encoding='utf-8')
+              assert path.is_file()
+
+          assert hotfix._ORIGINAL_REFERENCE_BUILD is base.reference_build
+          assert base.YEARS == [2019, 2020, 2021, 2022, 2023]
+          boundary = base.boundary()
+          assert boundary['raw_rows_emitted'] == 0
+          assert boundary['raw_files_emitted'] is False
+          assert boundary['point_in_time_market_backtest'] is False
+          assert boundary['model_training_or_retraining'] is False
+          assert boundary['formal_stake'] == 0
+          PY
 
       - name: Enforce approval-only boundary
         run: |

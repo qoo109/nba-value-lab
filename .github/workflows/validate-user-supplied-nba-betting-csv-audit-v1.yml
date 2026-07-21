@@ -9,6 +9,7 @@ on:
       - "data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json"
       - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
       - "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json"
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json"
       - "docs/user-supplied-nba-betting-csv-audit-v1.md"
       - "docs/user-supplied-nba-betting-csv-provenance-confirmation-v1.md"
       - "data/historical-odds-source-registry.json"
@@ -37,32 +38,24 @@ jobs:
             --self-test \
             --output /tmp/user-supplied-nba-betting-csv-audit-self-test.json
           python -m json.tool /tmp/user-supplied-nba-betting-csv-audit-self-test.json >/dev/null
-      - name: Validate audit, confirmation, current status, predeclaration, and registry
+      - name: Validate audit, confirmation, current status, implementation, and registry
         run: |
           python -m json.tool data/research/user-supplied-nba-betting-csv-audit-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json >/dev/null
+          python -m json.tool data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json >/dev/null
           python -m json.tool data/historical-odds-source-registry.json >/dev/null
           python - <<'PY'
           import json
           from pathlib import Path
 
-          report = json.loads(
-              Path('data/research/user-supplied-nba-betting-csv-audit-v1.json').read_text()
-          )
-          confirmation = json.loads(
-              Path('data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json').read_text()
-          )
-          current = json.loads(
-              Path('data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json').read_text()
-          )
-          predeclaration = json.loads(
-              Path('data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json').read_text()
-          )
-          registry = json.loads(
-              Path('data/historical-odds-source-registry.json').read_text()
-          )
+          report = json.loads(Path('data/research/user-supplied-nba-betting-csv-audit-v1.json').read_text())
+          confirmation = json.loads(Path('data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json').read_text())
+          current = json.loads(Path('data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json').read_text())
+          predeclaration = json.loads(Path('data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json').read_text())
+          implementation_manifest = json.loads(Path('data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json').read_text())
+          registry = json.loads(Path('data/historical-odds-source-registry.json').read_text())
 
           source_id = 'kaggle_cviaxmiwnptr_nba_betting_data_user_supplied'
           source = next(item for item in registry['sources'] if item['source_id'] == source_id)
@@ -72,16 +65,12 @@ jobs:
           assert report['schema']['row_count'] == 24440
           assert report['schema']['column_count'] == 27
           assert report['quality']['all_structural_gates_pass'] is True
-          assert report['decision']['formal_outcome'] == (
-              'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE_PROVENANCE_PENDING'
-          )
+          assert report['decision']['formal_outcome'] == 'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE_PROVENANCE_PENDING'
 
           assert confirmation['source_id'] == source_id
           assert confirmation['file_evidence']['sha256'] == report['source']['input_sha256']
           assert confirmation['provenance_status'] == 'user_confirmed'
-          assert confirmation['formal_outcome'] == (
-              'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE'
-          )
+          assert confirmation['formal_outcome'] == 'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE'
           assert confirmation['data_boundary']['raw_csv_committed'] is False
           assert confirmation['data_boundary']['raw_rows_emitted'] == 0
           assert confirmation['still_blocked']['point_in_time_odds_join_allowed'] is False
@@ -93,20 +82,32 @@ jobs:
           assert current['source_id'] == source_id
           assert current['current_formal_outcome'] == confirmation['formal_outcome']
           assert current['provenance_status'] == 'user_confirmed'
-          assert current['cross_source_audit_predeclaration_state'] == (
-              'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_'
-              'PREDECLARATION_READY'
-          )
+          assert current['cross_source_audit_predeclaration_state'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_PREDECLARATION_READY'
           assert current['real_cross_source_audit_executed'] is False
           assert current['source_role_changed_by_predeclaration'] is False
-          assert current['next_research_step'] == (
-              'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION'
-          )
+          assert current['source_role_changed_by_implementation'] is False
+          assert current['next_research_step'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_INPUTS_REQUIRED'
+          assert current['required_real_file_inputs']['cleaned_or_derived_candidate_substitution_allowed'] is False
+          assert current['required_real_file_inputs']['all_inputs_currently_available'] is False
           assert current['point_in_time_market_backtest_ready'] is False
           assert current['clv_ready'] is False
+          assert current['ev_ready'] is False
           assert current['roi_ready'] is False
+          assert current['drawdown_ready'] is False
           assert current['model_retraining_authorized'] is False
           assert current['formal_stake'] == 0
+
+          implementation = current['cross_source_audit_implementation']
+          assert implementation['formal_state'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_READY_BUT_REAL_FILE_EXECUTION_DISABLED'
+          assert implementation['workflow_run_id'] == 29798628467
+          assert implementation['artifact_id'] == 8482916767
+          assert implementation['fixture_games'] == 5800
+          assert implementation['self_tests_passed'] == implementation['self_tests_total'] == 5
+          assert implementation['real_candidate_csv_read'] is False
+          assert implementation['real_reference_database_read'] is False
+          assert implementation['network_calls_made'] is False
+          assert implementation['raw_rows_emitted'] == 0
+          assert implementation['raw_files_emitted'] is False
 
           assert predeclaration['candidate_source']['source_id'] == source_id
           assert predeclaration['candidate_source']['provenance_status'] == 'user_confirmed'
@@ -114,19 +115,27 @@ jobs:
           assert predeclaration['next_state_if_validation_passes']['real_file_audit_executed'] is False
           assert predeclaration['next_state_if_validation_passes']['source_role_changed'] is False
 
-          assert registry['registry_version'] == '1.4.0'
+          assert implementation_manifest['source_id'] == source_id
+          assert implementation_manifest['formal_state'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_PREDECLARED'
+          assert implementation_manifest['candidate_input']['cleaned_or_derived_file_substitution_allowed'] is False
+          assert implementation_manifest['validation_mode']['real_file_audit_executed'] is False
+          assert implementation_manifest['next_state_if_validation_passes']['formal_state'] == implementation['formal_state']
+
+          assert registry['registry_version'] == '1.5.0'
           assert source['status'] == 'role_limited_legacy_market_archive_eligible'
           assert source['provenance_status'] == 'user_confirmed'
           assert source['file_evidence']['sha256'] == report['source']['input_sha256']
           assert source['opening_closing_classified'] is False
           cross_source = source['cross_source_audit_predeclaration']
-          assert cross_source['formal_state'] == (
-              'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_'
-              'PREDECLARATION_READY'
-          )
+          assert cross_source['formal_state'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_PREDECLARATION_READY'
           assert cross_source['fuzzy_matching_allowed'] is False
           assert cross_source['real_file_audit_executed'] is False
           assert cross_source['source_role_changed'] is False
+          registered_implementation = source['cross_source_audit_implementation']
+          assert registered_implementation['formal_state'] == implementation['formal_state']
+          assert registered_implementation['artifact_digest'] == implementation['artifact_digest']
+          assert registered_implementation['required_inputs_available'] is False
+          assert registered_implementation['next_step'] == current['next_research_step']
           assert source['guardrails']['point_in_time_join_allowed'] is False
           assert source['guardrails']['roi_allowed'] is False
           assert source['guardrails']['clv_allowed'] is False

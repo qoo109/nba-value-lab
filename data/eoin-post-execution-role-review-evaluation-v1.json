@@ -1,0 +1,64 @@
+{
+  "schema_version": "eoin-post-execution-role-review-evaluation-v1",
+  "created_at": "2026-07-21T10:30:00+08:00",
+  "source_id": "kaggle_eoinamoore_historical_nba",
+  "evaluation_state": "POST_EXECUTION_ROLE_REVIEW_EVALUATION_PREDECLARED",
+  "policy": "data/eoin-post-execution-role-review-policy-v1.json",
+  "policy_required_state": "EOIN_POST_EXECUTION_ROLE_REVIEW_POLICY_READY",
+  "current_formal_role": "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+  "candidate_outcomes": [
+    "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+    "RETAIN_ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+    "POST_EXECUTION_ROLE_REVIEW_BLOCKED"
+  ],
+  "outcome_rules": {
+    "policy_or_boundary_failure": "POST_EXECUTION_ROLE_REVIEW_BLOCKED",
+    "valid_policy_but_any_scientific_gate_failure": "RETAIN_ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+    "valid_policy_and_all_scientific_gates_pass": "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED"
+  },
+  "input_boundary": {
+    "policy_json_only": true,
+    "embedded_aggregate_evidence_only": true,
+    "network_calls_allowed": false,
+    "new_bundle_execution_allowed": false,
+    "raw_source_rows_read_allowed": false,
+    "external_artifact_download_allowed": false
+  },
+  "output_boundary": {
+    "aggregate_report_only": true,
+    "maximum_output_files": 1,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "downloaded_archives_emitted": false,
+    "derived_tables_emitted": false
+  },
+  "role_boundary": {
+    "maximum_possible_role": "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+    "primary_source_allowed": false,
+    "historical_silver_replacement_allowed": false,
+    "historical_gold_replacement_allowed": false,
+    "player_stat_parity_claim_allowed": false,
+    "player_stat_feature_import_allowed": false,
+    "model_training_input_allowed": false,
+    "model_retraining_allowed": false,
+    "market_backtest_allowed": false,
+    "clv_ev_roi_drawdown_allowed": false,
+    "betting_decision_layer_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "repeat_full_bundle_execution_allowed": false,
+    "formal_stake": 0
+  },
+  "expected_result_for_frozen_evidence": {
+    "formal_outcome": "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+    "all_scientific_gates_passed": true,
+    "current_role_superseded_for_qa_label_only": true,
+    "ready_for_primary_source_use": false,
+    "ready_for_silver_replacement": false,
+    "ready_for_gold_replacement": false,
+    "ready_for_player_stat_parity": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  }
+}

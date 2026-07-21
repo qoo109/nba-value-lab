@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.8.0",
+  "registry_version": "1.9.0",
   "site_version_policy": "follow_current_release",
-  "updated_at": "2026-07-19T17:26:00+08:00",
+  "updated_at": "2026-07-21T10:20:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -261,7 +261,36 @@
         "ready_for_betting_edge_claim": false,
         "formal_stake": 0
       },
-      "notes": "2023-24 deterministic audit passed against shufinskiy event-level reference. Player result is coverage-only, not independent player-stat parity. The explicit one-time request has been consumed by one manual workflow_dispatch aggregate-only execution. Raw rows/files were not emitted. Does not replace Historical Silver or Gold."
+      "post_execution_role_review_policy": {
+        "policy": "data/eoin-post-execution-role-review-policy-v1.json",
+        "documentation": "docs/eoin-post-execution-role-review-policy-v1.md",
+        "validator": "scripts/validate_eoin_post_execution_role_review_policy_v1.py",
+        "workflow": ".github/workflows/validate-eoin-post-execution-role-review-policy-v1.yml",
+        "formal_state": "EOIN_POST_EXECUTION_ROLE_REVIEW_POLICY_READY",
+        "workflow_run_id": 29794965150,
+        "artifact_id": 8481660306,
+        "artifact_digest": "sha256:1b309073ae19c23483225b1264ea982ef1f6d71f1d482cd124ad63fc0bfd77d0",
+        "passed_checks": 24,
+        "total_checks": 24,
+        "checks_failed": 0,
+        "current_formal_role": "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+        "maximum_possible_role": "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+        "ready_for_evaluation_implementation": true,
+        "role_promotion_completed": false,
+        "network_calls_made": false,
+        "new_bundle_execution_performed": false,
+        "raw_eoin_rows_read": false,
+        "raw_rows_emitted": 0,
+        "raw_files_emitted": false,
+        "ready_for_silver_replacement": false,
+        "ready_for_gold_replacement": false,
+        "ready_for_player_stat_parity": false,
+        "ready_for_model_retraining": false,
+        "ready_for_market_backtest": false,
+        "ready_for_betting_edge_claim": false,
+        "formal_stake": 0
+      },
+      "notes": "2023-24 deterministic audit and one-time aggregate validation passed. Player result remains coverage-only, not independent player-stat parity. Post-execution role review policy is ready, but no evaluator outcome or role promotion has occurred. Does not replace Historical Silver or Gold."
     },
     {
       "source_id": "basketball_reference",

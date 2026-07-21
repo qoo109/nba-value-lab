@@ -1,0 +1,153 @@
+name: Run approved Historical Gold Silver real-reference reconciliation v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: "Exact approved reconciliation request ID"
+        required: true
+        default: "HISTORICAL-GOLD-SILVER-COVERAGE-RECONCILIATION-2026-07-21-001"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: historical-gold-silver-coverage-real-reference-once-v1
+  cancel-in-progress: false
+
+jobs:
+  execute-once:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.run_attempt == 1 &&
+      inputs.request_id == 'HISTORICAL-GOLD-SILVER-COVERAGE-RECONCILIATION-2026-07-21-001'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile approved reconciliation path
+        run: |
+          python -m py_compile \
+            scripts/validate_historical_gold_silver_coverage_real_reference_request_v1.py \
+            scripts/validate_historical_gold_silver_coverage_real_reference_approval_v1.py \
+            scripts/run_historical_gold_silver_coverage_real_reference_once_v1.py \
+            scripts/analyze_historical_gold_silver_coverage_v1.py \
+            scripts/historical_silver_runner.py \
+            scripts/combine_historical_silver.py \
+            scripts/build_historical_gold_multiseason.py
+
+      - name: Revalidate approval before network access
+        run: |
+          rm -rf /tmp/nbavl-gold-silver-real-reference-execution
+          mkdir -p /tmp/nbavl-gold-silver-real-reference-execution
+          PYTHONPATH=scripts python scripts/run_historical_gold_silver_coverage_real_reference_once_v1.py \
+            --request data/research/historical-gold-silver-coverage-real-reference-execution-request-v1.json \
+            --approval data/research/historical-gold-silver-coverage-real-reference-approval-v1.json \
+            --implementation data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json \
+            --result data/research/legacy-market-real-file-audit-retry-002-result-v1.json \
+            --confirmation-request-id "${{ inputs.request_id }}" \
+            --workflow-event "${{ github.event_name }}" \
+            --workflow-ref "${{ github.ref }}" \
+            --validate-only \
+            --output /tmp/nbavl-gold-silver-real-reference-execution/approval-validation-report.json
+
+      - name: Execute one aggregate-only real-reference reconciliation
+        id: execute
+        run: |
+          set +e
+          PYTHONPATH=scripts python scripts/run_historical_gold_silver_coverage_real_reference_once_v1.py \
+            --request data/research/historical-gold-silver-coverage-real-reference-execution-request-v1.json \
+            --approval data/research/historical-gold-silver-coverage-real-reference-approval-v1.json \
+            --implementation data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json \
+            --result data/research/legacy-market-real-file-audit-retry-002-result-v1.json \
+            --confirmation-request-id "${{ inputs.request_id }}" \
+            --workflow-event "${{ github.event_name }}" \
+            --workflow-ref "${{ github.ref }}" \
+            --output /tmp/nbavl-gold-silver-real-reference-execution/historical-gold-silver-coverage-real-reference-execution-report.json
+          CODE=$?
+          echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Remove admission-only report
+        if: always()
+        run: rm -f /tmp/nbavl-gold-silver-real-reference-execution/approval-validation-report.json
+
+      - name: Enforce aggregate-only output and result boundary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-gold-silver-real-reference-execution')
+          path = root / 'historical-gold-silver-coverage-real-reference-execution-report.json'
+          if not path.exists():
+              raise SystemExit('missing aggregate reconciliation report')
+          report = json.loads(path.read_text(encoding='utf-8'))
+          allowed = {
+              'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_NO_GAP',
+              'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_BLOCKED',
+              'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_MIXED_CAUSES',
+              'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_BUILDER_REPAIR_REQUIRED',
+              'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_SOURCE_DATA_GAP_CONFIRMED',
+              'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_REFERENCE_DRIFT_BLOCKED',
+          }
+          assert report['request_id'] == 'HISTORICAL-GOLD-SILVER-COVERAGE-RECONCILIATION-2026-07-21-001', report
+          assert report['approval_validation']['formal_state'] == (
+              'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH'
+          ), report
+          assert report['formal_outcome'] in allowed, report
+          assert report['execution_receipt']['execution_count_for_request'] == 1, report
+          assert report['execution_receipt']['temporary_material_deleted_with_runner'] is True, report
+          boundaries = report['boundaries']
+          assert boundaries['candidate_csv_downloaded_or_read'] is False, report
+          assert boundaries['raw_rows_emitted'] == 0, report
+          assert boundaries['raw_files_emitted'] is False, report
+          assert boundaries['reference_databases_uploaded_as_artifact'] is False, report
+          assert boundaries['source_archives_uploaded_as_artifact'] is False, report
+          assert boundaries['game_ids_emitted'] is False, report
+          assert boundaries['dates_emitted'] is False, report
+          assert boundaries['team_codes_emitted'] is False, report
+          assert boundaries['row_key_hashes_emitted'] is False, report
+          assert boundaries['gold_builder_changed_during_execution'] is False, report
+          assert boundaries['manual_row_insertion_or_override'] is False, report
+          assert boundaries['fuzzy_matching'] is False, report
+          assert boundaries['score_assisted_identity_repair'] is False, report
+          assert boundaries['historical_silver_replacement'] is False, report
+          assert boundaries['historical_gold_replacement'] is False, report
+          assert boundaries['opening_or_closing_labels'] is False, report
+          assert boundaries['point_in_time_market_backtest'] is False, report
+          assert boundaries['clv_ev_roi_drawdown'] is False, report
+          assert boundaries['model_training_or_retraining'] is False, report
+          assert boundaries['betting_edge_claim'] is False, report
+          assert boundaries['formal_stake'] == 0, report
+          assert path.stat().st_size <= 1048576, path.stat().st_size
+          files = sorted(item.name for item in root.iterdir() if item.is_file())
+          assert files == ['historical-gold-silver-coverage-real-reference-execution-report.json'], files
+          print(json.dumps({
+              'formal_outcome': report['formal_outcome'],
+              'silver_game_rows': report.get('scope', {}).get('silver_game_rows'),
+              'gold_matchup_rows': report.get('scope', {}).get('gold_matchup_rows'),
+              'missing_gold_for_silver': report.get('coverage', {}).get('missing_gold_for_silver'),
+              'missing_by_reason': report.get('coverage', {}).get('missing_by_reason'),
+              'builder_repair_required': report.get('decision', {}).get('builder_repair_required'),
+              'source_data_reconciliation_required': report.get('decision', {}).get('source_data_reconciliation_required'),
+              'formal_stake': boundaries['formal_stake'],
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload the single aggregate reconciliation Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-silver-coverage-real-reference-execution-v1
+          path: /tmp/nbavl-gold-silver-real-reference-execution/historical-gold-silver-coverage-real-reference-execution-report.json
+          retention-days: 14
+          if-no-files-found: error

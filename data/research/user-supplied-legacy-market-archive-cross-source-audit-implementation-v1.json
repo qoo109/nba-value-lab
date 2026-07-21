@@ -1,0 +1,75 @@
+{
+  "schema_version": "user-supplied-legacy-market-archive-cross-source-audit-implementation-v1",
+  "created_at": "2026-07-21T11:25:00+08:00",
+  "formal_state": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_READY",
+  "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
+  "predeclaration": "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json",
+  "runner": "scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py",
+  "workflow": ".github/workflows/run-user-supplied-legacy-market-archive-cross-source-audit-v1.yml",
+  "documentation": "docs/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.md",
+  "implementation_scope": {
+    "candidate_input_modes": [
+      "local_exact_file",
+      "confirmed_kaggle_dataset_exact_sha256_match"
+    ],
+    "reference_inputs": [
+      "historical-gold-multiseason.sqlite.gz",
+      "historical-silver-multiseason.sqlite.gz"
+    ],
+    "identity_table": "gold_matchup_features",
+    "season_table": "gold_team_game_features",
+    "score_table": "games",
+    "join_key": [
+      "game_date",
+      "home_team_abbr",
+      "away_team_abbr"
+    ],
+    "fuzzy_matching": false,
+    "manual_key_overrides": false,
+    "many_to_many_join": false,
+    "score_identity_repair": false
+  },
+  "frozen_reference_evidence": {
+    "workflow_run_id": 29551715399,
+    "historical_gold_artifact_id": 8396002371,
+    "historical_gold_artifact_digest": "sha256:c831e2fc1b03b99319e2847a015a0e94744574bfa6ebff49e43da3f3ed201538",
+    "head_sha": "c9ad2281c04b35a551acb617fcc255ce36af7a29",
+    "historical_gold_matchup_rows": 5824,
+    "artifact_expires_at": "2026-07-31T03:12:44Z"
+  },
+  "testing": {
+    "synthetic_positive_case": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_VALIDATED",
+    "synthetic_score_mismatch_case": "RETAIN_ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+    "synthetic_duplicate_key_case": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED",
+    "real_candidate_csv_read_in_pull_request_ci": false,
+    "real_reference_database_read_in_pull_request_ci": false
+  },
+  "execution": {
+    "real_cross_source_audit_executed": false,
+    "workflow_dispatch_required": true,
+    "explicit_execute_real_audit_input_required": true,
+    "raw_candidate_or_reference_artifact_allowed": false,
+    "aggregate_output_only": true,
+    "next_step": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_EXECUTION"
+  },
+  "boundaries": {
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "unmatched_keys_emitted": false,
+    "game_ids_emitted": false,
+    "opening_label_allowed": false,
+    "closing_label_allowed": false,
+    "point_in_time_join_allowed": false,
+    "entry_price_roi_allowed": false,
+    "clv_allowed": false,
+    "drawdown_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "historical_silver_replacement_allowed": false,
+    "historical_gold_replacement_allowed": false,
+    "model_retraining_allowed": false,
+    "formal_stake": 0
+  },
+  "source_role_changed_by_implementation": false,
+  "current_formal_outcome": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+  "formal_stake": 0
+}

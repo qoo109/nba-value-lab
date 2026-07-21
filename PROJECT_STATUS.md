@@ -15,7 +15,8 @@ legacy source role: ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE
 request 001: consumed by blocked pre-scientific execution
 blocked workflow run: 29804975869
 scientific result produced: false
-repair state: REFERENCE_ROOT_HOTFIX_UNDER_VALIDATION
+reference-root repair merged: 613ce3a6232780c486d899b02dd7a99e799b0a27
+retry request 002: AWAITING_EXPLICIT_USER_APPROVAL
 retry execution enabled: false
 formal Eoin source role: ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
 formal stake: 0
@@ -24,11 +25,9 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REPAIR_VALIDATE
-THEN_REQUEST_NEW_EXPLICIT_RETRY_APPROVAL
+LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_REQUEST_002
+AWAITING_EXPLICIT_USER_APPROVAL
 ```
-
-The first approved real-file run did not reach the frozen scientific comparison. It failed while preparing the first Historical Silver season because the temporary reference root did not exist before `config-2019.json` was written.
 
 ## Blocked Run 29804975869
 
@@ -58,15 +57,17 @@ Request `LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-001` recorded one execution atte
 
 ## Repair
 
+PR #111 merged the deterministic reference-root repair:
+
 ```text
+merge commit: 613ce3a6232780c486d899b02dd7a99e799b0a27
 hotfix entrypoint:
 scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py
-
-repair:
-create the temporary reference root before calling the reviewed v1 reference builder
 ```
 
-Unchanged by the repair:
+The repair creates the temporary reference root before calling the reviewed v1 reference builder.
+
+Unchanged:
 
 - exact candidate bytes and SHA-256;
 - 2019-20 through 2023-24 reference seasons;
@@ -77,7 +78,26 @@ Unchanged by the repair:
 - aggregate-only output;
 - Stake 0.
 
-A new one-time retry request and new explicit user approval are required after the hotfix PR passes CI and merges.
+## Retry Request 002
+
+```text
+request id: LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002
+state: AWAITING_EXPLICIT_USER_APPROVAL
+one-time only: true
+workflow_dispatch only: true
+approval granted: false
+execution enabled: false
+execution count: 0
+maximum execution count: 1
+```
+
+Request file:
+
+```text
+data/research/legacy-market-real-file-audit-retry-request-002-v1.json
+```
+
+The retry cannot be executed until a new explicit user approval is recorded and a separate one-time retry workflow is reviewed and merged.
 
 ## Legacy Market Archive
 
@@ -149,7 +169,7 @@ Eoin is deterministic QA evidence only. It is not a primary source and does not 
 - Injury Feature Holdout v1: `VALID_NEGATIVE_RESULT`.
 - Wyatt Real-file Audit: `STRUCTURAL_BLOCKED`.
 - Eoin Secondary QA: `VALIDATED / HEALTHY / ALERT-ONLY`.
-- Legacy Market Archive: `BLOCKED BEFORE SCIENTIFIC RESULT / REPAIR UNDER VALIDATION`.
+- Legacy Market Archive: `REPAIR MERGED / RETRY REQUEST 002 AWAITING APPROVAL`.
 
 ## Offseason Market State
 
@@ -162,7 +182,7 @@ No new live snapshot capture is required during the offseason. Point-in-time mar
 ## Do Not Do
 
 - Do not rerun workflow run `29804975869` or reuse request 001.
-- Do not dispatch a repaired real-file run before a new explicit retry approval.
+- Do not dispatch request 002 before a new explicit approval and reviewed one-time workflow.
 - Do not substitute a cleaned or derived candidate file.
 - Do not continue if candidate bytes or SHA-256 differ.
 - Do not commit or upload raw CSV, SQLite, Parquet, source archives, or raw rows.
@@ -181,17 +201,19 @@ No new live snapshot capture is required during the offseason. Point-in-time mar
 - `data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json`
 - `data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json`
 - `data/research/user-supplied-legacy-market-archive-real-file-audit-approval-v1.json`
+- `data/research/legacy-market-real-file-audit-retry-request-002-v1.json`
 - `docs/legacy-market-real-file-audit-run-29804975869-incident-v1.md`
+- `docs/legacy-market-real-file-audit-retry-request-002-v1.md`
 - `scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py`
 - `scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py`
 
 ## Explicit Next Step
 
 ```text
-1. Validate and merge the reference-root hotfix.
-2. Freeze a new one-time retry request.
-3. Obtain new explicit user approval.
-4. Dispatch one new run from main.
+1. Validate and merge retry request 002.
+2. Obtain new explicit user approval for request 002.
+3. Create and validate one new manual retry workflow.
+4. Dispatch exactly one new run from main.
 5. Read the aggregate Artifact before recording any scientific outcome.
 6. Keep Stake at 0.
 ```

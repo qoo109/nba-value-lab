@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Aggregate-only root-cause audit for Silver games with zero team features.
-
-The analyzer may inspect temporary SQLite rows, but never emits game ids, dates,
-team codes, row hashes, or raw records.
-"""
+"""Aggregate-only root-cause audit for Silver games with zero team features."""
 from __future__ import annotations
 
 import argparse
@@ -21,7 +17,6 @@ from typing import Any, Iterator
 SCHEMA_VERSION = "historical-silver-missing-team-features-root-cause-report-v1"
 IMPLEMENTATION_STATE = "HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_IMPLEMENTATION_READY_REAL_EXECUTION_DISABLED"
 SEASON = "2023-24"
-
 REASONS = (
     "nbastats_game_present_pbpstats_game_absent",
     "no_event_or_possession_source_rows",
@@ -64,7 +59,7 @@ def require_table(connection: sqlite3.Connection, table: str, columns: set[str])
         raise ValueError(f"{table} missing columns: {missing}")
 
 
-def bucket_count(value: int) -> str:
+def bucket(value: int) -> str:
     if value == 0:
         return "0"
     if value < 50:
@@ -74,6 +69,40 @@ def bucket_count(value: int) -> str:
     if value < 150:
         return "100-149"
     return "150+"
+
+
+def classify(game: sqlite3.Row, rows: list[sqlite3.Row]) -> str:
+    home = str(game["home_team_abbr"] or "").strip()
+    away = str(game["away_team_abbr"] or "").strip()
+    expected = {home, away} if home and away and home != away else set()
+    actual_count = len(rows)
+    metadata_count = int(game["possession_count"] or 0)
+    pbp_events = int(game["pbp_event_count"] or 0)
+    offenses = {
+        str(row["offense_team_abbr"]).strip()
+        for row in rows
+        if row["offense_team_abbr"] is not None
+        and str(row["offense_team_abbr"]).strip()
+    }
+    if not expected:
+        return "silver_game_identity_unresolved"
+    if actual_count == 0:
+        return (
+            "nbastats_game_present_pbpstats_game_absent"
+            if pbp_events > 0
+            else "no_event_or_possession_source_rows"
+        )
+    if metadata_count != actual_count:
+        return "possession_metadata_count_mismatch"
+    if not offenses:
+        return "pbpstats_possessions_all_offense_unresolved"
+    if len(offenses) == 1 and offenses <= expected:
+        return "pbpstats_single_expected_offense_team_coverage"
+    if offenses != expected:
+        return "pbpstats_offense_team_identity_mismatch"
+    if offenses == expected:
+        return "feature_aggregation_omission_after_valid_possessions"
+    return "unclassified"
 
 
 def analyze(silver_path: Path, season: str = SEASON) -> dict[str, Any]:
@@ -110,15 +139,13 @@ def analyze(silver_path: Path, season: str = SEASON) -> dict[str, Any]:
                 str(row[0])
                 for row in connection.execute(
                     """
-                    SELECT f.game_id
-                    FROM team_game_features AS f
+                    SELECT f.game_id FROM team_game_features AS f
                     JOIN games AS g ON g.game_id=f.game_id
                     WHERE g.season_label=?
                     """,
                     (season,),
                 )
             )
-
             possession_rows: dict[str, list[sqlite3.Row]] = defaultdict(list)
             for row in connection.execute(
                 """
@@ -133,75 +160,40 @@ def analyze(silver_path: Path, season: str = SEASON) -> dict[str, Any]:
 
             reasons = Counter()
             feature_histogram = Counter()
-            possession_row_histogram = Counter()
-            resolved_offense_count_histogram = Counter()
+            possession_histogram = Counter()
+            offense_team_histogram = Counter()
             pbp_event_presence = Counter()
-            missing_quality_flags = Counter()
-            missing_games = 0
+            game_quality_flags = Counter()
 
             for game in games:
                 game_id = str(game["game_id"])
                 feature_count = int(feature_counts.get(game_id, 0))
                 feature_histogram[str(feature_count)] += 1
-                if feature_count != 0:
+                if feature_count:
                     continue
-
-                missing_games += 1
                 rows = possession_rows.get(game_id, [])
-                actual_possessions = len(rows)
-                metadata_possessions = int(game["possession_count"] or 0)
-                pbp_events = int(game["pbp_event_count"] or 0)
-                possession_row_histogram[bucket_count(actual_possessions)] += 1
-                pbp_event_presence["present" if pbp_events > 0 else "absent"] += 1
-                for flag in str(game["quality_flags"] or "").split(","):
-                    flag = flag.strip()
-                    if flag:
-                        missing_quality_flags[flag] += 1
-
-                home = str(game["home_team_abbr"] or "").strip()
-                away = str(game["away_team_abbr"] or "").strip()
-                expected = {home, away} if home and away and home != away else set()
-                resolved_offenses = {
+                offenses = {
                     str(row["offense_team_abbr"]).strip()
                     for row in rows
                     if row["offense_team_abbr"] is not None
                     and str(row["offense_team_abbr"]).strip()
                 }
-                resolved_offense_count_histogram[str(len(resolved_offenses))] += 1
+                possession_histogram[bucket(len(rows))] += 1
+                offense_team_histogram[str(len(offenses))] += 1
+                pbp_event_presence[
+                    "present" if int(game["pbp_event_count"] or 0) > 0 else "absent"
+                ] += 1
+                for flag in str(game["quality_flags"] or "").split(","):
+                    flag = flag.strip()
+                    if flag:
+                        game_quality_flags[flag] += 1
+                reasons[classify(game, rows)] += 1
 
-                if not expected:
-                    reason = "silver_game_identity_unresolved"
-                elif actual_possessions == 0:
-                    reason = (
-                        "nbastats_game_present_pbpstats_game_absent"
-                        if pbp_events > 0
-                        else "no_event_or_possession_source_rows"
-                    )
-                elif metadata_possessions != actual_possessions:
-                    reason = "possession_metadata_count_mismatch"
-                elif not resolved_offenses:
-                    reason = "pbpstats_possessions_all_offense_unresolved"
-                elif len(resolved_offenses) == 1 and resolved_offenses <= expected:
-                    reason = "pbpstats_single_expected_offense_team_coverage"
-                elif resolved_offenses != expected:
-                    reason = "pbpstats_offense_team_identity_mismatch"
-                elif resolved_offenses == expected:
-                    reason = "feature_aggregation_omission_after_valid_possessions"
-                else:
-                    reason = "unclassified"
-                reasons[reason] += 1
-
-            classified = sum(reasons.values())
+            missing = sum(reasons.values())
             unclassified = int(reasons.get("unclassified", 0))
             source_gap = any(
                 reasons.get(name, 0) > 0
-                for name in (
-                    "nbastats_game_present_pbpstats_game_absent",
-                    "no_event_or_possession_source_rows",
-                    "pbpstats_possessions_all_offense_unresolved",
-                    "pbpstats_single_expected_offense_team_coverage",
-                    "pbpstats_offense_team_identity_mismatch",
-                )
+                for name in REASONS[:5]
             )
             builder_gap = any(
                 reasons.get(name, 0) > 0
@@ -212,7 +204,7 @@ def analyze(silver_path: Path, season: str = SEASON) -> dict[str, Any]:
             )
             identity_gap = reasons.get("silver_game_identity_unresolved", 0) > 0
 
-            if missing_games == 0:
+            if missing == 0:
                 outcome = "HISTORICAL_SILVER_MISSING_TEAM_FEATURES_NO_GAP"
             elif unclassified:
                 outcome = "HISTORICAL_SILVER_MISSING_TEAM_FEATURES_ROOT_CAUSE_BLOCKED"
@@ -232,8 +224,8 @@ def analyze(silver_path: Path, season: str = SEASON) -> dict[str, Any]:
                 "scope": {
                     "season_label": season,
                     "silver_games": len(games),
-                    "games_without_team_features": missing_games,
-                    "classified_missing_games": classified,
+                    "games_without_team_features": missing,
+                    "classified_missing_games": missing - unclassified,
                     "unclassified_missing_games": unclassified,
                 },
                 "root_cause": {
@@ -241,18 +233,18 @@ def analyze(silver_path: Path, season: str = SEASON) -> dict[str, Any]:
                         name: int(reasons.get(name, 0)) for name in REASONS
                     },
                     "team_feature_count_histogram": dict(sorted(feature_histogram.items())),
-                    "missing_game_possession_row_histogram": dict(sorted(possession_row_histogram.items())),
+                    "missing_game_possession_row_histogram": dict(sorted(possession_histogram.items())),
                     "missing_game_resolved_offense_team_count_histogram": dict(
-                        sorted(resolved_offense_count_histogram.items())
+                        sorted(offense_team_histogram.items())
                     ),
                     "missing_game_pbp_event_presence": dict(sorted(pbp_event_presence.items())),
-                    "missing_game_quality_flag_counts": dict(sorted(missing_quality_flags.items())),
+                    "missing_game_quality_flag_counts": dict(sorted(game_quality_flags.items())),
                 },
                 "decision": {
                     "source_archive_reconciliation_required": source_gap,
                     "silver_builder_repair_required": builder_gap,
                     "silver_game_identity_reconciliation_required": identity_gap,
-                    "ready_for_followup_repair_design": missing_games > 0 and unclassified == 0,
+                    "ready_for_followup_repair_design": missing > 0 and unclassified == 0,
                     "ready_for_gold_rebuild": False,
                     "ready_for_cross_source_audit_rerun": False,
                     "ready_for_market_backtest": False,
@@ -304,7 +296,7 @@ def write_fixture(path: Path) -> None:
             ("single-team", SEASON, "GGG", "HHH", 300, 2, ""),
             ("identity-mismatch", SEASON, "III", "JJJ", 300, 2, "source_team_set_mismatch"),
             ("builder-gap", SEASON, "KKK", "LLL", 300, 2, ""),
-            ("identity-unresolved", SEASON, NULL, "MMM", 300, 1, "home_away_team_unresolved"),
+            ("identity-unresolved", SEASON, None, "MMM", 300, 1, "home_away_team_unresolved"),
         ]
         connection.executemany("INSERT INTO games VALUES (?,?,?,?,?,?,?)", games)
         possessions = [

@@ -1,0 +1,14 @@
+{
+  "schema_version": "historical-silver-2023-24-missing-team-features-root-cause-validation-plan-v1",
+  "validation_mode": "synthetic_fixture_only",
+  "network_calls_allowed": false,
+  "real_reference_rows_allowed": false,
+  "real_root_cause_execution_allowed": false,
+  "expected_fixture_games": 7,
+  "expected_missing_feature_games": 6,
+  "expected_unclassified_games": 0,
+  "aggregate_output_only": true,
+  "raw_rows_emitted": 0,
+  "raw_files_emitted": false,
+  "formal_stake": 0
+}

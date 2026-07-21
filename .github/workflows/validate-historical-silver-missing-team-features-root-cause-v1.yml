@@ -1,0 +1,118 @@
+name: Validate Historical Silver missing team features root cause v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/historical-gold-silver-coverage-real-reference-result-v1.json"
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-implementation-v1.json"
+      - "docs/historical-silver-2023-24-missing-team-features-root-cause-implementation-v1.md"
+      - "scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py"
+      - ".github/workflows/validate-historical-silver-missing-team-features-root-cause-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-historical-silver-missing-team-features-root-cause-v1-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  implementation-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile root-cause analyzer
+        run: python -m py_compile scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py
+
+      - name: Run synthetic root-cause fixture
+        run: |
+          rm -rf /tmp/nbavl-silver-root-cause-v1
+          mkdir -p /tmp/nbavl-silver-root-cause-v1
+          python scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py \
+            --self-test \
+            --output /tmp/nbavl-silver-root-cause-v1/root-cause-self-test.json
+
+      - name: Validate aggregate-only implementation boundary
+        run: |
+          python -m json.tool data/research/historical-gold-silver-coverage-real-reference-result-v1.json >/dev/null
+          python -m json.tool data/research/historical-silver-2023-24-missing-team-features-root-cause-implementation-v1.json >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(
+              Path('data/research/historical-gold-silver-coverage-real-reference-result-v1.json').read_text()
+          )
+          implementation = json.loads(
+              Path('data/research/historical-silver-2023-24-missing-team-features-root-cause-implementation-v1.json').read_text()
+          )
+          report_path = Path('/tmp/nbavl-silver-root-cause-v1/root-cause-self-test.json')
+          report = json.loads(report_path.read_text())
+
+          assert result['workflow_run_id'] == 29819457942, result
+          assert result['formal_outcome'] == 'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_SOURCE_DATA_GAP_CONFIRMED', result
+          assert result['silver_game_rows'] == 5826, result
+          assert result['gold_matchup_rows'] == 5824, result
+          assert result['missing_gold_for_silver'] == 2, result
+          assert result['missing_season'] == '2023-24', result
+          assert result['missing_both_team_features'] == 2, result
+          assert result['builder_repair_required'] is False, result
+          assert result['source_data_reconciliation_required'] is True, result
+          assert result['game_ids_emitted'] is False, result
+          assert result['dates_emitted'] is False, result
+          assert result['team_codes_emitted'] is False, result
+          assert result['formal_stake'] == 0, result
+
+          assert implementation['formal_state'] == (
+              'HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_'
+              'IMPLEMENTATION_READY_REAL_EXECUTION_DISABLED'
+          ), implementation
+          assert implementation['validation_mode']['synthetic_fixture_only'] is True, implementation
+          assert implementation['validation_mode']['network_calls'] is False, implementation
+          assert implementation['validation_mode']['real_reference_rows_read'] is False, implementation
+          assert implementation['validation_mode']['real_root_cause_audit_executed'] is False, implementation
+          assert implementation['output_boundary']['raw_rows_emitted'] == 0, implementation
+          assert implementation['output_boundary']['raw_files_emitted'] is False, implementation
+          assert implementation['output_boundary']['game_ids_emitted'] is False, implementation
+          assert implementation['output_boundary']['dates_emitted'] is False, implementation
+          assert implementation['output_boundary']['team_codes_emitted'] is False, implementation
+          assert implementation['output_boundary']['candidate_csv_downloaded_or_read'] is False, implementation
+          assert implementation['downstream_permissions']['ready_for_silver_builder_change'] is False, implementation
+          assert implementation['downstream_permissions']['ready_for_gold_rebuild'] is False, implementation
+          assert implementation['downstream_permissions']['ready_for_cross_source_audit_rerun'] is False, implementation
+          assert implementation['downstream_permissions']['formal_stake'] == 0, implementation
+
+          assert report['scope']['silver_games'] == 7, report
+          assert report['scope']['games_without_team_features'] == 6, report
+          assert report['scope']['unclassified_missing_games'] == 0, report
+          assert report['formal_outcome'] == 'HISTORICAL_SILVER_MISSING_TEAM_FEATURES_MIXED_ROOT_CAUSES', report
+          assert report['root_cause']['missing_by_reason']['nbastats_game_present_pbpstats_game_absent'] == 1, report
+          assert report['root_cause']['missing_by_reason']['pbpstats_possessions_all_offense_unresolved'] == 1, report
+          assert report['root_cause']['missing_by_reason']['pbpstats_single_expected_offense_team_coverage'] == 1, report
+          assert report['root_cause']['missing_by_reason']['pbpstats_offense_team_identity_mismatch'] == 1, report
+          assert report['root_cause']['missing_by_reason']['feature_aggregation_omission_after_valid_possessions'] == 1, report
+          assert report['root_cause']['missing_by_reason']['silver_game_identity_unresolved'] == 1, report
+          assert report['boundaries']['raw_rows_emitted'] == 0, report
+          assert report['boundaries']['raw_files_emitted'] is False, report
+          assert report['boundaries']['game_ids_emitted'] is False, report
+          assert report['boundaries']['dates_emitted'] is False, report
+          assert report['boundaries']['team_codes_emitted'] is False, report
+          assert report['boundaries']['formal_stake'] == 0, report
+          assert report_path.stat().st_size <= 1048576
+          PY
+
+      - name: Upload aggregate-only synthetic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-missing-team-features-root-cause-v1
+          path: /tmp/nbavl-silver-root-cause-v1/root-cause-self-test.json
+          retention-days: 14
+          if-no-files-found: error

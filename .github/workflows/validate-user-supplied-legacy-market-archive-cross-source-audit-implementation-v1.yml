@@ -1,0 +1,78 @@
+name: Validate user-supplied legacy market cross-source audit implementation v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json"
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json"
+      - "docs/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.md"
+      - "scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py"
+      - ".github/workflows/validate-user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.yml"
+      - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
+      - "data/historical-odds-source-registry.json"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-user-supplied-legacy-market-cross-source-audit-implementation-v1-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  synthetic-implementation-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile runner
+        run: python -m py_compile scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py
+
+      - name: Run synthetic frozen-gate self-tests
+        run: |
+          python scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py \
+            --self-test \
+            --output runtime/reports/user_supplied_legacy_market_cross_source_audit_implementation_v1.json
+
+      - name: Enforce implementation-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("runtime/reports/user_supplied_legacy_market_cross_source_audit_implementation_v1.json")
+          report = json.loads(path.read_text(encoding="utf-8"))
+          assert report["formal_state"] == "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_READY_BUT_REAL_FILE_EXECUTION_DISABLED"
+          assert report["fixture_mode"] is True
+          assert report["fixture_games"] == 5800
+          assert all(report["self_tests"].values())
+          assert report["real_candidate_csv_read"] is False
+          assert report["real_reference_database_read"] is False
+          assert report["network_calls_made"] is False
+          assert report["external_artifacts_downloaded"] is False
+          assert report["real_file_audit_executed"] is False
+          assert report["raw_rows_emitted"] == 0
+          assert report["raw_files_emitted"] is False
+          assert report["source_role_changed"] is False
+          assert report["market_backtest_ready"] is False
+          assert report["betting_edge_claim_allowed"] is False
+          assert report["formal_stake"] == 0
+          assert path.stat().st_size <= 1048576
+          PY
+
+      - name: Upload aggregate-only implementation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-supplied-legacy-market-cross-source-audit-implementation-v1
+          path: runtime/reports/user_supplied_legacy_market_cross_source_audit_implementation_v1.json
+          if-no-files-found: error
+          retention-days: 14

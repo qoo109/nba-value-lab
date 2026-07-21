@@ -1,0 +1,118 @@
+{
+  "schema_version": "user-supplied-legacy-market-archive-cross-source-audit-implementation-v1",
+  "created_at": "2026-07-21T11:30:00+08:00",
+  "formal_state": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_PREDECLARED",
+  "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
+  "policy": "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json",
+  "policy_required_state": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_PREDECLARATION_READY",
+  "implementation": {
+    "runner": "scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py",
+    "documentation": "docs/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.md",
+    "workflow": ".github/workflows/validate-user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.yml"
+  },
+  "candidate_input": {
+    "file_name": "nba_2008-2026.csv",
+    "file_bytes": 2493308,
+    "file_sha256": "729eb2ead85c14affbb81ae9a4c611fee9790b8dd3d1d7824e1ddba14410a8c4",
+    "row_count": 24440,
+    "column_count": 27,
+    "required_columns": [
+      "season",
+      "date",
+      "regular",
+      "playoffs",
+      "away",
+      "home",
+      "score_away",
+      "score_home"
+    ],
+    "real_mode_exact_identity_required": true,
+    "cleaned_or_derived_file_substitution_allowed": false,
+    "network_download_allowed": false
+  },
+  "reference_inputs": {
+    "gold_database": {
+      "accepted_formats": ["sqlite", "sqlite.gz"],
+      "required_table": "gold_matchup_features",
+      "required_columns": [
+        "game_id",
+        "game_date",
+        "home_team_abbr",
+        "away_team_abbr"
+      ]
+    },
+    "silver_database": {
+      "accepted_formats": ["sqlite", "sqlite.gz"],
+      "required_table": "games",
+      "required_columns": [
+        "game_id",
+        "game_date",
+        "season_label",
+        "home_team_abbr",
+        "away_team_abbr",
+        "home_score",
+        "away_score"
+      ]
+    },
+    "real_mode_reference_rebuild_allowed_in_validation_workflow": false,
+    "network_download_allowed": false
+  },
+  "audit_contract": {
+    "join_key": ["game_date", "home_team_abbr", "away_team_abbr"],
+    "gold_to_silver_join_key": ["game_id"],
+    "score_validation_only": true,
+    "score_used_to_repair_identity": false,
+    "fuzzy_matching_allowed": false,
+    "manual_key_overrides_allowed": false,
+    "many_to_many_join_allowed": false,
+    "candidate_filter": "season in 2020..2024 and regular == true and playoffs == false",
+    "reference_seasons": ["2019-20", "2020-21", "2021-22", "2022-23", "2023-24"]
+  },
+  "outcome_rules": {
+    "invalid_policy_manifest_or_input_identity": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED",
+    "valid_inputs_with_any_frozen_gate_failure": "RETAIN_ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+    "valid_inputs_with_all_frozen_gates_passed": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_VALIDATED"
+  },
+  "validation_mode": {
+    "synthetic_fixture_only": true,
+    "real_candidate_csv_read": false,
+    "real_reference_database_read": false,
+    "network_calls": false,
+    "external_artifact_downloads": false,
+    "real_file_audit_executed": false
+  },
+  "output_boundary": {
+    "aggregate_report_only": true,
+    "maximum_output_files": 1,
+    "maximum_output_bytes": 1048576,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "row_level_unmatched_examples_emitted": false,
+    "candidate_csv_emitted": false,
+    "reference_database_emitted": false,
+    "derived_tables_emitted": false
+  },
+  "downstream_permissions": {
+    "ready_for_real_file_audit_execution": false,
+    "ready_for_opening_label": false,
+    "ready_for_closing_label": false,
+    "ready_for_point_in_time_join": false,
+    "ready_for_market_backtest": false,
+    "ready_for_clv": false,
+    "ready_for_ev": false,
+    "ready_for_roi": false,
+    "ready_for_drawdown": false,
+    "ready_for_historical_silver_replacement": false,
+    "ready_for_historical_gold_replacement": false,
+    "ready_for_model_retraining": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_state_if_validation_passes": {
+    "formal_state": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_READY_BUT_REAL_FILE_EXECUTION_DISABLED",
+    "ready_for_separate_real_file_execution_request": true,
+    "real_file_audit_executed": false,
+    "source_role_changed": false,
+    "formal_stake": 0
+  }
+}

@@ -1,0 +1,101 @@
+name: Validate legacy market real-file audit approval v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json"
+      - "data/research/user-supplied-legacy-market-archive-real-file-audit-approval-v1.json"
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json"
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json"
+      - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
+      - "scripts/validate_user_supplied_legacy_market_archive_real_file_audit_approval_v1.py"
+      - "scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py"
+      - ".github/workflows/validate-user-supplied-legacy-market-archive-real-file-audit-approval-v1.yml"
+      - ".github/workflows/run-approved-legacy-market-real-file-audit-once-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-legacy-market-real-file-audit-approval-v1-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  approval-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile approval validator and executor
+        run: |
+          python -m py_compile \
+            scripts/validate_user_supplied_legacy_market_archive_real_file_audit_approval_v1.py \
+            scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py \
+            scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py
+
+      - name: Validate approval and negative tests
+        run: |
+          rm -rf /tmp/nbavl-legacy-market-approval-v1
+          mkdir -p /tmp/nbavl-legacy-market-approval-v1
+          python scripts/validate_user_supplied_legacy_market_archive_real_file_audit_approval_v1.py \
+            --request data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json \
+            --approval data/research/user-supplied-legacy-market-archive-real-file-audit-approval-v1.json \
+            --implementation data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json \
+            --current-status data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json \
+            --self-test \
+            --output /tmp/nbavl-legacy-market-approval-v1/approval-validation-report.json
+
+      - name: Run executor synthetic-only self-test
+        run: |
+          python scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py \
+            --request data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json \
+            --approval data/research/user-supplied-legacy-market-archive-real-file-audit-approval-v1.json \
+            --implementation data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json \
+            --current-status data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json \
+            --policy data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json \
+            --self-test \
+            --output /tmp/nbavl-legacy-market-approval-v1/executor-self-test.json
+
+      - name: Enforce approval-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-legacy-market-approval-v1')
+          approval = json.loads((root / 'approval-validation-report.json').read_text())
+          executor = json.loads((root / 'executor-self-test.json').read_text())
+          assert approval['formal_state'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH'
+          assert approval['checks_failed'] == 0
+          assert all(approval['self_tests'].values())
+          assert approval['ready_for_one_time_aggregate_execution'] is True
+          assert approval['ready_for_repeat_execution'] is False
+          assert approval['network_calls_made'] is False
+          assert approval['real_candidate_csv_read'] is False
+          assert approval['real_reference_database_read'] is False
+          assert approval['raw_rows_emitted'] == 0
+          assert approval['raw_files_emitted'] is False
+          assert approval['formal_stake'] == 0
+          assert executor['formal_state'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_EXECUTOR_SELF_TEST_PASS'
+          assert executor['network_calls_made'] is False
+          assert executor['real_file_audit_executed'] is False
+          assert executor['boundaries']['raw_rows_emitted'] == 0
+          assert executor['boundaries']['raw_files_emitted'] is False
+          assert executor['boundaries']['formal_stake'] == 0
+          PY
+
+      - name: Upload aggregate-only approval evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-market-real-file-audit-approval-v1
+          path: |
+            /tmp/nbavl-legacy-market-approval-v1/approval-validation-report.json
+            /tmp/nbavl-legacy-market-approval-v1/executor-self-test.json
+          retention-days: 14
+          if-no-files-found: error

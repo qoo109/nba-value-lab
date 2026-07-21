@@ -1,0 +1,358 @@
+name: Run user-supplied legacy market cross-source audit v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py"
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json"
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json"
+      - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
+      - "docs/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.md"
+      - ".github/workflows/run-user-supplied-legacy-market-archive-cross-source-audit-v1.yml"
+  workflow_dispatch:
+    inputs:
+      execute_real_audit:
+        description: "Explicitly execute the real aggregate-only audit"
+        required: true
+        type: boolean
+        default: false
+      dataset_handle:
+        description: "Confirmed public Kaggle dataset handle"
+        required: true
+        default: "cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024"
+      season_start_years_json:
+        description: "Frozen five-season reference start years"
+        required: true
+        default: "[2019,2020,2021,2022,2023]"
+      max_download_mb:
+        description: "Maximum MB per historical source archive"
+        required: true
+        default: "600"
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile implementation and reference builders
+        run: |
+          python -m py_compile \
+            scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py \
+            scripts/build_historical_silver.py \
+            scripts/combine_historical_silver.py \
+            scripts/build_historical_gold_multiseason.py
+
+      - name: Run positive and negative synthetic cases
+        run: |
+          rm -rf /tmp/nbavl-legacy-cross-source-self-test
+          python scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py \
+            --self-test \
+            --predeclaration data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json \
+            --output-dir /tmp/nbavl-legacy-cross-source-self-test
+
+      - name: Validate synthetic aggregate-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("/tmp/nbavl-legacy-cross-source-self-test")
+          report = json.loads(
+              (root / "user-supplied-legacy-market-archive-cross-source-audit-report.json")
+              .read_text(encoding="utf-8")
+          )
+          status = json.loads(
+              (root / "user-supplied-legacy-market-archive-cross-source-run-status.json")
+              .read_text(encoding="utf-8")
+          )
+          self_test = json.loads((root / "self-test.json").read_text(encoding="utf-8"))
+
+          assert self_test["passed"] is True, self_test
+          assert self_test["positive_case"] == (
+              "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_VALIDATED"
+          ), self_test
+          assert self_test["score_mismatch_case"] == (
+              "RETAIN_ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE"
+          ), self_test
+          assert self_test["duplicate_key_case"] == (
+              "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED"
+          ), self_test
+          assert report["gates"]["all_frozen_gates_passed"] is True, report
+          assert report["scientific_interpretation"]["fuzzy_matching_used"] is False, report
+          assert report["scientific_interpretation"]["scores_used_for_identity_repair"] is False, report
+          assert report["boundaries"]["raw_rows_emitted"] == 0, report
+          assert report["boundaries"]["raw_files_emitted"] is False, report
+          assert report["boundaries"]["unmatched_keys_emitted"] is False, report
+          assert report["boundaries"]["game_ids_emitted"] is False, report
+          assert report["boundaries"]["historical_silver_replacement_allowed"] is False, report
+          assert report["boundaries"]["historical_gold_replacement_allowed"] is False, report
+          assert report["boundaries"]["model_retraining_allowed"] is False, report
+          assert report["boundaries"]["formal_stake"] == 0, report
+          assert status["raw_files_uploaded_as_artifact"] is False, status
+          assert status["raw_rows_uploaded_as_artifact"] is False, status
+          assert status["formal_stake"] == 0, status
+          PY
+
+      - name: Validate implementation manifest and current status
+        run: |
+          python -m json.tool \
+            data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json \
+            >/dev/null
+          python -m json.tool \
+            data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json \
+            >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path(
+                  "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json"
+              ).read_text(encoding="utf-8")
+          )
+          assert manifest["formal_state"] == (
+              "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_READY"
+          ), manifest
+          assert manifest["execution"]["real_cross_source_audit_executed"] is False, manifest
+          assert manifest["execution"]["aggregate_output_only"] is True, manifest
+          assert manifest["source_role_changed_by_implementation"] is False, manifest
+          assert manifest["boundaries"]["raw_rows_emitted"] == 0, manifest
+          assert manifest["boundaries"]["raw_files_emitted"] is False, manifest
+          assert manifest["boundaries"]["formal_stake"] == 0, manifest
+          PY
+
+  live-audit:
+    if: github.event_name == 'workflow_dispatch' && inputs.execute_real_audit == true
+    needs: self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      DATASET_HANDLE: ${{ inputs.dataset_handle }}
+      SEASON_START_YEARS_JSON: ${{ inputs.season_start_years_json }}
+      MAX_DOWNLOAD_MB: ${{ inputs.max_download_mb }}
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install live download dependency
+        run: python -m pip install --disable-pip-version-check kagglehub
+
+      - name: Validate frozen real-execution inputs
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          years = json.loads(os.environ["SEASON_START_YEARS_JSON"])
+          assert years == [2019, 2020, 2021, 2022, 2023], years
+          assert os.environ["DATASET_HANDLE"] == (
+              "cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024"
+          )
+          assert int(os.environ["MAX_DOWNLOAD_MB"]) <= 600
+          PY
+
+      - name: Build five audited Silver seasons in one temporary workspace
+        run: |
+          rm -rf /tmp/nbavl-legacy-reference-seasons
+          mkdir -p /tmp/nbavl-legacy-reference-seasons
+          python - <<'PY' >/tmp/nbavl-legacy-years.txt
+          import json
+          import os
+          for year in json.loads(os.environ["SEASON_START_YEARS_JSON"]):
+              print(int(year))
+          PY
+
+          while read -r YEAR; do
+            export YEAR
+            python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          year = int(os.environ["YEAR"])
+          season_label = f"{year}-{str(year + 1)[-2:]}"
+          config = json.loads(
+              Path("config/historical-source-pilot.json").read_text(encoding="utf-8")
+          )
+          for kind in ("pbpstats", "nbastats"):
+              source = config["sources"][f"{kind}_2023"]
+              source["season_label"] = season_label
+              source["url"] = (
+                  f"https://github.com/shufinskiy/nba_data/raw/main/"
+                  f"datasets/{kind}_{year}.tar.xz"
+              )
+          target = Path(f"/tmp/nbavl-season-config-{year}.json")
+          target.write_text(json.dumps(config, indent=2), encoding="utf-8")
+          PY
+
+            python scripts/build_historical_silver.py \
+              --config "/tmp/nbavl-season-config-${YEAR}.json" \
+              --max-download-mb "$MAX_DOWNLOAD_MB" \
+              --output-dir "/tmp/nbavl-legacy-reference-seasons/season-${YEAR}"
+
+            python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          year = os.environ["YEAR"]
+          root = Path(f"/tmp/nbavl-legacy-reference-seasons/season-{year}")
+          report = json.loads((root / "silver-build-report.json").read_text())
+          assert report["decision"]["ready_for_private_model_feature_pipeline"] is True, report
+          assert report["outputs"]["tables"]["games"] >= 1000, report
+          PY
+          done </tmp/nbavl-legacy-years.txt
+
+      - name: Combine Silver and rebuild season-aware Gold
+        run: |
+          rm -rf /tmp/nbavl-legacy-silver-multiseason
+          rm -rf /tmp/nbavl-legacy-gold-multiseason
+
+          python scripts/combine_historical_silver.py \
+            --input-root /tmp/nbavl-legacy-reference-seasons \
+            --output-dir /tmp/nbavl-legacy-silver-multiseason
+
+          python scripts/build_historical_gold_multiseason.py \
+            --silver-db /tmp/nbavl-legacy-silver-multiseason/historical-silver-multiseason.sqlite.gz \
+            --output-dir /tmp/nbavl-legacy-gold-multiseason
+
+      - name: Execute real deterministic aggregate-only audit
+        run: |
+          rm -rf /tmp/nbavl-legacy-cross-source-live
+          python scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py \
+            --dataset-handle "$DATASET_HANDLE" \
+            --gold-db /tmp/nbavl-legacy-gold-multiseason/historical-gold-multiseason.sqlite.gz \
+            --silver-db /tmp/nbavl-legacy-silver-multiseason/historical-silver-multiseason.sqlite.gz \
+            --predeclaration data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json \
+            --output-dir /tmp/nbavl-legacy-cross-source-live \
+            --reference-workflow-run-id 29551715399 \
+            --reference-artifact-id 8396002371 \
+            --reference-artifact-digest sha256:c831e2fc1b03b99319e2847a015a0e94744574bfa6ebff49e43da3f3ed201538
+
+      - name: Delete all temporary candidate and reference inputs
+        if: always()
+        run: |
+          rm -rf \
+            /tmp/nbavl-legacy-reference-seasons \
+            /tmp/nbavl-legacy-silver-multiseason \
+            /tmp/nbavl-legacy-gold-multiseason \
+            /tmp/nbavl-season-config-*.json \
+            /tmp/nbavl-legacy-years.txt \
+            "${HOME}/.cache/kagglehub"
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path(
+              "/tmp/nbavl-legacy-cross-source-live/"
+              "user-supplied-legacy-market-archive-cross-source-run-status.json"
+          )
+          if path.exists():
+              status = json.loads(path.read_text(encoding="utf-8"))
+              status["workflow_temporary_candidate_files_deleted"] = True
+              status["workflow_temporary_reference_files_deleted"] = True
+              status["raw_files_uploaded_as_artifact"] = False
+              status["raw_rows_uploaded_as_artifact"] = False
+              path.write_text(
+                  json.dumps(status, indent=2, sort_keys=True) + "\n",
+                  encoding="utf-8",
+              )
+          PY
+
+      - name: Validate live result and frozen guardrails
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("/tmp/nbavl-legacy-cross-source-live")
+          status_path = root / "user-supplied-legacy-market-archive-cross-source-run-status.json"
+          report_path = root / "user-supplied-legacy-market-archive-cross-source-audit-report.json"
+          if not status_path.exists():
+              raise SystemExit("missing aggregate run status")
+          status = json.loads(status_path.read_text(encoding="utf-8"))
+          if "error" in status:
+              print(json.dumps(status, indent=2, sort_keys=True))
+              raise SystemExit("real cross-source audit failed before report completion")
+          if not report_path.exists():
+              raise SystemExit("missing aggregate audit report")
+
+          report = json.loads(report_path.read_text(encoding="utf-8"))
+          allowed = {
+              "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_VALIDATED",
+              "RETAIN_ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+              "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED",
+          }
+          assert report["formal_outcome"] in allowed, report
+          assert report["scientific_interpretation"]["fuzzy_matching_used"] is False, report
+          assert report["scientific_interpretation"]["scores_used_for_identity_repair"] is False, report
+          assert report["boundaries"]["raw_rows_emitted"] == 0, report
+          assert report["boundaries"]["raw_files_emitted"] is False, report
+          assert report["boundaries"]["unmatched_keys_emitted"] is False, report
+          assert report["boundaries"]["game_ids_emitted"] is False, report
+          assert report["boundaries"]["point_in_time_join_allowed"] is False, report
+          assert report["boundaries"]["entry_price_roi_allowed"] is False, report
+          assert report["boundaries"]["clv_allowed"] is False, report
+          assert report["boundaries"]["model_retraining_allowed"] is False, report
+          assert report["boundaries"]["formal_stake"] == 0, report
+          assert status["workflow_temporary_candidate_files_deleted"] is True, status
+          assert status["workflow_temporary_reference_files_deleted"] is True, status
+          assert status["raw_files_uploaded_as_artifact"] is False, status
+          assert status["raw_rows_uploaded_as_artifact"] is False, status
+
+          print(json.dumps({
+              "formal_outcome": report["formal_outcome"],
+              "all_frozen_gates_passed": report["gates"]["all_frozen_gates_passed"],
+              "reference_games": report["reference"]["reference_rows"],
+              "candidate_eligible_games": report["candidate"]["eligible_rows"],
+              "matched_games": report["comparison"]["matched_games"],
+              "reference_match_rate": report["comparison"]["reference_match_rate"],
+              "candidate_match_rate": report["comparison"]["candidate_match_rate"],
+              "matched_score_pair_rate": report["comparison"]["matched_score_pair_rate"],
+              "failed_gates": report["gates"]["failed_gates"],
+              "formal_stake": report["boundaries"]["formal_stake"],
+          }, indent=2, sort_keys=True))
+          PY
+
+      - name: Reject unexpected output files
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path("/tmp/nbavl-legacy-cross-source-live")
+          allowed = {
+              "user-supplied-legacy-market-archive-cross-source-audit-report.json",
+              "user-supplied-legacy-market-archive-cross-source-run-status.json",
+          }
+          actual = {path.name for path in root.iterdir() if path.is_file()} if root.exists() else set()
+          unexpected = sorted(actual - allowed)
+          if unexpected:
+              raise SystemExit(f"unexpected output files: {unexpected}")
+          PY
+
+      - name: Upload aggregate-only audit result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-supplied-legacy-market-archive-cross-source-audit-v1
+          path: |
+            /tmp/nbavl-legacy-cross-source-live/user-supplied-legacy-market-archive-cross-source-audit-report.json
+            /tmp/nbavl-legacy-cross-source-live/user-supplied-legacy-market-archive-cross-source-run-status.json
+          retention-days: 14
+          if-no-files-found: warn

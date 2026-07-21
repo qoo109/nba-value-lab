@@ -1,0 +1,57 @@
+{
+  "schema_version": "historical-gold-silver-coverage-reconciliation-implementation-v1",
+  "created_at": "2026-07-21T15:40:00+08:00",
+  "formal_state": "HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_IMPLEMENTATION_READY_REAL_EXECUTION_DISABLED",
+  "triggering_result": "data/research/legacy-market-real-file-audit-retry-002-result-v1.json",
+  "triggering_workflow_run_id": 29810347326,
+  "observed_gap": {
+    "silver_rows_in_scope": 5826,
+    "gold_rows": 5824,
+    "missing_gold_for_silver": 2,
+    "all_scientific_gates_passed": true,
+    "formal_outcome": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED"
+  },
+  "analyzer": "scripts/analyze_historical_gold_silver_coverage_v1.py",
+  "validation_workflow": ".github/workflows/validate-historical-gold-silver-coverage-reconciliation-v1.yml",
+  "validation_mode": {
+    "synthetic_fixture_only": true,
+    "network_calls": false,
+    "real_reference_rows_read": false,
+    "external_artifacts_downloaded": false,
+    "real_reconciliation_executed": false
+  },
+  "classification_categories": [
+    "missing_home_team_feature",
+    "missing_away_team_feature",
+    "missing_both_team_features",
+    "silver_feature_pair_identity_mismatch",
+    "gold_team_feature_transfer_mismatch",
+    "gold_matchup_builder_omission",
+    "silver_game_outside_gold_identity_contract",
+    "unclassified"
+  ],
+  "output_boundary": {
+    "aggregate_json_only": true,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "game_ids_emitted": false,
+    "dates_emitted": false,
+    "team_codes_emitted": false,
+    "row_key_hashes_emitted": false,
+    "maximum_output_bytes": 1048576
+  },
+  "downstream_permissions": {
+    "ready_for_real_reference_reconciliation": false,
+    "ready_for_gold_builder_change": false,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_historical_silver_replacement": false,
+    "ready_for_historical_gold_replacement": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "source_role_changed_by_implementation": false,
+  "current_formal_role": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+  "next_research_step": "HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_REAL_REFERENCE_EXECUTION_REQUEST"
+}

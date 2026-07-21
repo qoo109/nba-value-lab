@@ -1,0 +1,63 @@
+name: Validate user-supplied NBA betting CSV audit v1
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/audit_user_supplied_nba_betting_csv_v1.py"
+      - "data/research/user-supplied-nba-betting-csv-audit-v1.json"
+      - "docs/user-supplied-nba-betting-csv-audit-v1.md"
+      - "data/historical-odds-source-registry.json"
+      - ".github/workflows/validate-user-supplied-nba-betting-csv-audit-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install audit dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy
+      - name: Compile audit tool
+        run: python -m py_compile scripts/audit_user_supplied_nba_betting_csv_v1.py
+      - name: Run fixture-only self-test
+        run: |
+          rm -f /tmp/user-supplied-nba-betting-csv-audit-self-test.json
+          python scripts/audit_user_supplied_nba_betting_csv_v1.py \
+            --self-test \
+            --output /tmp/user-supplied-nba-betting-csv-audit-self-test.json
+          python -m json.tool /tmp/user-supplied-nba-betting-csv-audit-self-test.json >/dev/null
+      - name: Validate committed aggregate report
+        run: |
+          python -m json.tool data/research/user-supplied-nba-betting-csv-audit-v1.json >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path('data/research/user-supplied-nba-betting-csv-audit-v1.json').read_text()
+          )
+          assert report['source']['raw_rows_emitted'] == 0
+          assert report['source']['raw_file_committed'] is False
+          assert report['schema']['row_count'] == 24440
+          assert report['schema']['column_count'] == 27
+          assert report['quality']['all_structural_gates_pass'] is True
+          assert report['decision']['formal_outcome'] == (
+              'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE_PROVENANCE_PENDING'
+          )
+          assert report['decision']['ready_for_closing_market_benchmark'] is False
+          assert report['decision']['ready_for_point_in_time_odds_layer'] is False
+          assert report['decision']['ready_for_clv_analysis'] is False
+          assert report['decision']['ready_for_entry_price_roi_backtest'] is False
+          assert report['decision']['ready_for_betting_edge_claim'] is False
+          assert report['decision']['existing_silver_replacement'] is False
+          assert report['decision']['existing_gold_replacement'] is False
+          assert report['decision']['model_retraining_authorized'] is False
+          assert report['decision']['formal_stake'] == 0
+          PY

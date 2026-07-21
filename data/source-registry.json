@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.9.0",
+  "registry_version": "2.0.0",
   "site_version_policy": "follow_current_release",
-  "updated_at": "2026-07-21T10:20:00+08:00",
+  "updated_at": "2026-07-21T10:40:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -115,7 +115,7 @@
     {
       "source_id": "kaggle_eoinamoore_historical_nba",
       "name": "Eoin A Moore historical NBA data and player box scores",
-      "status": "role_limited_secondary_eligible",
+      "status": "role_limited_secondary_qa_validated",
       "mode": "public_kaggle_archive_crosscheck",
       "domains": [
         "game_identity_crosscheck",
@@ -123,7 +123,8 @@
         "team_boxscore_crosscheck",
         "player_boxscore_candidate_coverage",
         "play_by_play_coverage",
-        "cross_source_validation"
+        "cross_source_validation",
+        "cross_source_regression_detection"
       ],
       "requires_secret": false,
       "quality_checks": [
@@ -290,7 +291,48 @@
         "ready_for_betting_edge_claim": false,
         "formal_stake": 0
       },
-      "notes": "2023-24 deterministic audit and one-time aggregate validation passed. Player result remains coverage-only, not independent player-stat parity. Post-execution role review policy is ready, but no evaluator outcome or role promotion has occurred. Does not replace Historical Silver or Gold."
+      "post_execution_role_review_evaluation": {
+        "manifest": "data/eoin-post-execution-role-review-evaluation-v1.json",
+        "documentation": "docs/eoin-post-execution-role-review-evaluation-v1.md",
+        "evaluator": "scripts/evaluate_eoin_post_execution_role_review_v1.py",
+        "workflow": ".github/workflows/evaluate-eoin-post-execution-role-review-v1.yml",
+        "formal_outcome": "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+        "workflow_run_id": 29795498102,
+        "artifact_id": 8481840798,
+        "artifact_digest": "sha256:f64248d5a3eaab52aa6a24fc36980144c5c962a31b91a4057834af1d36e42fd1",
+        "previous_formal_role": "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+        "reviewed_formal_role": "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+        "manifest_failures": 0,
+        "failed_scientific_gates": 0,
+        "all_scientific_gates_passed": true,
+        "policy_structural_validation_passed": true,
+        "secondary_qa_only": true,
+        "game_identity_qa": true,
+        "final_score_qa": true,
+        "team_boxscore_qa": true,
+        "player_boxscore_candidate_coverage_only": true,
+        "pbp_game_coverage_qa": true,
+        "independent_player_stat_parity": false,
+        "network_calls_made": false,
+        "new_bundle_execution_performed": false,
+        "external_artifacts_downloaded": false,
+        "raw_eoin_rows_read": false,
+        "raw_rows_emitted": 0,
+        "raw_files_emitted": false,
+        "derived_tables_emitted": false,
+        "ready_for_primary_source_use": false,
+        "ready_for_silver_replacement": false,
+        "ready_for_gold_replacement": false,
+        "ready_for_player_stat_parity": false,
+        "ready_for_player_feature_import": false,
+        "ready_for_model_retraining": false,
+        "ready_for_market_backtest": false,
+        "ready_for_clv_ev_roi_drawdown": false,
+        "ready_for_betting_edge_claim": false,
+        "ready_for_repeat_full_bundle_execution": false,
+        "formal_stake": 0
+      },
+      "notes": "Eoin is validated only as a role-limited secondary QA and cross-source regression-check source. Player statistics remain coverage-only and do not establish independent stat parity. No primary-source role, Historical Silver/Gold replacement, feature import, model retraining, market backtest, repeat bundle execution, betting-edge claim, or non-zero Stake is authorized."
     },
     {
       "source_id": "basketball_reference",

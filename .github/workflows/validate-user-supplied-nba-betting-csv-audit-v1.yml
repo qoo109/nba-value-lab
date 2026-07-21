@@ -11,9 +11,11 @@ on:
       - "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json"
       - "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json"
       - "data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json"
+      - "data/research/legacy-market-real-file-audit-retry-request-002-v1.json"
       - "docs/user-supplied-nba-betting-csv-audit-v1.md"
       - "docs/user-supplied-nba-betting-csv-provenance-confirmation-v1.md"
       - "docs/legacy-market-real-file-audit-run-29804975869-incident-v1.md"
+      - "docs/legacy-market-real-file-audit-retry-request-002-v1.md"
       - "data/historical-odds-source-registry.json"
       - ".github/workflows/validate-user-supplied-nba-betting-csv-audit-v1.yml"
 
@@ -40,7 +42,7 @@ jobs:
             --self-test \
             --output /tmp/user-supplied-nba-betting-csv-audit-self-test.json
           python -m json.tool /tmp/user-supplied-nba-betting-csv-audit-self-test.json >/dev/null
-      - name: Validate audit, confirmation, current status, request, implementation, and registry
+      - name: Validate audit, confirmation, current status, requests, implementation, and registry
         run: |
           python -m json.tool data/research/user-supplied-nba-betting-csv-audit-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json >/dev/null
@@ -48,6 +50,7 @@ jobs:
           python -m json.tool data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json >/dev/null
+          python -m json.tool data/research/legacy-market-real-file-audit-retry-request-002-v1.json >/dev/null
           python -m json.tool data/historical-odds-source-registry.json >/dev/null
           python - <<'PY'
           import json
@@ -59,6 +62,7 @@ jobs:
           predeclaration = json.loads(Path('data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json').read_text())
           implementation_manifest = json.loads(Path('data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json').read_text())
           request = json.loads(Path('data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json').read_text())
+          retry = json.loads(Path('data/research/legacy-market-real-file-audit-retry-request-002-v1.json').read_text())
           registry = json.loads(Path('data/historical-odds-source-registry.json').read_text())
 
           source_id = 'kaggle_cviaxmiwnptr_nba_betting_data_user_supplied'
@@ -89,7 +93,7 @@ jobs:
           assert current['cross_source_audit_predeclaration_state'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_PREDECLARATION_READY'
           assert current['real_cross_source_audit_executed'] is False
           assert current['source_role_changed_by_execution'] is False
-          assert current['next_research_step'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REPAIR_VALIDATE_THEN_REQUEST_NEW_EXPLICIT_RETRY_APPROVAL'
+          assert current['next_research_step'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_REQUEST_002_AWAITING_EXPLICIT_USER_APPROVAL'
           assert current['required_real_file_inputs']['cleaned_or_derived_candidate_substitution_allowed'] is False
           assert current['point_in_time_market_backtest_ready'] is False
           assert current['clv_ready'] is False
@@ -121,13 +125,44 @@ jobs:
 
           repair = current['repair']
           assert repair['hotfix_entrypoint'] == 'scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py'
+          assert repair['repair_commit'] == '613ce3a6232780c486d899b02dd7a99e799b0a27'
           assert repair['repair_scope'] == 'create_temporary_reference_root_before_config_write'
           assert repair['candidate_identity_changed'] is False
           assert repair['reference_scope_changed'] is False
           assert repair['scientific_policy_changed'] is False
           assert repair['frozen_gates_changed'] is False
           assert repair['output_boundary_changed'] is False
-          assert repair['retry_execution_enabled'] is False
+
+          retry_status = current['retry_request']
+          assert retry_status['request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002'
+          assert retry_status['state'] == 'AWAITING_EXPLICIT_USER_APPROVAL'
+          assert retry_status['approval_granted'] is False
+          assert retry_status['execution_enabled'] is False
+          assert retry_status['execution_count'] == 0
+          assert retry_status['maximum_execution_count'] == 1
+
+          assert retry['schema_version'] == 'legacy-market-real-file-audit-retry-request-002-v1'
+          assert retry['request_id'] == retry_status['request_id']
+          assert retry['state'] == retry_status['state']
+          assert retry['previous_request_id'] == execution['request_id']
+          assert retry['previous_run_id'] == execution['workflow_run_id']
+          assert retry['previous_result'] == 'BLOCKED_BEFORE_SCIENTIFIC_RESULT'
+          assert retry['repair_commit'] == repair['repair_commit']
+          assert retry['repair_entrypoint'] == repair['hotfix_entrypoint']
+          assert retry['one_time_only'] is True
+          assert retry['maximum_execution_count'] == 1
+          assert retry['workflow_dispatch_only'] is True
+          assert retry['approval_granted'] is False
+          assert retry['execution_enabled'] is False
+          assert retry['execution_count'] == 0
+          assert retry['candidate_identity_changed'] is False
+          assert retry['reference_scope_changed'] is False
+          assert retry['scientific_contract_changed'] is False
+          assert retry['frozen_gates_changed'] is False
+          assert retry['output_boundary_changed'] is False
+          assert retry['raw_rows_emitted'] == 0
+          assert retry['raw_files_uploaded'] is False
+          assert retry['formal_stake'] == 0
 
           assert predeclaration['candidate_source']['source_id'] == source_id
           assert predeclaration['candidate_source']['provenance_status'] == 'user_confirmed'

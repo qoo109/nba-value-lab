@@ -17,15 +17,15 @@ Gold/Silver reconciliation result: SOURCE_DATA_GAP_CONFIRMED
 2023-24 Silver games: 1,230
 2023-24 games without team features: 2
 root-cause implementation: VALIDATED
-root-cause request: VALID / AWAITING EXPLICIT USER APPROVAL
-real root-cause execution count: 0
+root-cause request: EXPLICIT APPROVAL GRANTED / READY FOR MANUAL DISPATCH
+real root-cause execution count: 0 / 1
 formal stake: 0
 ```
 
 ## Next Unique Mainline
 
 ```text
-HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_AWAITING_EXPLICIT_USER_APPROVAL
+HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_READY_FOR_MANUAL_DISPATCH
 ```
 
 Request ID:
@@ -78,15 +78,33 @@ request merge: 7d52582bca2a8ef596e862c7655872a14e0a00ac
 validation run: 29821759681
 validation artifact: 8491635865
 state: REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL
-approval granted: false
-execution enabled: false
 ```
 
-## Approved Future Scope Only After Explicit Approval
+### Explicit approval
 
-A later approved run may rebuild only the `2023-24` Historical Silver reference in temporary storage and classify the two zero-feature games using aggregate counts.
+```text
+approval granted: true
+approved by: qoo109
+execution enabled: true
+execution count: 0
+maximum execution count: 1
+workflow_dispatch only: true
+```
 
-It must not emit raw rows, game IDs, dates, team codes, row hashes, databases, or source archives. It must not modify the Silver or Gold builders during execution.
+The approved run may rebuild only the `2023-24` Historical Silver reference in temporary storage and classify the two zero-feature games using aggregate counts.
+
+## Approved One-time Scope
+
+The manual workflow may:
+
+1. download the existing `shufinskiy/nba_data` 2023-24 Silver inputs into temporary storage;
+2. rebuild the existing 2023-24 Historical Silver without changing builder code;
+3. read temporary `games`, `possessions`, and `team_game_features` rows;
+4. classify the two zero-feature games;
+5. delete temporary archives and database with the runner;
+6. upload one aggregate JSON report of at most 1 MiB.
+
+It must not download Candidate CSV, create or read Gold, or emit raw rows, game IDs, dates, team codes, row hashes, databases, or source archives.
 
 ## Still Blocked
 
@@ -98,6 +116,7 @@ It must not emit raw rows, game IDs, dates, team codes, row hashes, databases, o
 - point-in-time market evaluation;
 - CLV, EV, ROI, or Drawdown;
 - model retraining;
+- betting-edge claims;
 - formal Stake above `0`.
 
 ## Important Files
@@ -105,9 +124,12 @@ It must not emit raw rows, game IDs, dates, team codes, row hashes, databases, o
 - `data/research/historical-gold-silver-coverage-real-reference-result-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-implementation-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-real-execution-request-v1.json`
+- `data/research/historical-silver-2023-24-missing-team-features-root-cause-approval-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v2.json`
 - `scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py`
-- `scripts/validate_historical_silver_missing_team_features_root_cause_request_v1.py`
+- `scripts/validate_historical_silver_missing_team_features_root_cause_approval_v1.py`
+- `scripts/run_historical_silver_missing_team_features_root_cause_once_v1.py`
+- `.github/workflows/run-approved-historical-silver-missing-team-features-root-cause-once-v1.yml`
 
 ## Eoin and Other Research Lines
 

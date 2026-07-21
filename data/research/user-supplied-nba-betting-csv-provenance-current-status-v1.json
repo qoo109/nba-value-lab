@@ -1,6 +1,6 @@
 {
   "schema_version": "user-supplied-nba-betting-csv-provenance-current-status-v1",
-  "updated_at": "2026-07-21T14:35:00+08:00",
+  "updated_at": "2026-07-21T15:05:00+08:00",
   "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
   "current_formal_outcome": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
   "provenance_status": "user_confirmed",
@@ -47,14 +47,21 @@
   },
   "retry_request": {
     "request_file": "data/research/legacy-market-real-file-audit-retry-request-002-v1.json",
+    "approval_file": "data/research/legacy-market-real-file-audit-retry-002-approval-v1.json",
     "documentation": "docs/legacy-market-real-file-audit-retry-request-002-v1.md",
-    "validation_workflow": ".github/workflows/validate-legacy-market-real-file-audit-retry-request-002-v1.yml",
+    "approval_validator": "scripts/validate_legacy_market_real_file_audit_retry_002_approval_v1.py",
+    "executor": "scripts/run_legacy_market_real_file_audit_retry_002_v1.py",
+    "validation_workflow": ".github/workflows/validate-legacy-market-real-file-audit-retry-002-approval-v1.yml",
+    "execution_workflow": ".github/workflows/run-approved-legacy-market-real-file-audit-retry-002-v1.yml",
     "request_id": "LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002",
-    "state": "AWAITING_EXPLICIT_USER_APPROVAL",
-    "approval_granted": false,
-    "execution_enabled": false,
+    "state": "EXPLICIT_USER_APPROVAL_GRANTED_READY_FOR_MANUAL_DISPATCH",
+    "approval_granted": true,
+    "execution_enabled": true,
     "execution_count": 0,
-    "maximum_execution_count": 1
+    "maximum_execution_count": 1,
+    "approval_validation_workflow_run_id": 29808840623,
+    "approval_validation_artifact_id": 8486566785,
+    "approval_validation_artifact_digest": "sha256:bfcbd24ad9c0ab20492e22961a96f15b70a203b12487491d3c9e9a78318dbb65"
   },
   "required_real_file_inputs": {
     "exact_candidate_file": "nba_2008-2026.csv",
@@ -66,7 +73,7 @@
   },
   "real_cross_source_audit_executed": false,
   "source_role_changed_by_execution": false,
-  "next_research_step": "LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_REQUEST_002_AWAITING_EXPLICIT_USER_APPROVAL",
+  "next_research_step": "LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_002_READY_FOR_MANUAL_DISPATCH",
   "offseason_live_odds_capture_required": false,
   "point_in_time_market_backtest_ready": false,
   "clv_ready": false,

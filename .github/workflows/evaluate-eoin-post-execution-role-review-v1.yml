@@ -1,0 +1,118 @@
+name: Evaluate Eoin post-execution role review v1
+
+on:
+  pull_request:
+    paths:
+      - "data/eoin-post-execution-role-review-policy-v1.json"
+      - "data/eoin-post-execution-role-review-evaluation-v1.json"
+      - "scripts/validate_eoin_post_execution_role_review_policy_v1.py"
+      - "scripts/evaluate_eoin_post_execution_role_review_v1.py"
+      - "docs/eoin-post-execution-role-review-evaluation-v1.md"
+      - ".github/workflows/evaluate-eoin-post-execution-role-review-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/eoin-post-execution-role-review-policy-v1.json"
+      - "data/eoin-post-execution-role-review-evaluation-v1.json"
+      - "scripts/validate_eoin_post_execution_role_review_policy_v1.py"
+      - "scripts/evaluate_eoin_post_execution_role_review_v1.py"
+      - "docs/eoin-post-execution-role-review-evaluation-v1.md"
+      - ".github/workflows/evaluate-eoin-post-execution-role-review-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  aggregate-evaluation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile policy and evaluator
+        run: |
+          python -m py_compile scripts/validate_eoin_post_execution_role_review_policy_v1.py
+          python -m py_compile scripts/evaluate_eoin_post_execution_role_review_v1.py
+
+      - name: Validate frozen policy
+        run: |
+          mkdir -p artifacts/eoin-post-execution-role-review-evaluation-v1
+          python scripts/validate_eoin_post_execution_role_review_policy_v1.py \
+            --policy data/eoin-post-execution-role-review-policy-v1.json \
+            --output artifacts/eoin-post-execution-role-review-evaluation-v1/policy-report.json \
+            --self-test
+
+      - name: Evaluate frozen aggregate evidence
+        run: |
+          python scripts/evaluate_eoin_post_execution_role_review_v1.py \
+            --manifest data/eoin-post-execution-role-review-evaluation-v1.json \
+            --policy data/eoin-post-execution-role-review-policy-v1.json \
+            --output artifacts/eoin-post-execution-role-review-evaluation-v1/eoin-post-execution-role-review-evaluation-v1-report.json \
+            --self-test
+          rm artifacts/eoin-post-execution-role-review-evaluation-v1/policy-report.json
+
+      - name: Enforce role and output boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path(
+              "artifacts/eoin-post-execution-role-review-evaluation-v1/"
+              "eoin-post-execution-role-review-evaluation-v1-report.json"
+          )
+          report = json.loads(path.read_text(encoding="utf-8"))
+          assert report["formal_outcome"] == "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED", report
+          assert report["previous_formal_role"] == "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE", report
+          assert report["reviewed_formal_role"] == "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED", report
+          assert report["all_scientific_gates_passed"] is True, report
+          assert report["failed_scientific_gates"] == [], report
+          assert report["manifest_failures"] == [], report
+          assert report["policy_validation"]["structural_policy_valid"] is True, report
+
+          quality = report["quality"]
+          assert quality["network_calls_made"] is False, report
+          assert quality["new_bundle_execution_performed"] is False, report
+          assert quality["external_artifacts_downloaded"] is False, report
+          assert quality["raw_eoin_rows_read"] is False, report
+          assert quality["raw_rows_emitted"] == 0, report
+          assert quality["raw_files_emitted"] is False, report
+          assert quality["derived_tables_emitted"] is False, report
+          assert quality["formal_stake"] == 0, report
+
+          role = report["role_scope"]
+          assert role["secondary_qa_only"] is True, report
+          assert role["game_identity_qa"] is True, report
+          assert role["final_score_qa"] is True, report
+          assert role["team_boxscore_qa"] is True, report
+          assert role["player_boxscore_candidate_coverage_only"] is True, report
+          assert role["pbp_game_coverage_qa"] is True, report
+          assert role["independent_player_stat_parity"] is False, report
+
+          permissions = report["downstream_permissions"]
+          for key, value in permissions.items():
+              if key == "formal_stake":
+                  assert value == 0, report
+              else:
+                  assert value is False, (key, report)
+
+          files = [item for item in path.parent.iterdir() if item.is_file()]
+          assert files == [path], files
+          assert path.stat().st_size <= 10 * 1024 * 1024, path.stat().st_size
+          PY
+
+      - name: Upload aggregate-only evaluation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eoin-post-execution-role-review-evaluation-v1
+          path: artifacts/eoin-post-execution-role-review-evaluation-v1/eoin-post-execution-role-review-evaluation-v1-report.json
+          if-no-files-found: error
+          retention-days: 14

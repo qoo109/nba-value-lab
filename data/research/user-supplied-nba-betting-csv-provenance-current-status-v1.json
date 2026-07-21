@@ -1,6 +1,6 @@
 {
   "schema_version": "user-supplied-nba-betting-csv-provenance-current-status-v1",
-  "updated_at": "2026-07-21T14:25:00+08:00",
+  "updated_at": "2026-07-21T14:35:00+08:00",
   "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
   "current_formal_outcome": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
   "provenance_status": "user_confirmed",
@@ -37,13 +37,24 @@
   "repair": {
     "incident_document": "docs/legacy-market-real-file-audit-run-29804975869-incident-v1.md",
     "hotfix_entrypoint": "scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py",
+    "repair_commit": "613ce3a6232780c486d899b02dd7a99e799b0a27",
     "repair_scope": "create_temporary_reference_root_before_config_write",
     "candidate_identity_changed": false,
     "reference_scope_changed": false,
     "scientific_policy_changed": false,
     "frozen_gates_changed": false,
-    "output_boundary_changed": false,
-    "retry_execution_enabled": false
+    "output_boundary_changed": false
+  },
+  "retry_request": {
+    "request_file": "data/research/legacy-market-real-file-audit-retry-request-002-v1.json",
+    "documentation": "docs/legacy-market-real-file-audit-retry-request-002-v1.md",
+    "validation_workflow": ".github/workflows/validate-legacy-market-real-file-audit-retry-request-002-v1.yml",
+    "request_id": "LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002",
+    "state": "AWAITING_EXPLICIT_USER_APPROVAL",
+    "approval_granted": false,
+    "execution_enabled": false,
+    "execution_count": 0,
+    "maximum_execution_count": 1
   },
   "required_real_file_inputs": {
     "exact_candidate_file": "nba_2008-2026.csv",
@@ -55,7 +66,7 @@
   },
   "real_cross_source_audit_executed": false,
   "source_role_changed_by_execution": false,
-  "next_research_step": "LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REPAIR_VALIDATE_THEN_REQUEST_NEW_EXPLICIT_RETRY_APPROVAL",
+  "next_research_step": "LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_REQUEST_002_AWAITING_EXPLICIT_USER_APPROVAL",
   "offseason_live_odds_capture_required": false,
   "point_in_time_market_backtest_ready": false,
   "clv_ready": false,

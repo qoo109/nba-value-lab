@@ -1,0 +1,83 @@
+name: Validate legacy market real-file audit retry request 002 v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/legacy-market-real-file-audit-retry-request-002-v1.json"
+      - "docs/legacy-market-real-file-audit-retry-request-002-v1.md"
+      - "docs/legacy-market-real-file-audit-run-29804975869-incident-v1.md"
+      - "scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py"
+      - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
+      - "PROJECT_STATUS.md"
+      - ".github/workflows/validate-legacy-market-real-file-audit-retry-request-002-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-request:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile repaired executor
+        run: |
+          python -m py_compile \
+            scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py \
+            scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py
+
+      - name: Validate request 002 and repair boundary
+        run: |
+          python -m json.tool data/research/legacy-market-real-file-audit-retry-request-002-v1.json >/dev/null
+          PYTHONPATH=scripts python - <<'PY'
+          import json
+          import tempfile
+          from pathlib import Path
+          import run_user_supplied_legacy_market_archive_real_file_audit_once_v1 as base
+          import run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1 as hotfix
+
+          request = json.loads(Path('data/research/legacy-market-real-file-audit-retry-request-002-v1.json').read_text())
+          assert request['request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002'
+          assert request['state'] == 'AWAITING_EXPLICIT_USER_APPROVAL'
+          assert request['previous_request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-001'
+          assert request['previous_run_id'] == 29804975869
+          assert request['previous_result'] == 'BLOCKED_BEFORE_SCIENTIFIC_RESULT'
+          assert request['repair_commit'] == '613ce3a6232780c486d899b02dd7a99e799b0a27'
+          assert request['repair_entrypoint'] == 'scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py'
+          assert request['one_time_only'] is True
+          assert request['maximum_execution_count'] == 1
+          assert request['workflow_dispatch_only'] is True
+          assert request['approval_granted'] is False
+          assert request['execution_enabled'] is False
+          assert request['execution_count'] == 0
+          assert request['candidate_identity_changed'] is False
+          assert request['reference_scope_changed'] is False
+          assert request['scientific_contract_changed'] is False
+          assert request['frozen_gates_changed'] is False
+          assert request['output_boundary_changed'] is False
+          assert request['raw_rows_emitted'] == 0
+          assert request['raw_files_uploaded'] is False
+          assert request['formal_stake'] == 0
+
+          with tempfile.TemporaryDirectory() as temp_name:
+              root = Path(temp_name) / 'reference'
+              assert not root.exists()
+              hotfix.prepare_reference_root(root)
+              assert root.is_dir()
+              (root / 'config-2019.json').write_text('{}\n', encoding='utf-8')
+
+          assert hotfix._ORIGINAL_REFERENCE_BUILD is base.reference_build
+          assert base.YEARS == [2019, 2020, 2021, 2022, 2023]
+          boundary = base.boundary()
+          assert boundary['raw_rows_emitted'] == 0
+          assert boundary['raw_files_emitted'] is False
+          assert boundary['point_in_time_market_backtest'] is False
+          assert boundary['model_training_or_retraining'] is False
+          assert boundary['betting_edge_claim'] is False
+          assert boundary['formal_stake'] == 0
+          PY

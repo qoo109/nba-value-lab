@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.4.0",
-  "updated_at": "2026-07-21T10:40:00+08:00",
+  "registry_version": "1.5.0",
+  "updated_at": "2026-07-21T11:45:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -149,8 +149,30 @@
         "join_key": ["game_date", "home_team_abbr", "away_team_abbr"],
         "fuzzy_matching_allowed": false,
         "real_file_audit_executed": false,
+        "source_role_changed": false
+      },
+      "cross_source_audit_implementation": {
+        "manifest": "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json",
+        "documentation": "docs/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.md",
+        "runner": "scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py",
+        "workflow": ".github/workflows/validate-user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.yml",
+        "formal_state": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_READY_BUT_REAL_FILE_EXECUTION_DISABLED",
+        "workflow_run_id": 29798628467,
+        "artifact_id": 8482916767,
+        "artifact_digest": "sha256:b6b7b9483b603dea278989c162ae0f3025e6df962f9f51571e465fbb26fe8c70",
+        "fixture_games": 5800,
+        "self_tests_passed": 5,
+        "self_tests_total": 5,
+        "real_candidate_csv_read": false,
+        "real_reference_database_read": false,
+        "network_calls_made": false,
+        "external_artifacts_downloaded": false,
+        "real_file_audit_executed": false,
+        "raw_rows_emitted": 0,
+        "raw_files_emitted": false,
         "source_role_changed": false,
-        "next_step": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION"
+        "required_inputs_available": false,
+        "next_step": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_INPUTS_REQUIRED"
       },
       "guardrails": {
         "closing_label_allowed": false,
@@ -163,7 +185,7 @@
         "model_retraining_allowed": false,
         "formal_stake": 0
       },
-      "notes": "File-level structural audit passed, provenance is user-confirmed, and a deterministic five-season cross-source audit is predeclared but not executed. Missing moneyline and second-half lines remain missing, never zero or unchanged."
+      "notes": "File-level structural audit and provenance confirmation are complete. The deterministic five-season audit implementation is validated on synthetic fixtures, but real execution is disabled until the exact original candidate CSV and both Historical Gold and Silver reference databases are available."
     }
   ]
 }

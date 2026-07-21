@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.5.0",
-  "updated_at": "2026-07-21T11:45:00+08:00",
+  "registry_version": "1.6.0",
+  "updated_at": "2026-07-21T15:40:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -148,7 +148,7 @@
         "reference_seasons": ["2019-20", "2020-21", "2021-22", "2022-23", "2023-24"],
         "join_key": ["game_date", "home_team_abbr", "away_team_abbr"],
         "fuzzy_matching_allowed": false,
-        "real_file_audit_executed": false,
+        "real_file_audit_executed": true,
         "source_role_changed": false
       },
       "cross_source_audit_implementation": {
@@ -163,16 +163,37 @@
         "fixture_games": 5800,
         "self_tests_passed": 5,
         "self_tests_total": 5,
-        "real_candidate_csv_read": false,
-        "real_reference_database_read": false,
-        "network_calls_made": false,
-        "external_artifacts_downloaded": false,
-        "real_file_audit_executed": false,
-        "raw_rows_emitted": 0,
-        "raw_files_emitted": false,
-        "source_role_changed": false,
-        "required_inputs_available": false,
-        "next_step": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_INPUTS_REQUIRED"
+        "source_role_changed": false
+      },
+      "cross_source_audit_execution": {
+        "result": "data/research/legacy-market-real-file-audit-retry-002-result-v1.json",
+        "request_id": "LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002",
+        "workflow_run_id": 29810347326,
+        "workflow_sha": "78ac0931cd28b2315b6e24954dc9ad1af9caf4f0",
+        "real_file_audit_executed": true,
+        "all_scientific_gates_passed": true,
+        "formal_outcome": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED",
+        "boundary_failures": ["reference_missing_gold_for_silver"],
+        "silver_rows_in_scope": 5826,
+        "gold_rows": 5824,
+        "missing_gold_for_silver": 2,
+        "matched_games": 5824,
+        "candidate_match_rate": 0.99914222,
+        "reference_match_rate": 0.999656711,
+        "score_pair_match_rate": 0.999313187,
+        "request_consumed": true,
+        "repeat_execution_allowed": false,
+        "source_role_changed": false
+      },
+      "coverage_reconciliation": {
+        "implementation": "data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json",
+        "documentation": "docs/historical-gold-silver-coverage-reconciliation-implementation-v1.md",
+        "analyzer": "scripts/analyze_historical_gold_silver_coverage_v1.py",
+        "validation_workflow": ".github/workflows/validate-historical-gold-silver-coverage-reconciliation-v1.yml",
+        "formal_state": "HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_IMPLEMENTATION_READY_REAL_EXECUTION_DISABLED",
+        "real_reference_rows_read": false,
+        "real_reconciliation_executed": false,
+        "next_step": "HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_REAL_REFERENCE_EXECUTION_REQUEST"
       },
       "guardrails": {
         "closing_label_allowed": false,
@@ -185,7 +206,7 @@
         "model_retraining_allowed": false,
         "formal_stake": 0
       },
-      "notes": "File-level structural audit and provenance confirmation are complete. The deterministic five-season audit implementation is validated on synthetic fixtures, but real execution is disabled until the exact original candidate CSV and both Historical Gold and Silver reference databases are available."
+      "notes": "The exact candidate passed file identity and all frozen scientific gates in real workflow run 29810347326. The source role remains unchanged because two games present in five-season Historical Silver did not produce Historical Gold matchup rows. Aggregate-only reconciliation tooling is validated on synthetic fixtures; real reference reconciliation remains disabled pending a separate request."
     }
   ]
 }

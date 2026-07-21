@@ -23,6 +23,10 @@ VALIDATED_ROLE = "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED"
 RETAIN_ROLE = "RETAIN_ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE"
 BLOCKED = "POST_EXECUTION_ROLE_REVIEW_BLOCKED"
 EXPECTED_OUTCOMES = {VALIDATED_ROLE, RETAIN_ROLE, BLOCKED}
+EVIDENCE_POLICY_CHECKS = {
+    "cross_source_evidence_meets_frozen_gates",
+    "execution_evidence_meets_frozen_gates",
+}
 
 
 def utc_now() -> str:
@@ -154,7 +158,10 @@ def evaluate(manifest: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]
     gates = scientific_gate_results(policy)
 
     manifest_failures = sorted(name for name, passed in manifest_checks.items() if not passed)
-    boundary_valid = not manifest_failures and policy_report["formal_state"] == POLICY_READY_STATE
+    policy_failures = set(policy_report.get("failed_checks") or [])
+    structural_policy_failures = sorted(policy_failures - EVIDENCE_POLICY_CHECKS)
+    policy_structure_valid = not structural_policy_failures
+    boundary_valid = not manifest_failures and policy_structure_valid
     all_scientific_gates_passed = all(gates.values())
 
     if not boundary_valid:
@@ -175,6 +182,10 @@ def evaluate(manifest: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]
         "policy_validation": {
             "formal_state": policy_report["formal_state"],
             "checks_failed": policy_report["checks_failed"],
+            "failed_checks": sorted(policy_failures),
+            "structural_policy_failures": structural_policy_failures,
+            "structural_policy_valid": policy_structure_valid,
+            "evidence_gate_failures_are_evaluated_separately": True,
         },
         "manifest_checks": manifest_checks,
         "manifest_failures": manifest_failures,
@@ -226,6 +237,7 @@ def self_test(manifest: dict[str, Any], policy: dict[str, Any]) -> None:
     report = evaluate(manifest, mutated_policy)
     assert report["formal_outcome"] == RETAIN_ROLE, report
     assert "final_score_match_rate" in report["failed_scientific_gates"], report
+    assert report["policy_validation"]["structural_policy_valid"] is True, report
 
     mutated_manifest = copy.deepcopy(manifest)
     mutated_manifest["role_boundary"]["primary_source_allowed"] = True
@@ -236,6 +248,7 @@ def self_test(manifest: dict[str, Any], policy: dict[str, Any]) -> None:
     mutated_policy["review_scope"]["raw_rows_emitted"] = 1
     report = evaluate(manifest, mutated_policy)
     assert report["formal_outcome"] == BLOCKED, report
+    assert report["policy_validation"]["structural_policy_valid"] is False, report
 
 
 def main() -> int:

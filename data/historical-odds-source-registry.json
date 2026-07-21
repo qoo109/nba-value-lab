@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.1.0",
-  "updated_at": "2026-07-17T12:55:00+08:00",
+  "registry_version": "1.2.0",
+  "updated_at": "2026-07-21T09:55:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -109,6 +109,46 @@
       "automation_allowed": false,
       "commit_policy": "do_not_import_without_legal_review",
       "notes": "A downloadable mirror does not override original website terms or database rights."
+    },
+    {
+      "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
+      "name": "User-supplied NBA Betting Data CSV; exact Kaggle source confirmation pending",
+      "url": "https://www.kaggle.com/datasets/cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024",
+      "dataset_handle": "cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024",
+      "status": "role_limited_legacy_market_archive_eligible_provenance_pending",
+      "use_cases": ["game_identity_crosscheck", "final_score_crosscheck", "spread_total_descriptive_research", "moneyline_forecast_benchmark_pilot"],
+      "file_evidence": {
+        "file_name": "nba_2008-2026.csv",
+        "bytes": 2493308,
+        "sha256": "729eb2ead85c14affbb81ae9a4c611fee9790b8dd3d1d7824e1ddba14410a8c4",
+        "rows": 24440,
+        "columns": 27,
+        "date_min": "2007-10-30",
+        "date_max": "2026-06-13",
+        "season_labels": "2008-2026"
+      },
+      "source_identification": "Exact 27-column schema match to the linked Kaggle dataset; user confirmation of download origin remains pending.",
+      "license": "CC0 label on linked Kaggle page; exact local-file origin pending user confirmation",
+      "provenance": "Linked page states Sportsbook Reviews Online through 2023-01-16 and ESPN from 2023-01-17 onward.",
+      "timestamp_quality": "unknown_no_observed_at",
+      "bookmaker_available": false,
+      "opening_closing_classified": false,
+      "automation_allowed": "local_user_supplied_file_audit_only",
+      "commit_policy": "raw_csv_never_committed_aggregate_report_only",
+      "audit_report": "data/research/user-supplied-nba-betting-csv-audit-v1.json",
+      "audit_tool": "scripts/audit_user_supplied_nba_betting_csv_v1.py",
+      "guardrails": {
+        "closing_label_allowed": false,
+        "point_in_time_join_allowed": false,
+        "roi_allowed": false,
+        "clv_allowed": false,
+        "betting_edge_claim_allowed": false,
+        "silver_replacement_allowed": false,
+        "gold_replacement_allowed": false,
+        "model_retraining_allowed": false,
+        "formal_stake": 0
+      },
+      "notes": "File-level structural audit passed. Missing moneyline and second-half lines after the source transition are preserved as missing, never zero or unchanged."
     }
   ]
 }

@@ -1,0 +1,112 @@
+{
+  "schema_version": "eoin-post-execution-role-review-policy-v1",
+  "created_at": "2026-07-21T10:15:00+08:00",
+  "source_id": "kaggle_eoinamoore_historical_nba",
+  "current_formal_role": "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+  "policy_state": "POST_EXECUTION_ROLE_REVIEW_POLICY_PREDECLARED",
+  "purpose": "Predeclare a policy-only review of whether the completed Eoin evidence supports a more explicit role-limited secondary QA designation without changing any production data or model path.",
+  "evidence_anchors": {
+    "cross_source_audit": {
+      "formal_state": "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+      "workflow_run_id": 29672984966,
+      "artifact_id": 8437932113,
+      "artifact_digest": "sha256:96a87c6b52614ea6f7478e1bdbcc729c7c8eb2347490ca236475444ca5fcc63a",
+      "reference_games": 1230,
+      "matched_games": 1230,
+      "game_identity_match_rate": 1.0,
+      "final_score_match_rate": 0.999187,
+      "team_boxscore_coverage_rate": 1.0,
+      "team_boxscore_score_match_rate": 0.999187,
+      "player_boxscore_candidate_coverage_rate": 1.0,
+      "pbp_game_coverage_rate": 1.0
+    },
+    "one_time_full_adapter_execution": {
+      "formal_state": "ONE_TIME_FULL_ADAPTER_AGGREGATE_VALIDATION_PASS",
+      "workflow_run_id": 29680729672,
+      "artifact_id": 8440485189,
+      "artifact_digest": "sha256:e068940df05bfc51d8757aef500e9c6f812687bfa171b5fff8680ee3b59bb56c",
+      "request_id": "EOIN-FULL-ADAPTER-2026-07-19-001",
+      "request_consumed": true,
+      "execution_count": 1,
+      "games": 1383,
+      "team_boxscore_coverage_rate": 1.0,
+      "team_boxscore_score_match_rate": 1.0,
+      "player_boxscore_candidate_coverage_rate": 1.0,
+      "pbp_game_coverage_rate": 1.0,
+      "duplicate_game_id_groups": 0,
+      "raw_rows_emitted": 0,
+      "raw_files_emitted": false
+    }
+  },
+  "review_scope": {
+    "allowed_domains": [
+      "deterministic_game_identity_qa",
+      "final_score_qa",
+      "team_boxscore_coverage_qa",
+      "team_boxscore_score_qa",
+      "player_boxscore_candidate_coverage_only",
+      "pbp_game_coverage_qa",
+      "cross_source_regression_detection"
+    ],
+    "player_statistics_role": "coverage_only_not_stat_parity",
+    "network_calls_allowed": false,
+    "new_bundle_execution_allowed": false,
+    "raw_source_rows_read_allowed": false,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false
+  },
+  "frozen_review_gates": {
+    "minimum_cross_source_matched_games": 1000,
+    "minimum_game_identity_match_rate": 0.98,
+    "minimum_final_score_match_rate": 0.98,
+    "minimum_team_boxscore_coverage_rate": 0.98,
+    "minimum_team_boxscore_score_match_rate": 0.98,
+    "minimum_player_boxscore_candidate_coverage_rate": 0.95,
+    "minimum_pbp_game_coverage_rate": 0.95,
+    "minimum_full_bundle_games": 1000,
+    "maximum_duplicate_game_id_groups": 0,
+    "request_must_be_consumed": true,
+    "maximum_execution_count": 1,
+    "maximum_raw_rows_emitted": 0,
+    "raw_files_emitted_allowed": false
+  },
+  "candidate_review_outcomes": [
+    "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+    "RETAIN_ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+    "POST_EXECUTION_ROLE_REVIEW_BLOCKED"
+  ],
+  "maximum_possible_role_if_later_evaluation_passes": "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+  "forbidden_promotions": {
+    "primary_source_allowed": false,
+    "historical_silver_replacement_allowed": false,
+    "historical_gold_replacement_allowed": false,
+    "player_stat_parity_claim_allowed": false,
+    "player_stat_feature_import_allowed": false,
+    "model_training_input_allowed": false,
+    "model_retraining_allowed": false,
+    "market_backtest_allowed": false,
+    "clv_ev_roi_drawdown_allowed": false,
+    "betting_decision_layer_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "repeat_full_bundle_execution_allowed": false,
+    "formal_stake": 0
+  },
+  "next_state_if_policy_validation_passes": {
+    "formal_state": "EOIN_POST_EXECUTION_ROLE_REVIEW_POLICY_READY",
+    "ready_for_evaluation_implementation": true,
+    "role_promotion_completed": false,
+    "current_role_unchanged": true,
+    "ready_for_primary_source_use": false,
+    "ready_for_silver_replacement": false,
+    "ready_for_gold_replacement": false,
+    "ready_for_player_stat_parity": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "decision_states": [
+    "EOIN_POST_EXECUTION_ROLE_REVIEW_POLICY_BLOCKED",
+    "EOIN_POST_EXECUTION_ROLE_REVIEW_POLICY_READY"
+  ]
+}

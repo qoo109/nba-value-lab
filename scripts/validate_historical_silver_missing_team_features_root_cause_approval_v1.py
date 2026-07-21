@@ -92,11 +92,14 @@ def validate(request, approval, implementation, result, current, confirmation, e
     add("result_no_candidate", result.get("candidate_csv_downloaded_or_read") is False)
     add("result_stake", result.get("formal_stake") == 0)
 
-    add("current_state", current.get("formal_state") == "HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL")
+    add("current_state", current.get("formal_state") == "HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_EXPLICIT_APPROVAL_GRANTED_READY_FOR_MANUAL_DISPATCH")
     add("current_id", current.get("request_id") == REQUEST_ID)
-    add("current_unapproved", current.get("approval_granted") is False)
-    add("current_disabled", current.get("execution_enabled") is False)
+    add("current_approved", current.get("approval_granted") is True)
+    add("current_enabled", current.get("execution_enabled") is True)
     add("current_zero", current.get("execution_count") == 0)
+    add("current_max_one", current.get("maximum_execution_count") == 1)
+    add("current_no_candidate", current.get("candidate_csv_download_allowed") is False)
+    add("current_no_gold", current.get("gold_builder_execution_allowed") is False)
     add("current_stake", current.get("formal_stake") == 0)
 
     add("runtime_request", confirmation == REQUEST_ID)

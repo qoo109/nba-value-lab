@@ -1,0 +1,157 @@
+{
+  "schema_version": "user-supplied-legacy-market-archive-real-file-audit-execution-request-v1",
+  "created_at": "2026-07-21T19:55:00+08:00",
+  "request_id": "LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-001",
+  "request_state": "AWAITING_EXPLICIT_USER_APPROVAL",
+  "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
+  "purpose": "Request one explicitly approved workflow_dispatch run that reconstructs the five-season Historical Silver and Gold reference inputs in temporary storage, acquires the confirmed candidate dataset in temporary storage, enforces exact file identity, and executes the frozen deterministic aggregate-only cross-source audit.",
+  "upstream_evidence": {
+    "predeclaration": {
+      "formal_state": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_PREDECLARATION_READY",
+      "policy": "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json",
+      "merged_pr": 105,
+      "merge_commit": "af44d320f5dc996e990b8d53ac397f59d4825e3f"
+    },
+    "implementation": {
+      "formal_state": "USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_READY_BUT_REAL_FILE_EXECUTION_DISABLED",
+      "manifest": "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json",
+      "runner": "scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py",
+      "merged_pr": 106,
+      "workflow_run_id": 29798628467,
+      "artifact_id": 8482916767,
+      "artifact_digest": "sha256:b6b7b9483b603dea278989c162ae0f3025e6df962f9f51571e465fbb26fe8c70",
+      "fixture_games": 5800,
+      "self_tests_passed": 5,
+      "self_tests_total": 5
+    },
+    "status_sync": {
+      "merged_pr": 107,
+      "commit": "5ce01fee19ed821bbfbfe3a5f5e89347ad15b957"
+    },
+    "historical_gold_reference": {
+      "workflow_run_id": 29551715399,
+      "artifact_id": 8396002371,
+      "artifact_digest": "sha256:c831e2fc1b03b99319e2847a015a0e94744574bfa6ebff49e43da3f3ed201538",
+      "head_sha": "c9ad2281c04b35a551acb617fcc255ce36af7a29",
+      "historical_gold_matchup_rows": 5824,
+      "strict_point_in_time_violations": 0
+    }
+  },
+  "frozen_candidate_identity": {
+    "dataset_handle": "cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024",
+    "file_name": "nba_2008-2026.csv",
+    "file_bytes": 2493308,
+    "file_sha256": "729eb2ead85c14affbb81ae9a4c611fee9790b8dd3d1d7824e1ddba14410a8c4",
+    "row_count": 24440,
+    "column_count": 27,
+    "provenance_status": "user_confirmed",
+    "cleaned_or_derived_substitution_allowed": false,
+    "exact_identity_required": true
+  },
+  "frozen_reference_scope": {
+    "season_start_years": [2019, 2020, 2021, 2022, 2023],
+    "season_labels": ["2019-20", "2020-21", "2021-22", "2022-23", "2023-24"],
+    "reference_source_path": "shufinskiy/nba_data",
+    "required_reference_products": [
+      "combined Historical Silver SQLite containing games",
+      "season-aware Historical Gold SQLite containing gold_matchup_features"
+    ],
+    "reference_rebuild_required": true,
+    "reference_rebuild_location": "temporary_workflow_storage_only",
+    "reference_database_artifact_upload_allowed": false
+  },
+  "frozen_audit_contract": {
+    "candidate_filter": "season in 2020..2024 and regular == true and playoffs == false",
+    "join_key": ["game_date", "home_team_abbr", "away_team_abbr"],
+    "gold_to_silver_join_key": ["game_id"],
+    "fuzzy_matching_allowed": false,
+    "manual_key_overrides_allowed": false,
+    "many_to_many_join_allowed": false,
+    "score_validation_only": true,
+    "score_used_to_repair_identity": false,
+    "frozen_gates_source": "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json"
+  },
+  "one_time_execution_scope": {
+    "one_time_only": true,
+    "workflow_dispatch_only": true,
+    "automatic_main_push_execution_allowed": false,
+    "pull_request_execution_allowed": false,
+    "scheduled_execution_allowed": false,
+    "concurrent_execution_allowed": false,
+    "maximum_execution_count": 1,
+    "allowed_operations_after_explicit_approval": [
+      "download_confirmed_public_kaggle_dataset_to_temporary_storage",
+      "select_candidate_only_by_exact_bytes_and_sha256",
+      "download_frozen_five_season_reference_archives_to_temporary_storage",
+      "build_audited_per_season_historical_silver_databases",
+      "combine_historical_silver_in_temporary_storage",
+      "build_season_aware_historical_gold_in_temporary_storage",
+      "execute_frozen_deterministic_cross_source_audit",
+      "emit_one_aggregate_json_report",
+      "delete_candidate_reference_archives_and_databases_before_artifact_upload"
+    ],
+    "temporary_raw_candidate_rows_may_be_read_after_approval": true,
+    "temporary_reference_rows_may_be_read_after_approval": true,
+    "raw_rows_emitted": 0,
+    "raw_files_uploaded_as_artifact": false,
+    "reference_databases_uploaded_as_artifact": false,
+    "source_archives_uploaded_as_artifact": false
+  },
+  "operational_limits": {
+    "maximum_runtime_minutes": 300,
+    "maximum_concurrent_runs": 1,
+    "maximum_reference_seasons": 5,
+    "maximum_source_archive_bytes_each": 629145600,
+    "maximum_total_temporary_input_bytes": 10737418240,
+    "maximum_public_output_files": 1,
+    "maximum_public_output_bytes": 1048576,
+    "artifact_retention_days": 14
+  },
+  "approval_boundary": {
+    "explicit_user_approval_required": true,
+    "approval_granted": false,
+    "approved_by": null,
+    "approved_at": null,
+    "approval_record": null,
+    "execution_enabled": false,
+    "approval_text_template": "我核准 request LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-001 執行一次 workflow_dispatch 的 aggregate-only Legacy Market Archive 真實檔案 cross-source audit。核准範圍包含在暫存空間下載已確認的 Kaggle candidate、重建五季 Historical Silver／Gold、讀取暫存資料列並依 frozen deterministic gates 稽核；不得上傳原始 CSV、資料庫、來源 archive 或逐場資料，不得解鎖 Opening／Closing、PIT market backtest、CLV、EV、ROI、Drawdown、模型重訓、betting edge 或非 0 Stake。"
+  },
+  "required_user_acknowledgements": [
+    "The request permits exactly one workflow_dispatch execution after explicit approval.",
+    "The confirmed candidate and reference archives may be downloaded and read only in temporary workflow storage.",
+    "The candidate must match the frozen byte count and SHA-256 exactly.",
+    "Raw candidate rows, raw reference rows, databases, source archives, unmatched keys and game IDs will not be uploaded as artifacts.",
+    "Only one aggregate JSON report of at most 1 MiB may be uploaded.",
+    "The maximum passing role remains a role-limited historical cross-source validation source.",
+    "Opening, Closing, point-in-time joins, market backtests, model retraining and betting decisions remain disabled.",
+    "Formal Stake remains 0."
+  ],
+  "current_execution_boundary": {
+    "network_calls_made": 0,
+    "real_file_execution_count": 0,
+    "candidate_rows_read": false,
+    "reference_rows_read": false,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "ready_for_execution": false,
+    "ready_for_point_in_time_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_state_if_request_validation_passes": {
+    "formal_state": "LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL",
+    "ready_for_user_approval": true,
+    "ready_for_execution": false,
+    "real_file_audit_executed": false,
+    "source_role_changed": false,
+    "ready_for_point_in_time_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "decision_states": [
+    "LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REQUEST_STRUCTURAL_BLOCKED",
+    "LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL"
+  ]
+}

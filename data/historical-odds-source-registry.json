@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "1.2.0",
-  "updated_at": "2026-07-21T09:55:00+08:00",
+  "registry_version": "1.3.0",
+  "updated_at": "2026-07-21T10:08:31+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -112,11 +112,11 @@
     },
     {
       "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
-      "name": "User-supplied NBA Betting Data CSV; exact Kaggle source confirmation pending",
+      "name": "User-supplied NBA Betting Data CSV from confirmed Kaggle source",
       "url": "https://www.kaggle.com/datasets/cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024",
       "dataset_handle": "cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024",
-      "status": "role_limited_legacy_market_archive_eligible_provenance_pending",
-      "use_cases": ["game_identity_crosscheck", "final_score_crosscheck", "spread_total_descriptive_research", "moneyline_forecast_benchmark_pilot"],
+      "status": "role_limited_legacy_market_archive_eligible",
+      "use_cases": ["game_identity_crosscheck", "final_score_crosscheck", "spread_total_descriptive_research", "moneyline_forecast_benchmark_pilot", "predeclared_historical_gold_cross_source_audit"],
       "file_evidence": {
         "file_name": "nba_2008-2026.csv",
         "bytes": 2493308,
@@ -127,13 +127,15 @@
         "date_max": "2026-06-13",
         "season_labels": "2008-2026"
       },
-      "source_identification": "Exact 27-column schema match to the linked Kaggle dataset; user confirmation of download origin remains pending.",
-      "license": "CC0 label on linked Kaggle page; exact local-file origin pending user confirmation",
-      "provenance": "Linked page states Sportsbook Reviews Online through 2023-01-16 and ESPN from 2023-01-17 onward.",
+      "source_identification": "The repository owner explicitly confirmed that the supplied local CSV came from the linked Kaggle dataset.",
+      "license": "CC0 label on the confirmed Kaggle source page",
+      "provenance": "Confirmed Kaggle source page states Sportsbook Reviews Online through 2023-01-16 and ESPN from 2023-01-17 onward.",
+      "provenance_status": "user_confirmed",
+      "provenance_confirmation": "data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json",
       "timestamp_quality": "unknown_no_observed_at",
       "bookmaker_available": false,
       "opening_closing_classified": false,
-      "automation_allowed": "local_user_supplied_file_audit_only",
+      "automation_allowed": "local_user_supplied_file_audit_and_predeclared_cross_source_audit_only",
       "commit_policy": "raw_csv_never_committed_aggregate_report_only",
       "audit_report": "data/research/user-supplied-nba-betting-csv-audit-v1.json",
       "audit_tool": "scripts/audit_user_supplied_nba_betting_csv_v1.py",
@@ -148,7 +150,7 @@
         "model_retraining_allowed": false,
         "formal_stake": 0
       },
-      "notes": "File-level structural audit passed. Missing moneyline and second-half lines after the source transition are preserved as missing, never zero or unchanged."
+      "notes": "File-level structural audit passed and provenance is user-confirmed. Missing moneyline and second-half lines after the source transition remain missing, never zero or unchanged."
     }
   ]
 }

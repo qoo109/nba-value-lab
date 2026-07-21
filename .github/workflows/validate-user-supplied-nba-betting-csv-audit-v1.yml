@@ -8,14 +8,8 @@ on:
       - "data/research/user-supplied-nba-betting-csv-audit-v1.json"
       - "data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json"
       - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
-      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json"
-      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json"
-      - "data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json"
-      - "data/research/legacy-market-real-file-audit-retry-request-002-v1.json"
-      - "docs/user-supplied-nba-betting-csv-audit-v1.md"
-      - "docs/user-supplied-nba-betting-csv-provenance-confirmation-v1.md"
-      - "docs/legacy-market-real-file-audit-run-29804975869-incident-v1.md"
-      - "docs/legacy-market-real-file-audit-retry-request-002-v1.md"
+      - "data/research/legacy-market-real-file-audit-retry-002-result-v1.json"
+      - "data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json"
       - "data/historical-odds-source-registry.json"
       - ".github/workflows/validate-user-supplied-nba-betting-csv-audit-v1.yml"
 
@@ -28,200 +22,115 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Install audit dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy
-      - name: Compile audit tool
-        run: python -m py_compile scripts/audit_user_supplied_nba_betting_csv_v1.py
-      - name: Run fixture-only self-test
+
+      - name: Compile and run fixture-only audit self-test
         run: |
+          python -m py_compile scripts/audit_user_supplied_nba_betting_csv_v1.py
           rm -f /tmp/user-supplied-nba-betting-csv-audit-self-test.json
           python scripts/audit_user_supplied_nba_betting_csv_v1.py \
             --self-test \
             --output /tmp/user-supplied-nba-betting-csv-audit-self-test.json
           python -m json.tool /tmp/user-supplied-nba-betting-csv-audit-self-test.json >/dev/null
-      - name: Validate audit, confirmation, current status, requests, implementation, and registry
+
+      - name: Validate current aggregate evidence and guardrails
         run: |
           python -m json.tool data/research/user-supplied-nba-betting-csv-audit-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json >/dev/null
-          python -m json.tool data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json >/dev/null
-          python -m json.tool data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json >/dev/null
-          python -m json.tool data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json >/dev/null
-          python -m json.tool data/research/legacy-market-real-file-audit-retry-request-002-v1.json >/dev/null
+          python -m json.tool data/research/legacy-market-real-file-audit-retry-002-result-v1.json >/dev/null
+          python -m json.tool data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json >/dev/null
           python -m json.tool data/historical-odds-source-registry.json >/dev/null
           python - <<'PY'
           import json
           from pathlib import Path
 
-          report = json.loads(Path('data/research/user-supplied-nba-betting-csv-audit-v1.json').read_text())
+          audit = json.loads(Path('data/research/user-supplied-nba-betting-csv-audit-v1.json').read_text())
           confirmation = json.loads(Path('data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json').read_text())
           current = json.loads(Path('data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json').read_text())
-          predeclaration = json.loads(Path('data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json').read_text())
-          implementation_manifest = json.loads(Path('data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json').read_text())
-          request = json.loads(Path('data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json').read_text())
-          retry = json.loads(Path('data/research/legacy-market-real-file-audit-retry-request-002-v1.json').read_text())
+          execution = json.loads(Path('data/research/legacy-market-real-file-audit-retry-002-result-v1.json').read_text())
+          reconciliation = json.loads(Path('data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json').read_text())
           registry = json.loads(Path('data/historical-odds-source-registry.json').read_text())
 
           source_id = 'kaggle_cviaxmiwnptr_nba_betting_data_user_supplied'
           source = next(item for item in registry['sources'] if item['source_id'] == source_id)
 
-          assert report['source']['raw_rows_emitted'] == 0
-          assert report['source']['raw_file_committed'] is False
-          assert report['schema']['row_count'] == 24440
-          assert report['schema']['column_count'] == 27
-          assert report['quality']['all_structural_gates_pass'] is True
-          assert report['decision']['formal_outcome'] == 'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE_PROVENANCE_PENDING'
+          assert audit['schema']['row_count'] == 24440, audit
+          assert audit['schema']['column_count'] == 27, audit
+          assert audit['quality']['all_structural_gates_pass'] is True, audit
+          assert audit['source']['raw_rows_emitted'] == 0, audit
+          assert audit['source']['raw_file_committed'] is False, audit
+          assert confirmation['source_id'] == source_id, confirmation
+          assert confirmation['provenance_status'] == 'user_confirmed', confirmation
+          assert confirmation['formal_outcome'] == 'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE', confirmation
+          assert confirmation['file_evidence']['sha256'] == audit['source']['input_sha256'], confirmation
 
-          assert confirmation['source_id'] == source_id
-          assert confirmation['file_evidence']['sha256'] == report['source']['input_sha256']
-          assert confirmation['provenance_status'] == 'user_confirmed'
-          assert confirmation['formal_outcome'] == 'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE'
-          assert confirmation['data_boundary']['raw_csv_committed'] is False
-          assert confirmation['data_boundary']['raw_rows_emitted'] == 0
-          assert confirmation['still_blocked']['point_in_time_odds_join_allowed'] is False
-          assert confirmation['still_blocked']['clv_allowed'] is False
-          assert confirmation['still_blocked']['entry_price_roi_allowed'] is False
-          assert confirmation['still_blocked']['model_retraining_allowed'] is False
-          assert confirmation['still_blocked']['formal_stake'] == 0
+          assert execution['request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002', execution
+          assert execution['workflow_run_id'] == 29810347326, execution
+          assert execution['real_file_audit_executed'] is True, execution
+          assert execution['all_scientific_gates_passed'] is True, execution
+          assert execution['failed_scientific_gates'] == [], execution
+          assert execution['formal_outcome'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED', execution
+          assert execution['boundary_failures'] == ['reference_missing_gold_for_silver'], execution
+          assert execution['reference_counts']['silver_rows_in_scope'] == 5826, execution
+          assert execution['reference_counts']['gold_rows'] == 5824, execution
+          assert execution['reference_counts']['missing_gold_for_silver'] == 2, execution
+          assert execution['request_consumed'] is True, execution
+          assert execution['repeat_execution_allowed'] is False, execution
+          assert execution['boundaries']['raw_rows_emitted'] == 0, execution
+          assert execution['boundaries']['raw_files_emitted'] is False, execution
+          assert execution['boundaries']['formal_stake'] == 0, execution
 
-          assert current['source_id'] == source_id
-          assert current['current_formal_outcome'] == confirmation['formal_outcome']
-          assert current['provenance_status'] == 'user_confirmed'
-          assert current['cross_source_audit_predeclaration_state'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_PREDECLARATION_READY'
-          assert current['real_cross_source_audit_executed'] is False
-          assert current['source_role_changed_by_execution'] is False
-          assert current['next_research_step'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_REQUEST_002_AWAITING_EXPLICIT_USER_APPROVAL'
-          assert current['required_real_file_inputs']['cleaned_or_derived_candidate_substitution_allowed'] is False
-          assert current['point_in_time_market_backtest_ready'] is False
-          assert current['clv_ready'] is False
-          assert current['ev_ready'] is False
-          assert current['roi_ready'] is False
-          assert current['drawdown_ready'] is False
-          assert current['model_retraining_authorized'] is False
-          assert current['betting_edge_claim_allowed'] is False
-          assert current['formal_stake'] == 0
+          assert current['source_id'] == source_id, current
+          assert current['current_formal_outcome'] == 'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE', current
+          assert current['real_cross_source_audit_executed'] is True, current
+          assert current['source_role_changed_by_execution'] is False, current
+          retry = current['retry_real_file_execution']
+          assert retry['workflow_run_id'] == 29810347326, retry
+          assert retry['all_scientific_gates_passed'] is True, retry
+          assert retry['missing_gold_for_silver'] == 2, retry
+          assert retry['request_consumed'] is True, retry
+          assert retry['repeat_execution_allowed'] is False, retry
+          coverage = current['coverage_reconciliation']
+          assert coverage['formal_state'] == 'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_IMPLEMENTATION_READY_REAL_EXECUTION_DISABLED', coverage
+          assert coverage['synthetic_fixture_only'] is True, coverage
+          assert coverage['network_calls_made'] is False, coverage
+          assert coverage['real_reference_rows_read'] is False, coverage
+          assert coverage['real_reconciliation_executed'] is False, coverage
+          assert current['next_research_step'] == 'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_REAL_REFERENCE_EXECUTION_REQUEST', current
+          assert current['point_in_time_market_backtest_ready'] is False, current
+          assert current['clv_ready'] is False, current
+          assert current['ev_ready'] is False, current
+          assert current['roi_ready'] is False, current
+          assert current['drawdown_ready'] is False, current
+          assert current['model_retraining_authorized'] is False, current
+          assert current['betting_edge_claim_allowed'] is False, current
+          assert current['formal_stake'] == 0, current
 
-          implementation = current['cross_source_audit_implementation']
-          assert implementation['formal_state'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_READY_BUT_REAL_FILE_EXECUTION_DISABLED'
-          assert implementation['workflow_run_id'] == 29798628467
-          assert implementation['artifact_id'] == 8482916767
-          assert implementation['fixture_games'] == 5800
-          assert implementation['self_tests_passed'] == implementation['self_tests_total'] == 5
+          assert reconciliation['formal_state'] == coverage['formal_state'], reconciliation
+          assert reconciliation['observed_gap']['missing_gold_for_silver'] == 2, reconciliation
+          assert reconciliation['validation_mode']['real_reconciliation_executed'] is False, reconciliation
+          assert reconciliation['output_boundary']['raw_rows_emitted'] == 0, reconciliation
+          assert reconciliation['output_boundary']['raw_files_emitted'] is False, reconciliation
+          assert reconciliation['downstream_permissions']['ready_for_real_reference_reconciliation'] is False, reconciliation
+          assert reconciliation['downstream_permissions']['ready_for_gold_builder_change'] is False, reconciliation
+          assert reconciliation['downstream_permissions']['ready_for_cross_source_audit_rerun'] is False, reconciliation
+          assert reconciliation['downstream_permissions']['formal_stake'] == 0, reconciliation
 
-          execution = current['real_file_execution']
-          assert execution['request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-001'
-          assert execution['approval_granted'] is True
-          assert execution['workflow_run_id'] == 29804975869
-          assert execution['job_id'] == 88553587348
-          assert execution['artifact_id'] == 8485141135
-          assert execution['execution_count'] == 1
-          assert execution['formal_state'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_EXECUTION_BLOCKED_BEFORE_SCIENTIFIC_RESULT'
-          assert execution['scientific_outcome_produced'] is False
-          assert execution['scientific_gates_evaluated'] is False
-          assert execution['request_reusable'] is False
-
-          repair = current['repair']
-          assert repair['hotfix_entrypoint'] == 'scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py'
-          assert repair['repair_commit'] == '613ce3a6232780c486d899b02dd7a99e799b0a27'
-          assert repair['repair_scope'] == 'create_temporary_reference_root_before_config_write'
-          assert repair['candidate_identity_changed'] is False
-          assert repair['reference_scope_changed'] is False
-          assert repair['scientific_policy_changed'] is False
-          assert repair['frozen_gates_changed'] is False
-          assert repair['output_boundary_changed'] is False
-
-          retry_status = current['retry_request']
-          assert retry_status['request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002'
-          assert retry_status['state'] == 'AWAITING_EXPLICIT_USER_APPROVAL'
-          assert retry_status['approval_granted'] is False
-          assert retry_status['execution_enabled'] is False
-          assert retry_status['execution_count'] == 0
-          assert retry_status['maximum_execution_count'] == 1
-
-          assert retry['schema_version'] == 'legacy-market-real-file-audit-retry-request-002-v1'
-          assert retry['request_id'] == retry_status['request_id']
-          assert retry['state'] == retry_status['state']
-          assert retry['previous_request_id'] == execution['request_id']
-          assert retry['previous_run_id'] == execution['workflow_run_id']
-          assert retry['previous_result'] == 'BLOCKED_BEFORE_SCIENTIFIC_RESULT'
-          assert retry['repair_commit'] == repair['repair_commit']
-          assert retry['repair_entrypoint'] == repair['hotfix_entrypoint']
-          assert retry['one_time_only'] is True
-          assert retry['maximum_execution_count'] == 1
-          assert retry['workflow_dispatch_only'] is True
-          assert retry['approval_granted'] is False
-          assert retry['execution_enabled'] is False
-          assert retry['execution_count'] == 0
-          assert retry['candidate_identity_changed'] is False
-          assert retry['reference_scope_changed'] is False
-          assert retry['scientific_contract_changed'] is False
-          assert retry['frozen_gates_changed'] is False
-          assert retry['output_boundary_changed'] is False
-          assert retry['raw_rows_emitted'] == 0
-          assert retry['raw_files_uploaded'] is False
-          assert retry['formal_stake'] == 0
-
-          assert predeclaration['candidate_source']['source_id'] == source_id
-          assert predeclaration['candidate_source']['provenance_status'] == 'user_confirmed'
-          assert predeclaration['deterministic_join_contract']['fuzzy_matching_allowed'] is False
-          assert predeclaration['next_state_if_validation_passes']['real_file_audit_executed'] is False
-          assert predeclaration['next_state_if_validation_passes']['source_role_changed'] is False
-
-          assert implementation_manifest['source_id'] == source_id
-          assert implementation_manifest['formal_state'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_IMPLEMENTATION_PREDECLARED'
-          assert implementation_manifest['candidate_input']['cleaned_or_derived_file_substitution_allowed'] is False
-          assert implementation_manifest['validation_mode']['real_file_audit_executed'] is False
-          assert implementation_manifest['next_state_if_validation_passes']['formal_state'] == implementation['formal_state']
-
-          assert request['schema_version'] == 'user-supplied-legacy-market-archive-real-file-audit-execution-request-v1'
-          assert request['request_id'] == execution['request_id']
-          assert request['request_state'] == 'AWAITING_EXPLICIT_USER_APPROVAL'
-          assert request['source_id'] == source_id
-          assert request['frozen_candidate_identity']['file_sha256'] == report['source']['input_sha256']
-          assert request['frozen_candidate_identity']['cleaned_or_derived_substitution_allowed'] is False
-          assert request['one_time_execution_scope']['one_time_only'] is True
-          assert request['one_time_execution_scope']['workflow_dispatch_only'] is True
-          assert request['one_time_execution_scope']['scheduled_execution_allowed'] is False
-          assert request['one_time_execution_scope']['maximum_execution_count'] == 1
-          assert request['one_time_execution_scope']['raw_rows_emitted'] == 0
-          assert request['one_time_execution_scope']['raw_files_uploaded_as_artifact'] is False
-          assert request['approval_boundary']['approval_granted'] is False
-          assert request['approval_boundary']['execution_enabled'] is False
-          assert request['current_execution_boundary']['real_file_execution_count'] == 0
-          assert request['current_execution_boundary']['ready_for_execution'] is False
-          assert request['current_execution_boundary']['formal_stake'] == 0
-          assert request['next_state_if_request_validation_passes']['ready_for_execution'] is False
-          assert request['next_state_if_request_validation_passes']['formal_stake'] == 0
-
-          assert registry['registry_version'] == '1.5.0'
-          assert source['status'] == 'role_limited_legacy_market_archive_eligible'
-          assert source['provenance_status'] == 'user_confirmed'
-          assert source['file_evidence']['sha256'] == report['source']['input_sha256']
-          assert source['opening_closing_classified'] is False
-          cross_source = source['cross_source_audit_predeclaration']
-          assert cross_source['formal_state'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_PREDECLARATION_READY'
-          assert cross_source['fuzzy_matching_allowed'] is False
-          assert cross_source['real_file_audit_executed'] is False
-          assert cross_source['source_role_changed'] is False
-          registered_implementation = source['cross_source_audit_implementation']
-          assert registered_implementation['formal_state'] == implementation['formal_state']
-          assert registered_implementation['required_inputs_available'] is False
-          assert source['guardrails']['point_in_time_join_allowed'] is False
-          assert source['guardrails']['roi_allowed'] is False
-          assert source['guardrails']['clv_allowed'] is False
-          assert source['guardrails']['model_retraining_allowed'] is False
-          assert source['guardrails']['formal_stake'] == 0
-
-          assert report['decision']['ready_for_closing_market_benchmark'] is False
-          assert report['decision']['ready_for_point_in_time_odds_layer'] is False
-          assert report['decision']['ready_for_clv_analysis'] is False
-          assert report['decision']['ready_for_entry_price_roi_backtest'] is False
-          assert report['decision']['ready_for_betting_edge_claim'] is False
-          assert report['decision']['existing_silver_replacement'] is False
-          assert report['decision']['existing_gold_replacement'] is False
-          assert report['decision']['model_retraining_authorized'] is False
-          assert report['decision']['formal_stake'] == 0
+          assert registry['registry_version'] == '1.5.0', registry
+          assert source['status'] == 'role_limited_legacy_market_archive_eligible', source
+          assert source['provenance_status'] == 'user_confirmed', source
+          assert source['file_evidence']['sha256'] == audit['source']['input_sha256'], source
+          assert source['opening_closing_classified'] is False, source
+          assert source['guardrails']['point_in_time_join_allowed'] is False, source
+          assert source['guardrails']['roi_allowed'] is False, source
+          assert source['guardrails']['clv_allowed'] is False, source
+          assert source['guardrails']['model_retraining_allowed'] is False, source
+          assert source['guardrails']['formal_stake'] == 0, source
           PY

@@ -13,11 +13,15 @@ current work mode: OFFSEASON_DATA_CONSTRUCTION
 live odds capture required now: false
 legacy source role: ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE
 request 001: consumed by blocked pre-scientific execution
-blocked workflow run: 29804975869
-scientific result produced: false
-reference-root repair merged: 613ce3a6232780c486d899b02dd7a99e799b0a27
-retry request 002: AWAITING_EXPLICIT_USER_APPROVAL
-retry execution enabled: false
+request 002: consumed by completed real-file execution
+real audit workflow run: 29810347326
+all frozen scientific gates passed: true
+formal audit outcome: USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED
+blocking boundary: reference_missing_gold_for_silver
+Silver rows in scope: 5,826
+Gold matchup rows: 5,824
+missing Gold for Silver: 2
+coverage reconciliation implementation: READY / REAL EXECUTION DISABLED
 formal Eoin source role: ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
 formal stake: 0
 ```
@@ -25,79 +29,118 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_REQUEST_002
-AWAITING_EXPLICIT_USER_APPROVAL
+HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_REAL_REFERENCE_EXECUTION_REQUEST
 ```
 
-## Blocked Run 29804975869
+The candidate archive itself passed identity, deterministic matching, and every frozen scientific gate. The only blocker is a two-game reference coverage gap between rebuilt Historical Silver and Historical Gold.
 
-```text
-request id: LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-001
-workflow run: 29804975869
-job id: 88553587348
-head SHA: caf3177194a1a503714c91214359afc125052669
-artifact id: 8485141135
-artifact digest: sha256:0fb59d1b3801eb5edba7bb4a124c7d64c5e7850df97b794e2a3309ecdc2a52c4
-formal state: LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_EXECUTION_BLOCKED_BEFORE_SCIENTIFIC_RESULT
-error: FileNotFoundError before writing reference/config-2019.json
-approval checks: 90 / 90 passed
-network download performed: true
-exact candidate identity check completed: true
-reference rebuild completed: false
-cross-source comparison completed: false
-scientific gates evaluated: false
-raw rows emitted: 0
-raw files uploaded: false
-formal stake: 0
-```
-
-The Artifact contains one aggregate JSON report only. No candidate CSV, source archive, Historical Silver/Gold database, raw row, unmatched key, or game ID was uploaded.
-
-Request `LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-001` recorded one execution attempt and must not be reused or rerun.
-
-## Repair
-
-PR #111 merged the deterministic reference-root repair:
-
-```text
-merge commit: 613ce3a6232780c486d899b02dd7a99e799b0a27
-hotfix entrypoint:
-scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py
-```
-
-The repair creates the temporary reference root before calling the reviewed v1 reference builder.
-
-Unchanged:
-
-- exact candidate bytes and SHA-256;
-- 2019-20 through 2023-24 reference seasons;
-- deterministic date/home/away join;
-- no fuzzy matching or manual overrides;
-- score validation only;
-- frozen scientific gates;
-- aggregate-only output;
-- Stake 0.
-
-## Retry Request 002
+## Completed Real-file Audit Retry 002
 
 ```text
 request id: LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002
-state: AWAITING_EXPLICIT_USER_APPROVAL
-one-time only: true
-workflow_dispatch only: true
-approval granted: false
-execution enabled: false
-execution count: 0
-maximum execution count: 1
+workflow run: 29810347326
+workflow attempt: 1
+head SHA: 78ac0931cd28b2315b6e24954dc9ad1af9caf4f0
+real-file audit executed: true
+request consumed: true
+repeat execution allowed: false
 ```
 
-Request file:
+Aggregate result:
 
 ```text
-data/research/legacy-market-real-file-audit-retry-request-002-v1.json
+candidate eligible rows: 5,829
+matched games: 5,824
+candidate-only games: 5
+reference-only games: 0
+candidate match rate: 99.914222%
+reference match rate: 99.9656711%
+score-pair matches: 5,820 / 5,824
+score-pair match rate: 99.9313187%
+ambiguous join keys: 0
+duplicate candidate keys: 0
+unresolved team codes: 0
+invalid dates: 0
+all scientific gates passed: true
 ```
 
-The retry cannot be executed until a new explicit user approval is recorded and a separate one-time retry workflow is reviewed and merged.
+Formal outcome:
+
+```text
+USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED
+```
+
+Boundary failure:
+
+```text
+reference_missing_gold_for_silver
+```
+
+Reference rebuild:
+
+```text
+2019-20 Silver games: 1,056
+2020-21 Silver games: 1,080
+2021-22 Silver games: 1,230
+2022-23 Silver games: 1,230
+2023-24 Silver games: 1,230
+combined Silver games: 5,826
+Gold matchup rows: 5,824
+Gold team-feature rows: 11,648
+strict PIT violations: 0
+```
+
+Result record:
+
+```text
+data/research/legacy-market-real-file-audit-retry-002-result-v1.json
+```
+
+## Coverage Reconciliation Implementation
+
+```text
+formal state:
+HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_IMPLEMENTATION_READY_REAL_EXECUTION_DISABLED
+```
+
+Analyzer:
+
+```text
+scripts/analyze_historical_gold_silver_coverage_v1.py
+```
+
+The analyzer classifies missing Gold coverage without changing any source row. It checks:
+
+1. Silver home team feature presence.
+2. Silver away team feature presence.
+3. Exact two-sided Silver identity consistency.
+4. Transfer into Gold team features.
+5. Gold matchup-builder omission despite both Gold team rows existing.
+
+Aggregate categories:
+
+```text
+missing_home_team_feature
+missing_away_team_feature
+missing_both_team_features
+silver_feature_pair_identity_mismatch
+gold_team_feature_transfer_mismatch
+gold_matchup_builder_omission
+silver_game_outside_gold_identity_contract
+unclassified
+```
+
+Current validation is synthetic-only:
+
+```text
+network calls: false
+real Silver/Gold rows read: false
+real reconciliation executed: false
+raw rows emitted: 0
+raw files emitted: false
+source role changed: false
+formal stake: 0
+```
 
 ## Legacy Market Archive
 
@@ -112,7 +155,7 @@ provenance: user_confirmed
 current role: ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE
 ```
 
-`nba_2008-2026_cleaned.csv` or any derived file cannot replace the frozen candidate.
+The candidate does not need modification. `nba_2008-2026_cleaned.csv` or any derived file still cannot replace the frozen candidate.
 
 ## Frozen Comparison Contract
 
@@ -127,22 +170,6 @@ manual key override: false
 many-to-many join: false
 score-assisted identity repair: false
 ```
-
-## Frozen Quality Gates
-
-```text
-reference games >= 5,700
-eligible candidate games >= 5,700
-reference match rate >= 98.5%
-candidate match rate >= 98.5%
-matched score-pair rate >= 99.0%
-each-season reference match rate >= 97.0%
-duplicate / ambiguous / unresolved / invalid / missing-score counts = 0
-raw rows emitted = 0
-raw files emitted = false
-```
-
-No gate was evaluated in blocked run `29804975869`.
 
 ## Eoin Evidence Line
 
@@ -163,13 +190,15 @@ Eoin is deterministic QA evidence only. It is not a primary source and does not 
 ## Current Research Position
 
 - Historical Gold: Completed, 5,824 matchup rows, strict PIT violations 0.
+- Historical Silver five-season rebuild: 5,826 games.
+- Gold/Silver coverage gap: 2 games, cause not yet classified on real reference data.
 - Logistic + Elo Walk-forward v2: Completed, 3,688 OOF.
 - Closing Market Benchmark: model materially trails Closing Market.
 - Expected Minutes Audit v3: `ACCURACY_PASS`.
 - Injury Feature Holdout v1: `VALID_NEGATIVE_RESULT`.
 - Wyatt Real-file Audit: `STRUCTURAL_BLOCKED`.
 - Eoin Secondary QA: `VALIDATED / HEALTHY / ALERT-ONLY`.
-- Legacy Market Archive: `REPAIR MERGED / RETRY REQUEST 002 AWAITING APPROVAL`.
+- Legacy Market Archive: scientific gates passed, role upgrade blocked by reference coverage integrity.
 
 ## Offseason Market State
 
@@ -181,12 +210,13 @@ No new live snapshot capture is required during the offseason. Point-in-time mar
 
 ## Do Not Do
 
-- Do not rerun workflow run `29804975869` or reuse request 001.
-- Do not dispatch request 002 before a new explicit approval and reviewed one-time workflow.
-- Do not substitute a cleaned or derived candidate file.
-- Do not continue if candidate bytes or SHA-256 differ.
+- Do not rerun request 001 or request 002.
+- Do not modify the candidate CSV; it passed exact identity and scientific gates.
+- Do not classify the two missing Gold games without reading a reviewed reconciliation result.
+- Do not add rows manually to Gold or Silver.
+- Do not change the Gold builder during a diagnostic execution.
 - Do not commit or upload raw CSV, SQLite, Parquet, source archives, or raw rows.
-- Do not emit unmatched keys, game IDs, or row-level mismatch lists.
+- Do not emit game IDs, dates, team codes, unmatched keys, row hashes, or row-level examples.
 - Do not use fuzzy matching, manual identity overrides, or score-assisted identity repair.
 - Do not label the Legacy Archive as point-in-time, Opening, or Closing.
 - Do not unlock market backtests, CLV, EV, ROI, Drawdown, model retraining, or betting-edge claims.
@@ -197,23 +227,20 @@ No new live snapshot capture is required during the offseason. Point-in-time mar
 
 - `data/historical-odds-source-registry.json`
 - `data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json`
-- `data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json`
-- `data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json`
-- `data/research/user-supplied-legacy-market-archive-real-file-audit-execution-request-v1.json`
-- `data/research/user-supplied-legacy-market-archive-real-file-audit-approval-v1.json`
-- `data/research/legacy-market-real-file-audit-retry-request-002-v1.json`
-- `docs/legacy-market-real-file-audit-run-29804975869-incident-v1.md`
-- `docs/legacy-market-real-file-audit-retry-request-002-v1.md`
-- `scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py`
-- `scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py`
+- `data/research/legacy-market-real-file-audit-retry-002-result-v1.json`
+- `data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json`
+- `docs/historical-gold-silver-coverage-reconciliation-implementation-v1.md`
+- `scripts/analyze_historical_gold_silver_coverage_v1.py`
+- `.github/workflows/validate-historical-gold-silver-coverage-reconciliation-v1.yml`
 
 ## Explicit Next Step
 
 ```text
-1. Validate and merge retry request 002.
-2. Obtain new explicit user approval for request 002.
-3. Create and validate one new manual retry workflow.
-4. Dispatch exactly one new run from main.
-5. Read the aggregate Artifact before recording any scientific outcome.
-6. Keep Stake at 0.
+1. Validate and merge the aggregate audit result record and reconciliation analyzer implementation.
+2. Create a separate one-time real-reference reconciliation request.
+3. Obtain explicit approval before rebuilding or reading real Silver/Gold rows again.
+4. Execute one aggregate-only reconciliation run.
+5. Use its classified cause to decide between Gold builder repair and source-data gap handling.
+6. Do not rerun the cross-source audit until reconciliation is resolved.
+7. Keep Stake at 0.
 ```

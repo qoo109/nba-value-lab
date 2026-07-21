@@ -1,0 +1,84 @@
+name: Validate Historical Gold Silver real-reference request v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/historical-gold-silver-coverage-real-reference-execution-request-v1.json"
+      - "data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json"
+      - "data/research/legacy-market-real-file-audit-retry-002-result-v1.json"
+      - "docs/historical-gold-silver-coverage-real-reference-execution-request-v1.md"
+      - "scripts/validate_historical_gold_silver_coverage_real_reference_request_v1.py"
+      - ".github/workflows/validate-historical-gold-silver-coverage-real-reference-request-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  request-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile request validator
+        run: python -m py_compile scripts/validate_historical_gold_silver_coverage_real_reference_request_v1.py
+
+      - name: Validate request and negative tests
+        run: |
+          rm -rf /tmp/nbavl-gold-silver-real-reference-request
+          mkdir -p /tmp/nbavl-gold-silver-real-reference-request
+          python scripts/validate_historical_gold_silver_coverage_real_reference_request_v1.py \
+            --request data/research/historical-gold-silver-coverage-real-reference-execution-request-v1.json \
+            --implementation data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json \
+            --result data/research/legacy-market-real-file-audit-retry-002-result-v1.json \
+            --self-test \
+            --output /tmp/nbavl-gold-silver-real-reference-request/request-validation-report.json
+
+      - name: Enforce approval and aggregate-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('/tmp/nbavl-gold-silver-real-reference-request/request-validation-report.json')
+          report = json.loads(path.read_text(encoding='utf-8'))
+          assert report['formal_state'] == (
+              'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_'
+              'REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL'
+          ), report
+          assert report['checks_failed'] == 0, report
+          assert all(report['self_tests'].values()), report
+          quality = report['quality']
+          assert quality['network_calls_made'] is False, report
+          assert quality['real_reference_rows_read'] is False, report
+          assert quality['real_reconciliation_executed'] is False, report
+          assert quality['raw_rows_emitted'] == 0, report
+          assert quality['raw_files_emitted'] is False, report
+          assert quality['execution_enabled'] is False, report
+          assert quality['source_role_changed'] is False, report
+          assert quality['formal_stake'] == 0, report
+          decision = report['decision']
+          assert decision['ready_for_explicit_user_approval'] is True, report
+          assert decision['ready_for_execution'] is False, report
+          assert decision['ready_for_gold_builder_change'] is False, report
+          assert decision['ready_for_cross_source_audit_rerun'] is False, report
+          assert decision['ready_for_market_backtest'] is False, report
+          assert decision['ready_for_model_retraining'] is False, report
+          assert decision['ready_for_betting_edge_claim'] is False, report
+          assert decision['formal_stake'] == 0, report
+          assert path.stat().st_size <= 1048576
+          PY
+
+      - name: Upload aggregate-only request validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-silver-real-reference-request-v1
+          path: /tmp/nbavl-gold-silver-real-reference-request/request-validation-report.json
+          retention-days: 14
+          if-no-files-found: error

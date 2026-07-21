@@ -1,0 +1,12 @@
+{
+  "schema_version": "historical-gold-silver-coverage-reconciliation-current-status-v1",
+  "updated_at": "2026-07-21T16:20:00+08:00",
+  "formal_state": "REQUEST_RECORDED_PENDING_OWNER_CONFIRMATION",
+  "request_id": "HISTORICAL-GOLD-SILVER-COVERAGE-RECONCILIATION-2026-07-21-001",
+  "silver_rows_in_scope": 5826,
+  "gold_matchup_rows": 5824,
+  "missing_gold_for_silver": 2,
+  "real_reference_analysis_complete": false,
+  "source_role_changed": false,
+  "formal_stake": 0
+}

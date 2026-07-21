@@ -1,0 +1,21 @@
+{
+  "schema_version": "historical-silver-2023-24-missing-team-features-root-cause-current-status-v1",
+  "updated_at": "2026-07-21T18:05:00+08:00",
+  "formal_state": "HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_IMPLEMENTATION_PENDING_VALIDATION",
+  "triggering_result": "data/research/historical-gold-silver-coverage-real-reference-result-v1.json",
+  "triggering_workflow_run_id": 29819457942,
+  "season_label": "2023-24",
+  "silver_games": 1230,
+  "games_without_team_features": 2,
+  "observed_reason": "missing_both_team_features",
+  "implementation": "data/research/historical-silver-2023-24-missing-team-features-root-cause-implementation-v1.json",
+  "analyzer": "scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py",
+  "real_reference_rows_read": false,
+  "real_root_cause_audit_executed": false,
+  "source_role_changed": false,
+  "ready_for_silver_builder_change": false,
+  "ready_for_gold_rebuild": false,
+  "ready_for_cross_source_audit_rerun": false,
+  "next_research_step": "HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_IMPLEMENTATION_VALIDATION",
+  "formal_stake": 0
+}

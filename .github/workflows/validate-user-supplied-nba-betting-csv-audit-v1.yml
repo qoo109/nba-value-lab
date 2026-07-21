@@ -6,7 +6,9 @@ on:
     paths:
       - "scripts/audit_user_supplied_nba_betting_csv_v1.py"
       - "data/research/user-supplied-nba-betting-csv-audit-v1.json"
+      - "data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json"
       - "docs/user-supplied-nba-betting-csv-audit-v1.md"
+      - "docs/user-supplied-nba-betting-csv-provenance-confirmation-v1.md"
       - "data/historical-odds-source-registry.json"
       - ".github/workflows/validate-user-supplied-nba-betting-csv-audit-v1.yml"
 
@@ -33,9 +35,11 @@ jobs:
             --self-test \
             --output /tmp/user-supplied-nba-betting-csv-audit-self-test.json
           python -m json.tool /tmp/user-supplied-nba-betting-csv-audit-self-test.json >/dev/null
-      - name: Validate committed aggregate report
+      - name: Validate audit, confirmation, and registry
         run: |
           python -m json.tool data/research/user-supplied-nba-betting-csv-audit-v1.json >/dev/null
+          python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json >/dev/null
+          python -m json.tool data/historical-odds-source-registry.json >/dev/null
           python - <<'PY'
           import json
           from pathlib import Path
@@ -43,6 +47,16 @@ jobs:
           report = json.loads(
               Path('data/research/user-supplied-nba-betting-csv-audit-v1.json').read_text()
           )
+          confirmation = json.loads(
+              Path('data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json').read_text()
+          )
+          registry = json.loads(
+              Path('data/historical-odds-source-registry.json').read_text()
+          )
+
+          source_id = 'kaggle_cviaxmiwnptr_nba_betting_data_user_supplied'
+          source = next(item for item in registry['sources'] if item['source_id'] == source_id)
+
           assert report['source']['raw_rows_emitted'] == 0
           assert report['source']['raw_file_committed'] is False
           assert report['schema']['row_count'] == 24440
@@ -51,6 +65,32 @@ jobs:
           assert report['decision']['formal_outcome'] == (
               'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE_PROVENANCE_PENDING'
           )
+
+          assert confirmation['source_id'] == source_id
+          assert confirmation['file_evidence']['sha256'] == report['source']['input_sha256']
+          assert confirmation['provenance_status'] == 'user_confirmed'
+          assert confirmation['formal_outcome'] == (
+              'ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE'
+          )
+          assert confirmation['data_boundary']['raw_csv_committed'] is False
+          assert confirmation['data_boundary']['raw_rows_emitted'] == 0
+          assert confirmation['still_blocked']['point_in_time_odds_join_allowed'] is False
+          assert confirmation['still_blocked']['clv_allowed'] is False
+          assert confirmation['still_blocked']['entry_price_roi_allowed'] is False
+          assert confirmation['still_blocked']['model_retraining_allowed'] is False
+          assert confirmation['still_blocked']['formal_stake'] == 0
+
+          assert registry['registry_version'] == '1.3.0'
+          assert source['status'] == 'role_limited_legacy_market_archive_eligible'
+          assert source['provenance_status'] == 'user_confirmed'
+          assert source['file_evidence']['sha256'] == report['source']['input_sha256']
+          assert source['opening_closing_classified'] is False
+          assert source['guardrails']['point_in_time_join_allowed'] is False
+          assert source['guardrails']['roi_allowed'] is False
+          assert source['guardrails']['clv_allowed'] is False
+          assert source['guardrails']['model_retraining_allowed'] is False
+          assert source['guardrails']['formal_stake'] == 0
+
           assert report['decision']['ready_for_closing_market_benchmark'] is False
           assert report['decision']['ready_for_point_in_time_odds_layer'] is False
           assert report['decision']['ready_for_clv_analysis'] is False

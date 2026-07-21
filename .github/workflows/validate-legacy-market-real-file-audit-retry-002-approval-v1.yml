@@ -5,103 +5,85 @@ on:
     paths:
       - "data/research/legacy-market-real-file-audit-retry-request-002-v1.json"
       - "data/research/legacy-market-real-file-audit-retry-002-approval-v1.json"
-      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json"
-      - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
-      - "scripts/validate_legacy_market_real_file_audit_retry_002_approval_v1.py"
-      - "scripts/run_legacy_market_real_file_audit_retry_002_v1.py"
-      - "scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py"
-      - "scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py"
+      - "data/research/legacy-market-real-file-audit-retry-002-result-v1.json"
       - ".github/workflows/validate-legacy-market-real-file-audit-retry-002-approval-v1.yml"
-      - ".github/workflows/run-approved-legacy-market-real-file-audit-retry-002-v1.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: validate-legacy-market-real-file-audit-retry-002-approval-v1-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  approval-validation:
+  archival-approval-validation:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Compile retry approval and execution path
+      - name: Validate immutable approval 002 and completed lifecycle
         run: |
-          python -m py_compile \
-            scripts/validate_legacy_market_real_file_audit_retry_002_approval_v1.py \
-            scripts/run_legacy_market_real_file_audit_retry_002_v1.py \
-            scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1.py \
-            scripts/run_user_supplied_legacy_market_archive_real_file_audit_once_v1_1.py \
-            scripts/run_user_supplied_legacy_market_archive_cross_source_audit_v1.py
-
-      - name: Validate explicit approval and negative tests
-        run: |
-          rm -rf /tmp/nbavl-legacy-market-retry-002-approval
-          mkdir -p /tmp/nbavl-legacy-market-retry-002-approval
-          python scripts/validate_legacy_market_real_file_audit_retry_002_approval_v1.py \
-            --request data/research/legacy-market-real-file-audit-retry-request-002-v1.json \
-            --approval data/research/legacy-market-real-file-audit-retry-002-approval-v1.json \
-            --implementation data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json \
-            --current-status data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json \
-            --self-test \
-            --output /tmp/nbavl-legacy-market-retry-002-approval/approval-validation-report.json
-
-      - name: Run repaired executor synthetic-only self-test
-        run: |
-          python scripts/run_legacy_market_real_file_audit_retry_002_v1.py \
-            --request data/research/legacy-market-real-file-audit-retry-request-002-v1.json \
-            --approval data/research/legacy-market-real-file-audit-retry-002-approval-v1.json \
-            --implementation data/research/user-supplied-legacy-market-archive-cross-source-audit-implementation-v1.json \
-            --current-status data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json \
-            --policy data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json \
-            --self-test \
-            --output /tmp/nbavl-legacy-market-retry-002-approval/executor-self-test.json
-
-      - name: Enforce approval-only and aggregate-only boundary
-        run: |
+          rm -rf /tmp/nbavl-approval-002-archive
+          mkdir -p /tmp/nbavl-approval-002-archive
           python - <<'PY'
           import json
           from pathlib import Path
 
-          root = Path('/tmp/nbavl-legacy-market-retry-002-approval')
-          approval = json.loads((root / 'approval-validation-report.json').read_text())
-          executor = json.loads((root / 'executor-self-test.json').read_text())
-          assert approval['formal_state'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_002_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH', approval
-          assert approval['checks_failed'] == 0, approval
-          assert all(approval['self_tests'].values()), approval
-          assert approval['ready_for_one_time_aggregate_execution'] is True, approval
-          assert approval['ready_for_repeat_execution'] is False, approval
-          assert approval['network_calls_made'] is False, approval
-          assert approval['real_candidate_csv_read'] is False, approval
-          assert approval['real_reference_database_read'] is False, approval
-          assert approval['raw_rows_emitted'] == 0, approval
-          assert approval['raw_files_emitted'] is False, approval
-          assert approval['formal_stake'] == 0, approval
-          assert executor['formal_state'] == 'LEGACY_MARKET_ARCHIVE_REAL_FILE_AUDIT_RETRY_002_EXECUTOR_SELF_TEST_PASS', executor
-          assert executor['request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002', executor
-          assert executor['network_calls_made'] is False, executor
-          assert executor['real_file_audit_executed'] is False, executor
-          assert executor['boundaries']['raw_rows_emitted'] == 0, executor
-          assert executor['boundaries']['raw_files_emitted'] is False, executor
-          assert executor['boundaries']['point_in_time_market_backtest'] is False, executor
-          assert executor['boundaries']['model_training_or_retraining'] is False, executor
-          assert executor['boundaries']['formal_stake'] == 0, executor
+          request = json.loads(Path('data/research/legacy-market-real-file-audit-retry-request-002-v1.json').read_text())
+          approval = json.loads(Path('data/research/legacy-market-real-file-audit-retry-002-approval-v1.json').read_text())
+          result = json.loads(Path('data/research/legacy-market-real-file-audit-retry-002-result-v1.json').read_text())
+
+          request_id = 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002'
+          assert request['request_id'] == approval['request_id'] == result['request_id'] == request_id
+          assert request['one_time_only'] is True, request
+          assert request['maximum_execution_count'] == 1, request
+          assert request['workflow_dispatch_only'] is True, request
+          assert request['raw_rows_emitted'] == 0, request
+          assert request['raw_files_uploaded'] is False, request
+          assert request['formal_stake'] == 0, request
+          assert approval['approval_state'] == 'EXPLICIT_USER_APPROVAL_GRANTED', approval
+          auth = approval['execution_authorization']
+          assert auth['one_time_only'] is True, approval
+          assert auth['maximum_execution_count'] == 1, approval
+          assert auth['workflow_dispatch_only'] is True, approval
+          assert auth['aggregate_outputs_only'] is True, approval
+          for key, value in approval['acknowledgements'].items():
+              if key == 'formal_stake':
+                  assert value == 0, approval
+              else:
+                  assert value is False, (key, value)
+
+          assert result['workflow_run_id'] == 29810347326, result
+          assert result['real_file_audit_executed'] is True, result
+          assert result['all_scientific_gates_passed'] is True, result
+          assert result['formal_outcome'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED', result
+          assert result['boundary_failures'] == ['reference_missing_gold_for_silver'], result
+          assert result['reference_counts']['silver_rows_in_scope'] == 5826, result
+          assert result['reference_counts']['gold_rows'] == 5824, result
+          assert result['reference_counts']['missing_gold_for_silver'] == 2, result
+          assert result['request_consumed'] is True, result
+          assert result['repeat_execution_allowed'] is False, result
+          assert result['boundaries']['raw_rows_emitted'] == 0, result
+          assert result['boundaries']['raw_files_emitted'] is False, result
+          assert result['boundaries']['formal_stake'] == 0, result
+
+          report = {
+              'formal_state': 'LEGACY_MARKET_ARCHIVE_RETRY_002_ARCHIVED_CONSUMED',
+              'request_id': request_id,
+              'workflow_run_id': result['workflow_run_id'],
+              'scientific_gates_passed': True,
+              'formal_outcome': result['formal_outcome'],
+              'boundary_failures': result['boundary_failures'],
+              'ready_for_repeat_execution': False,
+              'source_role_changed': False,
+              'formal_stake': 0,
+          }
+          Path('/tmp/nbavl-approval-002-archive/approval-002-archive-validation.json').write_text(
+              json.dumps(report, indent=2, sort_keys=True) + '\n'
+          )
           PY
 
-      - name: Upload aggregate-only retry approval evidence
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: legacy-market-real-file-audit-retry-002-approval-v1
-          path: |
-            /tmp/nbavl-legacy-market-retry-002-approval/approval-validation-report.json
-            /tmp/nbavl-legacy-market-retry-002-approval/executor-self-test.json
+          name: legacy-market-approval-002-archive-validation
+          path: /tmp/nbavl-approval-002-archive/approval-002-archive-validation.json
           retention-days: 14
           if-no-files-found: error

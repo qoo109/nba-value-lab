@@ -9,11 +9,13 @@
 ## Current Control Block
 
 ```text
-latest Eoin evaluation merge: ce0620cb46f5074ee9ab506cd300d5898014dbbf
+latest Eoin monitor merge: 8e52036f4bd7bc5f89fb4af3e2ea7187d6dcaf5f
 formal Eoin execution result: ONE_TIME_FULL_ADAPTER_AGGREGATE_VALIDATION_PASS
-post-execution policy state: EOIN_POST_EXECUTION_ROLE_REVIEW_POLICY_READY
 formal Eoin source role: ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
-request id: EOIN-FULL-ADAPTER-2026-07-19-001
+integration policy: EOIN_SECONDARY_QA_INTEGRATION_POLICY_READY_FOR_IMPLEMENTATION
+contract monitor: EOIN_SECONDARY_QA_CONTRACT_HEALTHY
+integration mode: alert_only_evidence_contract_monitor
+source data integration active: false
 request consumed: true
 repeat execution allowed: false
 formal stake: 0
@@ -25,13 +27,20 @@ formal stake: 0
 None
 ```
 
-### Next unique research step
+### Next unique mainline
 
 ```text
-EOIN_SECONDARY_QA_INTEGRATION_POLICY — NOT_STARTED
+PAUSE_EOIN_EXPANSION_UNTIL_NEW_INDEPENDENT_PLAYER_REFERENCE_OR_NEW_APPROVAL
 ```
 
-下一步只能建立 **secondary QA integration policy**，定義 Eoin 如何在不替換任何資料層的前提下執行 deterministic cross-source QA。不得直接接入 Historical Silver、Historical Gold、player feature、模型訓練或市場回測。
+Eoin 已完成目前核准範圍內的 census、cross-source audit、一次性 aggregate validation、role review、integration policy 與 alert-only contract monitor。現階段不再擴充 Eoin 資料線。
+
+只有以下條件之一成立才重新開啟：
+
+1. 出現 independent player-stat parity reference；
+2. 需要更新超過 freshness deadline 的 evidence contract；
+3. 使用者對新的 bundle execution request 給予明確核准；
+4. 出現 materially new lawful source 或新 supplied file。
 
 ## Latest Completed Research Work
 
@@ -54,39 +63,47 @@ PR #96 — Reconciled post-execution PROJECT_STATUS
 PR #97 — Eoin post-execution role review policy v1
 PR #98 — Eoin role review policy status and registry sync
 PR #100 — Eoin post-execution role review evaluation v1
+PR #101 — Eoin secondary QA validation result sync
+PR #102 — Eoin secondary QA integration policy v1
+PR #103 — Eoin secondary QA contract monitor v1
 ```
 
-## Eoin One-time Full Adapter Result
+## Eoin Evidence Chain
 
-真實完整 Eoin bundle 已完成 **一次**、手動 `workflow_dispatch`、aggregate-only validation。該 request 已消耗，不得重複執行。
+### 1. Cross-source Audit
+
+```text
+formal outcome: ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
+workflow run: 29672984966
+artifact id: 8437932113
+artifact digest: sha256:96a87c6b52614ea6f7478e1bdbcc729c7c8eb2347490ca236475444ca5fcc63a
+reference games: 1,230
+matched games: 1,230
+game identity match: 100%
+final score match: 99.9187%
+team boxscore coverage: 100%
+player candidate coverage: 100% coverage-only
+PBP game coverage: 100%
+```
+
+### 2. One-time Full Adapter Aggregate Validation
 
 ```text
 formal state: ONE_TIME_FULL_ADAPTER_AGGREGATE_VALIDATION_PASS
 workflow run: 29680729672
 artifact id: 8440485189
 artifact digest: sha256:e068940df05bfc51d8757aef500e9c6f812687bfa171b5fff8680ee3b59bb56c
-execution count for request: 1
+request id: EOIN-FULL-ADAPTER-2026-07-19-001
+execution count: 1
 request consumed: true
 all research gates passed: true
-```
-
-### Aggregate Results
-
-```text
 games: 1,383
-team boxscore covered games: 1,383
-team boxscore coverage rate: 1.000
-team boxscore score match rate: 1.000
-player boxscore candidate covered games: 1,383
-player boxscore candidate coverage rate: 1.000
-PBP covered games: 1,383
-PBP game coverage rate: 1.000
 duplicate game_id groups: 0
 raw rows emitted: 0
 raw files emitted: false
 ```
 
-## Eoin Post-execution Role Review Policy
+### 3. Post-execution Role Review Policy
 
 ```text
 formal state: EOIN_POST_EXECUTION_ROLE_REVIEW_POLICY_READY
@@ -95,54 +112,74 @@ artifact id: 8481660306
 artifact digest: sha256:1b309073ae19c23483225b1264ea982ef1f6d71f1d482cd124ad63fc0bfd77d0
 checks: 24 / 24
 checks failed: 0
-network calls made: false
-new bundle execution performed: false
-raw Eoin rows read: false
-raw rows emitted: 0
-raw files emitted: false
-formal stake: 0
 ```
 
-## Eoin Post-execution Role Review Evaluation
-
-PR #100 使用政策 JSON 中已凍結的 aggregate evidence 完成 evaluator。沒有重新下載 Artifact、沒有接觸 Kaggle、沒有執行 Eoin bundle，也沒有讀取 raw Eoin rows。
+### 4. Post-execution Role Review Evaluation
 
 ```text
 formal outcome: ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
 workflow run: 29795498102
 artifact id: 8481840798
 artifact digest: sha256:f64248d5a3eaab52aa6a24fc36980144c5c962a31b91a4057834af1d36e42fd1
-previous formal role: ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
-reviewed formal role: ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
-manifest failures: 0
 failed scientific gates: 0
 all scientific gates passed: true
-policy structural validation: pass
 ```
 
-### Validated QA Scope
-
-Eoin 現在可作以下 **secondary QA／cross-source regression** 用途：
+Validated scope is limited to:
 
 - deterministic game identity QA；
 - final score QA；
-- team boxscore coverage 與 score QA；
+- team boxscore coverage／score QA；
 - player boxscore candidate coverage-only；
 - PBP game coverage QA；
 - cross-source regression detection。
 
-Player statistics 仍是 coverage-only，不構成 independent player-stat parity。
+Player statistics remain coverage-only and do not establish independent player-stat parity.
 
-### Evaluation Boundary
+### 5. Secondary QA Integration Policy
 
 ```text
-network calls made: false
-new bundle execution performed: false
-external artifacts downloaded: false
-raw Eoin rows read: false
+formal state: EOIN_SECONDARY_QA_INTEGRATION_POLICY_READY_FOR_IMPLEMENTATION
+workflow run: 29795934068
+artifact id: 8481986433
+artifact digest: sha256:ea9e3306c397ee2e150eb091d57171f8c17748e756984d89d288b8b5cc5b5638
+checks: 26 / 26
+checks failed: 0
+integration active: false
+alert only: true
+```
+
+The policy pins the reviewed evidence, enforces version／Artifact identity, defines a 365-day review window, and fail-closes on role drift, Artifact drift, stale evidence, missing evidence, or forbidden permission activation.
+
+### 6. Secondary QA Contract Monitor
+
+```text
+formal state: EOIN_SECONDARY_QA_CONTRACT_HEALTHY
+workflow run: 29796165352
+artifact id: 8482057613
+artifact digest: sha256:813e78b4ff070641f85c5b49a6e46eb3c65c324bb9d25c9b6491b57e694ff0e8
+alerts: 0
+blocking failures: 0
+all contract checks passed: true
+evidence review due: 2027-07-21
+evidence stale: false
+integration active for alerts only: true
+source data integration active: false
+```
+
+The monitor checks `PROJECT_STATUS.md`, `data/source-registry.json`, pinned evidence identity, request consumption, role consistency, forbidden permissions, approved QA domains and evidence freshness.
+
+## Eoin Runtime Boundary
+
+```text
+network calls by role evaluator / policy / monitor: false
+external Artifact downloads by monitor: false
+new bundle execution by monitor: false
+raw Eoin rows read by monitor: false
 raw rows emitted: 0
 raw files emitted: false
 derived tables emitted: false
+data or model mutation: false
 primary source use: false
 Historical Silver replacement: false
 Historical Gold replacement: false
@@ -151,6 +188,7 @@ player feature import: false
 model retraining: false
 market backtest: false
 CLV / EV / ROI / Drawdown: false
+betting decision activation: false
 betting edge claim: false
 repeat full-bundle execution: false
 formal stake: 0
@@ -174,7 +212,7 @@ formal stake: 0
 ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
 ```
 
-這不是 primary source，也不是 Historical Silver／Gold replacement。它只允許在明確受限的 QA domains 內，使用 deterministic cross-source evidence 做驗證與 regression detection。
+這不是 primary source，也不是 Historical Silver／Gold replacement。它只可作受限的 deterministic QA、cross-source validation 與 alert-only regression detection。
 
 ### Wyatt Walsh SQLite
 
@@ -190,9 +228,9 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 
 ## Known Blockers
 
-- Eoin secondary QA integration policy 尚未建立；目前尚無正式自動化接入規格。
 - Eoin player boxscore 仍是 coverage-only，沒有 independent player-stat parity reference。
 - Eoin 一次性 request 已使用，不能重複執行同一 request ID。
+- Eoin evidence review due date 為 2027-07-21；逾期後 monitor 必須回傳 alert-disabled，不能自動重跑來源。
 - Wyatt 真實檔案為 `STRUCTURAL_BLOCKED`。
 - 真實 bookmaker-level point-in-time odds source 合格數仍為 0。
 - Production Odds Backfill、PIT Odds Join、Market Backtest、CLV、EV、ROI、Drawdown 全部未解鎖。
@@ -209,6 +247,7 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 - 不把 Eoin coverage pass 寫成 independent player-stat parity。
 - 不替換目前已驗證的 `shufinskiy/nba_data` Historical Silver／Gold 主路徑。
 - 不將 Eoin player coverage-only 結果用作 player model feature import。
+- 不把 contract monitor 的 healthy state 當作模型 promotion 或資料匯入授權。
 - 不把 Wyatt integrity pass 寫成 source qualification pass。
 - 不重新開啟付費 odds 路徑，除非使用者未來另行明確改變決定。
 - Closing-only benchmark 不得當 executable market backtest。
@@ -226,20 +265,15 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 6. Historical Secondary Source Metadata Review              Completed
 7. Wyatt SQLite read-only census runner                     Completed / synthetic only
 8. Wyatt real-file schema and cross-source audit             STRUCTURAL_BLOCKED
-9. Eoin census and cross-source audit                        ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE
-10. Eoin adapter predeclaration                             Completed
-11. Eoin adapter self-test                                  Completed
-12. Eoin full adapter preflight                             Completed / execution gated
-13. Eoin separate execution policy                          Completed
-14. Eoin disabled runner guardrails                         Completed
-15. Eoin one-time execution request                         Completed / consumed
-16. Eoin one-time full-bundle aggregate validation          ONE_TIME_FULL_ADAPTER_AGGREGATE_VALIDATION_PASS
-17. Eoin post-execution role review policy                  EOIN_POST_EXECUTION_ROLE_REVIEW_POLICY_READY
-18. Eoin post-execution role review evaluation              ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
-19. Eoin secondary QA integration policy                    NOT_STARTED
-20. Point-in-time Odds Join and Market Backtest             Blocked
-21. CLV / EV / ROI / Drawdown                               Blocked
-22. Betting Decision Layer                                  Blocked
+9. Eoin census and cross-source audit                        Completed / role-limited
+10. Eoin one-time full-bundle aggregate validation          PASS / REQUEST CONSUMED
+11. Eoin post-execution role review                         ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
+12. Eoin secondary QA integration policy                    READY_FOR_IMPLEMENTATION
+13. Eoin secondary QA contract monitor                      EOIN_SECONDARY_QA_CONTRACT_HEALTHY
+14. Eoin source-data expansion                              PAUSED
+15. Point-in-time Odds Join and Market Backtest             Blocked
+16. CLV / EV / ROI / Drawdown                               Blocked
+17. Betting Decision Layer                                  Blocked
 ```
 
 ## Core Status
@@ -254,10 +288,10 @@ PAUSE_MARKET_DATA_LINE_UNTIL_MATERIALLY_NEW_LAWFUL_SOURCE_OR_USER_FILE
 | Paid Pilot Decision | **NOT APPROVED** | 付費、key 與 paid execution 均未授權。 |
 | No-cost Odds Metadata Census | **NO_COST_METADATA_BLOCKED** | 8 candidates；qualified 0。 |
 | Wyatt SQLite Real-file Audit | **STRUCTURAL_BLOCKED** | 16 tables、latest 2023-06-12、2023-24 games 0。 |
-| Eoin Full Adapter Aggregate Validation | **PASS / REQUEST CONSUMED** | 1,383 games；all frozen aggregate gates passed；raw output 0。 |
-| Eoin Post-execution Role Review Policy | **READY** | 24 / 24 checks；no data execution。 |
-| Eoin Role Review Evaluation | **ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED** | All frozen scientific gates passed；secondary QA only。 |
-| Eoin Player Statistics | **COVERAGE-ONLY** | 不構成 independent player-stat parity。 |
+| Eoin Aggregate Validation | **PASS / REQUEST CONSUMED** | 1,383 games；all frozen aggregate gates passed；raw output 0。 |
+| Eoin Role Review | **ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED** | Secondary QA only；player coverage-only。 |
+| Eoin Integration Policy | **READY_FOR_IMPLEMENTATION** | 26 / 26 checks；alert-only，source integration inactive。 |
+| Eoin Contract Monitor | **HEALTHY** | 0 alerts；0 blockers；review due 2027-07-21。 |
 | Market Backtest | Blocked | 尚無 executable PIT odds join。 |
 | Betting Decision Layer | Blocked | Stake = 0。 |
 
@@ -288,19 +322,20 @@ Closing benchmark（1,894 matched games）：
 - `PROJECT_STATUS.md`：正式專案狀態與唯一 Roadmap。
 - `README.md`：專案入口與研究定位。
 - `data/source-registry.json`：來源角色、證據、workflow／Artifact 與執行邊界。
-- `data/eoin-post-execution-role-review-policy-v1.json`：post-execution review policy。
-- `data/eoin-post-execution-role-review-evaluation-v1.json`：evaluation manifest。
-- `scripts/evaluate_eoin_post_execution_role_review_v1.py`：aggregate-only evaluator。
-- `docs/eoin-post-execution-role-review-evaluation-v1.md`：outcome 與 role boundary。
-- `.github/workflows/evaluate-eoin-post-execution-role-review-v1.yml`：evaluation CI。
+- `data/eoin-secondary-qa-integration-policy-v1.json`：alert-only integration policy。
+- `scripts/validate_eoin_secondary_qa_integration_policy_v1.py`：policy／evidence contract validator。
+- `data/eoin-secondary-qa-contract-monitor-v1.json`：contract monitor manifest。
+- `scripts/run_eoin_secondary_qa_contract_monitor_v1.py`：contract monitor。
+- `.github/workflows/run-eoin-secondary-qa-contract-monitor-v1.yml`：monitor workflow。
 
 ## Explicit Next Step
 
-建立 `Eoin Secondary QA Integration Policy v1`：
+目前 Eoin 線沒有新的自動擴充工作。維持 contract monitor，並將研究資源轉回尚未解鎖的核心阻塞：
 
-1. 只允許 deterministic QA 與 regression alerts；
-2. 不重新下載或執行完整 Eoin bundle；
-3. 不建立或替換 Silver／Gold tables；
-4. 不匯入 player features；
-5. 定義 fail-closed、版本 pinning、evidence freshness 與 alert-only outputs；
-6. 所有 QA 結果都不得影響模型、market backtest 或 Stake 0。
+```text
+1. materially new lawful point-in-time odds source；或
+2. 使用者提供 timestamped odds file 加 rights / provenance；或
+3. independent player-stat parity reference。
+```
+
+在上述條件未成立前，不新增 Eoin bundle execution、模型整合或市場回測工作。

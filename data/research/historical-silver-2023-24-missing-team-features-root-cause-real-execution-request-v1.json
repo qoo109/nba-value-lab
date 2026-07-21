@@ -1,0 +1,107 @@
+{
+  "schema_version": "historical-silver-2023-24-missing-team-features-root-cause-real-execution-request-v1",
+  "created_at": "2026-07-21T18:20:00+08:00",
+  "request_id": "HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-21-001",
+  "request_state": "AWAITING_EXPLICIT_USER_APPROVAL",
+  "purpose": "Authorize one aggregate-only temporary rebuild of the 2023-24 Historical Silver reference and classify why exactly two games have zero team_game_features rows.",
+  "upstream_evidence": {
+    "coverage_result": "data/research/historical-gold-silver-coverage-real-reference-result-v1.json",
+    "coverage_workflow_run_id": 29819457942,
+    "coverage_formal_outcome": "HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_SOURCE_DATA_GAP_CONFIRMED",
+    "implementation": "data/research/historical-silver-2023-24-missing-team-features-root-cause-implementation-v1.json",
+    "implementation_merge_commit": "be61b82d74ba17f500787d2685275e572f209b1d",
+    "implementation_validation_workflow_run_id": 29821350899,
+    "implementation_validation_artifact_id": 8491472454,
+    "implementation_validation_artifact_digest": "sha256:c61d635a0af8f676ae0fb7bd7378cccf2073313bc652fe4561ae7b1f0c37efe2"
+  },
+  "frozen_scope": {
+    "season_label": "2023-24",
+    "season_start_year": 2023,
+    "reference_source_path": "shufinskiy/nba_data",
+    "expected_silver_games": 1230,
+    "expected_games_without_team_features": 2,
+    "candidate_csv_required": false,
+    "candidate_csv_download_allowed": false,
+    "gold_database_required": false,
+    "gold_builder_execution_allowed": false
+  },
+  "one_time_execution_scope": {
+    "one_time_only": true,
+    "maximum_execution_count": 1,
+    "workflow_dispatch_only": true,
+    "automatic_main_push_execution_allowed": false,
+    "pull_request_execution_allowed": false,
+    "scheduled_execution_allowed": false,
+    "concurrent_execution_allowed": false,
+    "temporary_reference_archive_download_allowed_after_approval": true,
+    "temporary_reference_rows_may_be_read_after_approval": true,
+    "temporary_2023_24_silver_rebuild_allowed_after_approval": true,
+    "temporary_root_cause_diagnostics_allowed_after_approval": true,
+    "silver_builder_code_change_during_execution_allowed": false,
+    "manual_row_insertion_or_override_allowed": false,
+    "fuzzy_matching_allowed": false,
+    "score_assisted_identity_repair_allowed": false,
+    "historical_silver_replacement_allowed": false,
+    "historical_gold_replacement_allowed": false
+  },
+  "diagnostic_contract": {
+    "classification_categories": [
+      "nbastats_game_present_pbpstats_game_absent",
+      "no_event_or_possession_source_rows",
+      "pbpstats_possessions_all_offense_unresolved",
+      "pbpstats_single_expected_offense_team_coverage",
+      "pbpstats_offense_team_identity_mismatch",
+      "possession_metadata_count_mismatch",
+      "feature_aggregation_omission_after_valid_possessions",
+      "silver_game_identity_unresolved",
+      "unclassified"
+    ],
+    "individual_game_ids_may_be_emitted": false,
+    "individual_dates_may_be_emitted": false,
+    "individual_team_codes_may_be_emitted": false,
+    "row_level_records_may_be_emitted": false,
+    "row_key_hashes_may_be_emitted": false
+  },
+  "output_boundary": {
+    "aggregate_json_only": true,
+    "maximum_public_output_files": 1,
+    "maximum_public_output_bytes": 1048576,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "silver_database_uploaded_as_artifact": false,
+    "source_archives_uploaded_as_artifact": false,
+    "temporary_material_deleted_before_artifact_upload": true
+  },
+  "approval_boundary": {
+    "explicit_user_approval_required": true,
+    "approval_granted": false,
+    "approved_by": null,
+    "approved_at": null,
+    "approval_record": null,
+    "execution_enabled": false,
+    "approval_text_template": "我核准 request HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-21-001 執行一次 workflow_dispatch 的 aggregate-only 2023-24 Historical Silver missing-team-features root-cause audit。核准範圍只包含在暫存空間下載並重建 2023-24 Historical Silver、讀取暫存 games／possessions／team_game_features rows、分類兩場零 team features 的根本原因並輸出彙總 JSON；不得下載或讀取 candidate CSV，不得建立或修改 Gold，不得上傳原始資料、Silver database、來源 archive、game IDs、日期、隊伍代碼、逐場資料或 row-key hashes，不得修改 Silver builder、人工補列、模糊配對或以比分修補 identity，不得解鎖 Opening／Closing、PIT market backtest、CLV、EV、ROI、Drawdown、模型重訓、betting edge 或非 0 Stake。"
+  },
+  "current_execution_boundary": {
+    "network_calls_made": 0,
+    "real_reference_rows_read": false,
+    "real_root_cause_audit_executed": false,
+    "execution_count": 0,
+    "execution_enabled": false,
+    "source_role_changed": false,
+    "ready_for_silver_builder_change": false,
+    "ready_for_gold_rebuild": false,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_state_if_request_validation_passes": {
+    "formal_state": "HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL",
+    "ready_for_user_approval": true,
+    "ready_for_execution": false,
+    "real_root_cause_audit_executed": false,
+    "source_role_changed": false,
+    "formal_stake": 0
+  }
+}

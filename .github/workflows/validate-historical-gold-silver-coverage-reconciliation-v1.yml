@@ -1,0 +1,113 @@
+name: Validate Historical Gold Silver coverage reconciliation v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/legacy-market-real-file-audit-retry-002-result-v1.json"
+      - "data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json"
+      - "docs/historical-gold-silver-coverage-reconciliation-implementation-v1.md"
+      - "scripts/analyze_historical_gold_silver_coverage_v1.py"
+      - ".github/workflows/validate-historical-gold-silver-coverage-reconciliation-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile analyzer
+        run: python -m py_compile scripts/analyze_historical_gold_silver_coverage_v1.py
+
+      - name: Run synthetic classification self-test
+        run: |
+          rm -rf /tmp/nbavl-gold-silver-reconciliation-v1
+          mkdir -p /tmp/nbavl-gold-silver-reconciliation-v1
+          python scripts/analyze_historical_gold_silver_coverage_v1.py \
+            --self-test \
+            --output /tmp/nbavl-gold-silver-reconciliation-v1/self-test-report.json
+
+      - name: Validate aggregate result record and implementation manifest
+        run: |
+          python -m json.tool data/research/legacy-market-real-file-audit-retry-002-result-v1.json >/dev/null
+          python -m json.tool data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(
+              Path('data/research/legacy-market-real-file-audit-retry-002-result-v1.json').read_text()
+          )
+          implementation = json.loads(
+              Path('data/research/historical-gold-silver-coverage-reconciliation-implementation-v1.json').read_text()
+          )
+          test = json.loads(
+              Path('/tmp/nbavl-gold-silver-reconciliation-v1/self-test-report.json').read_text()
+          )
+
+          assert result['request_id'] == 'LEGACY-MARKET-ARCHIVE-AUDIT-2026-07-21-002', result
+          assert result['workflow_run_id'] == 29810347326, result
+          assert result['workflow_sha'] == '78ac0931cd28b2315b6e24954dc9ad1af9caf4f0', result
+          assert result['real_file_audit_executed'] is True, result
+          assert result['all_scientific_gates_passed'] is True, result
+          assert result['failed_scientific_gates'] == [], result
+          assert result['formal_outcome'] == 'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_RESEARCH_BLOCKED', result
+          assert result['boundary_failures'] == ['reference_missing_gold_for_silver'], result
+          assert result['reference_counts']['silver_rows_in_scope'] == 5826, result
+          assert result['reference_counts']['gold_rows'] == 5824, result
+          assert result['reference_counts']['missing_gold_for_silver'] == 2, result
+          assert result['request_consumed'] is True, result
+          assert result['repeat_execution_allowed'] is False, result
+          assert result['boundaries']['raw_rows_emitted'] == 0, result
+          assert result['boundaries']['raw_files_emitted'] is False, result
+          assert result['boundaries']['formal_stake'] == 0, result
+
+          assert implementation['formal_state'] == (
+              'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_'
+              'IMPLEMENTATION_READY_REAL_EXECUTION_DISABLED'
+          ), implementation
+          assert implementation['observed_gap']['missing_gold_for_silver'] == 2, implementation
+          assert implementation['validation_mode']['synthetic_fixture_only'] is True, implementation
+          assert implementation['validation_mode']['network_calls'] is False, implementation
+          assert implementation['validation_mode']['real_reference_rows_read'] is False, implementation
+          assert implementation['validation_mode']['real_reconciliation_executed'] is False, implementation
+          assert implementation['output_boundary']['raw_rows_emitted'] == 0, implementation
+          assert implementation['output_boundary']['raw_files_emitted'] is False, implementation
+          assert implementation['source_role_changed_by_implementation'] is False, implementation
+          assert implementation['downstream_permissions']['ready_for_real_reference_reconciliation'] is False, implementation
+          assert implementation['downstream_permissions']['ready_for_gold_builder_change'] is False, implementation
+          assert implementation['downstream_permissions']['ready_for_cross_source_audit_rerun'] is False, implementation
+          assert implementation['downstream_permissions']['formal_stake'] == 0, implementation
+
+          assert test['formal_outcome'] == 'HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_MIXED_CAUSES', test
+          assert test['coverage']['missing_gold_for_silver'] == 4, test
+          reasons = test['coverage']['missing_by_reason']
+          assert reasons['missing_home_team_feature'] == 1, test
+          assert reasons['missing_away_team_feature'] == 1, test
+          assert reasons['gold_team_feature_transfer_mismatch'] == 1, test
+          assert reasons['gold_matchup_builder_omission'] == 1, test
+          assert test['boundaries']['raw_rows_emitted'] == 0, test
+          assert test['boundaries']['raw_files_emitted'] is False, test
+          assert test['boundaries']['game_ids_emitted'] is False, test
+          assert test['boundaries']['dates_emitted'] is False, test
+          assert test['boundaries']['team_codes_emitted'] is False, test
+          assert test['decision']['ready_for_cross_source_audit_rerun'] is False, test
+          assert test['decision']['formal_stake'] == 0, test
+          assert Path('/tmp/nbavl-gold-silver-reconciliation-v1/self-test-report.json').stat().st_size <= 1048576
+          PY
+
+      - name: Upload synthetic aggregate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-silver-coverage-reconciliation-v1
+          path: /tmp/nbavl-gold-silver-reconciliation-v1/self-test-report.json
+          retention-days: 14
+          if-no-files-found: error

@@ -1,0 +1,150 @@
+{
+  "schema_version": "eoin-secondary-qa-integration-policy-v1",
+  "created_at": "2026-07-21T10:50:00+08:00",
+  "source_id": "kaggle_eoinamoore_historical_nba",
+  "current_formal_role": "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+  "policy_state": "SECONDARY_QA_INTEGRATION_POLICY_PREDECLARED",
+  "purpose": "Define an alert-only evidence-contract integration for the validated Eoin secondary QA role without accessing source rows or changing any data, model, market, or betting path.",
+  "pinned_evidence": {
+    "cross_source_audit": {
+      "repository_report": "data/eoin-cross-source-audit-v1.json",
+      "repository_blob_sha": "b0f758c3a78e060fa00337ae1e9a6011decb568f",
+      "formal_outcome": "ROLE_LIMITED_SECONDARY_SOURCE_ELIGIBLE",
+      "workflow_run_id": 29672984966,
+      "artifact_id": 8437932113,
+      "artifact_digest": "sha256:96a87c6b52614ea6f7478e1bdbcc729c7c8eb2347490ca236475444ca5fcc63a"
+    },
+    "one_time_aggregate_execution": {
+      "formal_outcome": "ONE_TIME_FULL_ADAPTER_AGGREGATE_VALIDATION_PASS",
+      "workflow_run_id": 29680729672,
+      "artifact_id": 8440485189,
+      "artifact_digest": "sha256:e068940df05bfc51d8757aef500e9c6f812687bfa171b5fff8680ee3b59bb56c",
+      "request_id": "EOIN-FULL-ADAPTER-2026-07-19-001",
+      "request_consumed": true,
+      "execution_count": 1
+    },
+    "role_review_policy": {
+      "repository_policy": "data/eoin-post-execution-role-review-policy-v1.json",
+      "formal_state": "EOIN_POST_EXECUTION_ROLE_REVIEW_POLICY_READY",
+      "workflow_run_id": 29794965150,
+      "artifact_id": 8481660306,
+      "artifact_digest": "sha256:1b309073ae19c23483225b1264ea982ef1f6d71f1d482cd124ad63fc0bfd77d0"
+    },
+    "role_review_evaluation": {
+      "repository_manifest": "data/eoin-post-execution-role-review-evaluation-v1.json",
+      "formal_outcome": "ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED",
+      "workflow_run_id": 29795498102,
+      "artifact_id": 8481840798,
+      "artifact_digest": "sha256:f64248d5a3eaab52aa6a24fc36980144c5c962a31b91a4057834af1d36e42fd1",
+      "evaluation_merge_sha": "ce0620cb46f5074ee9ab506cd300d5898014dbbf"
+    }
+  },
+  "allowed_integration_scope": {
+    "contract_integrity_check": true,
+    "pinned_evidence_identity_check": true,
+    "formal_role_consistency_check": true,
+    "forbidden_permission_regression_check": true,
+    "evidence_freshness_check": true,
+    "deterministic_qa_domain_registry_check": true,
+    "alert_only": true,
+    "allowed_qa_domains": [
+      "game_identity_qa",
+      "final_score_qa",
+      "team_boxscore_qa",
+      "player_boxscore_candidate_coverage_only",
+      "pbp_game_coverage_qa",
+      "cross_source_regression_detection"
+    ]
+  },
+  "execution_boundary": {
+    "network_calls_allowed": false,
+    "kaggle_download_allowed": false,
+    "external_artifact_download_allowed": false,
+    "new_bundle_execution_allowed": false,
+    "raw_source_rows_read_allowed": false,
+    "source_archive_read_allowed": false,
+    "database_read_allowed": false,
+    "fuzzy_matching_allowed": false,
+    "scheduled_execution_allowed": false,
+    "concurrent_execution_allowed": false,
+    "automatic_data_mutation_allowed": false
+  },
+  "integration_targets": {
+    "historical_silver_build_gate": false,
+    "historical_gold_build_gate": false,
+    "model_feature_pipeline": false,
+    "model_training_pipeline": false,
+    "market_backtest_pipeline": false,
+    "betting_decision_pipeline": false,
+    "research_status_alerts": true,
+    "source_registry_alerts": true,
+    "qa_dashboard_metadata": true
+  },
+  "version_pinning": {
+    "strict_artifact_id_and_digest_match_required": true,
+    "strict_repository_path_match_required": true,
+    "strict_formal_outcome_match_required": true,
+    "strict_request_consumed_match_required": true,
+    "strict_role_boundary_match_required": true,
+    "unreviewed_evidence_substitution_allowed": false
+  },
+  "evidence_freshness": {
+    "evidence_as_of": "2026-07-21",
+    "review_interval_days": 365,
+    "review_due_at": "2027-07-21",
+    "stale_behavior": "ALERT_AND_DISABLE_QA_INTEGRATION",
+    "automatic_reexecution_allowed": false,
+    "new_execution_requires_separate_policy_and_explicit_approval": true
+  },
+  "fail_closed_policy": {
+    "contract_mismatch": "ALERT_AND_DISABLE_QA_INTEGRATION",
+    "artifact_identity_mismatch": "ALERT_AND_DISABLE_QA_INTEGRATION",
+    "role_drift": "ALERT_AND_DISABLE_QA_INTEGRATION",
+    "forbidden_permission_enabled": "BLOCKED",
+    "evidence_stale": "ALERT_AND_DISABLE_QA_INTEGRATION",
+    "missing_required_evidence": "BLOCKED",
+    "never_mutate_primary_data_on_alert": true,
+    "never_mutate_model_or_market_outputs_on_alert": true
+  },
+  "allowed_public_output": {
+    "aggregate_contract_report": true,
+    "alert_summary": true,
+    "maximum_output_files": 1,
+    "maximum_output_bytes": 1048576,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "derived_tables_emitted": false,
+    "archives_or_databases_emitted": false
+  },
+  "forbidden_promotions": {
+    "primary_source_allowed": false,
+    "historical_silver_replacement_allowed": false,
+    "historical_gold_replacement_allowed": false,
+    "player_stat_parity_claim_allowed": false,
+    "player_stat_feature_import_allowed": false,
+    "model_training_input_allowed": false,
+    "model_retraining_allowed": false,
+    "market_backtest_allowed": false,
+    "clv_ev_roi_drawdown_allowed": false,
+    "betting_decision_layer_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "repeat_full_bundle_execution_allowed": false,
+    "formal_stake": 0
+  },
+  "integration_states": [
+    "EOIN_SECONDARY_QA_INTEGRATION_POLICY_BLOCKED",
+    "EOIN_SECONDARY_QA_INTEGRATION_POLICY_READY_FOR_IMPLEMENTATION"
+  ],
+  "next_state_if_policy_validation_passes": {
+    "formal_state": "EOIN_SECONDARY_QA_INTEGRATION_POLICY_READY_FOR_IMPLEMENTATION",
+    "ready_for_contract_monitor_implementation": true,
+    "integration_active": false,
+    "current_formal_role_unchanged": true,
+    "ready_for_data_layer_mutation": false,
+    "ready_for_player_stat_parity": false,
+    "ready_for_model_retraining": false,
+    "ready_for_market_backtest": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  }
+}

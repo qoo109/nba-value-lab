@@ -7,6 +7,7 @@ on:
       - "scripts/audit_user_supplied_nba_betting_csv_v1.py"
       - "data/research/user-supplied-nba-betting-csv-audit-v1.json"
       - "data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json"
+      - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
       - "docs/user-supplied-nba-betting-csv-audit-v1.md"
       - "docs/user-supplied-nba-betting-csv-provenance-confirmation-v1.md"
       - "data/historical-odds-source-registry.json"
@@ -35,10 +36,11 @@ jobs:
             --self-test \
             --output /tmp/user-supplied-nba-betting-csv-audit-self-test.json
           python -m json.tool /tmp/user-supplied-nba-betting-csv-audit-self-test.json >/dev/null
-      - name: Validate audit, confirmation, and registry
+      - name: Validate audit, confirmation, current status, and registry
         run: |
           python -m json.tool data/research/user-supplied-nba-betting-csv-audit-v1.json >/dev/null
           python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json >/dev/null
+          python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json >/dev/null
           python -m json.tool data/historical-odds-source-registry.json >/dev/null
           python - <<'PY'
           import json
@@ -49,6 +51,9 @@ jobs:
           )
           confirmation = json.loads(
               Path('data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json').read_text()
+          )
+          current = json.loads(
+              Path('data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json').read_text()
           )
           registry = json.loads(
               Path('data/historical-odds-source-registry.json').read_text()
@@ -79,6 +84,15 @@ jobs:
           assert confirmation['still_blocked']['entry_price_roi_allowed'] is False
           assert confirmation['still_blocked']['model_retraining_allowed'] is False
           assert confirmation['still_blocked']['formal_stake'] == 0
+
+          assert current['source_id'] == source_id
+          assert current['current_formal_outcome'] == confirmation['formal_outcome']
+          assert current['provenance_status'] == 'user_confirmed'
+          assert current['point_in_time_market_backtest_ready'] is False
+          assert current['clv_ready'] is False
+          assert current['roi_ready'] is False
+          assert current['model_retraining_authorized'] is False
+          assert current['formal_stake'] == 0
 
           assert registry['registry_version'] == '1.3.0'
           assert source['status'] == 'role_limited_legacy_market_archive_eligible'

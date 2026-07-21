@@ -1,0 +1,99 @@
+name: Validate user-supplied legacy market cross-source audit predeclaration v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json"
+      - "docs/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.md"
+      - "scripts/validate_user_supplied_legacy_market_archive_cross_source_audit_predeclaration_v1.py"
+      - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
+      - "data/historical-odds-source-registry.json"
+      - ".github/workflows/validate-user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json"
+      - "docs/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.md"
+      - "scripts/validate_user_supplied_legacy_market_archive_cross_source_audit_predeclaration_v1.py"
+      - "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json"
+      - "data/historical-odds-source-registry.json"
+      - ".github/workflows/validate-user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: |
+          python -m py_compile scripts/validate_user_supplied_legacy_market_archive_cross_source_audit_predeclaration_v1.py
+
+      - name: Validate policy and run negative self-tests
+        run: |
+          mkdir -p artifacts/user-supplied-legacy-market-cross-source-predeclaration-v1
+          python scripts/validate_user_supplied_legacy_market_archive_cross_source_audit_predeclaration_v1.py \
+            --policy data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json \
+            --output artifacts/user-supplied-legacy-market-cross-source-predeclaration-v1/report.json \
+            --self-test
+
+      - name: Enforce policy-only and aggregate-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path('artifacts/user-supplied-legacy-market-cross-source-predeclaration-v1/report.json')
+              .read_text(encoding='utf-8')
+          )
+          assert report['formal_state'] == (
+              'USER_SUPPLIED_LEGACY_MARKET_ARCHIVE_CROSS_SOURCE_AUDIT_'
+              'PREDECLARATION_READY'
+          ), report
+          assert report['checks_failed'] == 0, report
+
+          quality = report['quality']
+          assert quality['network_calls_made'] is False, report
+          assert quality['real_candidate_csv_read'] is False, report
+          assert quality['real_reference_database_read'] is False, report
+          assert quality['raw_rows_emitted'] == 0, report
+          assert quality['raw_files_emitted'] is False, report
+
+          decision = report['decision']
+          assert decision['ready_for_separate_audit_implementation'] is True, report
+          assert decision['real_file_audit_executed'] is False, report
+          assert decision['source_role_changed'] is False, report
+          assert decision['ready_for_point_in_time_market_backtest'] is False, report
+          assert decision['ready_for_clv_analysis'] is False, report
+          assert decision['ready_for_entry_price_roi_backtest'] is False, report
+          assert decision['ready_for_model_retraining'] is False, report
+          assert decision['ready_for_betting_edge_claim'] is False, report
+          assert decision['formal_stake'] == 0, report
+          PY
+
+      - name: Validate JSON registries
+        run: |
+          python -m json.tool data/research/user-supplied-legacy-market-archive-cross-source-audit-predeclaration-v1.json >/dev/null
+          python -m json.tool data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json >/dev/null
+          python -m json.tool data/historical-odds-source-registry.json >/dev/null
+
+      - name: Upload aggregate policy report
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-supplied-legacy-market-cross-source-predeclaration-v1
+          path: artifacts/user-supplied-legacy-market-cross-source-predeclaration-v1/report.json
+          if-no-files-found: error
+          retention-days: 14

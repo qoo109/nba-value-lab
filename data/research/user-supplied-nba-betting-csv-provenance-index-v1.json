@@ -1,0 +1,14 @@
+{
+  "schema_version": "user-supplied-nba-betting-csv-provenance-index-v1",
+  "source_id": "kaggle_cviaxmiwnptr_nba_betting_data_user_supplied",
+  "current_formal_outcome": "ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE",
+  "records": {
+    "original_audit": "data/research/user-supplied-nba-betting-csv-audit-v1.json",
+    "confirmation": "data/research/user-supplied-nba-betting-csv-provenance-confirmation-v1.json",
+    "resolution": "data/research/user-supplied-nba-betting-csv-provenance-resolution-v1.json",
+    "current_status": "data/research/user-supplied-nba-betting-csv-provenance-current-status-v1.json",
+    "source_registry": "data/historical-odds-source-registry.json"
+  },
+  "raw_csv_committed": false,
+  "formal_stake": 0
+}

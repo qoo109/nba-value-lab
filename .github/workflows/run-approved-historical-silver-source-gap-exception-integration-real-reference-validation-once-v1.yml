@@ -38,13 +38,14 @@ jobs:
         run: |
           python -m py_compile \
             scripts/integrate_historical_silver_source_gap_exception_v1.py \
-            scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py
+            scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py \
+            scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v2.py
 
       - name: Revalidate request approval and immutable bindings
         run: |
           rm -rf /tmp/nbavl-source-gap-real-reference-validation
           mkdir -p /tmp/nbavl-source-gap-real-reference-validation
-          PYTHONPATH=scripts python scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py \
+          PYTHONPATH=scripts python scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v2.py \
             --request data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.json \
             --approval data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-v1.json \
             --approval-status data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-current-status-v1.json \
@@ -60,7 +61,7 @@ jobs:
         id: execute
         run: |
           set +e
-          PYTHONPATH=scripts python scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py \
+          PYTHONPATH=scripts python scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v2.py \
             --request data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.json \
             --approval data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-v1.json \
             --approval-status data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-current-status-v1.json \

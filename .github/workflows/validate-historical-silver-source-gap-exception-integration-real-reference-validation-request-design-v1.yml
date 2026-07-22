@@ -1,0 +1,74 @@
+name: Validate Historical Silver source gap exception integration real-reference validation request design v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-design-v1.json"
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-current-status-v1.json"
+      - "docs/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-design-v1.md"
+      - "scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_request_design_v1.py"
+      - ".github/workflows/validate-historical-silver-source-gap-exception-integration-real-reference-validation-request-design-v1.yml"
+      - "PROJECT_STATUS.md"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-design-v1.json"
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-current-status-v1.json"
+      - "scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_request_design_v1.py"
+      - ".github/workflows/validate-historical-silver-source-gap-exception-integration-real-reference-validation-request-design-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-design:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_request_design_v1.py
+
+      - name: Validate request design and mutation tests
+        run: |
+          mkdir -p validation-output
+          python scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_request_design_v1.py \
+            --design data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-design-v1.json \
+            --output validation-output/real-reference-validation-request-design-validation-v1.json
+
+      - name: Enforce design-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("validation-output/real-reference-validation-request-design-validation-v1.json").read_text())
+          assert report["design_only"] is True
+          assert report["approval_granted"] is False
+          assert report["execution_enabled"] is False
+          assert report["real_reference_validation_executed"] is False
+          assert report["database_access"] is False
+          assert report["network_access"] is False
+          assert report["raw_rows_read"] is False
+          assert report["formal_stake"] == 0
+          PY
+
+      - name: Verify no execution or approval file was introduced
+        run: |
+          test ! -e data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.json
+          test ! -e data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-v1.json
+          test ! -e .github/workflows/run-approved-historical-silver-source-gap-exception-integration-real-reference-validation-once-v1.yml
+
+      - name: Upload aggregate design validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-gap-exception-integration-real-reference-validation-request-design-v1
+          path: validation-output/real-reference-validation-request-design-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

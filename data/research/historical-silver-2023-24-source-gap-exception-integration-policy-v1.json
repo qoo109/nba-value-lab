@@ -1,0 +1,127 @@
+{
+  "schema_version": "historical-silver-2023-24-source-gap-exception-integration-policy-v1",
+  "created_at": "2026-07-22",
+  "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_POLICY_DESIGN_READY",
+  "season_label": "2023-24",
+  "policy_role": "QA_AND_COVERAGE_REPORTING_ONLY",
+  "inputs": {
+    "exception_manifest": "data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json",
+    "exception_status": "data/research/historical-silver-2023-24-source-gap-exception-current-status-v1.json",
+    "reconciliation_result": "data/research/historical-silver-2023-24-source-archive-reconciliation-result-v1.json",
+    "reconciliation_status": "data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v2.json",
+    "coverage_analyzer": "scripts/analyze_historical_gold_silver_coverage_v1.py"
+  },
+  "frozen_exception_contract": {
+    "exception_code": "SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT",
+    "source_id": "shufinskiy_nba_data",
+    "exception_count": 2,
+    "unclassified_count": 0,
+    "missing_reason": "nbastats_game_present_pbpstats_game_absent",
+    "source_archive_gap_stable": true,
+    "silver_builder_repair_required": false,
+    "handling_mode": "DOCUMENTED_AGGREGATE_ONLY_NO_ROW_PATCH"
+  },
+  "recognition_gate": {
+    "all_conditions_required": true,
+    "conditions": [
+      "coverage report season includes 2023-24",
+      "raw missing Gold for Silver count equals 2 for 2023-24",
+      "raw missing reason remains missing_both_team_features for both games",
+      "source archive reconciliation decision remains SOURCE_ARCHIVE_GAP_STABLE",
+      "exception manifest exception_count equals 2",
+      "exception manifest unclassified_count equals 0",
+      "exception code remains SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT",
+      "Silver builder repair required remains false",
+      "no row-level identifiers are supplied by the exception manifest",
+      "formal Stake remains 0"
+    ],
+    "on_any_mismatch": "FAIL_CLOSED_UNEXPLAINED_COVERAGE_GAP",
+    "partial_recognition_allowed": false,
+    "automatic_count_adjustment_allowed": false
+  },
+  "reporting_contract": {
+    "preserve_raw_metrics": true,
+    "raw_silver_game_count": 5826,
+    "raw_gold_matchup_count": 5824,
+    "raw_missing_gold_for_silver": 2,
+    "documented_source_gap_exception_count": 2,
+    "unexplained_missing_count_after_documentation": 0,
+    "covered_or_documented_count": 5826,
+    "gold_matchup_count_after_documentation": 5824,
+    "gold_coverage_rewritten_as_complete": false,
+    "allowed_new_aggregate_fields": [
+      "documented_source_gap_exception_count",
+      "documented_source_gap_exception_code",
+      "unexplained_missing_count_after_documentation",
+      "covered_or_documented_count",
+      "exception_policy_version",
+      "exception_policy_state"
+    ],
+    "prohibited_fields": [
+      "game_id",
+      "game_date",
+      "home_team_abbr",
+      "away_team_abbr",
+      "team_code",
+      "source_file_path",
+      "source_file_hash",
+      "row_level_record",
+      "row_key_hash"
+    ]
+  },
+  "decision_semantics": {
+    "raw_outcome_unchanged": "HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_SOURCE_DATA_GAP_CONFIRMED",
+    "documented_exception_state": "HISTORICAL_GOLD_SILVER_COVERAGE_DOCUMENTED_SOURCE_EXCEPTION_RECOGNIZED",
+    "coverage_gap_explained": true,
+    "gold_dataset_complete": false,
+    "silver_dataset_modified": false,
+    "gold_dataset_modified": false,
+    "builder_repair_required": false,
+    "source_data_reconciliation_required": false,
+    "manual_repair_required": false,
+    "cross_source_audit_rerun_ready": false,
+    "market_backtest_ready": false,
+    "model_retraining_ready": false,
+    "betting_edge_claim_ready": false,
+    "formal_stake": 0
+  },
+  "implementation_boundary": {
+    "design_only": true,
+    "current_analyzer_changed": false,
+    "current_builder_changed": false,
+    "database_read_or_write": false,
+    "network_calls_made": false,
+    "source_archives_read": false,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "silver_exception_patch": false,
+    "historical_silver_replacement": false,
+    "historical_gold_replacement": false,
+    "cross_source_audit_rerun": false,
+    "market_backtest": false,
+    "model_training_or_retraining": false,
+    "formal_stake": 0
+  },
+  "future_implementation_requirements": {
+    "separate_branch_and_pull_request_required": true,
+    "synthetic_fixture_tests_required": true,
+    "mutation_tests_required": true,
+    "aggregate_only_output_required": true,
+    "existing_raw_coverage_metrics_must_remain_visible": true,
+    "exception_manifest_must_be_read_only": true,
+    "no_real_data_execution_required_for_initial_implementation": true,
+    "real_reference_validation_requires_separate_approval": true,
+    "cross_source_audit_rerun_requires_separate_approval": true
+  },
+  "next_state_if_valid": {
+    "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_POLICY_VALIDATED",
+    "next_research_step": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_IMPLEMENTATION_READY_FOR_DESIGN",
+    "ready_for_implementation_design": true,
+    "ready_for_real_data_execution": false,
+    "ready_for_silver_builder_change": false,
+    "ready_for_gold_rebuild": false,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_market_backtest": false,
+    "formal_stake": 0
+  }
+}

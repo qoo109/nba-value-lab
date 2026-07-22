@@ -1,0 +1,65 @@
+name: Validate Historical Silver source gap exception integration policy v1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-policy-v1.json"
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-current-status-v1.json"
+      - "data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json"
+      - "docs/historical-silver-2023-24-source-gap-exception-integration-policy-v1.md"
+      - "scripts/validate_historical_silver_source_gap_exception_integration_policy_v1.py"
+      - ".github/workflows/validate-historical-silver-source-gap-exception-integration-policy-v1.yml"
+  pull_request:
+    paths:
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-policy-v1.json"
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-current-status-v1.json"
+      - "data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json"
+      - "docs/historical-silver-2023-24-source-gap-exception-integration-policy-v1.md"
+      - "scripts/validate_historical_silver_source_gap_exception_integration_policy_v1.py"
+      - ".github/workflows/validate-historical-silver-source-gap-exception-integration-policy-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_historical_silver_source_gap_exception_integration_policy_v1.py
+      - name: Validate integration policy
+        run: |
+          mkdir -p /tmp/nbavl-exception-integration-policy
+          python scripts/validate_historical_silver_source_gap_exception_integration_policy_v1.py \
+            --policy data/research/historical-silver-2023-24-source-gap-exception-integration-policy-v1.json \
+            --manifest data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json \
+            --status data/research/historical-silver-2023-24-source-gap-exception-integration-current-status-v1.json \
+            --output /tmp/nbavl-exception-integration-policy/validation-report.json \
+            --self-test
+      - name: Enforce design-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/nbavl-exception-integration-policy/validation-report.json').read_text())
+          assert report['formal_state'] == 'HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_POLICY_VALIDATED'
+          assert report['checks_failed'] == 0
+          assert report['ready_for_implementation_design'] is True
+          assert report['ready_for_real_data_execution'] is False
+          assert report['ready_for_cross_source_audit_rerun'] is False
+          assert report['ready_for_market_backtest'] is False
+          assert report['formal_stake'] == 0
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-gap-exception-integration-policy-v1
+          path: /tmp/nbavl-exception-integration-policy/validation-report.json
+          retention-days: 14
+          if-no-files-found: error

@@ -39,6 +39,13 @@ source gap exception manifest: VALIDATED / AGGREGATE ONLY
 source gap exception code: SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT
 source gap exception count: 2
 source gap exception patch allowed: false
+source gap exception integration policy: VALIDATED / DESIGN ONLY
+raw Historical Silver games: 5,826
+raw Historical Gold matchups: 5,824
+raw missing Gold for Silver: 2
+documented source gap exceptions: 2
+unexplained missing after documentation: 0
+Gold dataset complete: false
 silver builder repair required: false
 canonical repository: qoo109/nba-value-lab / SINGLE_ACTIVE_WORKSPACE
 odds history hub: ARCHIVED_IN_MAIN / V0.19 / NO_EXTERNAL_DEPENDENCY
@@ -49,10 +56,10 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_POLICY_READY_FOR_DESIGN
+HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_IMPLEMENTATION_READY_FOR_DESIGN
 ```
 
-The privacy-safe source-gap exception manifest is now validated. The next controlled lane may design how existing QA and coverage validators recognize the documented aggregate exception. It does not authorize row patches, Silver／Gold changes, cross-source audit reruns, market backtests, or model activation.
+The exception integration policy is validated for QA and coverage reporting only. It preserves the raw 5,826 Silver／5,824 Gold counts while allowing reports to distinguish two documented upstream exceptions from unexplained gaps. It does not authorize analyzer changes, real-data execution, Silver／Gold modification, cross-source audit reruns, market backtests, or model activation.
 
 ## Completed Evidence
 
@@ -247,7 +254,23 @@ handling mode: DOCUMENTED_AGGREGATE_ONLY_NO_ROW_PATCH
 
 The public manifest contains aggregate evidence only. It keeps the existing Silver game identities while explicitly denying synthetic, copied, imputed, or manual team-feature rows. The two exception games remain ineligible for Gold inclusion, model use, and market-backtest reference unless genuinely new valid source rows are separately governed and validated.
 
-This manifest does not authorize a Silver exception patch or any data execution. The next possible work is an integration-policy design for existing QA and coverage validators.
+### Source gap exception integration policy
+
+```text
+formal state: HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_POLICY_VALIDATED
+policy: data/research/historical-silver-2023-24-source-gap-exception-integration-policy-v1.json
+current status: data/research/historical-silver-2023-24-source-gap-exception-integration-current-status-v1.json
+documentation: docs/historical-silver-2023-24-source-gap-exception-integration-policy-v1.md
+validator: scripts/validate_historical_silver_source_gap_exception_integration_policy_v1.py
+workflow: .github/workflows/validate-historical-silver-source-gap-exception-integration-policy-v1.yml
+policy role: QA_AND_COVERAGE_REPORTING_ONLY
+raw Silver / Gold / gap: 5,826 / 5,824 / 2
+documented exceptions: 2
+unexplained missing after documentation: 0
+Gold dataset complete: false
+```
+
+The policy allows future reports to add aggregate fields for documented exceptions while preserving the original 5,826 Silver, 5,824 Gold and two missing-game metrics. It does not rewrite Gold coverage as complete and does not change the analyzer or databases in this design PR.
 
 ## Consumed One-time Scopes
 
@@ -259,14 +282,12 @@ HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-22-002
 HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
 ```
 
-The source archive reconciliation was allowed only to temporarily download and read the Shufinskiy `2023-24` NBA Stats and PBP Stats archives, calculate aggregate manifest／coverage／grouping counts, delete temporary material, and upload one aggregate-only JSON report.
-
-It was not allowed to download Candidate CSV, read Chris Munch or Eoin, create or read Gold, alter Silver, or emit raw rows, game IDs, dates, team codes, source paths, source hashes, row hashes, databases, or source archives.
-
 ## Still Blocked
 
+- production analyzer integration before a separately validated implementation design;
+- real-reference execution of exception recognition;
 - Silver builder changes or manual row insertion;
-- source-gap exception row patch or downstream integration outside a separately validated integration policy;
+- source-gap exception row patch;
 - Gold rebuild;
 - cross-source audit rerun;
 - source archive reconciliation repeat execution;
@@ -297,15 +318,20 @@ It was not allowed to download Candidate CSV, read Chris Munch or Eoin, create o
 - `data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v2.json`
 - `data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json`
 - `data/research/historical-silver-2023-24-source-gap-exception-current-status-v1.json`
+- `data/research/historical-silver-2023-24-source-gap-exception-integration-policy-v1.json`
+- `data/research/historical-silver-2023-24-source-gap-exception-integration-current-status-v1.json`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-request-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-approval-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-result-v1.md`
 - `docs/historical-silver-2023-24-source-gap-exception-manifest-v1.md`
+- `docs/historical-silver-2023-24-source-gap-exception-integration-policy-v1.md`
 - `scripts/validate_historical_silver_source_archive_reconciliation_result_v1.py`
 - `scripts/validate_historical_silver_source_gap_exception_manifest_v1.py`
+- `scripts/validate_historical_silver_source_gap_exception_integration_policy_v1.py`
 - `.github/workflows/validate-historical-silver-source-archive-reconciliation-result-v1.yml`
 - `.github/workflows/validate-historical-silver-source-gap-exception-manifest-v1.yml`
+- `.github/workflows/validate-historical-silver-source-gap-exception-integration-policy-v1.yml`
 
 ## Eoin and Other Research Lines
 

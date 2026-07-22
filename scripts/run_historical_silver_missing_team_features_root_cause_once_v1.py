@@ -88,6 +88,23 @@ def approval_validation(request, approval, implementation, result, current, conf
     return gate.validate(request, approval, implementation, result, current, confirmation, event, ref)
 
 
+def rebuild_summary(report: dict[str, Any]) -> dict[str, Any]:
+    outputs = report.get("outputs") or {}
+    tables = outputs.get("tables") or {}
+    quality = report.get("quality") or {}
+    sources = report.get("sources") or {}
+    pbp_source = sources.get("pbpstats_2023") or {}
+    return {
+        "season_label": "2023-24",
+        "games": int(tables["games"]),
+        "team_game_features": int(tables["team_game_features"]),
+        "incomplete_team_games": int(quality["incomplete_team_games"]),
+        "team_inference_failures": int(pbp_source["team_inference_failures"]),
+        "raw_rows_emitted": 0,
+        "raw_files_emitted": False,
+    }
+
+
 def build_2023_24_silver(root: Path) -> tuple[Path, dict[str, Any]]:
     root.mkdir(parents=True, exist_ok=True)
     config = read_json(Path("config/historical-source-pilot.json"))
@@ -105,21 +122,23 @@ def build_2023_24_silver(root: Path) -> tuple[Path, dict[str, Any]]:
         raise RuntimeError(f"expected 1230 Silver games, found {games}")
     if report["decision"]["ready_for_private_model_feature_pipeline"] is not True:
         raise RuntimeError("rebuilt Silver failed existing quality gate")
-    return output_dir / "historical-silver.sqlite.gz", {
-        "season_label": "2023-24",
-        "games": games,
-        "team_game_features": features,
-        "incomplete_team_games": int(report["quality"]["incomplete_team_games"]),
-        "team_inference_failures": int(report["quality"]["team_inference_failures"]),
-        "raw_rows_emitted": 0,
-        "raw_files_emitted": False,
-    }
+    summary = rebuild_summary(report)
+    if summary["games"] != games or summary["team_game_features"] != features:
+        raise RuntimeError("Silver rebuild summary drift")
+    return output_dir / "historical-silver.sqlite.gz", summary
 
 
 def self_test(request, approval, implementation, result, current) -> dict[str, Any]:
     validation = approval_validation(request, approval, implementation, result, current, REQUEST_ID, "workflow_dispatch", "refs/heads/main")
     if validation["formal_state"] != gate.READY:
         raise AssertionError(validation)
+    summary = rebuild_summary({
+        "sources": {"pbpstats_2023": {"team_inference_failures": 0}},
+        "outputs": {"tables": {"games": 1230, "team_game_features": 2456}},
+        "quality": {"incomplete_team_games": 2},
+    })
+    assert summary["team_inference_failures"] == 0, summary
+    assert summary["incomplete_team_games"] == 2, summary
     with tempfile.TemporaryDirectory(prefix="nbavl-silver-root-cause-executor-test-") as temp_name:
         fixture = analyzer.self_test(Path(temp_name) / "fixture-report.json")
     return {

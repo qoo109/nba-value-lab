@@ -90,6 +90,15 @@ jobs:
           if not path.exists():
               raise SystemExit('missing aggregate root-cause report')
           report = json.loads(path.read_text(encoding='utf-8'))
+          if report.get('formal_state') == 'HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_BLOCKED_BEFORE_RESULT':
+              print(json.dumps({
+                  'formal_state': report.get('formal_state'),
+                  'error_type': report.get('error_type'),
+                  'error_summary': report.get('error_summary'),
+                  'request_id': report.get('request_id'),
+                  'formal_stake': report.get('boundaries', {}).get('formal_stake'),
+              }, ensure_ascii=False, indent=2))
+              raise SystemExit('root-cause execution blocked before result')
           allowed = {
               'HISTORICAL_SILVER_MISSING_TEAM_FEATURES_NO_GAP',
               'HISTORICAL_SILVER_MISSING_TEAM_FEATURES_ROOT_CAUSE_BLOCKED',

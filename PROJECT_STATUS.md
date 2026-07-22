@@ -17,8 +17,11 @@ Gold/Silver reconciliation result: SOURCE_DATA_GAP_CONFIRMED
 2023-24 Silver games: 1,230
 2023-24 games without team features: 2
 root-cause implementation: VALIDATED
-root-cause request: EXPLICIT APPROVAL GRANTED / READY FOR MANUAL DISPATCH
-real root-cause execution count: 0 / 1
+root-cause request: EXECUTION ATTEMPTED / BLOCKED BY RUNNER FIELD-PATH BUG
+real root-cause execution count: 1 / 1
+root-cause incident run: 29888939524
+root-cause incident artifact: 8517546804
+root-cause incident error: KeyError team_inference_failures
 canonical repository: qoo109/nba-value-lab / SINGLE_ACTIVE_WORKSPACE
 odds history hub: ARCHIVED_IN_MAIN / V0.19 / NO_EXTERNAL_DEPENDENCY
 odds history hub snapshot: backups/nba-odds-history-hub-v0.19 @ 5d2659efb2fee1cf28816ebfc65ddac929d75d6a
@@ -28,7 +31,7 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_READY_FOR_MANUAL_DISPATCH
+HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_RETRY_REQUEST_REQUIRED
 ```
 
 Request ID:
@@ -83,18 +86,24 @@ validation artifact: 8491635865
 state: REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL
 ```
 
-### Explicit approval
+### Explicit approval and blocked execution attempt
 
 ```text
 approval granted: true
 approved by: qoo109
 execution enabled: true
-execution count: 0
+execution count: 1
 maximum execution count: 1
 workflow_dispatch only: true
+execution run: 29888939524
+execution artifact: 8517546804
+formal state: HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_BLOCKED_BEFORE_RESULT
+error: KeyError 'team_inference_failures'
 ```
 
-The approved run may rebuild only the `2023-24` Historical Silver reference in temporary storage and classify the two zero-feature games using aggregate counts.
+The approved request `001` recorded one execution attempt and must not be reused. The run stopped before a formal scientific root-cause classification because the executor read `team_inference_failures` from the wrong report path.
+
+Incident note: `docs/historical-silver-missing-team-features-run-29888939524-incident-v1.md`
 
 ## Approved One-time Scope
 
@@ -122,6 +131,7 @@ It must not download Candidate CSV, create or read Gold, or emit raw rows, game 
 - betting-edge claims;
 - formal Stake above `0`.
 - automatic import from the archived Odds History Hub snapshot.
+- rerunning request `HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-21-001`.
 
 ## Important Files
 
@@ -130,6 +140,8 @@ It must not download Candidate CSV, create or read Gold, or emit raw rows, game 
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-real-execution-request-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-approval-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v2.json`
+- `data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v3.json`
+- `docs/historical-silver-missing-team-features-run-29888939524-incident-v1.md`
 - `scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py`
 - `scripts/validate_historical_silver_missing_team_features_root_cause_approval_v1.py`
 - `scripts/run_historical_silver_missing_team_features_root_cause_once_v1.py`

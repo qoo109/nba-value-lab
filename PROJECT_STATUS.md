@@ -30,6 +30,9 @@ root-cause retry 002 outcome: HISTORICAL_SILVER_MISSING_TEAM_FEATURES_SOURCE_GAP
 source archive reconciliation design: READY
 source archive reconciliation design policy: data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json
 source archive reconciliation design state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_DESIGN_READY
+source archive reconciliation request: CREATED / AWAITING EXPLICIT USER APPROVAL
+source archive reconciliation request policy: data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json
+source archive reconciliation request state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL
 canonical repository: qoo109/nba-value-lab / SINGLE_ACTIVE_WORKSPACE
 odds history hub: ARCHIVED_IN_MAIN / V0.19 / NO_EXTERNAL_DEPENDENCY
 odds history hub snapshot: backups/nba-odds-history-hub-v0.19 @ 5d2659efb2fee1cf28816ebfc65ddac929d75d6a
@@ -39,14 +42,16 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_REQUEST_DRAFT_READY_FOR_IMPLEMENTATION
+HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL
 ```
 
 Execution Request ID:
 
 ```text
-Not created yet. The completed design permits a future request draft, but no source archive reconciliation execution is approved.
+HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
 ```
+
+The request is valid as a policy packet only. No source archive reconciliation execution is approved or enabled until the repository owner explicitly approves the exact request ID and aggregate-only boundary.
 
 ## Completed Evidence
 
@@ -169,9 +174,31 @@ formal stake: 0
 
 This design allows three follow-up lanes: aggregate source archive reconciliation, secondary team-feature QA reference design, or documented source-gap exception handling. It does not authorize any real data execution.
 
-## Approved One-time Scope
+### Source archive reconciliation request
 
-The manual workflow may:
+```text
+request id: HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
+state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL
+policy: data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json
+documentation: docs/historical-silver-2023-24-source-archive-reconciliation-request-v1.md
+validator: scripts/validate_historical_silver_source_archive_reconciliation_request_v1.py
+workflow: .github/workflows/validate-historical-silver-source-archive-reconciliation-request-v1.yml
+approval granted: false
+execution enabled: false
+execution count: 0 / 1
+network calls made: 0
+source archives read: false
+candidate CSV rows read: false
+raw rows emitted: 0
+raw files emitted: false
+formal stake: 0
+```
+
+This request only prepares an approval packet for one future aggregate-only Shufinskiy source archive reconciliation. It does not authorize execution, source archive uploads, raw row output, Silver or Gold database creation, Chris Munch CSV reads, Eoin bundle reads, model retraining, market backtest, betting-edge claims, or non-zero Stake.
+
+## Consumed Retry 002 One-time Scope
+
+The already consumed retry `002` manual workflow was allowed to:
 
 1. download the existing `shufinskiy/nba_data` 2023-24 Silver inputs into temporary storage;
 2. rebuild the existing 2023-24 Historical Silver without changing builder code;
@@ -180,7 +207,7 @@ The manual workflow may:
 5. delete temporary archives and database with the runner;
 6. upload one aggregate JSON report of at most 1 MiB.
 
-It must not download Candidate CSV, create or read Gold, or emit raw rows, game IDs, dates, team codes, row hashes, databases, or source archives.
+It was not allowed to download Candidate CSV, create or read Gold, or emit raw rows, game IDs, dates, team codes, row hashes, databases, or source archives.
 
 ## Still Blocked
 
@@ -214,7 +241,9 @@ It must not download Candidate CSV, create or read Gold, or emit raw rows, game 
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-approval-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json`
 - `data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json`
+- `data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md`
+- `docs/historical-silver-2023-24-source-archive-reconciliation-request-v1.md`
 - `docs/historical-silver-missing-team-features-retry-request-002-v1.md`
 - `docs/historical-silver-missing-team-features-run-29888939524-incident-v1.md`
 - `scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py`
@@ -222,6 +251,7 @@ It must not download Candidate CSV, create or read Gold, or emit raw rows, game 
 - `scripts/validate_historical_silver_missing_team_features_retry_request_002_v1.py`
 - `scripts/validate_historical_silver_missing_team_features_retry_002_approval_v1.py`
 - `scripts/validate_historical_silver_source_archive_reconciliation_design_v1.py`
+- `scripts/validate_historical_silver_source_archive_reconciliation_request_v1.py`
 - `scripts/run_historical_silver_missing_team_features_root_cause_once_v1.py`
 - `scripts/run_historical_silver_missing_team_features_root_cause_retry_002_v1.py`
 - `.github/workflows/run-approved-historical-silver-missing-team-features-root-cause-once-v1.yml`
@@ -229,6 +259,7 @@ It must not download Candidate CSV, create or read Gold, or emit raw rows, game 
 - `.github/workflows/validate-historical-silver-missing-team-features-retry-002-approval-v1.yml`
 - `.github/workflows/run-approved-historical-silver-missing-team-features-root-cause-retry-002-v1.yml`
 - `.github/workflows/validate-historical-silver-source-archive-reconciliation-design-v1.yml`
+- `.github/workflows/validate-historical-silver-source-archive-reconciliation-request-v1.yml`
 
 ## Eoin and Other Research Lines
 

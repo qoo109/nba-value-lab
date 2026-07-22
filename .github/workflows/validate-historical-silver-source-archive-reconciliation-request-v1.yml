@@ -1,0 +1,103 @@
+name: Validate Historical Silver source archive reconciliation request v1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json"
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json"
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json"
+      - "data/source-registry.json"
+      - "docs/historical-silver-2023-24-source-archive-reconciliation-request-v1.md"
+      - "scripts/validate_historical_silver_source_archive_reconciliation_request_v1.py"
+      - ".github/workflows/validate-historical-silver-source-archive-reconciliation-request-v1.yml"
+  pull_request:
+    paths:
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json"
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json"
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json"
+      - "data/source-registry.json"
+      - "docs/historical-silver-2023-24-source-archive-reconciliation-request-v1.md"
+      - "scripts/validate_historical_silver_source_archive_reconciliation_request_v1.py"
+      - ".github/workflows/validate-historical-silver-source-archive-reconciliation-request-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-historical-silver-source-archive-reconciliation-request-v1-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  request-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile request validator
+        run: python -m py_compile scripts/validate_historical_silver_source_archive_reconciliation_request_v1.py
+
+      - name: Validate request and negative tests
+        run: |
+          rm -rf /tmp/nbavl-source-archive-reconciliation-request-v1
+          mkdir -p /tmp/nbavl-source-archive-reconciliation-request-v1
+          python scripts/validate_historical_silver_source_archive_reconciliation_request_v1.py \
+            --request data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json \
+            --design data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json \
+            --result data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json \
+            --registry data/source-registry.json \
+            --self-test \
+            --output /tmp/nbavl-source-archive-reconciliation-request-v1/request-validation-report.json
+
+      - name: Enforce approval and aggregate-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('/tmp/nbavl-source-archive-reconciliation-request-v1/request-validation-report.json')
+          report = json.loads(path.read_text())
+          assert report['formal_state'] == (
+              'HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_'
+              'REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL'
+          ), report
+          assert report['checks_failed'] == 0, report
+          assert all(report['self_tests'].values()), report
+          quality = report['quality']
+          assert quality['network_calls_made'] is False, report
+          assert quality['shufinskiy_source_archives_read'] is False, report
+          assert quality['candidate_csv_rows_read'] is False, report
+          assert quality['real_reconciliation_executed'] is False, report
+          assert quality['raw_rows_emitted'] == 0, report
+          assert quality['raw_files_emitted'] is False, report
+          assert quality['execution_enabled'] is False, report
+          assert quality['source_role_changed'] is False, report
+          assert quality['formal_stake'] == 0, report
+          decision = report['decision']
+          assert decision['ready_for_explicit_user_approval'] is True, report
+          assert decision['ready_for_execution'] is False, report
+          assert decision['ready_for_silver_builder_change'] is False, report
+          assert decision['ready_for_silver_exception_patch'] is False, report
+          assert decision['ready_for_gold_rebuild'] is False, report
+          assert decision['ready_for_cross_source_audit_rerun'] is False, report
+          assert decision['ready_for_chris_munch_data_execution'] is False, report
+          assert decision['ready_for_market_backtest'] is False, report
+          assert decision['ready_for_model_retraining'] is False, report
+          assert decision['ready_for_betting_edge_claim'] is False, report
+          assert decision['formal_stake'] == 0, report
+          assert path.stat().st_size <= 1048576
+          PY
+
+      - name: Upload aggregate-only request validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-archive-reconciliation-request-v1
+          path: /tmp/nbavl-source-archive-reconciliation-request-v1/request-validation-report.json
+          retention-days: 14
+          if-no-files-found: error

@@ -6,7 +6,7 @@ on:
       - "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.json"
       - "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-current-status-v2.json"
       - "docs/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.md"
-      - "scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_request_v1.py"
+      - "scripts/validate_historical_silver_source_gap_exception_integration_real-reference-validation-request-v1.py"
       - ".github/workflows/validate-historical-silver-source-gap-exception-integration-real-reference-validation-request-v1.yml"
       - "PROJECT_STATUS.md"
   push:
@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5

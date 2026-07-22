@@ -1,0 +1,76 @@
+name: Validate Historical Silver source gap exception integration implementation design v1
+
+on:
+  push:
+    paths:
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-design-v1.json"
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-current-status-v1.json"
+      - "docs/historical-silver-2023-24-source-gap-exception-integration-implementation-design-v1.md"
+      - "scripts/validate_historical_silver_source_gap_exception_integration_implementation_design_v1.py"
+      - ".github/workflows/validate-historical-silver-source-gap-exception-integration-implementation-design-v1.yml"
+      - "PROJECT_STATUS.md"
+  pull_request:
+    paths:
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-design-v1.json"
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-current-status-v1.json"
+      - "docs/historical-silver-2023-24-source-gap-exception-integration-implementation-design-v1.md"
+      - "scripts/validate_historical_silver_source_gap_exception_integration_implementation_design_v1.py"
+      - ".github/workflows/validate-historical-silver-source-gap-exception-integration-implementation-design-v1.yml"
+      - "PROJECT_STATUS.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-design:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: |
+          python -m py_compile scripts/validate_historical_silver_source_gap_exception_integration_implementation_design_v1.py
+
+      - name: Validate implementation design
+        run: |
+          mkdir -p artifacts
+          python scripts/validate_historical_silver_source_gap_exception_integration_implementation_design_v1.py \
+            --output artifacts/historical-silver-source-gap-exception-integration-implementation-design-validation-v1.json
+
+      - name: Enforce design-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("artifacts/historical-silver-source-gap-exception-integration-implementation-design-validation-v1.json").read_text(encoding="utf-8")
+          )
+          assert report["design_only"] is True
+          assert report["production_module_created"] is False
+          assert report["coverage_analyzer_changed"] is False
+          assert report["database_read_or_write"] is False
+          assert report["network_calls_made"] is False
+          assert report["real_rows_read"] is False
+          assert report["raw_rows_emitted"] == 0
+          assert report["ready_for_synthetic_implementation"] is True
+          assert report["ready_for_real_data_execution"] is False
+          assert report["ready_for_cross_source_audit_rerun"] is False
+          assert report["ready_for_market_backtest"] is False
+          assert report["formal_stake"] == 0
+          PY
+
+      - name: Upload design validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-gap-exception-integration-implementation-design-v1
+          path: artifacts/historical-silver-source-gap-exception-integration-implementation-design-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,181 @@
+{
+  "schema_version": "historical-silver-2023-24-source-gap-exception-integration-implementation-design-v1",
+  "created_at": "2026-07-22",
+  "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_IMPLEMENTATION_DESIGN_READY",
+  "design_role": "PURE_AGGREGATE_REPORT_TRANSFORMER_CONTRACT",
+  "triggering_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_POLICY_VALIDATED",
+  "inputs": {
+    "raw_coverage_report_schema": "historical-gold-silver-coverage-reconciliation-report-v1",
+    "coverage_analyzer": "scripts/analyze_historical_gold_silver_coverage_v1.py",
+    "exception_manifest": "data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json",
+    "exception_manifest_status": "data/research/historical-silver-2023-24-source-gap-exception-current-status-v1.json",
+    "integration_policy": "data/research/historical-silver-2023-24-source-gap-exception-integration-policy-v1.json",
+    "integration_policy_status": "data/research/historical-silver-2023-24-source-gap-exception-integration-current-status-v1.json"
+  },
+  "future_module_contract": {
+    "proposed_module": "scripts/integrate_historical_silver_source_gap_exception_v1.py",
+    "proposed_function": "integrate_documented_source_gap(raw_report, exception_manifest, integration_policy)",
+    "execution_model": "PURE_IN_MEMORY_TRANSFORM",
+    "database_access": false,
+    "network_access": false,
+    "source_archive_access": false,
+    "row_level_input_allowed": false,
+    "row_level_output_allowed": false,
+    "existing_analyzer_modified_in_initial_implementation": false,
+    "existing_builder_modified": false
+  },
+  "input_validation_contract": {
+    "required_raw_report_fields": [
+      "schema_version",
+      "formal_outcome",
+      "scope.season_labels",
+      "scope.silver_game_rows",
+      "scope.gold_matchup_rows",
+      "coverage.missing_gold_for_silver",
+      "coverage.unclassified_missing_games",
+      "coverage.missing_by_season",
+      "coverage.missing_by_reason",
+      "coverage.missing_by_season_and_reason",
+      "decision.builder_repair_required",
+      "decision.formal_stake",
+      "boundaries.game_ids_emitted",
+      "boundaries.dates_emitted",
+      "boundaries.team_codes_emitted",
+      "boundaries.row_key_hashes_emitted"
+    ],
+    "required_policy_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_POLICY_DESIGN_READY",
+    "required_manifest_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_MANIFEST_DESIGN_READY",
+    "required_exception_code": "SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT",
+    "required_exception_count": 2,
+    "required_season_label": "2023-24",
+    "structural_failure_mode": "RAISE_VALIDATION_ERROR_BEFORE_OUTPUT",
+    "semantic_mismatch_mode": "EMIT_FAIL_CLOSED_AGGREGATE_REPORT"
+  },
+  "recognition_algorithm": {
+    "all_conditions_required": true,
+    "partial_recognition_allowed": false,
+    "conditions": [
+      "raw report schema equals historical-gold-silver-coverage-reconciliation-report-v1",
+      "raw report includes season 2023-24",
+      "raw report formal outcome remains HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_SOURCE_DATA_GAP_CONFIRMED",
+      "raw missing Gold for Silver equals 2",
+      "2023-24 missing count equals 2",
+      "2023-24 missing_both_team_features count equals 2",
+      "all other missing reason counts equal 0",
+      "raw unclassified missing count equals 0",
+      "builder repair required equals false",
+      "exception manifest code equals SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT",
+      "exception manifest exception count equals 2",
+      "exception manifest unclassified count equals 0",
+      "integration policy recognition gate remains fail closed and aggregate only",
+      "raw report emits no prohibited identifiers",
+      "formal Stake equals 0"
+    ],
+    "on_full_match": {
+      "documented_source_gap_exception_count": 2,
+      "unexplained_missing_count_after_documentation": 0,
+      "documented_exception_state": "HISTORICAL_GOLD_SILVER_COVERAGE_DOCUMENTED_SOURCE_EXCEPTION_RECOGNIZED"
+    },
+    "on_any_semantic_mismatch": {
+      "documented_source_gap_exception_count": 0,
+      "unexplained_missing_count_after_documentation": "raw coverage.missing_gold_for_silver",
+      "documented_exception_state": "FAIL_CLOSED_UNEXPLAINED_COVERAGE_GAP"
+    }
+  },
+  "output_contract": {
+    "schema_version": "historical-gold-silver-coverage-with-documented-exceptions-v1",
+    "preserve_raw_report_without_mutation": true,
+    "preserve_raw_formal_outcome": true,
+    "preserve_raw_silver_game_count": true,
+    "preserve_raw_gold_matchup_count": true,
+    "preserve_raw_missing_count": true,
+    "additive_top_level_section": "documented_exception_reporting",
+    "required_additive_fields": [
+      "exception_policy_version",
+      "exception_policy_state",
+      "documented_source_gap_exception_code",
+      "documented_source_gap_exception_count",
+      "unexplained_missing_count_after_documentation",
+      "covered_or_documented_count",
+      "gold_dataset_complete",
+      "recognition_gate_passed",
+      "recognition_failure_reasons"
+    ],
+    "gold_dataset_complete": false,
+    "maximum_output_bytes": 1048576,
+    "prohibited_fields": [
+      "game_id",
+      "game_date",
+      "home_team_abbr",
+      "away_team_abbr",
+      "team_code",
+      "source_file_path",
+      "source_file_hash",
+      "row_level_record",
+      "row_key_hash"
+    ]
+  },
+  "derived_metric_rules": {
+    "covered_or_documented_count": "raw covered_games + documented_source_gap_exception_count",
+    "unexplained_missing_count_after_documentation": "raw missing_gold_for_silver - documented_source_gap_exception_count",
+    "gold_matchup_count_after_documentation": "raw gold_matchup_rows",
+    "gold_coverage_rewritten_as_complete": false,
+    "negative_derived_counts_allowed": false,
+    "automatic_raw_count_adjustment_allowed": false
+  },
+  "synthetic_test_matrix": [
+    "valid frozen aggregate fixture recognizes exactly 2 documented exceptions",
+    "raw missing count 3 recognizes 0 and reports 3 unexplained",
+    "wrong missing reason recognizes 0 and reports the raw gap unexplained",
+    "builder repair required true recognizes 0",
+    "unclassified missing count above 0 recognizes 0",
+    "manifest exception count mutation recognizes 0",
+    "exception code mutation recognizes 0",
+    "formal Stake above 0 fails closed",
+    "prohibited identifier boundary mutation fails closed",
+    "structurally incomplete input raises before output",
+    "input objects remain byte-equivalent after transformation",
+    "output remains aggregate only and below 1 MiB"
+  ],
+  "implementation_sequence": [
+    "create the pure transformer module on a separate branch",
+    "add synthetic fixture and mutation tests without real databases",
+    "add a validator workflow that executes only synthetic tests",
+    "confirm the existing analyzer file is unchanged",
+    "confirm no database, network, source archive, Silver, or Gold write path exists",
+    "merge the synthetic implementation only after validation",
+    "prepare a separately approved real-reference validation request if still required"
+  ],
+  "boundaries": {
+    "design_only": true,
+    "production_module_created": false,
+    "coverage_analyzer_changed": false,
+    "database_read_or_write": false,
+    "network_calls_made": false,
+    "source_archives_read": false,
+    "real_rows_read": false,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "silver_builder_change": false,
+    "gold_builder_change": false,
+    "historical_silver_replacement": false,
+    "historical_gold_replacement": false,
+    "cross_source_audit_rerun": false,
+    "market_backtest": false,
+    "model_training_or_retraining": false,
+    "betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_state_if_valid": {
+    "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_IMPLEMENTATION_DESIGN_VALIDATED",
+    "next_research_step": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_IMPLEMENTATION_READY_FOR_IMPLEMENTATION",
+    "ready_for_synthetic_implementation": true,
+    "ready_for_real_data_execution": false,
+    "ready_for_analyzer_replacement": false,
+    "ready_for_silver_builder_change": false,
+    "ready_for_gold_rebuild": false,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_market_backtest": false,
+    "formal_stake": 0
+  }
+}

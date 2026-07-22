@@ -1,0 +1,108 @@
+name: Validate Historical Silver source gap exception integration implementation v1
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/integrate_historical_silver_source_gap_exception_v1.py'
+      - 'scripts/test_integrate_historical_silver_source_gap_exception_v1.py'
+      - 'scripts/validate_historical_silver_source_gap_exception_integration_implementation_v1.py'
+      - 'data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-*.json'
+      - 'docs/historical-silver-2023-24-source-gap-exception-integration-implementation-v1.md'
+      - '.github/workflows/validate-historical-silver-source-gap-exception-integration-implementation-v1.yml'
+      - 'PROJECT_STATUS.md'
+      - 'README.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-implementation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile implementation modules
+        run: |
+          python -m py_compile \
+            scripts/integrate_historical_silver_source_gap_exception_v1.py \
+            scripts/test_integrate_historical_silver_source_gap_exception_v1.py \
+            scripts/validate_historical_silver_source_gap_exception_integration_implementation_v1.py
+
+      - name: Run synthetic and mutation tests
+        run: |
+          mkdir -p artifacts/source-gap-integration-implementation-v1
+          python scripts/test_integrate_historical_silver_source_gap_exception_v1.py \
+            --output artifacts/source-gap-integration-implementation-v1/synthetic-test-summary.json
+
+      - name: Validate implementation contract
+        run: |
+          python scripts/validate_historical_silver_source_gap_exception_integration_implementation_v1.py \
+            --repo-root . \
+            --test-summary artifacts/source-gap-integration-implementation-v1/synthetic-test-summary.json \
+            --output artifacts/source-gap-integration-implementation-v1/implementation-validation.json
+
+      - name: Confirm existing coverage analyzer is unchanged
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
+            scripts/analyze_historical_gold_silver_coverage_v1.py
+
+      - name: Enforce aggregate-only synthetic boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('artifacts/source-gap-integration-implementation-v1')
+          test = json.loads((root / 'synthetic-test-summary.json').read_text())
+          validation = json.loads((root / 'implementation-validation.json').read_text())
+
+          assert test['successful'] is True
+          assert test['tests_run'] >= 12
+          assert validation['all_tests_passed'] is True
+          assert validation['aggregate_only'] is True
+          assert validation['database_access'] is False
+          assert validation['network_access'] is False
+          assert validation['source_archive_access'] is False
+          assert validation['real_rows_read'] is False
+          assert validation['real_reference_validation_executed'] is False
+          assert validation['cross_source_audit_rerun'] is False
+          assert validation['market_backtest'] is False
+          assert validation['model_retraining'] is False
+          assert validation['betting_edge_claim'] is False
+          assert validation['formal_stake'] == 0
+
+          prohibited = {
+              'game_id', 'game_date', 'home_team_abbr', 'away_team_abbr',
+              'team_code', 'source_file_path', 'source_file_hash',
+              'row_level_record', 'row_key_hash'
+          }
+          def walk(value):
+              if isinstance(value, dict):
+                  for key, child in value.items():
+                      assert key not in prohibited, key
+                      walk(child)
+              elif isinstance(value, list):
+                  for child in value:
+                      walk(child)
+          walk(test)
+          walk(validation)
+          PY
+
+      - name: Upload aggregate synthetic validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-gap-exception-integration-implementation-v1
+          path: artifacts/source-gap-integration-implementation-v1/*.json
+          if-no-files-found: error
+          retention-days: 14

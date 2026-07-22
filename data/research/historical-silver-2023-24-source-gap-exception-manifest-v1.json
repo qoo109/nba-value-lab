@@ -1,0 +1,124 @@
+{
+  "schema_version": "historical-silver-2023-24-source-gap-exception-manifest-v1",
+  "created_at": "2026-07-22",
+  "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_MANIFEST_DESIGN_READY",
+  "season_label": "2023-24",
+  "source_id": "shufinskiy_nba_data",
+  "triggering_reconciliation": {
+    "result_record": "data/research/historical-silver-2023-24-source-archive-reconciliation-result-v1.json",
+    "current_status_record": "data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v2.json",
+    "workflow_run_id": 29901869841,
+    "artifact_id": 8522225397,
+    "artifact_digest": "sha256:2b42dca052d331bf94e31568b24492092beb00fef352405601fd812a8603b334",
+    "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_AGGREGATE_VALIDATION_PASS",
+    "decision": "SOURCE_ARCHIVE_GAP_STABLE"
+  },
+  "aggregate_scope": {
+    "silver_games": 1230,
+    "games_with_two_team_feature_rows": 1228,
+    "source_gap_exception_games": 2,
+    "unclassified_games": 0,
+    "missing_reason": "nbastats_game_present_pbpstats_game_absent",
+    "missing_reason_count": 2,
+    "coverage_overlap": {
+      "nbastats_game_count": 1230,
+      "pbpstats_game_count": 1228,
+      "overlap_game_count": 1228,
+      "nbastats_only_game_count": 2,
+      "pbpstats_only_game_count": 0
+    },
+    "team_feature_count_histogram": {
+      "0": 2,
+      "2": 1228
+    }
+  },
+  "exception_class": {
+    "exception_code": "SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT",
+    "description": "The Silver game row is present through the NBA Stats archive component, but the corresponding PBP Stats game coverage is absent, so possession-derived team features cannot be produced.",
+    "upstream_gap_stable": true,
+    "silver_builder_defect": false,
+    "gold_builder_defect": false,
+    "identity_defect": false,
+    "manual_repair_allowed": false
+  },
+  "public_evidence_policy": {
+    "aggregate_only": true,
+    "game_ids_allowed": false,
+    "dates_allowed": false,
+    "team_codes_allowed": false,
+    "source_file_paths_allowed": false,
+    "source_file_hashes_allowed": false,
+    "row_level_records_allowed": false,
+    "row_key_hashes_allowed": false,
+    "raw_rows_allowed": false,
+    "raw_files_allowed": false,
+    "maximum_public_output_bytes": 1048576
+  },
+  "exception_handling_policy": {
+    "mode": "DOCUMENTED_AGGREGATE_ONLY_NO_ROW_PATCH",
+    "retain_existing_silver_game_rows": true,
+    "delete_silver_game_rows": false,
+    "synthesize_team_feature_rows": false,
+    "insert_manual_team_feature_rows": false,
+    "impute_missing_features_as_zero": false,
+    "copy_features_from_another_source": false,
+    "override_builder_output": false,
+    "historical_silver_replacement": false,
+    "historical_gold_replacement": false,
+    "runtime_identification_rule": "silver_game_present AND nbastats_game_present AND pbpstats_game_absent AND team_feature_row_count_equals_0",
+    "runtime_identifiers_may_be_persisted_publicly": false
+  },
+  "downstream_eligibility": {
+    "silver_game_identity_retained": true,
+    "possession_derived_team_features_available": false,
+    "gold_matchup_eligible_without_new_valid_source_rows": false,
+    "model_training_eligible": false,
+    "model_evaluation_eligible": false,
+    "market_backtest_reference_eligible": false,
+    "manual_override_eligible": false,
+    "ready_for_silver_builder_change": false,
+    "ready_for_silver_exception_patch": false,
+    "ready_for_gold_rebuild": false,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "fail_closed_invariants": [
+    "source_gap_exception_games must equal 2",
+    "unclassified_games must equal 0",
+    "silver_games must equal games_with_two_team_feature_rows plus source_gap_exception_games",
+    "nbastats_only_game_count must equal source_gap_exception_games",
+    "pbpstats_only_game_count must equal 0",
+    "missing_reason must remain nbastats_game_present_pbpstats_game_absent",
+    "no public row identifiers may be added",
+    "no synthetic, copied, imputed, or manually inserted team features may be created",
+    "the manifest does not authorize Silver or Gold modification",
+    "formal Stake must remain 0"
+  ],
+  "execution_boundary": {
+    "design_only": true,
+    "network_calls_made": false,
+    "source_archives_read": false,
+    "candidate_csv_downloaded_or_read": false,
+    "chris_munch_data_execution": false,
+    "eoin_bundle_execution": false,
+    "silver_database_created_or_modified": false,
+    "gold_database_created_or_read": false,
+    "builder_execution": false,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "formal_stake": 0
+  },
+  "next_state_if_valid": {
+    "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_MANIFEST_VALIDATED",
+    "next_research_step": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_POLICY_READY_FOR_DESIGN",
+    "ready_for_data_execution": false,
+    "ready_for_silver_builder_change": false,
+    "ready_for_gold_rebuild": false,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_market_backtest": false,
+    "formal_stake": 0
+  }
+}

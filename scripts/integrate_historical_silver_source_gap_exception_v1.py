@@ -56,7 +56,7 @@ REQUIRED_RAW_PATHS = (
 
 
 class IntegrationValidationError(ValueError):
-    """Raised when the aggregate input structure is incomplete or invalid."""
+    """Raised when aggregate inputs are incomplete, invalid, or privacy-unsafe."""
 
 
 def _require_mapping(value: Any, name: str) -> Mapping[str, Any]:
@@ -105,6 +105,11 @@ def _validate_structure(
     exception_manifest: Mapping[str, Any],
     integration_policy: Mapping[str, Any],
 ) -> None:
+    if _mapping_contains_prohibited_key(raw_report):
+        raise IntegrationValidationError("raw_report contains prohibited identifier evidence")
+    if _mapping_contains_prohibited_key(exception_manifest):
+        raise IntegrationValidationError("exception_manifest contains prohibited identifier evidence")
+
     for path in REQUIRED_RAW_PATHS:
         _get_path(raw_report, path)
 
@@ -268,10 +273,6 @@ def _semantic_failure_reasons(
         for field in ("game_ids_emitted", "dates_emitted", "team_codes_emitted", "row_key_hashes_emitted")
     ):
         reasons.append("RAW_IDENTIFIER_BOUNDARY_VIOLATION")
-    if _mapping_contains_prohibited_key(raw_report):
-        reasons.append("RAW_PROHIBITED_IDENTIFIER_PRESENT")
-    if _mapping_contains_prohibited_key(exception_manifest):
-        reasons.append("MANIFEST_PROHIBITED_IDENTIFIER_PRESENT")
 
     if raw_report["decision"]["formal_stake"] != 0:
         reasons.append("RAW_FORMAL_STAKE_NONZERO")

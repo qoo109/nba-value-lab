@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "v0.3-public-snapshot-manifest",
+  "snapshotId": "pinnacle_nba_futures_2026-07-20T11-10+08-00",
+  "sourceId": "pinnacle_manual_browser_capture",
+  "observedAt": "2026-07-20T11:10:00+08:00",
+  "ingestedAt": "2026-07-20T14:00:00+08:00",
+  "matchedMatchupIds": [
+    1630602963,
+    1630590660,
+    1630602967,
+    1631943127,
+    1632126349
+  ],
+  "unmatchedMatchupIds": [],
+  "marketCount": 5,
+  "optionCount": 91,
+  "files": {
+    "market-1630602963.json": {
+      "sha256": "a560d7e41e8cba6cb5a25979ed37eddbda30c2ab9706c5bfaead62221e320598",
+      "bytes": 3788
+    },
+    "market-1630590660.json": {
+      "sha256": "316a103418aa7705a132f193715f9a3f97a75c318e83848e92fc7693b18c2197",
+      "bytes": 1946
+    },
+    "market-1630602967.json": {
+      "sha256": "4d350edb40061a3ce5e3d59cac119dc4e1d4f71f61f1f0e807d1a2f8d284c8c6",
+      "bytes": 1995
+    },
+    "market-1631943127.json": {
+      "sha256": "4dacaab5bd8554aef94c42da413660fc45fec8e954d6e70c9d6384013f948010",
+      "bytes": 3638
+    },
+    "market-1632126349.json": {
+      "sha256": "5c22cc91ff36e9aeb25a7584bebb27c67ece7fd8047c19fc0c9f1a70ce57bfee",
+      "bytes": 409
+    },
+    "index.json": {
+      "sha256": "f7fa521d8742ccffddf756292235a5ecd5060e6cf25b959b9d0ca8299644d182",
+      "bytes": 1886
+    }
+  },
+  "qualityFlags": {
+    "hasObservedAt": true,
+    "cutoffIsNotObservedAt": true,
+    "duplicateMatchupIds": false,
+    "duplicateParticipantIdsWithinMarket": false,
+    "containsCredentialsOrTokens": false,
+    "historicalMovementReady": false,
+    "reason": "Only one observed_at snapshot is available."
+  },
+  "publicUsageBoundary": "Small owner-supplied snapshot for reproducible research and dashboard demonstration; no automated collection, credentials, cookies, session data, or HAR files."
+}

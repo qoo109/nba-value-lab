@@ -212,6 +212,17 @@
           <div><dt>Stake</dt><dd>0</dd></div>
         </dl>
       </article>
+      <article class="registry-card licensed">
+        <div><span>Odds History Hub</span><em>V0.19 ARCHIVED</em></div>
+        <h2>舊站已完整封存到主專案</h2>
+        <dl>
+          <div><dt>備份網站</dt><dd><a href="./backups/nba-odds-history-hub-v0.19/">在主站內開啟 V0.19</a></dd></div>
+          <div><dt>完整原始碼</dt><dd><a href="./backups/nba-odds-history-hub-v0.19/nba-odds-history-hub-v0.19-source.tar.gz" download>下載 145 檔封存包</a></dd></div>
+          <div><dt>來源</dt><dd>commit 5d2659e・145 files</dd></div>
+          <div><dt>作業位置</dt><dd>只使用 qoo109/nba-value-lab</dd></div>
+          <div><dt>限制</dt><dd>唯讀備份・無自動匯入・Stake 0</dd></div>
+        </dl>
+      </article>
     </div>`;
 
     if (modelStatus) modelStatus.insertAdjacentElement("afterend", section);

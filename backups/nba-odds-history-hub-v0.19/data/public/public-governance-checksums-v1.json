@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "public-governance-checksum-manifest-v1",
+  "asOf": "2026-07-21",
+  "releaseVersion": "v0.14",
+  "algorithm": "sha256",
+  "assetCount": 8,
+  "assets": [
+    {
+      "path": "data/public/offseason-metadata-readiness-v1.json",
+      "bytes": 2679,
+      "sha256": "d26016a01a6bee06f93d6654c72991f857f1429269488b6d7d7d3401c6fa829b"
+    },
+    {
+      "path": "data/public/offseason-readiness.json",
+      "bytes": 266,
+      "sha256": "8eb5a893e59ccddef8e45a8aea8d3e0105368ed4777dc50d225dc8df5f9fc091"
+    },
+    {
+      "path": "data/public/readiness-contract-drift-report-v1.json",
+      "bytes": 2713,
+      "sha256": "823d17cbb407a4efe63ee65cf2347b9ccb5a7ae58246533d7996d5f608a55c9c"
+    },
+    {
+      "path": "data/public/readiness-release-manifest-v1.json",
+      "bytes": 784,
+      "sha256": "d1b118f8b665f0415019b8ad08e016c6110fc6b21b9cc8487ee54296f725a375"
+    },
+    {
+      "path": "release-index.html",
+      "bytes": 4287,
+      "sha256": "cd032f4c6db68b7782de9ac05adcaa82d53819060aa501ff2c06c8020ed98019"
+    },
+    {
+      "path": "schemas/public/offseason-aggregate-metadata-readiness-v1.schema.json",
+      "bytes": 4824,
+      "sha256": "4ce6d79d2b076d22bdc01f6058ea273e02045f19ebf98dfcbec6e14edf880d85"
+    },
+    {
+      "path": "schemas/public/public-contract-drift-report-v1.schema.json",
+      "bytes": 1188,
+      "sha256": "b292b24d486e9a17df4f6dedaff8084d7de04b74b0597fa90d01ea368c474b9d"
+    },
+    {
+      "path": "schemas/public/readiness-release-manifest-v1.schema.json",
+      "bytes": 2357,
+      "sha256": "60a9fed8f7db3215442a3b4f3c95878e83738b10018c5e31cbb988d6e113a0a4"
+    }
+  ],
+  "quality": {
+    "deterministicOrder": true,
+    "repositoryOnly": true,
+    "externalFilesRead": false,
+    "networkCallsMade": false,
+    "crossRepositoryWrite": false,
+    "selfChecksumExcluded": true
+  }
+}

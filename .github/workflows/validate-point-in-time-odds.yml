@@ -38,7 +38,11 @@ on:
       - "docs/point-in-time-odds-layer-v1.md"
       - "data/templates/point-in-time-odds-template.csv"
       - "data/source-registry.json"
+      - "data/odds-history-hub-integration-v1.json"
+      - "backups/nba-odds-history-hub-v0.19/**"
       - "docs/data-sources-v4.3.md"
+      - "docs/nba-odds-history-hub-integration-v1.md"
+      - "scripts/validate_odds_history_hub_integration_v1.py"
 
 permissions:
   contents: read
@@ -54,7 +58,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile odds layer
-        run: python -m py_compile scripts/build_point_in_time_odds.py
+        run: python -m py_compile scripts/build_point_in_time_odds.py scripts/validate_odds_history_hub_integration_v1.py
+      - name: Validate Odds History Hub integration boundary
+        run: python scripts/validate_odds_history_hub_integration_v1.py
       - name: Run synthetic point-in-time odds self-test
         run: |
           rm -rf /tmp/nbavl-odds-self-test

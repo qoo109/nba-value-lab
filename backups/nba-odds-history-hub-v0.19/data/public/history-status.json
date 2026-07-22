@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "v0.4-public-history-status",
+  "generatedAt": "2026-07-20T16:20:00+08:00",
+  "snapshotCount": 1,
+  "quoteCount": 91,
+  "movementReadyQuoteCount": 0,
+  "canonicalMappedQuoteCount": 0,
+  "canonicalMappingCoveragePct": 0.0,
+  "historyReady": false,
+  "executableBacktestReady": false,
+  "reason": "目前只有一個真實 observed_at。第二份快照匯入並通過 QA 後，才會啟用賠率走勢圖。"
+}

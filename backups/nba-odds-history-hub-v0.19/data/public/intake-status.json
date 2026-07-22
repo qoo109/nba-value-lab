@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "v0.4-public-intake-status",
+  "status": "WAITING_FOR_SECOND_REAL_SNAPSHOT",
+  "requiredFiles": [
+    "matchups.json",
+    "straight.json",
+    "metadata.json"
+  ],
+  "intakePage": "snapshot-intake.html",
+  "trackingIssue": "https://github.com/qoo109/nba-odds-history-hub/issues/4",
+  "readyForImport": false,
+  "reason": "A second owner-supplied snapshot package has not been received and validated yet."
+}

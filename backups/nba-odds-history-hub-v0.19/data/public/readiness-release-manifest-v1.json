@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "readiness-release-manifest-v1",
+  "releaseVersion": "v0.14",
+  "asOf": "2026-07-21",
+  "currentMode": "offseason_sleep",
+  "contracts": [
+    {"contractId": "legacy-readiness", "path": "data/public/offseason-readiness.json", "schemaVersion": "offseason-readiness-v1", "compatibility": "supported", "fixtureOnly": true},
+    {"contractId": "aggregate-readiness", "path": "data/public/offseason-metadata-readiness-v1.json", "schemaVersion": "offseason-aggregate-metadata-readiness-v1", "compatibility": "current", "fixtureOnly": true}
+  ],
+  "releaseBoundary": {"repositoryOnly": true, "aggregateOnly": true, "collectionActivated": false, "productionScheduleImported": false, "networkCallsMade": false, "externalFilesRead": false, "crossRepositoryWrite": false}
+}

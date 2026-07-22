@@ -406,6 +406,52 @@
       "notes": "Eoin is validated only as a role-limited secondary QA and cross-source regression-check source. The alert-only evidence-contract monitor is healthy, with review due 2027-07-21. Player statistics remain coverage-only and do not establish independent stat parity. No primary-source role, Historical Silver/Gold replacement, feature import, model retraining, market backtest, repeat bundle execution, betting-edge claim, or non-zero Stake is authorized."
     },
     {
+      "source_id": "nba_odds_history_hub_archive",
+      "name": "NBA Odds History Hub V0.19 archive",
+      "status": "archived_internal_snapshot",
+      "mode": "vendored_read_only_snapshot",
+      "domains": [
+        "historical_odds_governance",
+        "schedule_import_controls",
+        "owner_review_packet",
+        "disabled_control_plan"
+      ],
+      "requires_secret": false,
+      "historical_origin": "https://github.com/qoo109/nba-odds-history-hub",
+      "snapshot_commit": "5d2659efb2fee1cf28816ebfc65ddac929d75d6a",
+      "archive_path": "backups/nba-odds-history-hub-v0.19",
+      "archive_website": "backups/nba-odds-history-hub-v0.19/index.html",
+      "source_archive": "backups/nba-odds-history-hub-v0.19/nba-odds-history-hub-v0.19-source.tar.gz",
+      "source_archive_sha256": "654eeda2229e99b051ab5ad6088983e79b212e9c8fd7e46247bae3e02ef98deb",
+      "integration_manifest": "data/odds-history-hub-integration-v1.json",
+      "documentation": "docs/nba-odds-history-hub-integration-v1.md",
+      "quality_checks": [
+        "snapshot_commit_pinned",
+        "source_archive_inventory_verified",
+        "disabled_import_boundary_recorded",
+        "owner_review_decision_not_requested",
+        "production_import_false",
+        "external_schedule_read_false",
+        "cross_repository_write_false"
+      ],
+      "safety_boundary": {
+        "automatic_import_enabled": false,
+        "cross_repository_write_enabled": false,
+        "production_schedule_import_enabled": false,
+        "production_database_access_enabled": false,
+        "external_schedule_read_enabled": false,
+        "formal_stake": 0
+      },
+      "latest_evidence": {
+        "phase": "V0.19",
+        "formal_state": "OFFSEASON_PRESEASON_OWNER_REVIEW_PACKET_AND_DISABLED_IMPORT_COMMAND_PLAN_V1_READY",
+        "checks": "31 / 31",
+        "merge_commit": "5d2659efb2fee1cf28816ebfc65ddac929d75d6a",
+        "next_unique_mainline": "OFFSEASON_PRESEASON_APPROVAL_STATE_MACHINE_AND_CHANGE_CONTROL_MATRIX"
+      },
+      "notes": "V0.19 is vendored inside NBA Value Lab as a read-only source and static-site backup. NBA Value Lab is the only active workspace; the historical repository is not a runtime dependency. The archive does not unlock collection, production schedule import, production database access, market backtest, CLV/EV/ROI/Drawdown claims, formal betting decisions, or non-zero Stake."
+    },
+    {
       "source_id": "basketball_reference",
       "name": "Basketball-Reference",
       "status": "manual",

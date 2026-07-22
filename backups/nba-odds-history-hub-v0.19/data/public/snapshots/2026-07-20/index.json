@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "v0.3-public-snapshot-index",
+  "snapshotId": "pinnacle_nba_futures_2026-07-20T11-10+08-00",
+  "source": "Pinnacle browser capture (manual)",
+  "bookmaker": "Pinnacle",
+  "league": "NBA",
+  "capturedAt": "2026-07-20T11:10:00+08:00",
+  "marketScope": "futures",
+  "marketCount": 5,
+  "optionCount": 91,
+  "markets": [
+    {
+      "matchupId": 1630602963,
+      "title": "2026-27 NBA Champion",
+      "file": "data/public/snapshots/2026-07-20/market-1630602963.json",
+      "optionCount": 30,
+      "cutoffAt": "2026-10-31T08:00:00Z",
+      "sourceStatus": "closed",
+      "rawImpliedProbabilitySumPct": 119.5
+    },
+    {
+      "matchupId": 1630590660,
+      "title": "2026-27 NBA Eastern Conference Winner",
+      "file": "data/public/snapshots/2026-07-20/market-1630590660.json",
+      "optionCount": 15,
+      "cutoffAt": "2026-10-31T09:00:00Z",
+      "sourceStatus": "closed",
+      "rawImpliedProbabilitySumPct": 119.45
+    },
+    {
+      "matchupId": 1630602967,
+      "title": "2026-27 NBA Western Conference Winner",
+      "file": "data/public/snapshots/2026-07-20/market-1630602967.json",
+      "optionCount": 15,
+      "cutoffAt": "2026-10-31T09:00:00Z",
+      "sourceStatus": "closed",
+      "rawImpliedProbabilitySumPct": 118.97
+    },
+    {
+      "matchupId": 1631943127,
+      "title": "2026-2027 NBA Regular Season MVP",
+      "file": "data/public/snapshots/2026-07-20/market-1631943127.json",
+      "optionCount": 29,
+      "cutoffAt": "2026-10-31T16:00:00Z",
+      "sourceStatus": "open",
+      "rawImpliedProbabilitySumPct": 136.66
+    },
+    {
+      "matchupId": 1632126349,
+      "title": "2026-2027 Rookie of the Year",
+      "file": "data/public/snapshots/2026-07-20/market-1632126349.json",
+      "optionCount": 2,
+      "cutoffAt": "2026-10-31T09:00:00Z",
+      "sourceStatus": "open",
+      "rawImpliedProbabilitySumPct": 104.75
+    }
+  ]
+}

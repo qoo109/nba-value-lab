@@ -19,6 +19,9 @@ Gold/Silver reconciliation result: SOURCE_DATA_GAP_CONFIRMED
 root-cause implementation: VALIDATED
 root-cause request: EXPLICIT APPROVAL GRANTED / READY FOR MANUAL DISPATCH
 real root-cause execution count: 0 / 1
+canonical repository: qoo109/nba-value-lab / SINGLE_ACTIVE_WORKSPACE
+odds history hub: ARCHIVED_IN_MAIN / V0.19 / NO_EXTERNAL_DEPENDENCY
+odds history hub snapshot: backups/nba-odds-history-hub-v0.19 @ 5d2659efb2fee1cf28816ebfc65ddac929d75d6a
 formal stake: 0
 ```
 
@@ -118,6 +121,7 @@ It must not download Candidate CSV, create or read Gold, or emit raw rows, game 
 - model retraining;
 - betting-edge claims;
 - formal Stake above `0`.
+- automatic import from the archived Odds History Hub snapshot.
 
 ## Important Files
 

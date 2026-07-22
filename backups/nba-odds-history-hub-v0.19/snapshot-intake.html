@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>第二份快照提交｜NBA Odds History Hub</title>
+<style>
+:root{--bg:#07111f;--panel:#102139;--line:#29405e;--text:#eef6ff;--muted:#9db0c9;--accent:#ffb000;--blue:#65d6ff;--good:#55e6a5}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,rgba(101,214,255,.12),transparent 34%),radial-gradient(circle at 90% 10%,rgba(255,176,0,.12),transparent 30%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;line-height:1.65}
+main{max-width:920px;margin:auto;padding:42px 20px 80px}.back{color:var(--muted);text-decoration:none}.hero{margin-top:24px;padding:30px;border:1px solid rgba(255,255,255,.09);border-radius:22px;background:linear-gradient(180deg,rgba(19,39,65,.98),rgba(12,27,46,.98));box-shadow:0 18px 60px rgba(0,0,0,.3)}.tag{display:inline-flex;padding:6px 10px;border-radius:999px;border:1px solid rgba(85,230,165,.3);background:rgba(85,230,165,.08);color:var(--good);font-size:12px;font-weight:800}h1{font-size:38px;line-height:1.16;margin:14px 0 12px}p{color:var(--muted)}.status{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}.metric{padding:16px;border-radius:15px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025)}.metric strong{display:block;font-size:24px}.metric span{font-size:12px;color:var(--muted)}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:12px;border:1px solid var(--line);text-decoration:none;color:var(--text);font-weight:750}.primary{background:var(--accent);border-color:var(--accent);color:#07111f}.card{margin-top:18px;padding:24px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(16,33,57,.9)}h2{margin-top:0}code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}pre{overflow:auto;padding:16px;border-radius:13px;background:#081524;border:1px solid var(--line);color:#dcecff}.warn{border-left:4px solid var(--accent);padding-left:15px}.good{color:var(--good);font-weight:800}@media(max-width:680px){h1{font-size:30px}.status{grid-template-columns:1fr}.hero{padding:23px}}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="./">← 回到 NBA Odds History Hub</a>
+<section class="hero">
+<span class="tag">V0.4 DATA ACTIVATION</span>
+<h1>提交第二份真實 NBA 賠率快照</h1>
+<p>歷史建構器與走勢圖邏輯已完成。現在需要第二份真實的 <strong>matchups.json</strong>、<strong>straight.json</strong>，以及包含時區的真實觀測時間，才能啟用第一段賠率走勢。</p>
+<div class="status"><div class="metric"><strong>1</strong><span>目前真實快照</span></div><div class="metric"><strong>91</strong><span>Quote identities</span></div><div class="metric"><strong>0</strong><span>可畫走勢報價</span></div></div>
+<div class="actions"><a class="btn primary" href="https://github.com/qoo109/nba-odds-history-hub/issues/new?template=second-snapshot.yml">開啟提交表單</a><a class="btn" href="https://github.com/qoo109/nba-odds-history-hub/blob/main/docs/second-snapshot-intake.md">查看完整流程</a><a class="btn" href="https://github.com/qoo109/nba-odds-history-hub">Repository</a></div>
+</section>
+<section class="card"><h2>需要準備的三個檔案</h2><pre>second-snapshot/
+├── matchups.json
+├── straight.json
+└── metadata.json</pre><p><code>metadata.json</code> 範例：</p><pre>{
+  "observedAt": "2026-07-21T11:10:00+08:00",
+  "sourceId": "pinnacle_manual",
+  "bookmakerId": "pinnacle",
+  "notes": "Second owner-supplied snapshot"
+}</pre></section>
+<section class="card"><h2>先驗證，再匯入</h2><pre>odds-hub-validate-intake \
+  --package-dir /path/to/second-snapshot</pre><p>只有報告出現 <span class="good">readyForImport = true</span>，第二份快照才會進入匯入與歷史比較流程。</p></section>
+<section class="card warn"><h2>不要附帶的資料</h2><p>不要上傳 Cookie、Authorization Header、密碼、Token、Session、帳號資訊或 HAR 檔。提交內容應只有 JSON response body 與真實的觀測時間。</p></section>
+</main>
+</body>
+</html>

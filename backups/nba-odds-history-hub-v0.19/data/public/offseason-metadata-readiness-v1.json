@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "offseason-aggregate-metadata-readiness-v1",
+  "asOf": "2026-07-21",
+  "fixtureMode": true,
+  "currentMode": "offseason_sleep",
+  "formalState": "OFFSEASON_AGGREGATE_METADATA_EXPORT_AND_READINESS_DASHBOARD_V1_READY",
+  "validation": {"checksPassed": 25, "checksTotal": 25, "checksFailed": 0, "failedChecks": []},
+  "summary": {"teams": 30, "marketClasses": 11, "sources": 1, "providers": 1, "metadataMissingFields": 0, "automationApprovals": 0, "activeCadenceTemplates": 0, "fixtureScheduleGames": 6},
+  "teamRegistry": {"count": 30, "conferenceCounts": {"East": 15, "West": 15}, "divisionCounts": {"Atlantic": 5, "Central": 5, "Northwest": 5, "Pacific": 5, "Southeast": 5, "Southwest": 5}, "automaticFuzzyMatchingAllowed": false},
+  "marketTaxonomy": {"classCount": 11, "eventTypeCounts": {"futures": 5, "game": 6}, "movementEligibleCount": 11, "pointInTimeEligibleCount": 6, "openingClosingInferenceAllowed": false},
+  "sourceMetadata": {"schemaVersion": "v0.11-source-registry", "count": 1, "activeCount": 1, "automationApprovedCount": 0, "reviewStatusCounts": {"manual_only": 1}, "rightsStatusCounts": {"owner_supplied_research": 1}, "missingRequiredFieldCount": 0},
+  "providerMetadata": {"schemaVersion": "v0.12-provider-registry", "count": 1, "activeCount": 1, "automationApprovedCount": 0, "definitionStatusCounts": {"source_label_only": 1}, "supportedFormatCounts": {"american": 1}, "dataScopeCounts": {"owner_supplied_nba_futures_snapshots": 1}, "missingRequiredFieldCount": 0},
+  "scheduleFixture": {"gameCount": 6, "acceptedCount": 2, "excludedCount": 4, "statusCounts": {"candidate_unverified": 2, "quarantined": 2, "rejected": 2}, "excludedReasonCounts": {"historical_alias": 1, "unknown_alias": 1, "same_team": 1, "invalid_id_or_time": 1}, "canonicalEventIdsCreated": 0, "rowLevelRecordsIncluded": false},
+  "collectionState": {"liveCaptureActive": false, "scheduledCaptureActive": false, "phase2ApprovalGranted": false, "phase2ExecutionEnabled": false, "phase2ExecutionCount": 0, "phase2MaximumExecutionCount": 1, "productionScheduleImported": false, "externalScheduleRead": false},
+  "researchReadiness": {"referenceDataReady": true, "liveCaptureReady": false, "historicalMovementReady": false, "openingClosingReady": false, "pointInTimeJoinReady": false},
+  "privacyBoundary": {"aggregateOnly": true, "rowLevelRecordsIncluded": false, "sourceUrlsIncluded": false, "sourceNamesIncluded": false, "providerNamesIncluded": false, "credentialsIncluded": false, "cookiesOrSessionsIncluded": false, "authorizationHeadersIncluded": false, "networkCallsMade": false, "externalFilesRead": false, "rawRowsEmitted": 0, "crossRepositoryWrite": false}
+}

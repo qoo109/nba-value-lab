@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "offseason-readiness-v1",
+  "fixtureMode": true,
+  "currentMode": "offseason_sleep",
+  "summary": {
+    "teams": 30,
+    "marketClasses": 11,
+    "mappingCases": 5,
+    "databaseTables": 2,
+    "databaseViews": 2,
+    "activeTemplates": 0
+  }
+}

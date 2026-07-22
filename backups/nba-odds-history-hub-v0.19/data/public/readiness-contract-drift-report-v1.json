@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "public-contract-drift-report-v1",
+  "asOf": "2026-07-21",
+  "releaseVersion": "v0.14",
+  "formalState": "OFFSEASON_PUBLIC_CONTRACT_DRIFT_REPORT_V1_READY",
+  "checks": {
+    "manifest_schema": true,
+    "release_version": true,
+    "exact_contract_count": true,
+    "contract_ids_unique": true,
+    "contract_schemas_match": true,
+    "fixture_flags_match": true,
+    "shared_fields_present": true,
+    "shared_fields_equal": true,
+    "release_boundary_safe": true
+  },
+  "checksPassed": 9,
+  "checksTotal": 9,
+  "checksFailed": 0,
+  "failedChecks": [],
+  "driftCount": 0,
+  "contracts": [
+    {
+      "contractId": "legacy-readiness",
+      "path": "data/public/offseason-readiness.json",
+      "compatibility": "supported",
+      "expectedSchemaVersion": "offseason-readiness-v1",
+      "actualSchemaVersion": "offseason-readiness-v1",
+      "schemaMatch": true,
+      "expectedFixtureOnly": true,
+      "actualFixtureOnly": true,
+      "fixtureOnlyMatch": true
+    },
+    {
+      "contractId": "aggregate-readiness",
+      "path": "data/public/offseason-metadata-readiness-v1.json",
+      "compatibility": "current",
+      "expectedSchemaVersion": "offseason-aggregate-metadata-readiness-v1",
+      "actualSchemaVersion": "offseason-aggregate-metadata-readiness-v1",
+      "schemaMatch": true,
+      "expectedFixtureOnly": true,
+      "actualFixtureOnly": true,
+      "fixtureOnlyMatch": true
+    }
+  ],
+  "sharedFieldComparisons": [
+    {
+      "field": "summary.teams",
+      "values": {
+        "legacy-readiness": 30,
+        "aggregate-readiness": 30
+      },
+      "allPresent": true,
+      "allEqual": true
+    },
+    {
+      "field": "summary.marketClasses",
+      "values": {
+        "legacy-readiness": 11,
+        "aggregate-readiness": 11
+      },
+      "allPresent": true,
+      "allEqual": true
+    },
+    {
+      "field": "fixtureMode",
+      "values": {
+        "legacy-readiness": true,
+        "aggregate-readiness": true
+      },
+      "allPresent": true,
+      "allEqual": true
+    },
+    {
+      "field": "currentMode",
+      "values": {
+        "legacy-readiness": "offseason_sleep",
+        "aggregate-readiness": "offseason_sleep"
+      },
+      "allPresent": true,
+      "allEqual": true
+    }
+  ],
+  "releaseBoundary": {
+    "repositoryOnly": true,
+    "aggregateOnly": true,
+    "collectionActivated": false,
+    "productionScheduleImported": false,
+    "networkCallsMade": false,
+    "externalFilesRead": false,
+    "crossRepositoryWrite": false
+  },
+  "quality": {
+    "repositoryOnly": true,
+    "fixtureOnly": true,
+    "networkCallsMade": false,
+    "externalFilesRead": false,
+    "rowLevelRecordsIncluded": false,
+    "crossRepositoryWrite": false
+  }
+}

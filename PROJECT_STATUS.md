@@ -40,10 +40,12 @@ source gap exception code: SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT
 source gap exception count: 2
 source gap exception patch allowed: false
 source gap exception integration policy: VALIDATED / DESIGN ONLY
-source gap exception integration implementation design: VALIDATED / DESIGN ONLY
-implementation contract: PURE_AGGREGATE_REPORT_TRANSFORMER_CONTRACT
-production integration module created: false
-ready for synthetic implementation: true
+source gap exception integration implementation design: VALIDATED
+source gap exception integration implementation: VALIDATED / SYNTHETIC ONLY
+implementation contract: PURE_AGGREGATE_REPORT_TRANSFORMER
+production integration module created: true
+synthetic mutation tests: 17 / PASS
+real-reference validation executed: false
 raw Historical Silver games: 5,826
 raw Historical Gold matchups: 5,824
 raw missing Gold for Silver: 2
@@ -60,10 +62,10 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_IMPLEMENTATION_READY_FOR_IMPLEMENTATION
+HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_REAL_REFERENCE_VALIDATION_REQUEST_READY_FOR_DESIGN
 ```
 
-The implementation design freezes a pure in-memory aggregate report transformer. The next controlled lane may create the synthetic implementation and mutation tests on a separate branch, while leaving the existing coverage analyzer unchanged. It does not authorize real-reference execution, analyzer replacement, Silver／Gold modification, cross-source audit reruns, market backtests, or model activation.
+The pure in-memory transformer and its synthetic mutation suite are implemented. The next controlled lane may design a separately approved aggregate-only real-reference validation request. It does not authorize real-data execution, analyzer replacement, Silver／Gold modification, cross-source audit reruns, market backtests, or model activation.
 
 ## Completed Evidence
 
@@ -295,6 +297,25 @@ ready for synthetic implementation: true
 
 The design freezes a pure transformer that preserves the complete raw coverage report and adds only aggregate documented-exception fields. Structural failures produce no output; semantic mismatches recognize zero exceptions and retain the entire raw gap as unexplained. The current analyzer and all data assets remain unchanged.
 
+### Source gap exception integration synthetic implementation
+
+```text
+formal state: HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_IMPLEMENTATION_VALIDATED_SYNTHETIC_ONLY
+implementation: scripts/integrate_historical_silver_source_gap_exception_v1.py
+synthetic tests: scripts/test_integrate_historical_silver_source_gap_exception_v1.py
+validator: scripts/validate_historical_silver_source_gap_exception_integration_implementation_v1.py
+workflow: .github/workflows/validate-historical-silver-source-gap-exception-integration-implementation-v1.yml
+status: data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-current-status-v2.json
+documentation: docs/historical-silver-2023-24-source-gap-exception-integration-implementation-v1.md
+execution model: PURE_IN_MEMORY_TRANSFORM
+synthetic mutation tests: 17
+real data read: false
+coverage analyzer changed: false
+formal stake: 0
+```
+
+The implementation returns a new aggregate report, preserves all inputs byte-for-byte, rejects prohibited identifier evidence before output, and fails closed on semantic mismatches. Its validation workflow runs synthetic fixtures only and uploads aggregate summaries only.
+
 ## Consumed One-time Scopes
 
 The following requests are permanently consumed and must not be rerun:
@@ -307,7 +328,7 @@ HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
 
 ## Still Blocked
 
-- production analyzer integration or replacement before a separately validated synthetic transformer implementation;
+- production analyzer integration or replacement before separately approved real-reference validation;
 - real-reference validation or execution of exception recognition without separate approval;
 - Silver builder changes or manual row insertion;
 - source-gap exception row patch;
@@ -345,6 +366,7 @@ HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
 - `data/research/historical-silver-2023-24-source-gap-exception-integration-current-status-v1.json`
 - `data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-design-v1.json`
 - `data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-current-status-v1.json`
+- `data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-current-status-v2.json`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-request-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-approval-v1.md`
@@ -352,14 +374,19 @@ HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
 - `docs/historical-silver-2023-24-source-gap-exception-manifest-v1.md`
 - `docs/historical-silver-2023-24-source-gap-exception-integration-policy-v1.md`
 - `docs/historical-silver-2023-24-source-gap-exception-integration-implementation-design-v1.md`
+- `docs/historical-silver-2023-24-source-gap-exception-integration-implementation-v1.md`
+- `scripts/integrate_historical_silver_source_gap_exception_v1.py`
+- `scripts/test_integrate_historical_silver_source_gap_exception_v1.py`
 - `scripts/validate_historical_silver_source_archive_reconciliation_result_v1.py`
 - `scripts/validate_historical_silver_source_gap_exception_manifest_v1.py`
 - `scripts/validate_historical_silver_source_gap_exception_integration_policy_v1.py`
 - `scripts/validate_historical_silver_source_gap_exception_integration_implementation_design_v1.py`
+- `scripts/validate_historical_silver_source_gap_exception_integration_implementation_v1.py`
 - `.github/workflows/validate-historical-silver-source-archive-reconciliation-result-v1.yml`
 - `.github/workflows/validate-historical-silver-source-gap-exception-manifest-v1.yml`
 - `.github/workflows/validate-historical-silver-source-gap-exception-integration-policy-v1.yml`
 - `.github/workflows/validate-historical-silver-source-gap-exception-integration-implementation-design-v1.yml`
+- `.github/workflows/validate-historical-silver-source-gap-exception-integration-implementation-v1.yml`
 
 ## Eoin and Other Research Lines
 

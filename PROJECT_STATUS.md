@@ -35,6 +35,10 @@ source archive reconciliation artifact digest: sha256:2b42dca052d331bf94e31568b2
 source archive reconciliation formal state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_AGGREGATE_VALIDATION_PASS
 source archive reconciliation decision: SOURCE_ARCHIVE_GAP_STABLE
 source archive reconciliation repeat execution: disabled
+source gap exception manifest: VALIDATED / AGGREGATE ONLY
+source gap exception code: SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT
+source gap exception count: 2
+source gap exception patch allowed: false
 silver builder repair required: false
 canonical repository: qoo109/nba-value-lab / SINGLE_ACTIVE_WORKSPACE
 odds history hub: ARCHIVED_IN_MAIN / V0.19 / NO_EXTERNAL_DEPENDENCY
@@ -45,10 +49,10 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_MANIFEST_READY_FOR_DESIGN
+HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_POLICY_READY_FOR_DESIGN
 ```
 
-The one-time source archive reconciliation has been consumed. The result confirms a stable upstream coverage gap, so the next controlled lane is a privacy-safe documented source-gap exception manifest. This does not authorize Silver or Gold modification.
+The privacy-safe source-gap exception manifest is now validated. The next controlled lane may design how existing QA and coverage validators recognize the documented aggregate exception. It does not authorize row patches, Silver／Gold changes, cross-source audit reruns, market backtests, or model activation.
 
 ## Completed Evidence
 
@@ -226,6 +230,25 @@ Formal records:
 - `data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v2.json`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-result-v1.md`
 
+### Source gap exception manifest
+
+```text
+formal state: HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_MANIFEST_VALIDATED
+manifest: data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json
+current status: data/research/historical-silver-2023-24-source-gap-exception-current-status-v1.json
+documentation: docs/historical-silver-2023-24-source-gap-exception-manifest-v1.md
+validator: scripts/validate_historical_silver_source_gap_exception_manifest_v1.py
+workflow: .github/workflows/validate-historical-silver-source-gap-exception-manifest-v1.yml
+exception code: SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT
+exception count: 2
+unclassified count: 0
+handling mode: DOCUMENTED_AGGREGATE_ONLY_NO_ROW_PATCH
+```
+
+The public manifest contains aggregate evidence only. It keeps the existing Silver game identities while explicitly denying synthetic, copied, imputed, or manual team-feature rows. The two exception games remain ineligible for Gold inclusion, model use, and market-backtest reference unless genuinely new valid source rows are separately governed and validated.
+
+This manifest does not authorize a Silver exception patch or any data execution. The next possible work is an integration-policy design for existing QA and coverage validators.
+
 ## Consumed One-time Scopes
 
 The following requests are permanently consumed and must not be rerun:
@@ -243,7 +266,7 @@ It was not allowed to download Candidate CSV, read Chris Munch or Eoin, create o
 ## Still Blocked
 
 - Silver builder changes or manual row insertion;
-- source-gap exception patch before a separately validated exception manifest;
+- source-gap exception row patch or downstream integration outside a separately validated integration policy;
 - Gold rebuild;
 - cross-source audit rerun;
 - source archive reconciliation repeat execution;
@@ -272,12 +295,17 @@ It was not allowed to download Candidate CSV, read Chris Munch or Eoin, create o
 - `data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v1.json`
 - `data/research/historical-silver-2023-24-source-archive-reconciliation-result-v1.json`
 - `data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v2.json`
+- `data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json`
+- `data/research/historical-silver-2023-24-source-gap-exception-current-status-v1.json`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-request-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-approval-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-result-v1.md`
+- `docs/historical-silver-2023-24-source-gap-exception-manifest-v1.md`
 - `scripts/validate_historical_silver_source_archive_reconciliation_result_v1.py`
+- `scripts/validate_historical_silver_source_gap_exception_manifest_v1.py`
 - `.github/workflows/validate-historical-silver-source-archive-reconciliation-result-v1.yml`
+- `.github/workflows/validate-historical-silver-source-gap-exception-manifest-v1.yml`
 
 ## Eoin and Other Research Lines
 

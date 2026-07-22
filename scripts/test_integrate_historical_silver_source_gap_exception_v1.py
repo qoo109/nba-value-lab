@@ -184,7 +184,10 @@ class SourceGapIntegrationTests(unittest.TestCase):
         raw = fixture_raw_report()
         raw["decision"]["builder_repair_required"] = True
         output = self.run_transform(raw=raw)
-        self.assertIn("BUILDER_REPAIR_REQUIRED", output["documented_exception_reporting"]["recognition_failure_reasons"])
+        self.assertIn(
+            "BUILDER_REPAIR_REQUIRED",
+            output["documented_exception_reporting"]["recognition_failure_reasons"],
+        )
 
     def test_unclassified_missing_fails_closed(self) -> None:
         raw = fixture_raw_report()
@@ -196,31 +199,43 @@ class SourceGapIntegrationTests(unittest.TestCase):
         manifest = fixture_manifest()
         manifest["aggregate_scope"]["source_gap_exception_games"] = 3
         output = self.run_transform(manifest=manifest)
-        self.assertIn("MANIFEST_EXCEPTION_COUNT_MISMATCH", output["documented_exception_reporting"]["recognition_failure_reasons"])
+        self.assertIn(
+            "MANIFEST_EXCEPTION_COUNT_MISMATCH",
+            output["documented_exception_reporting"]["recognition_failure_reasons"],
+        )
 
     def test_exception_code_mutation_fails_closed(self) -> None:
         manifest = fixture_manifest()
         manifest["exception_class"]["exception_code"] = "OTHER"
         output = self.run_transform(manifest=manifest)
-        self.assertIn("EXCEPTION_CODE_MISMATCH", output["documented_exception_reporting"]["recognition_failure_reasons"])
+        self.assertIn(
+            "EXCEPTION_CODE_MISMATCH",
+            output["documented_exception_reporting"]["recognition_failure_reasons"],
+        )
 
     def test_nonzero_stake_fails_closed(self) -> None:
         raw = fixture_raw_report()
         raw["decision"]["formal_stake"] = 1
         output = self.run_transform(raw=raw)
-        self.assertIn("RAW_FORMAL_STAKE_NONZERO", output["documented_exception_reporting"]["recognition_failure_reasons"])
+        self.assertIn(
+            "RAW_FORMAL_STAKE_NONZERO",
+            output["documented_exception_reporting"]["recognition_failure_reasons"],
+        )
 
     def test_identifier_boundary_mutation_fails_closed(self) -> None:
         raw = fixture_raw_report()
         raw["boundaries"]["game_ids_emitted"] = True
         output = self.run_transform(raw=raw)
-        self.assertIn("RAW_IDENTIFIER_BOUNDARY_VIOLATION", output["documented_exception_reporting"]["recognition_failure_reasons"])
+        self.assertIn(
+            "RAW_IDENTIFIER_BOUNDARY_VIOLATION",
+            output["documented_exception_reporting"]["recognition_failure_reasons"],
+        )
 
-    def test_prohibited_identifier_key_fails_closed(self) -> None:
+    def test_prohibited_identifier_key_raises_before_output(self) -> None:
         raw = fixture_raw_report()
         raw["coverage"]["game_id"] = "synthetic-do-not-persist"
-        output = self.run_transform(raw=raw)
-        self.assertIn("RAW_PROHIBITED_IDENTIFIER_PRESENT", output["documented_exception_reporting"]["recognition_failure_reasons"])
+        with self.assertRaises(IntegrationValidationError):
+            self.run_transform(raw=raw)
 
     def test_structurally_incomplete_input_raises_before_output(self) -> None:
         raw = fixture_raw_report()
@@ -248,25 +263,37 @@ class SourceGapIntegrationTests(unittest.TestCase):
         policy = fixture_policy()
         policy["recognition_gate"]["partial_recognition_allowed"] = True
         output = self.run_transform(policy=policy)
-        self.assertIn("POLICY_PARTIAL_RECOGNITION_ENABLED", output["documented_exception_reporting"]["recognition_failure_reasons"])
+        self.assertIn(
+            "POLICY_PARTIAL_RECOGNITION_ENABLED",
+            output["documented_exception_reporting"]["recognition_failure_reasons"],
+        )
 
     def test_policy_fail_closed_mode_mutation_fails_closed(self) -> None:
         policy = fixture_policy()
         policy["recognition_gate"]["on_any_mismatch"] = "ALLOW"
         output = self.run_transform(policy=policy)
-        self.assertIn("POLICY_FAIL_CLOSED_MODE_MISMATCH", output["documented_exception_reporting"]["recognition_failure_reasons"])
+        self.assertIn(
+            "POLICY_FAIL_CLOSED_MODE_MISMATCH",
+            output["documented_exception_reporting"]["recognition_failure_reasons"],
+        )
 
     def test_missing_season_fails_closed(self) -> None:
         raw = fixture_raw_report()
         raw["scope"]["season_labels"].remove("2023-24")
         output = self.run_transform(raw=raw)
-        self.assertIn("SEASON_SCOPE_MISMATCH", output["documented_exception_reporting"]["recognition_failure_reasons"])
+        self.assertIn(
+            "SEASON_SCOPE_MISMATCH",
+            output["documented_exception_reporting"]["recognition_failure_reasons"],
+        )
 
     def test_wrong_formal_outcome_fails_closed(self) -> None:
         raw = fixture_raw_report()
         raw["formal_outcome"] = "OTHER"
         output = self.run_transform(raw=raw)
-        self.assertIn("RAW_FORMAL_OUTCOME_MISMATCH", output["documented_exception_reporting"]["recognition_failure_reasons"])
+        self.assertIn(
+            "RAW_FORMAL_OUTCOME_MISMATCH",
+            output["documented_exception_reporting"]["recognition_failure_reasons"],
+        )
 
 
 def main() -> int:
@@ -278,7 +305,11 @@ def main() -> int:
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     summary = {
         "schema_version": "historical-silver-source-gap-exception-integration-synthetic-test-summary-v1",
-        "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_SYNTHETIC_TESTS_PASS" if result.wasSuccessful() else "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_SYNTHETIC_TESTS_FAIL",
+        "formal_state": (
+            "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_SYNTHETIC_TESTS_PASS"
+            if result.wasSuccessful()
+            else "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_SYNTHETIC_TESTS_FAIL"
+        ),
         "tests_run": result.testsRun,
         "failures": len(result.failures),
         "errors": len(result.errors),
@@ -290,7 +321,10 @@ def main() -> int:
         "formal_stake": 0,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     return 0 if result.wasSuccessful() else 1
 
 

@@ -130,10 +130,10 @@ def mutation_tests(runner_text: str, workflow_text: str, status: dict[str, Any])
     assert all(baseline.values()), baseline
 
     for index, fragment in enumerate(RUNNER_REQUIRED):
-        mutated = runner_text.replace(fragment, f"REMOVED_RUNNER_{index}", 1)
+        mutated = runner_text.replace(fragment, f"REMOVED_RUNNER_{index}")
         tests[f"remove_runner_required_{index}_blocks"] = not all(checks_for(mutated, workflow_text, status).values())
     for index, fragment in enumerate(WORKFLOW_REQUIRED):
-        mutated = workflow_text.replace(fragment, f"REMOVED_WORKFLOW_{index}", 1)
+        mutated = workflow_text.replace(fragment, f"REMOVED_WORKFLOW_{index}")
         tests[f"remove_workflow_required_{index}_blocks"] = not all(checks_for(runner_text, mutated, status).values())
 
     for index, fragment in enumerate(("import requests", "import sqlite3", "import socket")):

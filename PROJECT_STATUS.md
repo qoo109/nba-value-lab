@@ -45,6 +45,12 @@ source gap exception integration implementation: VALIDATED / SYNTHETIC ONLY
 implementation contract: PURE_AGGREGATE_REPORT_TRANSFORMER
 production integration module created: true
 synthetic mutation tests: 17 / PASS
+real-reference validation request design: VALIDATED
+real-reference validation request: VALID / AWAITING EXPLICIT USER APPROVAL
+real-reference validation request id: HISTORICAL-SILVER-2023-24-SOURCE-GAP-EXCEPTION-INTEGRATION-REAL-REFERENCE-VALIDATION-2026-07-22-001
+real-reference validation request execution count: 0 / 1
+real-reference validation approval granted: false
+real-reference validation execution enabled: false
 real-reference validation executed: false
 raw Historical Silver games: 5,826
 raw Historical Gold matchups: 5,824
@@ -62,10 +68,10 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_REAL_REFERENCE_VALIDATION_REQUEST_READY_FOR_DESIGN
+HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_REAL_REFERENCE_VALIDATION_EXPLICIT_USER_APPROVAL_REQUIRED
 ```
 
-The pure in-memory transformer and its synthetic mutation suite are implemented. The next controlled lane may design a separately approved aggregate-only real-reference validation request. It does not authorize real-data execution, analyzer replacement, Silver／Gold modification, cross-source audit reruns, market backtests, or model activation.
+The immutable one-time request is ready and its validator computes exact SHA-256 bindings for the request file and transformer implementation. The next controlled lane is a separate explicit approval record. Approval has not been granted, no execution workflow exists, and real-reference validation remains disabled.
 
 ## Completed Evidence
 
@@ -316,6 +322,42 @@ formal stake: 0
 
 The implementation returns a new aggregate report, preserves all inputs byte-for-byte, rejects prohibited identifier evidence before output, and fails closed on semantic mismatches. Its validation workflow runs synthetic fixtures only and uploads aggregate summaries only.
 
+### Source gap exception real-reference validation request design
+
+```text
+formal state: HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_REAL_REFERENCE_VALIDATION_REQUEST_DESIGN_VALIDATED
+design: data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-design-v1.json
+status: data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-current-status-v1.json
+documentation: docs/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-design-v1.md
+validator: scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_request_design_v1.py
+workflow: .github/workflows/validate-historical-silver-source-gap-exception-integration-real-reference-validation-request-design-v1.yml
+maximum execution count: 1
+explicit approval required: true
+execution enabled: false
+formal stake: 0
+```
+
+The design permits a future request to validate only committed aggregate records. It forbids database rebuilds, source archives, raw CSV, raw rows, network access, automatic dispatch, and execution without a separately validated approval.
+
+### Source gap exception real-reference validation request
+
+```text
+request id: HISTORICAL-SILVER-2023-24-SOURCE-GAP-EXCEPTION-INTEGRATION-REAL-REFERENCE-VALIDATION-2026-07-22-001
+formal state: HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_REAL_REFERENCE_VALIDATION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL
+request: data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.json
+status: data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-current-status-v2.json
+documentation: docs/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.md
+validator: scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_request_v1.py
+workflow: .github/workflows/validate-historical-silver-source-gap-exception-integration-real-reference-validation-request-v1.yml
+execution count: 0 / 1
+approval granted: false
+execution enabled: false
+real-reference inputs read: false
+formal stake: 0
+```
+
+The request validator computes immutable request and implementation SHA-256 bindings but does not run the transformer or read any real-reference input. A separate explicit approval record is required before an execution workflow may be created.
+
 ## Consumed One-time Scopes
 
 The following requests are permanently consumed and must not be rerun:
@@ -367,6 +409,10 @@ HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
 - `data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-design-v1.json`
 - `data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-current-status-v1.json`
 - `data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-current-status-v2.json`
+- `data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-design-v1.json`
+- `data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-current-status-v1.json`
+- `data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.json`
+- `data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-current-status-v2.json`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-request-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-approval-v1.md`
@@ -375,6 +421,8 @@ HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
 - `docs/historical-silver-2023-24-source-gap-exception-integration-policy-v1.md`
 - `docs/historical-silver-2023-24-source-gap-exception-integration-implementation-design-v1.md`
 - `docs/historical-silver-2023-24-source-gap-exception-integration-implementation-v1.md`
+- `docs/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-design-v1.md`
+- `docs/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.md`
 - `scripts/integrate_historical_silver_source_gap_exception_v1.py`
 - `scripts/test_integrate_historical_silver_source_gap_exception_v1.py`
 - `scripts/validate_historical_silver_source_archive_reconciliation_result_v1.py`
@@ -382,11 +430,15 @@ HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
 - `scripts/validate_historical_silver_source_gap_exception_integration_policy_v1.py`
 - `scripts/validate_historical_silver_source_gap_exception_integration_implementation_design_v1.py`
 - `scripts/validate_historical_silver_source_gap_exception_integration_implementation_v1.py`
+- `scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_request_design_v1.py`
+- `scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_request_v1.py`
 - `.github/workflows/validate-historical-silver-source-archive-reconciliation-result-v1.yml`
 - `.github/workflows/validate-historical-silver-source-gap-exception-manifest-v1.yml`
 - `.github/workflows/validate-historical-silver-source-gap-exception-integration-policy-v1.yml`
 - `.github/workflows/validate-historical-silver-source-gap-exception-integration-implementation-design-v1.yml`
 - `.github/workflows/validate-historical-silver-source-gap-exception-integration-implementation-v1.yml`
+- `.github/workflows/validate-historical-silver-source-gap-exception-integration-real-reference-validation-request-design-v1.yml`
+- `.github/workflows/validate-historical-silver-source-gap-exception-integration-real-reference-validation-request-v1.yml`
 
 ## Eoin and Other Research Lines
 

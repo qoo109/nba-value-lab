@@ -141,6 +141,9 @@ It must not download Candidate CSV, create or read Gold, or emit raw rows, game 
 Eoin role: ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
 Eoin integration: alert-only
 Eoin repeat execution: disabled
+formal Eoin source role: ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
+request consumed: true
+repeat execution allowed: false
 Wyatt: STRUCTURAL_BLOCKED
 live odds capture: offseason sleep mode
 ```

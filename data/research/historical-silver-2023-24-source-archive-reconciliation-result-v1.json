@@ -1,0 +1,125 @@
+{
+  "schema_version": "historical-silver-2023-24-source-archive-reconciliation-result-v1",
+  "recorded_at": "2026-07-22",
+  "request_id": "HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001",
+  "source_id": "shufinskiy_nba_data",
+  "season_label": "2023-24",
+  "workflow_run": {
+    "run_id": 29901869841,
+    "run_attempt": 1,
+    "event": "workflow_dispatch",
+    "ref": "refs/heads/main",
+    "head_sha": "fb0b67df9f5cb110e10bbcff2cd0702a9b7b8fbd",
+    "job_name": "execute-once",
+    "job_conclusion": "success"
+  },
+  "artifact": {
+    "artifact_id": 8522225397,
+    "artifact_name": "historical-silver-source-archive-reconciliation-execution-v1",
+    "artifact_size_in_bytes": 2414,
+    "artifact_digest": "sha256:2b42dca052d331bf94e31568b24492092beb00fef352405601fd812a8603b334",
+    "artifact_json_file": "historical-silver-source-archive-reconciliation-execution-report.json",
+    "artifact_expires_at": "2026-08-05T07:54:09Z"
+  },
+  "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_AGGREGATE_VALIDATION_PASS",
+  "decision": {
+    "decision": "SOURCE_ARCHIVE_GAP_STABLE",
+    "source_archive_gap_stable": true,
+    "silver_builder_repair_required": false,
+    "historical_silver_replacement_ready": false,
+    "historical_gold_rebuild_ready": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "formal_stake": 0
+  },
+  "coverage_overlap_counts": {
+    "nbastats_game_count": 1230,
+    "pbpstats_game_count": 1228,
+    "overlap_game_count": 1228,
+    "nbastats_only_game_count": 2,
+    "pbpstats_only_game_count": 0,
+    "union_game_count": 1230
+  },
+  "missing_reason_count_histogram": {
+    "nbastats_game_present_pbpstats_game_absent": 2,
+    "pbpstats_game_present_nbastats_game_absent": 0
+  },
+  "archive_manifest_counts": {
+    "nbastats_2023": {
+      "archive_member_count": 1,
+      "column_count": 34,
+      "row_count": 567665,
+      "exact_duplicate_rows": 3,
+      "rows_after_exact_dedupe": 567662,
+      "game_count": 1230,
+      "expected_fields_missing_count": 0
+    },
+    "pbpstats_2023": {
+      "archive_member_count": 1,
+      "column_count": 19,
+      "row_count": 478625,
+      "exact_duplicate_rows": 540,
+      "rows_after_exact_dedupe": 478085,
+      "game_count": 1228,
+      "expected_fields_missing_count": 0
+    }
+  },
+  "pbpstats_grouping_counts": {
+    "possession_base": {
+      "group_count": 242363,
+      "incomplete_rows": 0,
+      "inconsistent_group_count": 2,
+      "usable_for_normalization": false
+    },
+    "possession_with_score_context": {
+      "group_count": 242364,
+      "incomplete_rows": 0,
+      "inconsistent_group_count": 1,
+      "usable_for_normalization": false
+    },
+    "possession_with_score_and_start_type": {
+      "group_count": 242365,
+      "incomplete_rows": 0,
+      "inconsistent_group_count": 0,
+      "usable_for_normalization": true
+    }
+  },
+  "execution_receipt": {
+    "execution_count_for_request": 1,
+    "maximum_execution_count_for_request": 1,
+    "request_consumed": true,
+    "repeat_execution_allowed": false,
+    "network_download_performed": true,
+    "temporary_material_deleted_with_runner": true
+  },
+  "boundaries": {
+    "candidate_csv_downloaded_or_read": false,
+    "chris_munch_csv_downloaded_or_read": false,
+    "eoin_bundle_downloaded_or_read": false,
+    "gold_database_created_or_read": false,
+    "silver_database_created_modified_or_uploaded": false,
+    "gold_builder_executed_or_changed": false,
+    "silver_builder_changed_during_execution": false,
+    "manual_row_insertion_or_override": false,
+    "fuzzy_matching": false,
+    "score_assisted_identity_repair": false,
+    "source_archives_uploaded_as_artifact": false,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "game_ids_emitted": false,
+    "dates_emitted": false,
+    "team_codes_emitted": false,
+    "source_file_paths_emitted": false,
+    "source_file_hashes_emitted": false,
+    "row_level_records_emitted": false,
+    "row_key_hashes_emitted": false,
+    "historical_silver_replacement": false,
+    "historical_gold_replacement": false,
+    "cross_source_audit_rerun": false,
+    "point_in_time_market_backtest": false,
+    "clv_ev_roi_drawdown": false,
+    "model_training_or_retraining": false,
+    "betting_edge_claim": false,
+    "formal_stake": 0
+  }
+}

@@ -22,7 +22,8 @@ real root-cause execution count: 1 / 1
 root-cause incident run: 29888939524
 root-cause incident artifact: 8517546804
 root-cause incident error: KeyError team_inference_failures
-root-cause retry request 002: AWAITING EXPLICIT USER APPROVAL
+root-cause retry request 002: EXPLICIT APPROVAL GRANTED / READY FOR MANUAL DISPATCH
+root-cause retry 002 execution count: 0 / 1
 canonical repository: qoo109/nba-value-lab / SINGLE_ACTIVE_WORKSPACE
 odds history hub: ARCHIVED_IN_MAIN / V0.19 / NO_EXTERNAL_DEPENDENCY
 odds history hub snapshot: backups/nba-odds-history-hub-v0.19 @ 5d2659efb2fee1cf28816ebfc65ddac929d75d6a
@@ -32,7 +33,7 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_RETRY_002_AWAITING_EXPLICIT_USER_APPROVAL
+HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_RETRY_002_READY_FOR_MANUAL_DISPATCH
 ```
 
 Request ID:
@@ -110,15 +111,18 @@ Incident note: `docs/historical-silver-missing-team-features-run-29888939524-inc
 
 ```text
 request id: HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-22-002
-state: AWAITING_EXPLICIT_USER_APPROVAL
-approval granted: false
-execution enabled: false
+state: EXPLICIT_APPROVAL_GRANTED_READY_FOR_MANUAL_DISPATCH
+approval granted: true
+approved by: qoo109
+execution enabled: true
 execution count: 0
 maximum execution count: 1
 repair commit: db5a7ea4ad38f5d3db763d6ea4457e5428292fb5
 ```
 
-Retry `002` may not be executed until explicit approval is recorded and validated.
+Retry `002` may rebuild only the `2023-24` Historical Silver reference in temporary storage and classify the two zero-feature games using aggregate counts.
+
+It remains workflow_dispatch only and may be executed at most once.
 
 ## Approved One-time Scope
 
@@ -156,15 +160,21 @@ It must not download Candidate CSV, create or read Gold, or emit raw rows, game 
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-approval-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v2.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v3.json`
+- `data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v4.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-request-002-v1.json`
+- `data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-approval-v1.json`
 - `docs/historical-silver-missing-team-features-retry-request-002-v1.md`
 - `docs/historical-silver-missing-team-features-run-29888939524-incident-v1.md`
 - `scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py`
 - `scripts/validate_historical_silver_missing_team_features_root_cause_approval_v1.py`
 - `scripts/validate_historical_silver_missing_team_features_retry_request_002_v1.py`
+- `scripts/validate_historical_silver_missing_team_features_retry_002_approval_v1.py`
 - `scripts/run_historical_silver_missing_team_features_root_cause_once_v1.py`
+- `scripts/run_historical_silver_missing_team_features_root_cause_retry_002_v1.py`
 - `.github/workflows/run-approved-historical-silver-missing-team-features-root-cause-once-v1.yml`
 - `.github/workflows/validate-historical-silver-missing-team-features-retry-request-002-v1.yml`
+- `.github/workflows/validate-historical-silver-missing-team-features-retry-002-approval-v1.yml`
+- `.github/workflows/run-approved-historical-silver-missing-team-features-root-cause-retry-002-v1.yml`
 
 ## Eoin and Other Research Lines
 

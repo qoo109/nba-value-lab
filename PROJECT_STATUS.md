@@ -1,6 +1,6 @@
 # NBA Value Lab — Project Status
 
-狀態核對日期：2026-07-22
+狀態核對日期：2026-07-22  
 研究定位：**Research Candidate / Pre-Market-Backtest**  
 正式 Stake：**0**
 
@@ -27,14 +27,15 @@ root-cause retry 002 execution count: 1 / 1
 root-cause retry 002 run: 29890527281
 root-cause retry 002 artifact: 8518081820
 root-cause retry 002 outcome: HISTORICAL_SILVER_MISSING_TEAM_FEATURES_SOURCE_GAP_CONFIRMED
-source archive reconciliation design: READY
-source archive reconciliation design policy: data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json
-source archive reconciliation design state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_DESIGN_READY
-source archive reconciliation request: CREATED / EXPLICIT USER APPROVAL GRANTED
-source archive reconciliation request policy: data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json
-source archive reconciliation approval: GRANTED / READY FOR MANUAL DISPATCH
-source archive reconciliation approval policy: data/research/historical-silver-2023-24-source-archive-reconciliation-approval-v1.json
-source archive reconciliation current state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH
+source archive reconciliation request: EXECUTED / CONSUMED
+source archive reconciliation execution count: 1 / 1
+source archive reconciliation run: 29901869841
+source archive reconciliation artifact: 8522225397
+source archive reconciliation artifact digest: sha256:2b42dca052d331bf94e31568b24492092beb00fef352405601fd812a8603b334
+source archive reconciliation formal state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_AGGREGATE_VALIDATION_PASS
+source archive reconciliation decision: SOURCE_ARCHIVE_GAP_STABLE
+source archive reconciliation repeat execution: disabled
+silver builder repair required: false
 canonical repository: qoo109/nba-value-lab / SINGLE_ACTIVE_WORKSPACE
 odds history hub: ARCHIVED_IN_MAIN / V0.19 / NO_EXTERNAL_DEPENDENCY
 odds history hub snapshot: backups/nba-odds-history-hub-v0.19 @ 5d2659efb2fee1cf28816ebfc65ddac929d75d6a
@@ -44,16 +45,10 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_READY_FOR_MANUAL_DISPATCH
+HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_MANIFEST_READY_FOR_DESIGN
 ```
 
-Execution Request ID:
-
-```text
-HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
-```
-
-The request has explicit user approval and is ready for one manual `workflow_dispatch`. It has not executed yet.
+The one-time source archive reconciliation has been consumed. The result confirms a stable upstream coverage gap, so the next controlled lane is a privacy-safe documented source-gap exception manifest. This does not authorize Silver or Gold modification.
 
 ## Completed Evidence
 
@@ -116,7 +111,7 @@ formal state: HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_BLOCKED
 error: KeyError 'team_inference_failures'
 ```
 
-The approved request `001` recorded one execution attempt and must not be reused. The run stopped before a formal scientific root-cause classification because the executor read `team_inference_failures` from the wrong report path.
+The approved root-cause request `001` recorded one execution attempt and must not be reused. The run stopped before a formal scientific classification because the executor read `team_inference_failures` from the wrong report path.
 
 Incident note: `docs/historical-silver-missing-team-features-run-29888939524-incident-v1.md`
 
@@ -139,9 +134,7 @@ silver builder repair required: false
 silver game identity reconciliation required: false
 ```
 
-Retry `002` rebuilt only the `2023-24` Historical Silver reference in temporary storage and classified the two zero-feature games using aggregate counts.
-
-It was workflow_dispatch only and is now consumed. It must not be executed again.
+Retry `002` rebuilt only the `2023-24` Historical Silver reference in temporary storage and classified the two zero-feature games using aggregate counts. It is consumed and must not execute again.
 
 Aggregate result:
 
@@ -174,96 +167,101 @@ ready for market backtest: false
 formal stake: 0
 ```
 
-This design allows three follow-up lanes: aggregate source archive reconciliation, secondary team-feature QA reference design, or documented source-gap exception handling. It does not authorize any real data execution.
+The design defined three follow-up lanes: aggregate source archive reconciliation, secondary team-feature QA reference design, and documented source-gap exception handling.
 
-### Source archive reconciliation request
-
-```text
-request id: HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
-state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL
-policy: data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json
-documentation: docs/historical-silver-2023-24-source-archive-reconciliation-request-v1.md
-validator: scripts/validate_historical_silver_source_archive_reconciliation_request_v1.py
-workflow: .github/workflows/validate-historical-silver-source-archive-reconciliation-request-v1.yml
-approval granted: false
-execution enabled: false
-execution count: 0 / 1
-network calls made: 0
-source archives read: false
-candidate CSV rows read: false
-raw rows emitted: 0
-raw files emitted: false
-formal stake: 0
-```
-
-This request only prepares an approval packet for one future aggregate-only Shufinskiy source archive reconciliation. It does not authorize execution, source archive uploads, raw row output, Silver or Gold database creation, Chris Munch CSV reads, Eoin bundle reads, model retraining, market backtest, betting-edge claims, or non-zero Stake.
-
-### Source archive reconciliation approval
+### Source archive reconciliation request and approval
 
 ```text
 request id: HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
-state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH
+request: data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json
 approval: data/research/historical-silver-2023-24-source-archive-reconciliation-approval-v1.json
-current status: data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v1.json
-documentation: docs/historical-silver-2023-24-source-archive-reconciliation-approval-v1.md
-validator: scripts/validate_historical_silver_source_archive_reconciliation_approval_v1.py
-runner: scripts/run_historical_silver_source_archive_reconciliation_once_v1.py
-validation workflow: .github/workflows/validate-historical-silver-source-archive-reconciliation-approval-v1.yml
-execution workflow: .github/workflows/run-approved-historical-silver-source-archive-reconciliation-once-v1.yml
+pre-execution current status: data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v1.json
+workflow_dispatch only: true
 approval granted: true
-execution enabled: true
-execution count: 0 / 1
-network calls made: 0
-source archives read: false
-candidate CSV rows read: false
-raw rows emitted: 0
-raw files emitted: false
-formal stake: 0
+maximum execution count: 1
 ```
 
-The only approved future execution is one manual aggregate-only Shufinskiy source archive reconciliation. It may not upload source archives, raw rows, raw files, source file paths, source file hashes, game IDs, dates, team codes, Silver or Gold databases, or any candidate CSV data.
+The approval packet and pre-execution status remain immutable evidence of the authorized scope. They are not the current post-execution state.
 
-## Consumed Retry 002 One-time Scope
+### Source archive reconciliation execution result
 
-The already consumed retry `002` manual workflow was allowed to:
+```text
+request id: HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
+workflow run: 29901869841
+job: execute-once / success
+artifact id: 8522225397
+artifact name: historical-silver-source-archive-reconciliation-execution-v1
+artifact digest: sha256:2b42dca052d331bf94e31568b24492092beb00fef352405601fd812a8603b334
+formal state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_AGGREGATE_VALIDATION_PASS
+decision: SOURCE_ARCHIVE_GAP_STABLE
+execution count: 1 / 1
+request consumed: true
+repeat execution allowed: false
+```
 
-1. download the existing `shufinskiy/nba_data` 2023-24 Silver inputs into temporary storage;
-2. rebuild the existing 2023-24 Historical Silver without changing builder code;
-3. read temporary `games`, `possessions`, and `team_game_features` rows;
-4. classify the two zero-feature games;
-5. delete temporary archives and database with the runner;
-6. upload one aggregate JSON report of at most 1 MiB.
+Aggregate coverage:
 
-It was not allowed to download Candidate CSV, create or read Gold, or emit raw rows, game IDs, dates, team codes, row hashes, databases, or source archives.
+```text
+nbastats_2023 games: 1,230
+pbpstats_2023 games: 1,228
+overlap games: 1,228
+nbastats only: 2
+pbpstats only: 0
+missing reason: nbastats_game_present_pbpstats_game_absent = 2
+```
+
+Possession grouping QA:
+
+```text
+possession_base: 242,363 groups / 2 inconsistent / unusable
+possession_with_score_context: 242,364 groups / 1 inconsistent / unusable
+possession_with_score_and_start_type: 242,365 groups / 0 inconsistent / usable
+```
+
+The stable upstream archive gap is confirmed. No Silver builder repair is required. Historical Silver replacement, Gold rebuild, market backtest and model retraining remain blocked.
+
+Formal records:
+
+- `data/research/historical-silver-2023-24-source-archive-reconciliation-result-v1.json`
+- `data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v2.json`
+- `docs/historical-silver-2023-24-source-archive-reconciliation-result-v1.md`
+
+## Consumed One-time Scopes
+
+The following requests are permanently consumed and must not be rerun:
+
+```text
+HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-21-001
+HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-22-002
+HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
+```
+
+The source archive reconciliation was allowed only to temporarily download and read the Shufinskiy `2023-24` NBA Stats and PBP Stats archives, calculate aggregate manifest／coverage／grouping counts, delete temporary material, and upload one aggregate-only JSON report.
+
+It was not allowed to download Candidate CSV, read Chris Munch or Eoin, create or read Gold, alter Silver, or emit raw rows, game IDs, dates, team codes, source paths, source hashes, row hashes, databases, or source archives.
 
 ## Still Blocked
 
-- Silver builder changes;
+- Silver builder changes or manual row insertion;
+- source-gap exception patch before a separately validated exception manifest;
 - Gold rebuild;
 - cross-source audit rerun;
 - source archive reconciliation repeat execution;
-- source archive reconciliation execution outside the approved one-time manual dispatch;
 - Chris Munch raw CSV read or import;
+- Eoin repeat or full-bundle execution;
 - Historical Silver or Gold replacement;
 - Opening or Closing semantics;
 - point-in-time market evaluation;
 - CLV, EV, ROI, or Drawdown;
 - model retraining;
 - betting-edge claims;
-- formal Stake above `0`.
+- formal Stake above `0`;
 - automatic import from the archived Odds History Hub snapshot.
-- rerunning request `HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-21-001`.
-- rerunning request `HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-22-002`.
 
 ## Important Files
 
 - `data/research/historical-gold-silver-coverage-real-reference-result-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-implementation-v1.json`
-- `data/research/historical-silver-2023-24-missing-team-features-root-cause-real-execution-request-v1.json`
-- `data/research/historical-silver-2023-24-missing-team-features-root-cause-approval-v1.json`
-- `data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v2.json`
-- `data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v3.json`
-- `data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v4.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v5.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-request-002-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-approval-v1.json`
@@ -272,29 +270,14 @@ It was not allowed to download Candidate CSV, create or read Gold, or emit raw r
 - `data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json`
 - `data/research/historical-silver-2023-24-source-archive-reconciliation-approval-v1.json`
 - `data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v1.json`
+- `data/research/historical-silver-2023-24-source-archive-reconciliation-result-v1.json`
+- `data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v2.json`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-request-v1.md`
 - `docs/historical-silver-2023-24-source-archive-reconciliation-approval-v1.md`
-- `docs/historical-silver-missing-team-features-retry-request-002-v1.md`
-- `docs/historical-silver-missing-team-features-run-29888939524-incident-v1.md`
-- `scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py`
-- `scripts/validate_historical_silver_missing_team_features_root_cause_approval_v1.py`
-- `scripts/validate_historical_silver_missing_team_features_retry_request_002_v1.py`
-- `scripts/validate_historical_silver_missing_team_features_retry_002_approval_v1.py`
-- `scripts/validate_historical_silver_source_archive_reconciliation_design_v1.py`
-- `scripts/validate_historical_silver_source_archive_reconciliation_request_v1.py`
-- `scripts/validate_historical_silver_source_archive_reconciliation_approval_v1.py`
-- `scripts/run_historical_silver_source_archive_reconciliation_once_v1.py`
-- `scripts/run_historical_silver_missing_team_features_root_cause_once_v1.py`
-- `scripts/run_historical_silver_missing_team_features_root_cause_retry_002_v1.py`
-- `.github/workflows/run-approved-historical-silver-missing-team-features-root-cause-once-v1.yml`
-- `.github/workflows/validate-historical-silver-missing-team-features-retry-request-002-v1.yml`
-- `.github/workflows/validate-historical-silver-missing-team-features-retry-002-approval-v1.yml`
-- `.github/workflows/run-approved-historical-silver-missing-team-features-root-cause-retry-002-v1.yml`
-- `.github/workflows/validate-historical-silver-source-archive-reconciliation-design-v1.yml`
-- `.github/workflows/validate-historical-silver-source-archive-reconciliation-request-v1.yml`
-- `.github/workflows/validate-historical-silver-source-archive-reconciliation-approval-v1.yml`
-- `.github/workflows/run-approved-historical-silver-source-archive-reconciliation-once-v1.yml`
+- `docs/historical-silver-2023-24-source-archive-reconciliation-result-v1.md`
+- `scripts/validate_historical_silver_source_archive_reconciliation_result_v1.py`
+- `.github/workflows/validate-historical-silver-source-archive-reconciliation-result-v1.yml`
 
 ## Eoin and Other Research Lines
 

@@ -1,0 +1,164 @@
+name: Run approved Historical Silver source gap exception real-reference validation once v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: "Exact approved source-gap exception validation request ID"
+        required: true
+        default: "HISTORICAL-SILVER-2023-24-SOURCE-GAP-EXCEPTION-INTEGRATION-REAL-REFERENCE-VALIDATION-2026-07-22-001"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: historical-silver-source-gap-exception-real-reference-validation-once-v1
+  cancel-in-progress: false
+
+jobs:
+  execute-once:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.run_attempt == 1 &&
+      inputs.request_id == 'HISTORICAL-SILVER-2023-24-SOURCE-GAP-EXCEPTION-INTEGRATION-REAL-REFERENCE-VALIDATION-2026-07-22-001'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out approved main
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile approved aggregate-only path
+        run: |
+          python -m py_compile \
+            scripts/integrate_historical_silver_source_gap_exception_v1.py \
+            scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py
+
+      - name: Revalidate request approval and immutable bindings
+        run: |
+          rm -rf /tmp/nbavl-source-gap-real-reference-validation
+          mkdir -p /tmp/nbavl-source-gap-real-reference-validation
+          PYTHONPATH=scripts python scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py \
+            --request data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.json \
+            --approval data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-v1.json \
+            --approval-status data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-current-status-v1.json \
+            --implementation scripts/integrate_historical_silver_source_gap_exception_v1.py \
+            --confirmation-request-id "${{ inputs.request_id }}" \
+            --workflow-event "${{ github.event_name }}" \
+            --workflow-ref "${{ github.ref }}" \
+            --execution-count-before 0 \
+            --validate-only \
+            --output /tmp/nbavl-source-gap-real-reference-validation/admission.json
+
+      - name: Execute one committed aggregate-only validation
+        id: execute
+        run: |
+          set +e
+          PYTHONPATH=scripts python scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py \
+            --request data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.json \
+            --approval data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-v1.json \
+            --approval-status data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-current-status-v1.json \
+            --implementation scripts/integrate_historical_silver_source_gap_exception_v1.py \
+            --coverage data/research/historical-gold-silver-coverage-real-reference-result-v1.json \
+            --manifest data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json \
+            --policy data/research/historical-silver-2023-24-source-gap-exception-integration-policy-v1.json \
+            --confirmation-request-id "${{ inputs.request_id }}" \
+            --workflow-event "${{ github.event_name }}" \
+            --workflow-ref "${{ github.ref }}" \
+            --execution-count-before 0 \
+            --output /tmp/nbavl-source-gap-real-reference-validation/real-reference-validation-execution-result-v1.json
+          CODE=$?
+          echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Remove admission-only report
+        if: always()
+        run: rm -f /tmp/nbavl-source-gap-real-reference-validation/admission.json
+
+      - name: Enforce aggregate-only output and one-time receipt
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-source-gap-real-reference-validation')
+          path = root / 'real-reference-validation-execution-result-v1.json'
+          if not path.exists():
+              raise SystemExit('missing aggregate real-reference validation result')
+          report = json.loads(path.read_text(encoding='utf-8'))
+          allowed_states = {
+              'HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_REAL_REFERENCE_VALIDATION_PASS',
+              'HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_REAL_REFERENCE_VALIDATION_FAIL_CLOSED',
+          }
+          assert report['request_id'] == (
+              'HISTORICAL-SILVER-2023-24-SOURCE-GAP-EXCEPTION-INTEGRATION-'
+              'REAL-REFERENCE-VALIDATION-2026-07-22-001'
+          ), report
+          assert report['formal_state'] in allowed_states, report
+          receipt = report['execution_receipt']
+          assert receipt['execution_attempted'] is True, report
+          assert receipt['execution_count_for_request'] == 1, report
+          assert receipt['maximum_execution_count'] == 1, report
+          assert receipt['request_consumed'] is True, report
+          assert receipt['repeat_execution_allowed'] is False, report
+          assert receipt['workflow_dispatch_only'] is True, report
+          assert receipt['aggregate_only'] is True, report
+          boundaries = report['boundaries']
+          assert boundaries['database_access'] is False, report
+          assert boundaries['network_access'] is False, report
+          assert boundaries['source_archive_access'] is False, report
+          assert boundaries['raw_csv_access'] is False, report
+          assert boundaries['raw_rows_read'] is False, report
+          assert boundaries['raw_rows_emitted'] == 0, report
+          assert boundaries['raw_files_emitted'] is False, report
+          assert boundaries['silver_or_gold_write'] is False, report
+          assert boundaries['coverage_analyzer_modified'] is False, report
+          assert boundaries['transformer_modified'] is False, report
+          assert boundaries['cross_source_audit_rerun'] is False, report
+          assert boundaries['market_backtest'] is False, report
+          assert boundaries['model_training_or_retraining'] is False, report
+          assert boundaries['betting_edge_claim'] is False, report
+          assert boundaries['formal_stake'] == 0, report
+
+          prohibited = {
+              'game_id', 'game_date', 'home_team_abbr', 'away_team_abbr',
+              'team_code', 'source_file_path', 'source_file_hash',
+              'row_level_record', 'row_key_hash',
+          }
+          def unsafe(value):
+              if isinstance(value, dict):
+                  return any(str(k) in prohibited or unsafe(v) for k, v in value.items())
+              if isinstance(value, list):
+                  return any(unsafe(v) for v in value)
+              return False
+          assert not unsafe(report), report
+          assert path.stat().st_size <= 1048576, path.stat().st_size
+          files = sorted(item.name for item in root.iterdir() if item.is_file())
+          assert files == ['real-reference-validation-execution-result-v1.json'], files
+          print(json.dumps({
+              'formal_state': report['formal_state'],
+              'execution_count': receipt['execution_count_for_request'],
+              'request_consumed': receipt['request_consumed'],
+              'formal_stake': boundaries['formal_stake'],
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload the single aggregate validation Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-gap-exception-integration-real-reference-validation-execution-v1
+          path: /tmp/nbavl-source-gap-real-reference-validation/real-reference-validation-execution-result-v1.json
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Preserve fail-closed execution conclusion
+        if: always()
+        run: exit "${{ steps.execute.outputs.exit_code }}"

@@ -27,6 +27,11 @@
     "failed_dispatch_execution_receipt_created": false,
     "failed_dispatch_result_artifact_created": false
   },
+  "failed_dispatch_reached_execution_step": false,
+  "failed_dispatch_governed_inputs_read": false,
+  "failed_dispatch_transformer_executed": false,
+  "failed_dispatch_execution_receipt_created": false,
+  "failed_dispatch_result_artifact_created": false,
   "fix": {
     "mode": "COMPATIBILITY_WRAPPER_BINDING_EXACT_COMMITTED_APPROVAL_LIFECYCLE_STATE",
     "core_runner_modified": false,

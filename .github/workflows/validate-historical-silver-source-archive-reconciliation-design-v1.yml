@@ -1,0 +1,78 @@
+name: Validate Historical Silver source archive reconciliation design v1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json"
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json"
+      - "docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md"
+      - "scripts/validate_historical_silver_source_archive_reconciliation_design_v1.py"
+      - ".github/workflows/validate-historical-silver-source-archive-reconciliation-design-v1.yml"
+      - "PROJECT_STATUS.md"
+      - "data/source-registry.json"
+  pull_request:
+    paths:
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json"
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json"
+      - "docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md"
+      - "scripts/validate_historical_silver_source_archive_reconciliation_design_v1.py"
+      - ".github/workflows/validate-historical-silver-source-archive-reconciliation-design-v1.yml"
+      - "PROJECT_STATUS.md"
+      - "data/source-registry.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-historical-silver-source-archive-reconciliation-design-v1-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  design-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_historical_silver_source_archive_reconciliation_design_v1.py
+
+      - name: Validate design policy
+        run: |
+          rm -rf /tmp/nbavl-source-archive-reconciliation-design-v1
+          mkdir -p /tmp/nbavl-source-archive-reconciliation-design-v1
+          python scripts/validate_historical_silver_source_archive_reconciliation_design_v1.py \
+            --output /tmp/nbavl-source-archive-reconciliation-design-v1/design-validation-report.json
+
+      - name: Enforce aggregate-only design boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report_path = Path('/tmp/nbavl-source-archive-reconciliation-design-v1/design-validation-report.json')
+          report = json.loads(report_path.read_text())
+
+          assert report['formal_state'] == 'HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_DESIGN_READY', report
+          assert report['checks_failed'] == 0, report
+          assert report['network_calls_made'] is False, report
+          assert report['raw_rows_emitted'] == 0, report
+          assert report['raw_files_emitted'] is False, report
+          assert report['formal_stake'] == 0, report
+          assert report_path.stat().st_size <= 1048576
+          PY
+
+      - name: Upload aggregate-only design evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-archive-reconciliation-design-v1
+          path: /tmp/nbavl-source-archive-reconciliation-design-v1/design-validation-report.json
+          retention-days: 14
+          if-no-files-found: error

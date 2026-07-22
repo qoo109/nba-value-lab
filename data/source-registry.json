@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "registry_version": "2.1.0",
+  "registry_version": "2.2.0",
   "site_version_policy": "follow_current_release",
-  "updated_at": "2026-07-21T11:10:00+08:00",
+  "updated_at": "2026-07-22T12:40:00+08:00",
   "timezone": "Asia/Taipei",
   "sources": [
     {
@@ -110,6 +110,26 @@
         "feature_coverage"
       ],
       "storage_policy": "workflow_temp_only_full_sqlite_as_expiring_artifact",
+      "source_archive_reconciliation_design": {
+        "policy": "data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json",
+        "documentation": "docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md",
+        "validator": "scripts/validate_historical_silver_source_archive_reconciliation_design_v1.py",
+        "workflow": ".github/workflows/validate-historical-silver-source-archive-reconciliation-design-v1.yml",
+        "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_DESIGN_READY",
+        "triggering_result": "HISTORICAL_SILVER_MISSING_TEAM_FEATURES_SOURCE_GAP_CONFIRMED",
+        "season_label": "2023-24",
+        "source_archive_reconciliation_required": true,
+        "ready_for_request_draft": true,
+        "execution_approved": false,
+        "network_calls_made": false,
+        "raw_rows_read": false,
+        "raw_rows_emitted": 0,
+        "raw_files_emitted": false,
+        "ready_for_silver_builder_change": false,
+        "ready_for_gold_rebuild": false,
+        "ready_for_market_backtest": false,
+        "formal_stake": 0
+      },
       "notes": "NBA Value Lab 歷史 Silver 試驗；版本名稱永遠跟隨網站目前正式版本。完整 SQLite 僅作 14 天 Actions artifact，上游資料再發布權不作推定。"
     },
     {
@@ -450,6 +470,61 @@
         "next_unique_mainline": "OFFSEASON_PRESEASON_APPROVAL_STATE_MACHINE_AND_CHANGE_CONTROL_MATRIX"
       },
       "notes": "V0.19 is vendored inside NBA Value Lab as a read-only source and static-site backup. NBA Value Lab is the only active workspace; the historical repository is not a runtime dependency. The archive does not unlock collection, production schedule import, production database access, market backtest, CLV/EV/ROI/Drawdown claims, formal betting decisions, or non-zero Stake."
+    },
+    {
+      "source_id": "kaggle_chrismunch_team_statistics",
+      "name": "Chris Munch NBA Box Score Statistics Team-Level",
+      "status": "candidate_not_integrated",
+      "mode": "public_kaggle_team_feature_qa_candidate",
+      "domains": [
+        "team_boxscore_crosscheck",
+        "team_advanced_feature_coverage",
+        "team_four_factors_coverage",
+        "historical_silver_source_gap_reconciliation_candidate"
+      ],
+      "requires_secret": false,
+      "candidate_role": "ROLE_LIMITED_SECONDARY_TEAM_FEATURE_QA_CANDIDATE",
+      "quality_checks_required_before_execution": [
+        "dataset_handle",
+        "dataset_version",
+        "required_file_inventory",
+        "file_size_bytes",
+        "sha256",
+        "row_counts",
+        "column_inventory",
+        "duplicate_game_team_keys",
+        "exactly_two_team_rows_per_game",
+        "no_raw_rows_emitted"
+      ],
+      "allowed_files_after_manifest": [
+        "cumulative_scraped/games_advanced.csv",
+        "cumulative_scraped/games_four-factors.csv",
+        "cumulative_scraped/games_traditional.csv",
+        "data_dictionary.csv"
+      ],
+      "processed_files_policy": {
+        "main_key_allowed": false,
+        "notes": "Local inspection found processed game_id collisions. processed/ files may be used only after a separate manifest defines composite keys and validates duplicate behavior."
+      },
+      "storage_policy": "raw_csv_not_committed_temp_only_after_separate_approval",
+      "current_design": {
+        "policy": "data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json",
+        "documentation": "docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md",
+        "validator": "scripts/validate_historical_silver_source_archive_reconciliation_design_v1.py",
+        "workflow": ".github/workflows/validate-historical-silver-source-archive-reconciliation-design-v1.yml",
+        "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_DESIGN_READY",
+        "ready_for_manifest_predeclaration": true,
+        "ready_for_data_execution": false,
+        "raw_rows_read": false,
+        "raw_rows_emitted": 0,
+        "raw_files_emitted": false,
+        "ready_for_silver_replacement": false,
+        "ready_for_gold_rebuild": false,
+        "ready_for_model_retraining": false,
+        "ready_for_market_backtest": false,
+        "formal_stake": 0
+      },
+      "notes": "Candidate only. May become a secondary team-feature QA reference after manifest and fetch/verify script approval. Does not authorize raw CSV commits, raw artifacts, Historical Silver/Gold replacement, model retraining, market backtest, betting-edge claims, or non-zero Stake."
     },
     {
       "source_id": "basketball_reference",

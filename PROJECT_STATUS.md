@@ -27,6 +27,9 @@ root-cause retry 002 execution count: 1 / 1
 root-cause retry 002 run: 29890527281
 root-cause retry 002 artifact: 8518081820
 root-cause retry 002 outcome: HISTORICAL_SILVER_MISSING_TEAM_FEATURES_SOURCE_GAP_CONFIRMED
+source archive reconciliation design: READY
+source archive reconciliation design policy: data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json
+source archive reconciliation design state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_DESIGN_READY
 canonical repository: qoo109/nba-value-lab / SINGLE_ACTIVE_WORKSPACE
 odds history hub: ARCHIVED_IN_MAIN / V0.19 / NO_EXTERNAL_DEPENDENCY
 odds history hub snapshot: backups/nba-odds-history-hub-v0.19 @ 5d2659efb2fee1cf28816ebfc65ddac929d75d6a
@@ -36,13 +39,13 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_DESIGN_AWAITING_EXPLICIT_APPROVAL
+HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_REQUEST_DRAFT_READY_FOR_IMPLEMENTATION
 ```
 
-Request ID:
+Execution Request ID:
 
 ```text
-HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-22-002
+Not created yet. The completed design permits a future request draft, but no source archive reconciliation execution is approved.
 ```
 
 ## Completed Evidence
@@ -146,6 +149,26 @@ temporary material deleted with runner: true
 formal stake: 0
 ```
 
+### Source archive reconciliation design
+
+```text
+formal state: HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_DESIGN_READY
+policy: data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json
+documentation: docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md
+validator: scripts/validate_historical_silver_source_archive_reconciliation_design_v1.py
+workflow: .github/workflows/validate-historical-silver-source-archive-reconciliation-design-v1.yml
+triggering result: HISTORICAL_SILVER_MISSING_TEAM_FEATURES_SOURCE_GAP_CONFIRMED
+ready for source archive reconciliation request draft: true
+ready for Chris Munch manifest predeclaration: true
+ready for Chris Munch data execution: false
+ready for Silver builder change: false
+ready for Gold rebuild: false
+ready for market backtest: false
+formal stake: 0
+```
+
+This design allows three follow-up lanes: aggregate source archive reconciliation, secondary team-feature QA reference design, or documented source-gap exception handling. It does not authorize any real data execution.
+
 ## Approved One-time Scope
 
 The manual workflow may:
@@ -164,6 +187,8 @@ It must not download Candidate CSV, create or read Gold, or emit raw rows, game 
 - Silver builder changes;
 - Gold rebuild;
 - cross-source audit rerun;
+- source archive reconciliation execution;
+- Chris Munch raw CSV read or import;
 - Historical Silver or Gold replacement;
 - Opening or Closing semantics;
 - point-in-time market evaluation;
@@ -188,18 +213,22 @@ It must not download Candidate CSV, create or read Gold, or emit raw rows, game 
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-request-002-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-approval-v1.json`
 - `data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json`
+- `data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json`
+- `docs/historical-silver-2023-24-source-archive-reconciliation-design-v1.md`
 - `docs/historical-silver-missing-team-features-retry-request-002-v1.md`
 - `docs/historical-silver-missing-team-features-run-29888939524-incident-v1.md`
 - `scripts/analyze_historical_silver_missing_team_features_root_cause_v1.py`
 - `scripts/validate_historical_silver_missing_team_features_root_cause_approval_v1.py`
 - `scripts/validate_historical_silver_missing_team_features_retry_request_002_v1.py`
 - `scripts/validate_historical_silver_missing_team_features_retry_002_approval_v1.py`
+- `scripts/validate_historical_silver_source_archive_reconciliation_design_v1.py`
 - `scripts/run_historical_silver_missing_team_features_root_cause_once_v1.py`
 - `scripts/run_historical_silver_missing_team_features_root_cause_retry_002_v1.py`
 - `.github/workflows/run-approved-historical-silver-missing-team-features-root-cause-once-v1.yml`
 - `.github/workflows/validate-historical-silver-missing-team-features-retry-request-002-v1.yml`
 - `.github/workflows/validate-historical-silver-missing-team-features-retry-002-approval-v1.yml`
 - `.github/workflows/run-approved-historical-silver-missing-team-features-root-cause-retry-002-v1.yml`
+- `.github/workflows/validate-historical-silver-source-archive-reconciliation-design-v1.yml`
 
 ## Eoin and Other Research Lines
 
@@ -211,5 +240,6 @@ formal Eoin source role: ROLE_LIMITED_SECONDARY_QA_SOURCE_VALIDATED
 request consumed: true
 repeat execution allowed: false
 Wyatt: STRUCTURAL_BLOCKED
+Chris Munch: ROLE_LIMITED_SECONDARY_TEAM_FEATURE_QA_CANDIDATE / manifest required before execution
 live odds capture: offseason sleep mode
 ```

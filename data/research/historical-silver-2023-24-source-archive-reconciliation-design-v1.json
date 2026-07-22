@@ -1,0 +1,109 @@
+{
+  "schema_version": "historical-silver-2023-24-source-archive-reconciliation-design-v1",
+  "created_at": "2026-07-22",
+  "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_DESIGN_READY",
+  "triggering_result": "data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json",
+  "triggering_workflow_run_id": 29890527281,
+  "triggering_artifact_id": 8518081820,
+  "triggering_artifact_digest": "sha256:a10b1c63b3edff65e4a3eeb86e5062f245fdc300e61b2e40ff0ba8cc4df98f40",
+  "season_label": "2023-24",
+  "root_cause_outcome": "HISTORICAL_SILVER_MISSING_TEAM_FEATURES_SOURCE_GAP_CONFIRMED",
+  "observed_gap": {
+    "silver_games": 1230,
+    "games_without_team_features": 2,
+    "classified_missing_games": 2,
+    "unclassified_missing_games": 0,
+    "missing_reason": "nbastats_game_present_pbpstats_game_absent",
+    "missing_reason_count": 2,
+    "team_feature_count_histogram": {
+      "0": 2,
+      "2": 1228
+    }
+  },
+  "design_objective": "Define a controlled follow-up path for the two 2023-24 Silver games that have game rows but no PBP Stats possession-derived team features.",
+  "allowed_followup_lanes": [
+    {
+      "lane_id": "source_archive_reconciliation",
+      "role": "primary_followup_design",
+      "description": "Compare the existing Shufinskiy nbastats and pbpstats archive coverage at aggregate level to determine whether the source archive has a stable known gap.",
+      "raw_data_execution_requires_separate_request": true,
+      "candidate_csv_allowed": false,
+      "silver_builder_change_allowed": false,
+      "gold_builder_execution_allowed": false
+    },
+    {
+      "lane_id": "secondary_team_feature_qa_reference",
+      "role": "candidate_reference_design",
+      "description": "Evaluate whether a role-limited secondary source can confirm team-level advanced and four-factor coverage for the same season without becoming Silver or Gold.",
+      "candidate_sources": [
+        {
+          "source_id": "kaggle_chrismunch_team_statistics",
+          "candidate_role": "ROLE_LIMITED_SECONDARY_TEAM_FEATURE_QA_CANDIDATE",
+          "required_manifest_before_execution": true,
+          "required_fetch_verify_script_before_execution": true,
+          "raw_csv_committed_to_git": false,
+          "raw_csv_uploaded_as_artifact": false,
+          "allowed_files": [
+            "cumulative_scraped/games_advanced.csv",
+            "cumulative_scraped/games_four-factors.csv",
+            "cumulative_scraped/games_traditional.csv",
+            "data_dictionary.csv"
+          ],
+          "processed_files_main_key_allowed": false,
+          "processed_files_notes": "processed game_id values showed collisions in local inspection; processed files may be used only as auxiliary evidence after a separate manifest defines composite keys."
+        }
+      ],
+      "raw_data_execution_requires_separate_request": true,
+      "candidate_csv_allowed_in_this_design": false,
+      "silver_or_gold_patch_allowed": false
+    },
+    {
+      "lane_id": "documented_exception",
+      "role": "fallback_design",
+      "description": "If source archive reconciliation confirms the two games are stable upstream gaps, keep them as explicit source-gap exceptions and prevent accidental Gold repair or model use.",
+      "requires_exception_manifest": true,
+      "game_ids_may_be_publicly_emitted": false,
+      "dates_or_team_codes_may_be_publicly_emitted": false
+    }
+  ],
+  "required_next_artifacts_before_any_data_execution": [
+    "source_archive_reconciliation_request",
+    "explicit_user_approval",
+    "aggregate_only_runner_or_validator",
+    "public_output_boundary_test"
+  ],
+  "output_boundary": {
+    "design_only": true,
+    "network_calls_made": false,
+    "candidate_csv_downloaded_or_read": false,
+    "chris_munch_raw_rows_read": false,
+    "shufinskiy_raw_rows_read": false,
+    "gold_database_created_or_read": false,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "silver_database_uploaded_as_artifact": false,
+    "source_archives_uploaded_as_artifact": false,
+    "game_ids_emitted": false,
+    "dates_emitted": false,
+    "team_codes_emitted": false,
+    "row_level_records_emitted": false,
+    "row_key_hashes_emitted": false,
+    "maximum_public_output_bytes": 1048576
+  },
+  "downstream_permissions": {
+    "ready_for_source_archive_reconciliation_request": true,
+    "ready_for_chris_munch_manifest_predeclaration": true,
+    "ready_for_chris_munch_data_execution": false,
+    "ready_for_silver_builder_change": false,
+    "ready_for_silver_exception_patch": false,
+    "ready_for_gold_rebuild": false,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_historical_silver_replacement": false,
+    "ready_for_historical_gold_replacement": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "ready_for_betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_research_step": "HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_REQUEST_DRAFT_READY_FOR_IMPLEMENTATION"
+}

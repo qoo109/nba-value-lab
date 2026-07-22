@@ -1,0 +1,79 @@
+name: Validate Historical Silver source archive reconciliation result v1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-result-v1.json"
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v2.json"
+      - "docs/historical-silver-2023-24-source-archive-reconciliation-result-v1.md"
+      - "scripts/validate_historical_silver_source_archive_reconciliation_result_v1.py"
+      - ".github/workflows/validate-historical-silver-source-archive-reconciliation-result-v1.yml"
+  pull_request:
+    paths:
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-result-v1.json"
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v2.json"
+      - "docs/historical-silver-2023-24-source-archive-reconciliation-result-v1.md"
+      - "scripts/validate_historical_silver_source_archive_reconciliation_result_v1.py"
+      - ".github/workflows/validate-historical-silver-source-archive-reconciliation-result-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-historical-silver-source-archive-reconciliation-result-v1-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-result:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile result validator
+        run: |
+          python -m py_compile scripts/validate_historical_silver_source_archive_reconciliation_result_v1.py
+
+      - name: Validate immutable result and current status
+        run: |
+          rm -rf /tmp/nbavl-source-archive-reconciliation-result
+          mkdir -p /tmp/nbavl-source-archive-reconciliation-result
+          python scripts/validate_historical_silver_source_archive_reconciliation_result_v1.py \
+            --result data/research/historical-silver-2023-24-source-archive-reconciliation-result-v1.json \
+            --current-status data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v2.json \
+            --output /tmp/nbavl-source-archive-reconciliation-result/result-validation-report.json \
+            --self-test
+
+      - name: Enforce consumed non-activation boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path('/tmp/nbavl-source-archive-reconciliation-result/result-validation-report.json').read_text(encoding='utf-8'))
+          assert report['formal_state'] == 'HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_RESULT_VALID', report
+          assert report['checks_failed'] == 0, report
+          assert report['request_consumed'] is True, report
+          assert report['repeat_execution_allowed'] is False, report
+          assert report['ready_for_silver_builder_change'] is False, report
+          assert report['ready_for_gold_rebuild'] is False, report
+          assert report['ready_for_market_backtest'] is False, report
+          assert report['ready_for_model_retraining'] is False, report
+          assert report['ready_for_betting_edge_claim'] is False, report
+          assert report['formal_stake'] == 0, report
+          PY
+
+      - name: Upload result validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-archive-reconciliation-result-v1
+          path: /tmp/nbavl-source-archive-reconciliation-result/result-validation-report.json
+          retention-days: 14
+          if-no-files-found: error

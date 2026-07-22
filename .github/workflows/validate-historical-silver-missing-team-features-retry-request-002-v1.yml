@@ -1,0 +1,81 @@
+name: Validate Historical Silver missing team features retry request 002 v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-request-002-v1.json"
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v3.json"
+      - "docs/historical-silver-missing-team-features-retry-request-002-v1.md"
+      - "docs/historical-silver-missing-team-features-run-29888939524-incident-v1.md"
+      - "scripts/validate_historical_silver_missing_team_features_retry_request_002_v1.py"
+      - "PROJECT_STATUS.md"
+      - ".github/workflows/validate-historical-silver-missing-team-features-retry-request-002-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-request-002-v1.json"
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v3.json"
+      - "docs/historical-silver-missing-team-features-retry-request-002-v1.md"
+      - "docs/historical-silver-missing-team-features-run-29888939524-incident-v1.md"
+      - "scripts/validate_historical_silver_missing_team_features_retry_request_002_v1.py"
+      - "PROJECT_STATUS.md"
+      - ".github/workflows/validate-historical-silver-missing-team-features-retry-request-002-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-request:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile retry request validator
+        run: python -m py_compile scripts/validate_historical_silver_missing_team_features_retry_request_002_v1.py
+
+      - name: Validate retry request 002
+        run: |
+          rm -rf /tmp/nbavl-silver-root-cause-retry-002
+          mkdir -p /tmp/nbavl-silver-root-cause-retry-002
+          python scripts/validate_historical_silver_missing_team_features_retry_request_002_v1.py \
+            --request data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-request-002-v1.json \
+            --current-status data/research/historical-silver-2023-24-missing-team-features-root-cause-current-status-v3.json \
+            --output /tmp/nbavl-silver-root-cause-retry-002/retry-request-002-validation-report.json \
+            --self-test
+
+      - name: Enforce waiting-for-approval boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('/tmp/nbavl-silver-root-cause-retry-002/retry-request-002-validation-report.json')
+          report = json.loads(path.read_text(encoding='utf-8'))
+          assert report['formal_state'] == 'HISTORICAL_SILVER_2023_24_MISSING_TEAM_FEATURES_ROOT_CAUSE_RETRY_002_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL', report
+          assert report['checks_failed'] == 0, report
+          assert report['decision']['ready_for_explicit_user_approval'] is True, report
+          assert report['decision']['ready_for_execution'] is False, report
+          assert report['decision']['ready_for_repeat_execution'] is False, report
+          assert report['quality']['network_calls_made'] is False, report
+          assert report['quality']['real_reference_rows_read'] is False, report
+          assert report['quality']['real_root_cause_audit_executed'] is False, report
+          assert report['quality']['raw_rows_emitted'] == 0, report
+          assert report['quality']['raw_files_emitted'] is False, report
+          assert report['quality']['execution_enabled'] is False, report
+          assert report['quality']['formal_stake'] == 0, report
+          assert path.stat().st_size <= 1048576
+          PY
+
+      - name: Upload retry request validation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-missing-team-features-retry-request-002-validation-v1
+          path: /tmp/nbavl-silver-root-cause-retry-002/retry-request-002-validation-report.json
+          retention-days: 14
+          if-no-files-found: error

@@ -1,0 +1,105 @@
+{
+  "schema_version": "historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1",
+  "recorded_at": "2026-07-22",
+  "request_id": "HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-22-002",
+  "workflow_run_id": 29890527281,
+  "workflow_run_attempt": 1,
+  "workflow_event": "workflow_dispatch",
+  "workflow_ref": "refs/heads/main",
+  "head_sha": "fd31cc0f51e0daab4ca2b52e66215be41f110465",
+  "artifact_id": 8518081820,
+  "artifact_name": "historical-silver-missing-team-features-root-cause-retry-002-execution-v1",
+  "artifact_size_in_bytes": 2273,
+  "artifact_digest": "sha256:a10b1c63b3edff65e4a3eeb86e5062f245fdc300e61b2e40ff0ba8cc4df98f40",
+  "artifact_json_file": "historical-silver-missing-team-features-root-cause-retry-002-execution-report.json",
+  "artifact_json_bytes": 8052,
+  "formal_outcome": "HISTORICAL_SILVER_MISSING_TEAM_FEATURES_SOURCE_GAP_CONFIRMED",
+  "scope": {
+    "season_label": "2023-24",
+    "silver_games": 1230,
+    "games_without_team_features": 2,
+    "classified_missing_games": 2,
+    "unclassified_missing_games": 0
+  },
+  "reference_rebuild": {
+    "season_label": "2023-24",
+    "games": 1230,
+    "team_game_features": 2456,
+    "incomplete_team_games": 2,
+    "team_inference_failures": 0,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false
+  },
+  "root_cause": {
+    "missing_by_reason": {
+      "nbastats_game_present_pbpstats_game_absent": 2,
+      "no_event_or_possession_source_rows": 0,
+      "pbpstats_single_expected_offense_team_coverage": 0,
+      "pbpstats_possessions_all_offense_unresolved": 0,
+      "pbpstats_offense_team_identity_mismatch": 0,
+      "possession_metadata_count_mismatch": 0,
+      "feature_aggregation_omission_after_valid_possessions": 0,
+      "silver_game_identity_unresolved": 0,
+      "unclassified": 0
+    },
+    "team_feature_count_histogram": {
+      "0": 2,
+      "2": 1228
+    },
+    "missing_game_pbp_event_presence": {
+      "present": 2
+    },
+    "missing_game_possession_row_histogram": {
+      "0": 2
+    },
+    "missing_game_resolved_offense_team_count_histogram": {
+      "0": 2
+    },
+    "missing_game_quality_flag_counts": {}
+  },
+  "decision": {
+    "source_archive_reconciliation_required": true,
+    "silver_builder_repair_required": false,
+    "silver_game_identity_reconciliation_required": false,
+    "ready_for_followup_repair_design": true,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_gold_rebuild": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "formal_stake": 0
+  },
+  "execution_receipt": {
+    "execution_count_for_request": 1,
+    "maximum_execution_count_for_request": 1,
+    "request_consumed": true,
+    "repeat_execution_allowed": false,
+    "network_download_performed": true,
+    "temporary_material_deleted_with_runner": true
+  },
+  "boundaries": {
+    "candidate_csv_downloaded_or_read": false,
+    "gold_database_created_or_read": false,
+    "gold_builder_executed_or_changed": false,
+    "silver_builder_changed_during_execution": false,
+    "manual_row_insertion_or_override": false,
+    "fuzzy_matching": false,
+    "score_assisted_identity_repair": false,
+    "raw_rows_emitted": 0,
+    "raw_files_emitted": false,
+    "silver_database_uploaded_as_artifact": false,
+    "source_archives_uploaded_as_artifact": false,
+    "game_ids_emitted": false,
+    "dates_emitted": false,
+    "team_codes_emitted": false,
+    "row_level_records_emitted": false,
+    "row_key_hashes_emitted": false,
+    "historical_silver_replacement": false,
+    "historical_gold_replacement": false,
+    "opening_or_closing_labels": false,
+    "point_in_time_market_backtest": false,
+    "clv_ev_roi_drawdown": false,
+    "model_training_or_retraining": false,
+    "betting_edge_claim": false,
+    "formal_stake": 0
+  }
+}

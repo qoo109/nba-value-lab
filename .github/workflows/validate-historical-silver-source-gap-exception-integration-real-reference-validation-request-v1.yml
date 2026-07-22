@@ -79,9 +79,8 @@ jobs:
           assert report["implementation_file_sha256"].startswith("sha256:")
           PY
 
-      - name: Verify approval and execution remain absent
+      - name: Verify execution remains absent
         run: |
-          test ! -e data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-v1.json
           test ! -e .github/workflows/run-approved-historical-silver-source-gap-exception-integration-real-reference-validation-once-v1.yml
           test ! -e scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py
 

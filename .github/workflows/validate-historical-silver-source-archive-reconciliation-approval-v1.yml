@@ -1,0 +1,121 @@
+name: Validate Historical Silver source archive reconciliation approval v1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json"
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-approval-v1.json"
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v1.json"
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json"
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json"
+      - "data/source-registry.json"
+      - "docs/historical-silver-2023-24-source-archive-reconciliation-approval-v1.md"
+      - "scripts/validate_historical_silver_source_archive_reconciliation_approval_v1.py"
+      - "scripts/run_historical_silver_source_archive_reconciliation_once_v1.py"
+      - ".github/workflows/validate-historical-silver-source-archive-reconciliation-approval-v1.yml"
+      - ".github/workflows/run-approved-historical-silver-source-archive-reconciliation-once-v1.yml"
+  pull_request:
+    paths:
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json"
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-approval-v1.json"
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v1.json"
+      - "data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json"
+      - "data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json"
+      - "data/source-registry.json"
+      - "docs/historical-silver-2023-24-source-archive-reconciliation-approval-v1.md"
+      - "scripts/validate_historical_silver_source_archive_reconciliation_approval_v1.py"
+      - "scripts/run_historical_silver_source_archive_reconciliation_once_v1.py"
+      - ".github/workflows/validate-historical-silver-source-archive-reconciliation-approval-v1.yml"
+      - ".github/workflows/run-approved-historical-silver-source-archive-reconciliation-once-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-historical-silver-source-archive-reconciliation-approval-v1-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-approval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile source archive reconciliation approval path
+        run: |
+          python -m py_compile \
+            scripts/validate_historical_silver_source_archive_reconciliation_approval_v1.py \
+            scripts/run_historical_silver_source_archive_reconciliation_once_v1.py \
+            scripts/historical_phase2_core.py
+
+      - name: Validate approval and executor self-test
+        run: |
+          rm -rf /tmp/nbavl-source-archive-reconciliation-approval
+          mkdir -p /tmp/nbavl-source-archive-reconciliation-approval
+          PYTHONPATH=scripts python scripts/validate_historical_silver_source_archive_reconciliation_approval_v1.py \
+            --request data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json \
+            --approval data/research/historical-silver-2023-24-source-archive-reconciliation-approval-v1.json \
+            --design data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json \
+            --result data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json \
+            --current-status data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v1.json \
+            --registry data/source-registry.json \
+            --output /tmp/nbavl-source-archive-reconciliation-approval/approval-validation-report.json \
+            --self-test
+          PYTHONPATH=scripts python scripts/run_historical_silver_source_archive_reconciliation_once_v1.py \
+            --request data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json \
+            --approval data/research/historical-silver-2023-24-source-archive-reconciliation-approval-v1.json \
+            --design data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json \
+            --result data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json \
+            --current-status data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v1.json \
+            --registry data/source-registry.json \
+            --confirmation-request-id HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001 \
+            --workflow-event workflow_dispatch \
+            --workflow-ref refs/heads/main \
+            --self-test \
+            --output /tmp/nbavl-source-archive-reconciliation-approval/executor-self-test.json
+
+      - name: Enforce approval-ready boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-source-archive-reconciliation-approval')
+          approval = json.loads((root / 'approval-validation-report.json').read_text(encoding='utf-8'))
+          executor = json.loads((root / 'executor-self-test.json').read_text(encoding='utf-8'))
+          assert approval['formal_state'] == 'HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH', approval
+          assert approval['checks_failed'] == 0, approval
+          assert approval['ready_for_one_time_aggregate_execution'] is True, approval
+          assert approval['ready_for_repeat_execution'] is False, approval
+          assert approval['network_calls_made'] is False, approval
+          assert approval['shufinskiy_source_archives_read'] is False, approval
+          assert approval['candidate_csv_rows_read'] is False, approval
+          assert approval['real_reconciliation_executed'] is False, approval
+          assert approval['raw_rows_emitted'] == 0, approval
+          assert approval['raw_files_emitted'] is False, approval
+          assert approval['formal_stake'] == 0, approval
+          assert executor['formal_state'] == 'HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_EXECUTOR_SELF_TEST_PASS', executor
+          assert executor['request_id'] == 'HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001', executor
+          assert executor['network_calls_made'] is False, executor
+          assert executor['shufinskiy_source_archives_read'] is False, executor
+          assert executor['real_reconciliation_executed'] is False, executor
+          assert executor['boundaries']['formal_stake'] == 0, executor
+          PY
+
+      - name: Upload approval validation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-archive-reconciliation-approval-v1
+          path: |
+            /tmp/nbavl-source-archive-reconciliation-approval/approval-validation-report.json
+            /tmp/nbavl-source-archive-reconciliation-approval/executor-self-test.json
+          retention-days: 14
+          if-no-files-found: error

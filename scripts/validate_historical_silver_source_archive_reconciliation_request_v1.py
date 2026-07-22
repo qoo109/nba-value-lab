@@ -17,6 +17,7 @@ REQUEST_SCHEMA = "historical-silver-2023-24-source-archive-reconciliation-reques
 DESIGN_SCHEMA = "historical-silver-2023-24-source-archive-reconciliation-design-v1"
 RESULT_SCHEMA = "historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1"
 READY = "HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL"
+APPROVAL_READY = "HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH"
 BLOCKED = "HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_REQUEST_STRUCTURAL_BLOCKED"
 EXPECTED_SECTIONS = [
     "archive_manifest_counts",
@@ -228,10 +229,10 @@ def evaluate(
     sources = registry.get("sources", [])
     shufinskiy = next((source for source in sources if source.get("source_id") == "shufinskiy_nba_data"), {})
     policy = shufinskiy.get("source_archive_reconciliation_design", {})
-    check("registry_shufinskiy_policy", policy.get("formal_state") == "HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL")
+    check("registry_shufinskiy_policy", policy.get("formal_state") in {READY, APPROVAL_READY})
     check("registry_request", policy.get("request") == "data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json")
-    check("registry_execution_not_approved", policy.get("execution_approved") is False)
-    check("registry_execution_disabled", policy.get("execution_enabled") is False)
+    check("registry_execution_not_executed", policy.get("execution_count") == 0)
+    check("registry_max_one", policy.get("maximum_execution_count") == 1)
     check("registry_raw_zero", policy.get("raw_rows_emitted") == 0)
     check("registry_stake", policy.get("formal_stake") == 0)
 
@@ -290,7 +291,7 @@ def self_test(
         "builder_change_blocks": ("request", ["one_time_execution_scope", "silver_builder_code_change_during_execution_allowed"], True),
         "scope_drift_blocks": ("request", ["frozen_scope", "expected_games_without_team_features"], 3),
         "result_drift_blocks": ("result", ["scope", "games_without_team_features"], 3),
-        "registry_execution_blocks": ("registry", ["sources", "shufinskiy_nba_data", "source_archive_reconciliation_design", "execution_enabled"], True),
+        "registry_execution_blocks": ("registry", ["sources", "shufinskiy_nba_data", "source_archive_reconciliation_design", "execution_count"], 1),
         "nonzero_stake_blocks": ("request", ["current_execution_boundary", "formal_stake"], 1),
     }
     for name, (target_name, path, value) in cases.items():

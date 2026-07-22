@@ -1,0 +1,165 @@
+name: Run approved Historical Silver source archive reconciliation once v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: "Exact approved source archive reconciliation request ID"
+        required: true
+        default: "HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: historical-silver-source-archive-reconciliation-once-v1
+  cancel-in-progress: false
+
+jobs:
+  execute-once:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.run_attempt == 1 &&
+      inputs.request_id == 'HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile approved source archive reconciliation path
+        run: |
+          python -m py_compile \
+            scripts/validate_historical_silver_source_archive_reconciliation_approval_v1.py \
+            scripts/run_historical_silver_source_archive_reconciliation_once_v1.py \
+            scripts/historical_phase2_core.py
+
+      - name: Revalidate approval before network access
+        run: |
+          rm -rf /tmp/nbavl-source-archive-reconciliation-execution
+          mkdir -p /tmp/nbavl-source-archive-reconciliation-execution
+          PYTHONPATH=scripts python scripts/run_historical_silver_source_archive_reconciliation_once_v1.py \
+            --request data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json \
+            --approval data/research/historical-silver-2023-24-source-archive-reconciliation-approval-v1.json \
+            --design data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json \
+            --result data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json \
+            --current-status data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v1.json \
+            --registry data/source-registry.json \
+            --confirmation-request-id "${{ inputs.request_id }}" \
+            --workflow-event "${{ github.event_name }}" \
+            --workflow-ref "${{ github.ref }}" \
+            --validate-only \
+            --output /tmp/nbavl-source-archive-reconciliation-execution/approval-validation-report.json
+
+      - name: Execute one aggregate-only source archive reconciliation
+        id: execute
+        run: |
+          set +e
+          PYTHONPATH=scripts python scripts/run_historical_silver_source_archive_reconciliation_once_v1.py \
+            --request data/research/historical-silver-2023-24-source-archive-reconciliation-request-v1.json \
+            --approval data/research/historical-silver-2023-24-source-archive-reconciliation-approval-v1.json \
+            --design data/research/historical-silver-2023-24-source-archive-reconciliation-design-v1.json \
+            --result data/research/historical-silver-2023-24-missing-team-features-root-cause-retry-002-result-v1.json \
+            --current-status data/research/historical-silver-2023-24-source-archive-reconciliation-current-status-v1.json \
+            --registry data/source-registry.json \
+            --confirmation-request-id "${{ inputs.request_id }}" \
+            --workflow-event "${{ github.event_name }}" \
+            --workflow-ref "${{ github.ref }}" \
+            --output /tmp/nbavl-source-archive-reconciliation-execution/historical-silver-source-archive-reconciliation-execution-report.json
+          CODE=$?
+          echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Remove admission-only report
+        if: always()
+        run: rm -f /tmp/nbavl-source-archive-reconciliation-execution/approval-validation-report.json
+
+      - name: Enforce aggregate-only source archive reconciliation output
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-source-archive-reconciliation-execution')
+          path = root / 'historical-silver-source-archive-reconciliation-execution-report.json'
+          if not path.exists():
+              raise SystemExit('missing aggregate source archive reconciliation report')
+          report = json.loads(path.read_text(encoding='utf-8'))
+          if report.get('formal_state') == 'HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_BLOCKED_BEFORE_RESULT':
+              print(json.dumps({
+                  'formal_state': report.get('formal_state'),
+                  'error_type': report.get('error_type'),
+                  'error_summary': report.get('error_summary'),
+                  'request_id': report.get('request_id'),
+                  'formal_stake': report.get('boundaries', {}).get('formal_stake'),
+              }, ensure_ascii=False, indent=2))
+              raise SystemExit('source archive reconciliation blocked before result')
+          assert report['formal_state'] == 'HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_AGGREGATE_VALIDATION_PASS', report
+          assert report['request_id'] == 'HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001', report
+          assert report['approval_validation']['formal_state'] == 'HISTORICAL_SILVER_2023_24_SOURCE_ARCHIVE_RECONCILIATION_APPROVAL_VALID_READY_FOR_MANUAL_DISPATCH', report
+          assert report['season_label'] == '2023-24', report
+          counts = report['coverage_overlap_counts']
+          assert counts['nbastats_game_count'] == 1230, report
+          assert counts['pbpstats_game_count'] == 1228, report
+          assert counts['overlap_game_count'] == 1228, report
+          assert counts['union_game_count'] == 1230, report
+          assert counts['nbastats_only_game_count'] == 2, report
+          assert counts['pbpstats_only_game_count'] == 0, report
+          assert report['missing_reason_count_histogram']['nbastats_game_present_pbpstats_game_absent'] == 2, report
+          assert report['decision_summary']['decision'] == 'SOURCE_ARCHIVE_GAP_STABLE', report
+          assert report['execution_receipt']['execution_count_for_request'] == 1, report
+          assert report['execution_receipt']['temporary_material_deleted_with_runner'] is True, report
+          boundaries = report['boundaries']
+          assert boundaries['chris_munch_csv_downloaded_or_read'] is False, report
+          assert boundaries['eoin_bundle_downloaded_or_read'] is False, report
+          assert boundaries['candidate_csv_downloaded_or_read'] is False, report
+          assert boundaries['gold_database_created_or_read'] is False, report
+          assert boundaries['silver_database_created_modified_or_uploaded'] is False, report
+          assert boundaries['gold_builder_executed_or_changed'] is False, report
+          assert boundaries['silver_builder_changed_during_execution'] is False, report
+          assert boundaries['manual_row_insertion_or_override'] is False, report
+          assert boundaries['fuzzy_matching'] is False, report
+          assert boundaries['score_assisted_identity_repair'] is False, report
+          assert boundaries['raw_rows_emitted'] == 0, report
+          assert boundaries['raw_files_emitted'] is False, report
+          assert boundaries['source_archives_uploaded_as_artifact'] is False, report
+          assert boundaries['silver_database_uploaded_as_artifact'] is False, report
+          assert boundaries['game_ids_emitted'] is False, report
+          assert boundaries['dates_emitted'] is False, report
+          assert boundaries['team_codes_emitted'] is False, report
+          assert boundaries['source_file_paths_emitted'] is False, report
+          assert boundaries['source_file_hashes_emitted'] is False, report
+          assert boundaries['row_level_records_emitted'] is False, report
+          assert boundaries['row_key_hashes_emitted'] is False, report
+          assert boundaries['historical_silver_replacement'] is False, report
+          assert boundaries['historical_gold_replacement'] is False, report
+          assert boundaries['cross_source_audit_rerun'] is False, report
+          assert boundaries['point_in_time_market_backtest'] is False, report
+          assert boundaries['model_training_or_retraining'] is False, report
+          assert boundaries['betting_edge_claim'] is False, report
+          assert boundaries['formal_stake'] == 0, report
+          assert path.stat().st_size <= 1048576
+          files = sorted(item.name for item in root.iterdir() if item.is_file())
+          assert files == ['historical-silver-source-archive-reconciliation-execution-report.json'], files
+          print(json.dumps({
+              'decision': report['decision_summary']['decision'],
+              'coverage_overlap_counts': report['coverage_overlap_counts'],
+              'missing_reason_count_histogram': report['missing_reason_count_histogram'],
+              'formal_stake': boundaries['formal_stake'],
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload the single aggregate source archive reconciliation Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-archive-reconciliation-execution-v1
+          path: /tmp/nbavl-source-archive-reconciliation-execution/historical-silver-source-archive-reconciliation-execution-report.json
+          retention-days: 14
+          if-no-files-found: error

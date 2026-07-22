@@ -49,7 +49,7 @@ jobs:
             --implementation-status data/research/historical-silver-2023-24-source-gap-exception-integration-implementation-current-status-v2.json \
             --output validation-output/real-reference-validation-request-validation-v1.json
 
-      - name: Enforce request-only boundary
+      - name: Enforce immutable request boundary
         run: |
           python - <<'PY'
           import json
@@ -79,10 +79,28 @@ jobs:
           assert report["implementation_file_sha256"].startswith("sha256:")
           PY
 
-      - name: Verify execution remains absent
+      - name: Verify governed lifecycle compatibility
         run: |
-          test ! -e .github/workflows/run-approved-historical-silver-source-gap-exception-integration-real-reference-validation-once-v1.yml
-          test ! -e scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          approval = Path('data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-v1.json')
+          runner = Path('scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py')
+          manual = Path('.github/workflows/run-approved-historical-silver-source-gap-exception-integration-real-reference-validation-once-v1.yml')
+          status = Path('data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-execution-implementation-current-status-v1.json')
+          if status.exists():
+              assert approval.exists() and runner.exists() and manual.exists()
+              state = json.loads(status.read_text())
+              assert state['execution_workflow_created'] is True
+              assert state['execution_count'] == 0
+              assert state['real_reference_validation_executed'] is False
+              assert state['formal_stake'] == 0
+          elif approval.exists():
+              assert not runner.exists() and not manual.exists()
+          else:
+              assert not runner.exists() and not manual.exists()
+          PY
 
       - name: Confirm existing analyzer and transformer are unchanged
         if: github.event_name == 'pull_request'

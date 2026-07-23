@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json"
-      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-current-status-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-current-status-v1.json"
       - "scripts/run_historical_gold_5826_freeze_manifest_real_artifact_execution_once_v1.py"
       - ".github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml"
       - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.yml"
@@ -14,7 +14,7 @@ on:
       - main
     paths:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json"
-      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-current-status-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-current-status-v1.json"
       - "scripts/run_historical_gold_5826_freeze_manifest_real_artifact_execution_once_v1.py"
       - ".github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml"
 
@@ -55,13 +55,13 @@ jobs:
             --execution-count-before 0 \
             --validate-only
 
-      - name: Validate approval status contract
+      - name: Validate separate approval status contract
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           approval = json.loads(Path('data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json').read_text())
-          status = json.loads(Path('data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-current-status-v1.json').read_text())
+          status = json.loads(Path('data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-current-status-v1.json').read_text())
           assert approval['approval_state'] == 'EXPLICIT_USER_APPROVAL_GRANTED', approval
           assert approval['approved_by'] == 'qoo109', approval
           assert approval['execution_authorization']['maximum_execution_count'] == 1, approval
@@ -69,13 +69,14 @@ jobs:
           assert approval['execution_authorization']['workflow_rerun_allowed'] is False, approval
           assert approval['formal_stake'] == 0, approval
           assert status['formal_state'] == 'HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_APPROVED_READY_FOR_ONE_TIME_MANUAL_DISPATCH', status
+          assert status['approval_granted'] is True, status
           control = status['execution_control']
           assert control['execution_count'] == 0, status
           assert control['maximum_execution_count'] == 1, status
           assert control['request_consumed'] is False, status
           assert control['execution_enabled'] is True, status
           assert control['execution_workflow_created'] is True, status
-          assert status['ready_for_real_artifact_execution'] is True, status
+          assert status['ready_for_one_time_manual_dispatch'] is True, status
           assert status['formal_stake'] == 0, status
           PY
 

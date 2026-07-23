@@ -4,14 +4,20 @@ on:
   pull_request:
     paths:
       - "PROJECT_STATUS.md"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json"
       - "scripts/validate_project_status_after_gold_5826_freeze_manifest_design_v1.py"
+      - "scripts/validate_project_status_after_gold_5826_freeze_manifest_synthetic_result_v1.py"
       - ".github/workflows/validate-project-status-after-gold-5826-freeze-manifest-design-v1.yml"
   push:
     branches:
       - main
     paths:
       - "PROJECT_STATUS.md"
-      - "scripts/validate_project_status_after_gold_5826_freeze_manifest_design_v1.py"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json"
+      - "scripts/validate_project_status_after-gold-5826-freeze-manifest-design-v1.py"
+      - "scripts/validate_project_status_after_gold_5826_freeze_manifest_synthetic_result_v1.py"
       - ".github/workflows/validate-project-status-after-gold-5826-freeze-manifest-design-v1.yml"
 
 permissions:
@@ -32,10 +38,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Compile status validator
+      - name: Determine lifecycle state
+        id: lifecycle
+        run: |
+          if test -f data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json; then
+            echo "state=synthetic_result" >> "$GITHUB_OUTPUT"
+          else
+            echo "state=manifest_design" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compile manifest-design status validator
+        if: steps.lifecycle.outputs.state == 'manifest_design'
         run: python -m py_compile scripts/validate_project_status_after_gold_5826_freeze_manifest_design_v1.py
 
-      - name: Validate status and mutation tests
+      - name: Validate manifest-design status
+        if: steps.lifecycle.outputs.state == 'manifest_design'
         run: |
           mkdir -p validation-output
           python scripts/validate_project_status_after_gold_5826_freeze_manifest_design_v1.py \
@@ -44,22 +61,41 @@ jobs:
             --self-test \
             --output validation-output/project-status-gold-5826-freeze-manifest-design-v1.json
 
-      - name: Enforce freeze-manifest design status boundaries
+      - name: Compile superseding synthetic-result status validator
+        if: steps.lifecycle.outputs.state == 'synthetic_result'
+        run: python -m py_compile scripts/validate_project_status_after_gold_5826_freeze_manifest_synthetic_result_v1.py
+
+      - name: Validate superseding synthetic-result status
+        if: steps.lifecycle.outputs.state == 'synthetic_result'
+        run: |
+          mkdir -p validation-output
+          python scripts/validate_project_status_after_gold_5826_freeze_manifest_synthetic_result_v1.py \
+            --status PROJECT_STATUS.md \
+            --implementation-status data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
+            --synthetic-result data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json \
+            --self-test \
+            --output validation-output/project-status-gold-5826-freeze-manifest-design-v1.json
+
+      - name: Enforce lifecycle boundaries
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           report = json.loads(Path("validation-output/project-status-gold-5826-freeze-manifest-design-v1.json").read_text())
           assert report["checks_failed"] == 0, report
-          assert report["formal_state"] == "PROJECT_STATUS_GOLD_5826_FREEZE_MANIFEST_DESIGN_SYNC_VALID", report
+          if report["formal_state"] == "PROJECT_STATUS_GOLD_5826_FREEZE_MANIFEST_DESIGN_SYNC_VALID":
+              assert report["design_validated"] is True, report
+              assert report["implementation_module_created"] is False, report
+              assert report["ready_for_synthetic_implementation"] is True, report
+          else:
+              assert report["formal_state"] == "PROJECT_STATUS_GOLD_5826_FREEZE_MANIFEST_SYNTHETIC_RESULT_SYNC_VALID", report
+              assert report["synthetic_tests_passed"] == 20, report
+              assert report["request_design_created"] is False, report
+              assert report["ready_for_real_artifact_execution_request_design"] is True, report
           assert report["gold_matchups"] == 5826, report
           assert report["remaining_exceptions"] == 0, report
-          assert report["design_validated"] is True, report
-          assert report["implementation_module_created"] is False, report
-          assert report["synthetic_validation_executed"] is False, report
           assert report["real_artifact_execution_approved"] is False, report
           assert report["corpus_freeze_executed"] is False, report
-          assert report["ready_for_synthetic_implementation"] is True, report
           assert report["ready_for_real_artifact_execution"] is False, report
           assert report["ready_for_market_backtest"] is False, report
           assert report["ready_for_model_retraining"] is False, report
@@ -67,19 +103,20 @@ jobs:
           assert all(report["self_test"].values()), report
           PY
 
-      - name: Confirm design, policy, recovery evidence, and builders unchanged
+      - name: Confirm design, implementation, policy, recovery and builders unchanged
         if: github.event_name == 'pull_request'
         run: |
           git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
             data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-design-v1.json \
-            data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
             data/research/historical-gold-5826-complete-corpus-freeze-policy-v1.json \
             data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json \
             data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json \
+            scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py \
+            scripts/test_build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py \
             scripts/build_historical_gold_multiseason.py \
             scripts/historical_gold_schema.py
 
-      - name: Upload status validation Artifact
+      - name: Upload lifecycle validation Artifact
         uses: actions/upload-artifact@v4
         with:
           name: project-status-after-gold-5826-freeze-manifest-design-v1

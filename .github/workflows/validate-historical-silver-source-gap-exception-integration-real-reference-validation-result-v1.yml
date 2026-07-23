@@ -1,0 +1,95 @@
+name: Validate Historical Silver source gap exception real-reference validation result v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-result-v1.json"
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-current-status-v3.json"
+      - "docs/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-result-v1.md"
+      - "scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_result_v1.py"
+      - ".github/workflows/validate-historical-silver-source-gap-exception-integration-real-reference-validation-result-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-result-v1.json"
+      - "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-current-status-v3.json"
+      - "scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_result_v1.py"
+      - ".github/workflows/validate-historical-silver-source-gap-exception-integration-real-reference-validation-result-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-consumed-result:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile result validator
+        run: python -m py_compile scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_result_v1.py
+
+      - name: Validate consumed result and mutation tests
+        run: |
+          mkdir -p validation-output
+          python scripts/validate_historical_silver_source_gap_exception_integration_real_reference_validation_result_v1.py \
+            --result data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-result-v1.json \
+            --current-status data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-current-status-v3.json \
+            --self-test \
+            --output validation-output/real-reference-validation-result-validation-v1.json
+
+      - name: Enforce consumed aggregate-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("validation-output/real-reference-validation-result-validation-v1.json").read_text()
+          )
+          assert report["checks_failed"] == 0, report
+          assert report["formal_state"] == (
+              "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_"
+              "REAL_REFERENCE_VALIDATION_RESULT_VALID_CONSUMED"
+          ), report
+          assert report["execution_count"] == 1, report
+          assert report["maximum_execution_count"] == 1, report
+          assert report["request_consumed"] is True, report
+          assert report["repeat_execution_allowed"] is False, report
+          assert report["real_reference_validation_executed"] is True, report
+          assert report["ready_for_eligible_corpus_freeze_policy_design"] is True, report
+          assert report["ready_for_market_backtest"] is False, report
+          assert report["formal_stake"] == 0, report
+          assert all(report["self_test"].values()), report
+          PY
+
+      - name: Confirm governed inputs and scientific implementation are unchanged
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
+            data/research/historical-gold-silver-coverage-real-reference-result-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-integration-policy-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-v1.json \
+            scripts/analyze_historical_gold_silver_coverage_v1.py \
+            scripts/integrate_historical_silver_source_gap_exception_v1.py \
+            scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py \
+            scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v2.py
+
+      - name: Upload aggregate result validation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-source-gap-exception-integration-real-reference-validation-result-v1
+          path: validation-output/real-reference-validation-result-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

@@ -80,7 +80,7 @@ jobs:
             | tee /tmp/g120-live/frontend-tests.txt
       - name: Confirm repository hygiene and boundaries
         run: |
-          test ! -d scripts/__pycache__
+          test -z "$(git ls-files 'scripts/__pycache__/*')"
           test ! -e .github/workflows/apply-g1-2-0-live-output-v1.yml
           test ! -e .github/workflows/kick-g1-2-0-live-output-v1.yml
           python - <<'PY' | tee /tmp/g120-live/boundaries.json

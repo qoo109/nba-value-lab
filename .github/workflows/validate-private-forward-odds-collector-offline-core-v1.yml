@@ -1,0 +1,39 @@
+name: Validate private forward odds collector offline core v1
+
+on:
+  pull_request:
+    paths:
+      - PROJECT_STATUS.md
+      - scripts/private_forward_odds_collector_v1.py
+      - scripts/validate_private_forward_odds_collector_offline_core_v1.py
+      - data/fixtures/private-forward-odds-synthetic-v1.json
+      - data/research/source-agnostic-private-forward-odds-collector-offline-core-v1.json
+      - data/research/no-cost-timestamped-odds-source-qualification-current-status-v6.json
+      - docs/source-agnostic-private-forward-odds-collector-offline-core-v1.md
+      - docs/handoffs/nba_value_lab_handoff_2026-07-24_private_forward_collector_offline_core.md
+      - .github/workflows/validate-private-forward-odds-collector-offline-core-v1.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile offline collector core and validator
+        run: |
+          python -m py_compile scripts/private_forward_odds_collector_v1.py
+          python -m py_compile scripts/validate_private_forward_odds_collector_offline_core_v1.py
+
+      - name: Validate offline collector core
+        run: python scripts/validate_private_forward_odds_collector_offline_core_v1.py
+
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-forward-odds-collector-offline-core-validation-v1
+          path: build/private-forward-odds-collector-offline-core-validation-v1.json
+          retention-days: 14

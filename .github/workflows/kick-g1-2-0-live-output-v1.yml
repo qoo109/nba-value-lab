@@ -23,8 +23,9 @@ jobs:
           python-version: "3.12"
       - name: Extract implementation step
         run: |
-          python -m pip install --quiet pyyaml
-          python - <<'PY'
+          set +e
+          python -m pip install --quiet pyyaml > /tmp/extract.log 2>&1
+          python - <<'PY' >> /tmp/extract.log 2>&1
           from pathlib import Path
           import yaml
           payload = yaml.safe_load(Path('.github/workflows/apply-g1-2-0-live-output-v1.yml').read_text(encoding='utf-8'))
@@ -33,7 +34,11 @@ jobs:
           Path('/tmp/g120-step-1.sh').write_text('set -euo pipefail\n' + step['run'] + '\n', encoding='utf-8')
           print(f"extracted {len(step['run'].splitlines())} implementation lines")
           PY
+          echo $? > /tmp/extract.exit
+          tail -120 /tmp/extract.log
+          exit 0
       - name: Run implementation with diagnostic capture
+        if: hashFiles('/tmp/g120-step-1.sh') != ''
         run: |
           set +e
           bash /tmp/g120-step-1.sh > /tmp/g120-step-1.log 2>&1
@@ -46,7 +51,9 @@ jobs:
         with:
           name: g1-2-0-bootstrap-diagnostic
           path: |
+            /tmp/extract.log
+            /tmp/extract.exit
             /tmp/g120-step-1.log
             /tmp/g120-step-1.exit
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 1

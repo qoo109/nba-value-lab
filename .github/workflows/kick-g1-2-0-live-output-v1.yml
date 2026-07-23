@@ -47,20 +47,24 @@ jobs:
           PY
       - name: Implement
         run: bash /tmp/g120-step-1.sh
-      - name: Validate with diagnostic capture
+      - name: Align frontend download expectations
         run: |
-          set +e
-          bash /tmp/g120-step-2.sh > /tmp/g120-validation.log 2>&1
-          code=$?
-          echo "$code" > /tmp/g120-validation.exit
-          tail -240 /tmp/g120-validation.log
-          exit 0
-      - name: Upload validation diagnostic
-        uses: actions/upload-artifact@v4
-        with:
-          name: g1-2-0-validation-diagnostic
-          path: |
-            /tmp/g120-validation.log
-            /tmp/g120-validation.exit
-          if-no-files-found: error
-          retention-days: 1
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/test_frontend_model_decisions.js')
+          text = path.read_text(encoding='utf-8')
+          old = '["complete-rules", "v-spec", "g-spec", "source-registry", "source-json", "coordination-spec"],'
+          new = '["complete-rules", "v-spec", "g-spec", "source-registry", "source-json", "coordination-spec", "g120-spec"],'
+          if old not in text:
+              raise SystemExit('frontend download id expectation not found')
+          text = text.replace(old, new, 1)
+          anchor = 'assert.equal(downloadState[5].href, "./models/coordination/v3.1.1-g1.1.1/spec.md");'
+          if anchor not in text:
+              raise SystemExit('frontend coordination href assertion not found')
+          text = text.replace(anchor, anchor + '\nassert.equal(downloadState[6].href, "./models/g1/1.2.0/spec.md");', 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Validate
+        run: bash /tmp/g120-step-2.sh
+      - name: Commit and push implementation
+        run: bash /tmp/g120-step-3.sh

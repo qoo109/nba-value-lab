@@ -1,9 +1,10 @@
 {
   "schema_version": "historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1",
   "updated_at": "2026-07-23",
-  "formal_state": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_DESIGN_VALIDATED_READY_FOR_SYNTHETIC_VALIDATION",
+  "formal_state": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_SYNTHETIC_VALIDATED_READY_FOR_REAL_ARTIFACT_EXECUTION_REQUEST_DESIGN",
   "design_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-MANIFEST-IMPLEMENTATION-DESIGN-2026-07-23-001",
   "design_path": "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-design-v1.json",
+  "result_path": "data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json",
   "policy_binding": {
     "policy_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-POLICY-2026-07-23-001",
     "policy_recording_pr": 135,
@@ -11,6 +12,19 @@
     "policy_validation_run_id": 29978555275,
     "policy_validation_artifact_id": 8552326235,
     "policy_validation_artifact_digest": "sha256:96fdcee4b39f6ca03b9597677aa01db2e47b15d6d8f780f2e4525be978dd3722"
+  },
+  "synthetic_validation_evidence": {
+    "implementation_recording_pr": 139,
+    "implementation_recording_merge_commit": "b561c941b5fc27a0bda3fa790244ff92c35b5c0b",
+    "validated_head_sha": "04fdbe44f642af85bc287a02a2f978f12bf62cb0",
+    "workflow_run_id": 29984329419,
+    "workflow_job_id": 89132779309,
+    "artifact_id": 8554394051,
+    "artifact_digest": "sha256:1ecf4862ff87c3eb23ccb8d6b1c9860a229b54b8c76c469930dd2723da213f6f",
+    "artifact_expires_at": "2026-08-06T06:12:27Z",
+    "tests_total": 20,
+    "tests_passed": 20,
+    "tests_failed": 0
   },
   "governed_corpus": {
     "gold_matchup_features": 5826,
@@ -27,8 +41,14 @@
   },
   "implementation_state": {
     "design_validated": true,
-    "implementation_module_created": false,
-    "synthetic_sqlite_tests_executed": false,
+    "implementation_module_created": true,
+    "synthetic_sqlite_tests_executed": true,
+    "synthetic_sqlite_tests_passed": true,
+    "synthetic_tests_total": 20,
+    "synthetic_tests_passed": 20,
+    "synthetic_tests_failed": 0,
+    "real_artifact_execution_request_design_created": false,
+    "real_artifact_execution_request_created": false,
     "real_artifact_execution_workflow_created": false,
     "real_artifact_execution_approved": false,
     "real_artifact_execution_count": 0,
@@ -36,7 +56,7 @@
     "corpus_frozen": false,
     "repeat_execution_allowed": false
   },
-  "design_controls": {
+  "implementation_controls": {
     "read_only_sqlite_required": true,
     "policy_driven_column_exclusions_required": true,
     "type_tagged_canonical_json_lines_required": true,
@@ -44,12 +64,13 @@
     "row_level_output_forbidden": true,
     "aggregate_manifest_maximum_bytes": 1048576,
     "pre_and_post_database_sha256_equality_required": true,
-    "python_standard_library_only": true
+    "python_standard_library_only": true,
+    "offline_only": true
   },
   "remaining_data_dependencies": {
-    "required_before_synthetic_implementation": [],
+    "required_before_real_artifact_execution_request_design": [],
     "required_before_real_artifact_execution": [
-      "VALIDATED_SYNTHETIC_IMPLEMENTATION",
+      "VALIDATED_REAL_ARTIFACT_EXECUTION_REQUEST",
       "SEPARATE_EXPLICIT_REAL_ARTIFACT_EXECUTION_APPROVAL",
       "UNEXPIRED_EXACT_ARTIFACT_8551587005_OR_NEW_GOVERNED_REBUILD_WITH_COMPLETE_SOURCE_HASH_MANIFEST"
     ],
@@ -62,7 +83,7 @@
     ]
   },
   "boundaries": {
-    "design_only": true,
+    "synthetic_only": true,
     "real_artifact_downloaded": false,
     "real_gold_database_read": false,
     "database_modified": false,
@@ -79,8 +100,8 @@
     "betting_edge_claim": false,
     "formal_stake": 0
   },
-  "next_research_step": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_READY_FOR_SYNTHETIC_VALIDATION",
-  "ready_for_synthetic_implementation": true,
+  "next_research_step": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_READY_FOR_DESIGN",
+  "ready_for_real_artifact_execution_request_design": true,
   "ready_for_real_artifact_execution": false,
   "ready_for_market_backtest": false,
   "ready_for_model_retraining": false,

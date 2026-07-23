@@ -5,6 +5,8 @@ on:
     paths:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-current-status-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-current-status-v2.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.json"
       - "scripts/run_historical_gold_5826_freeze_manifest_real_artifact_execution_once_v1.py"
       - ".github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml"
       - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.yml"
@@ -15,6 +17,8 @@ on:
     paths:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-current-status-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-current-status-v2.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.json"
       - "scripts/run_historical_gold_5826_freeze_manifest_real_artifact_execution_once_v1.py"
       - ".github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml"
 
@@ -22,7 +26,7 @@ permissions:
   contents: read
 
 jobs:
-  validate-approval-and-executor:
+  validate-approval-lifecycle:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -42,7 +46,7 @@ jobs:
             scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py \
             scripts/run_historical_gold_5826_freeze_manifest_real_artifact_execution_once_v1.py
 
-      - name: Validate explicit approval and immutable bindings
+      - name: Validate immutable explicit approval
         run: |
           python scripts/run_historical_gold_5826_freeze_manifest_real_artifact_execution_once_v1.py \
             --approval data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json \
@@ -55,62 +59,58 @@ jobs:
             --execution-count-before 0 \
             --validate-only
 
-      - name: Validate separate approval status contract
+      - name: Detect execution lifecycle
+        id: lifecycle
+        run: |
+          if test -e data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-current-status-v2.json; then
+            echo "state=consumed" >> "$GITHUB_OUTPUT"
+          else
+            echo "state=approved" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate approved pre-execution status
+        if: steps.lifecycle.outputs.state == 'approved'
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          approval = json.loads(Path('data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json').read_text())
           status = json.loads(Path('data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-current-status-v1.json').read_text())
-          assert approval['approval_state'] == 'EXPLICIT_USER_APPROVAL_GRANTED', approval
-          assert approval['approved_by'] == 'qoo109', approval
-          assert approval['execution_authorization']['maximum_execution_count'] == 1, approval
-          assert approval['execution_authorization']['approved_to_dispatch_exactly_once'] is True, approval
-          assert approval['execution_authorization']['workflow_rerun_allowed'] is False, approval
-          assert approval['formal_stake'] == 0, approval
-          assert status['formal_state'] == 'HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_APPROVED_READY_FOR_ONE_TIME_MANUAL_DISPATCH', status
-          assert status['approval_granted'] is True, status
+          assert status['formal_state'] == 'HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_APPROVED_READY_FOR_ONE_TIME_MANUAL_DISPATCH'
           control = status['execution_control']
-          assert control['execution_count'] == 0, status
-          assert control['maximum_execution_count'] == 1, status
-          assert control['request_consumed'] is False, status
-          assert control['execution_enabled'] is True, status
-          assert control['execution_workflow_created'] is True, status
-          assert status['ready_for_one_time_manual_dispatch'] is True, status
-          assert status['formal_stake'] == 0, status
+          assert control['execution_count'] == 0
+          assert control['maximum_execution_count'] == 1
+          assert control['request_consumed'] is False
+          assert control['execution_enabled'] is True
+          assert control['execution_workflow_created'] is True
+          assert status['ready_for_one_time_manual_dispatch'] is True
+          assert status['formal_stake'] == 0
+          assert Path('.github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml').exists()
           PY
 
-      - name: Enforce manual-only GitHub Artifact transport
+      - name: Validate consumed post-execution status
+        if: steps.lifecycle.outputs.state == 'consumed'
         run: |
           python - <<'PY'
+          import json
           from pathlib import Path
-          workflow = Path('.github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml').read_text(encoding='utf-8')
-          assert 'workflow_dispatch:' in workflow
-          assert 'pull_request:' not in workflow
-          assert 'push:' not in workflow
-          assert "github.ref == 'refs/heads/main'" in workflow
-          assert 'github.run_attempt == 1' in workflow
-          assert 'actions/download-artifact@v4' in workflow
-          assert 'run-id: 29976204693' in workflow
-          assert 'historical-silver-gold-two-game-official-cdn-recovery-v2' in workflow
-          assert 'curl ' not in workflow
-          assert 'wget ' not in workflow
-          assert 'pip install' not in workflow
-          allowed = {
-              'actions/checkout@v4',
-              'actions/setup-python@v5',
-              'actions/download-artifact@v4',
-              'actions/upload-artifact@v4',
-          }
-          used = {
-              line.split('uses:', 1)[1].strip()
-              for line in workflow.splitlines()
-              if 'uses:' in line
-          }
-          assert used <= allowed, used
+          status = json.loads(Path('data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-current-status-v2.json').read_text())
+          result = json.loads(Path('data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.json').read_text())
+          expected = 'HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_PASS_CONSUMED'
+          assert status['formal_state'] == expected
+          assert result['formal_state'] == expected
+          control = status['execution_control']
+          assert control['execution_count'] == 1
+          assert control['maximum_execution_count'] == 1
+          assert control['request_consumed'] is True
+          assert control['repeat_execution_allowed'] is False
+          assert control['workflow_rerun_allowed'] is False
+          assert control['execution_enabled'] is False
+          assert control['executor_workflow_retired'] is True
+          assert not Path('.github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml').exists()
+          assert status['formal_stake'] == 0
           PY
 
-      - name: Confirm real Artifact was not accessed during validation
+      - name: Confirm no validation-time real Artifact access
         run: |
           test ! -e /tmp/nbavl-gold-5826-input
           test ! -e /tmp/nbavl-gold-5826-output

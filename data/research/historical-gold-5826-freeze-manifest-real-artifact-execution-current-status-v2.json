@@ -1,0 +1,40 @@
+{
+  "schema_version": "historical-gold-5826-freeze-manifest-real-artifact-execution-current-status-v2",
+  "updated_at": "2026-07-23",
+  "formal_state": "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_PASS_CONSUMED",
+  "request_id": "HISTORICAL-GOLD-5826-FREEZE-MANIFEST-REAL-ARTIFACT-EXECUTION-2026-07-23-001",
+  "approval_granted": true,
+  "execution_control": {
+    "maximum_execution_count": 1,
+    "execution_count": 1,
+    "request_consumed": true,
+    "repeat_execution_allowed": false,
+    "workflow_rerun_allowed": false,
+    "execution_enabled": false,
+    "executor_workflow_retired": true,
+    "real_artifact_downloaded": true,
+    "real_artifact_read": true,
+    "semantic_manifest_created": true,
+    "corpus_frozen_by_semantic_manifest": true
+  },
+  "execution_evidence": {
+    "workflow_run_id": 30000293169,
+    "job_id": 89183633328,
+    "head_sha": "5eb4bd9c11740ed0f68b5b3806ede24335796c6f",
+    "output_artifact_id": 8560678596,
+    "output_artifact_digest": "sha256:a6bfa2afbd2aef32f7e3f87078caaf620d94c744cf1eec74760d20ae4d0d5531",
+    "manifest_sha256": "sha256:dcd9522e7ee55669d5b4fd413e424aa01ac9182a1330d51c6f9bf6b13ad8059d",
+    "execution_receipt_sha256": "sha256:a0b6ceba02d5cd7d4987dc293f1c41e3dd78d53f583ea5ab1474c469e17bd134",
+    "corpus_semantic_sha256": "sha256:c0c48fe17d843714209c822422b9675eadbff8b6be048782a599b2085bc20cbd"
+  },
+  "formal_records": {
+    "manifest_path": "data/research/historical-gold-5826-complete-corpus-freeze-manifest-v1.json",
+    "receipt_path": "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-receipt-v1.json",
+    "result_path": "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.json",
+    "documentation_path": "docs/historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.md"
+  },
+  "next_unique_mainline": "TIMESTAMPED_BOOKMAKER_ODDS_REAL_OBSERVED_AT_DATA_ACQUISITION_REQUIRED",
+  "ready_for_market_backtest": false,
+  "ready_for_model_retraining": false,
+  "formal_stake": 0
+}

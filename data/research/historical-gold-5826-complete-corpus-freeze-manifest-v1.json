@@ -1,0 +1,96 @@
+{
+  "aggregate_validation": {
+    "blob_values_detected": 0,
+    "database_integrity_check_passed": true,
+    "database_query_only": true,
+    "database_sha256_unchanged": true,
+    "nonfinite_values_detected": 0,
+    "required_table_set_exact": true,
+    "row_counts_exact": true,
+    "schema_exact": true,
+    "season_set_exact": true
+  },
+  "corpus_semantic_sha256": "sha256:c0c48fe17d843714209c822422b9675eadbff8b6be048782a599b2085bc20cbd",
+  "duplicate_validation": {
+    "duplicate_matchup_game_keys": 0,
+    "duplicate_team_game_keys": 0,
+    "team_matchup_alignment": true,
+    "two_team_rows_per_matchup": true
+  },
+  "formal_stake": 0,
+  "formal_state": "HISTORICAL_GOLD_SEMANTIC_CORPUS_MANIFEST_VALID",
+  "gold_metadata_identity": {
+    "gold_feature_version": "gold-team-game-v1",
+    "gold_schema_version": "1.0.0",
+    "source_version": "97c32cca9fb8ea802219068bd7d0e895b1f8590621f3ad6dded9801d234b96ee"
+  },
+  "implementation_design_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-MANIFEST-IMPLEMENTATION-DESIGN-2026-07-23-001",
+  "metadata_semantic_identity": {
+    "entry_count": 8,
+    "excluded_keys": [
+      "feature_generated_at"
+    ],
+    "required_keys_present": true,
+    "semantic_sha256": "sha256:8bf9029a7aacaacf29b1b0e36ce184436b09b422e2ca227f27cd1376204f891e"
+  },
+  "point_in_time_validation": {
+    "passed": true,
+    "rule": "POLICY_BOUND_GOVERNED_CORPUS_VALIDATION",
+    "violations": 0
+  },
+  "policy_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-POLICY-2026-07-23-001",
+  "privacy_boundaries": {
+    "aggregate_only": true,
+    "game_dates_emitted": false,
+    "game_ids_emitted": false,
+    "maximum_output_bytes": 1048576,
+    "row_level_hashes_emitted": false,
+    "row_level_values_emitted": false,
+    "team_codes_emitted": false
+  },
+  "schema_version": "historical-gold-5826-complete-corpus-freeze-manifest-v1",
+  "scientific_boundaries": {
+    "betting_edge_claim": false,
+    "corpus_database_modified": false,
+    "injury_candidate_activated": false,
+    "market_backtest_executed": false,
+    "model_training_or_retraining_executed": false,
+    "semantic_manifest_only": true
+  },
+  "season_labels": [
+    "2019-20",
+    "2020-21",
+    "2021-22",
+    "2022-23",
+    "2023-24"
+  ],
+  "source_binding": {
+    "compressed_artifact_validation": "SEPARATE_GOVERNED_WORKFLOW_REQUIRED",
+    "database_sqlite_sha256": "sha256:c5e25f12ace407a2a0314d2968dd9af77bcb78a2ab3e75fadb30cd8af232a558",
+    "source_artifact_digest": "sha256:3ed2d28da3af58b8b72d805860a144541ac5f38106653cfbda593e16bbaa8e8d",
+    "source_artifact_id": 8551587005,
+    "source_gold_binary_sha256": "sha256:a4e94fab1681b53817f305d08c196995d406fa0566ab70d6083aa5cebfc52085"
+  },
+  "tables": {
+    "gold_matchup_features": {
+      "excluded_columns": [
+        "feature_generated_at"
+      ],
+      "included_column_count": 21,
+      "row_count": 5826,
+      "schema_column_count": 22,
+      "schema_sha256": "sha256:fb1568d69e5cf49b5a22ba3701d2c574d7f49f84b354fffc9b99ceb2f06835d9",
+      "semantic_sha256": "sha256:d57a470ccc7d62fd8d05bc2f8ad1975950a2dc93ae415efd203c1e8e007ba006"
+    },
+    "gold_team_game_features": {
+      "excluded_columns": [
+        "feature_generated_at"
+      ],
+      "included_column_count": 71,
+      "row_count": 11652,
+      "schema_column_count": 72,
+      "schema_sha256": "sha256:a316e1bc6f46dd2b6c98bd2d547189719f09c21a09d2c6736fe590934a8b9212",
+      "semantic_sha256": "sha256:198570cf1a49922c42f1f0b2289ecac68fd7b4f3fbbccdd3386823465e0f0275"
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "schema_version": "historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v2",
+  "updated_at": "2026-07-23",
+  "formal_state": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_SYNTHETIC_VALIDATED_READY_FOR_REAL_ARTIFACT_EXECUTION_REQUEST_DESIGN",
+  "implementation_design_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-MANIFEST-IMPLEMENTATION-DESIGN-2026-07-23-001",
+  "policy_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-POLICY-2026-07-23-001",
+  "result_path": "data/research/historical-gold-5826-freeze-manifest-synthetic-implementation-result-v1.json",
+  "implementation_evidence": {
+    "implementation_pr": 139,
+    "implementation_merge_commit": "b561c941b5fc27a0bda3fa790244ff92c35b5c0b",
+    "validated_head_sha": "04fdbe44f642af85bc287a02a2f978f12bf62cb0",
+    "workflow_run_id": 29984329419,
+    "workflow_job_id": 89132779309,
+    "workflow_conclusion": "success",
+    "artifact_id": 8554394051,
+    "artifact_digest": "sha256:1ecf4862ff87c3eb23ccb8d6b1c9860a229b54b8c76c469930dd2723da213f6f",
+    "artifact_expires_at": "2026-08-06T06:12:27Z",
+    "tests_total": 20,
+    "tests_passed": 20,
+    "tests_failed": 0
+  },
+  "governed_corpus": {
+    "gold_matchup_features": 5826,
+    "gold_team_game_features": 11652,
+    "remaining_source_exceptions": 0,
+    "point_in_time_violations": 0,
+    "seasons": [
+      "2019-20",
+      "2020-21",
+      "2021-22",
+      "2022-23",
+      "2023-24"
+    ]
+  },
+  "implementation_state": {
+    "design_validated": true,
+    "implementation_module_created": true,
+    "synthetic_sqlite_tests_executed": true,
+    "synthetic_sqlite_tests_passed": true,
+    "real_artifact_execution_request_designed": false,
+    "real_artifact_execution_workflow_created": false,
+    "real_artifact_execution_approved": false,
+    "real_artifact_execution_count": 0,
+    "semantic_manifest_created": false,
+    "corpus_frozen": false,
+    "repeat_execution_allowed": false
+  },
+  "implementation_controls": {
+    "read_only_sqlite_enforced": true,
+    "exact_schema_and_unique_keys_enforced": true,
+    "policy_driven_volatile_exclusions_enforced": true,
+    "canonical_type_tagged_streaming_sha256_enforced": true,
+    "database_pre_post_sha256_equality_enforced": true,
+    "aggregate_only_privacy_enforced": true,
+    "maximum_output_bytes": 1048576,
+    "python_standard_library_only": true
+  },
+  "remaining_data_dependencies": {
+    "required_before_real_artifact_execution_request_design": [],
+    "required_before_real_artifact_execution": [
+      "VALIDATED_ONE_TIME_EXECUTION_REQUEST_DESIGN",
+      "EXPLICIT_USER_APPROVAL_BOUND_TO_EXACT_REQUEST_AND_IMPLEMENTATION_HASHES",
+      "UNEXPIRED_EXACT_ARTIFACT_8551587005_OR_NEW_GOVERNED_REBUILD_WITH_COMPLETE_SOURCE_HASH_MANIFEST"
+    ],
+    "required_before_market_backtest": [
+      "LEGAL_AUDITABLE_TIMESTAMPED_BOOKMAKER_ODDS_WITH_RELIABLE_OBSERVED_AT"
+    ],
+    "required_before_injury_aware_holdout": [
+      "AT_LEAST_100_INDEPENDENT_FEATURE_READY_GAMES",
+      "POINT_IN_TIME_TEAM_SUBMISSION_COMPLETENESS_LEDGER"
+    ]
+  },
+  "boundaries": {
+    "synthetic_sqlite_only": true,
+    "real_artifact_downloaded": false,
+    "real_artifact_read": false,
+    "real_gold_database_read": false,
+    "real_execution_workflow_created": false,
+    "real_artifact_execution_approved": false,
+    "canonical_semantic_manifest_created": false,
+    "corpus_freeze_executed": false,
+    "market_backtest_executed": false,
+    "model_training_or_retraining_executed": false,
+    "injury_candidate_activated": false,
+    "betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_research_step": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_READY_FOR_DESIGN",
+  "ready_for_real_artifact_execution_request_design": true,
+  "ready_for_real_artifact_execution": false,
+  "ready_for_market_backtest": false,
+  "ready_for_model_retraining": false,
+  "formal_stake": 0
+}

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Apply one guarded policy-Stake path correction to the request validator."""
 from pathlib import Path
 
 path = Path("scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_v1.py")

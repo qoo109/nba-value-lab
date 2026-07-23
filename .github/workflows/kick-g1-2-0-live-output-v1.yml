@@ -23,21 +23,15 @@ jobs:
           python-version: "3.12"
       - name: Extract implementation step
         run: |
+          python -m pip install --quiet pyyaml
           python - <<'PY'
           from pathlib import Path
-          text = Path('.github/workflows/apply-g1-2-0-live-output-v1.yml').read_text(encoding='utf-8')
-          start_marker = '      - name: Implement G1.2.0 live output\n        run: |\n'
-          end_marker = '\n      - name: Run local validation before commit\n'
-          if start_marker not in text or end_marker not in text:
-              raise SystemExit('implementation step markers not found')
-          block = text.split(start_marker, 1)[1].split(end_marker, 1)[0]
-          lines = []
-          for line in block.splitlines():
-              if line and not line.startswith('          '):
-                  raise SystemExit(f'unexpected indentation: {line!r}')
-              lines.append(line[10:] if line.startswith('          ') else '')
-          Path('/tmp/g120-step-1.sh').write_text('set -euo pipefail\n' + '\n'.join(lines) + '\n', encoding='utf-8')
-          print(f'extracted {len(lines)} implementation lines')
+          import yaml
+          payload = yaml.safe_load(Path('.github/workflows/apply-g1-2-0-live-output-v1.yml').read_text(encoding='utf-8'))
+          steps = payload['jobs']['apply']['steps']
+          step = next(item for item in steps if item.get('name') == 'Implement G1.2.0 live output')
+          Path('/tmp/g120-step-1.sh').write_text('set -euo pipefail\n' + step['run'] + '\n', encoding='utf-8')
+          print(f"extracted {len(step['run'].splitlines())} implementation lines")
           PY
       - name: Run implementation with diagnostic capture
         run: |

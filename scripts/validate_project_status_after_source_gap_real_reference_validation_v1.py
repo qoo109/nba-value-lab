@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import copy
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -149,7 +148,7 @@ def self_test(text: str) -> dict[str, bool]:
         "approval_false_blocks": text.replace("real-reference validation approval granted: true", "real-reference validation approval granted: false", 1),
         "nonzero_stake_blocks": text.replace("正式 Stake：**0**", "正式 Stake：**1**", 1),
         "wrong_next_step_blocks": text.replace(NEXT_STEP, "WRONG_NEXT_STEP", 1),
-        "missing_consumed_evidence_blocks": text.replace("request consumed: true", "request consumed: unavailable", 1),
+        "missing_consumed_evidence_blocks": text.replace("request consumed: true", "request consumed: unavailable"),
         "market_block_removed_blocks": text.replace("point-in-time market evaluation", "point-in-time evaluation removed", 1),
         "wrong_eligible_count_blocks": text.replace("eligible Historical Gold corpus for future policy design: 5,824", "eligible Historical Gold corpus for future policy design: 5,826", 1),
     }

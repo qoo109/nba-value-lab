@@ -56,3 +56,5 @@ jobs:
           git add PROJECT_STATUS.md
           git commit -m "Sync PROJECT_STATUS after consumed source gap validation [skip ci]"
           git push origin HEAD:sync-project-status-after-source-gap-validation
+
+# This branch-only workflow performs a guarded status synchronization and does not execute research data paths.

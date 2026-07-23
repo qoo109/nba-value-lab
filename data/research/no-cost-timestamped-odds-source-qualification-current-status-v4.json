@@ -1,0 +1,50 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v4",
+  "updated_at": "2026-07-24",
+  "formal_state": "NO_COST_TIMESTAMPED_ODDS_QUALIFICATION_FORWARD_COLLECTOR_DESIGN_READY",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v3.json",
+  "recording_pr": 156,
+  "user_decisions": {
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED"
+  },
+  "completed_source_reviews": [
+    {
+      "source_id": "kaggle_zachht_basketball_odds_history",
+      "result_path": "data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json",
+      "formal_result": "KAGGLE_ZACHHT_PINNACLE_BASKETBALL_ODDS_ARCHIVE_RESEARCH_BLOCKED",
+      "qualified": false
+    },
+    {
+      "source_id": "bloombet_free_api",
+      "result_path": "data/research/bloombet-free-api-public-review-v1.json",
+      "formal_result": "BLOOMBET_FREE_API_PUBLIC_REVIEW_BLOCKED",
+      "qualified": false,
+      "schema_probe_deferred": true
+    },
+    {
+      "source_id": "hoopsapi_free_forward_collection",
+      "result_path": "data/research/hoopsapi-free-forward-collection-public-review-v1.json",
+      "formal_result": "HOOPSAPI_FREE_PUBLIC_REVIEW_FORWARD_ONLY_CANDIDATE",
+      "qualified_for_historical_backfill": false,
+      "structurally_promising_for_private_forward_collection": true,
+      "forward_collection_authorized": false
+    }
+  ],
+  "qualified_for_historical_backfill": [],
+  "qualified_for_existing_frozen_gold_point_in_time_join": [],
+  "forward_only_candidates_not_authorized": [
+    "hoopsapi_free_forward_collection"
+  ],
+  "next_unique_mainline": "DESIGN_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_V1",
+  "next_task_requires_account_or_api_key": false,
+  "next_task_executes_provider_requests": false,
+  "account_creation_authorized": false,
+  "api_key_connection_authorized": false,
+  "provider_request_execution_authorized": false,
+  "raw_quote_publication_authorized": false,
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

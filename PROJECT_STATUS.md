@@ -167,6 +167,13 @@ bloombet zero-cost schema probe request design: VALIDATED / AWAITING EXPLICIT US
 bloombet account creation authorized: false
 bloombet private API key connection authorized: false
 bloombet probe execution count: 0 / 1
+bloombet schema probe: DEFERRED BY USER / NO EXECUTION
+hoopsapi public review: COMPLETED / FORWARD-ONLY CANDIDATE
+hoopsapi free tier public claim: 10 requests per day / no card / current multi-provider markets
+hoopsapi historical snapshots on free tier: false
+hoopsapi provider observed_at in public example: false
+hoopsapi raw odds redistribution: PROHIBITED BY PUBLIC TERMS
+hoopsapi provider requests executed: 0
 injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate
 team submission completeness ledger: REQUIRED BEFORE FORMAL INJURY HOLDOUT
 silver builder repair required: false
@@ -197,18 +204,43 @@ TIMESTAMPED_BOOKMAKER_ODDS_REAL_OBSERVED_AT_DATA_ACQUISITION_REQUIRED
 Active prerequisite sub-mainline:
 
 ```text
-BLOOMBET_FREE_API_ZERO_COST_SCHEMA_PROBE_AWAITING_EXPLICIT_USER_APPROVAL
+DESIGN_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_V1
 ```
 
 Current prerequisite status:
 
 ```text
-BLOCKED — ACCOUNT CREATION AND PRIVATE API KEY CONNECTION NOT AUTHORIZED
+READY — DESIGN ONLY / NO ACCOUNT OR API KEY REQUIRED
 ```
 
 The complete governed five-season Historical Gold corpus is now bound by a validated semantic freeze manifest. The one-time request was consumed successfully and its executor was retired. Market backtesting remains blocked because real timestamped bookmaker odds with `observed_at`, bookmaker provenance and opening/closing identity have not been acquired or separately authorized. Injury-model activation, model retraining, betting-edge claims and Stake above `0` remain unauthorized.
 
 ## Completed Evidence
+
+### HoopsAPI Free public forward-collection review
+
+```text
+formal state: HOOPSAPI_FREE_PUBLIC_REVIEW_FORWARD_ONLY_CANDIDATE
+free tier publicly claimed: 10 requests per day / no card
+current markets publicly claimed: moneyline / handicap / over-under
+public sample game_id and start_time: present
+same-provider two-sided moneyline shape: present
+quote-level observed_at in public example: false
+full history and snapshots on free tier: false
+paid Data plan required for history: EUR 249 per month / not authorized
+raw odds resale or redistribution: prohibited by public Terms
+qualified for historical backfill: false
+qualified for frozen-Gold point-in-time join: false
+structurally promising for private forward collection: true
+forward collection authorized: false
+account created: false
+API key connected: false
+provider requests executed: 0
+market metrics executed: false
+formal Stake: 0
+```
+
+HoopsAPI cannot repair the historical timestamped-odds gap because free access exposes current markets rather than full historical snapshots. Its public shape is sufficient to justify a provider-neutral private forward-collector design, but collector-generated `fetched_at` must remain explicitly distinct from a provider-origin timestamp. No account, key or request execution is authorized.
 
 ### BloomBet Free API public schema, terms and timestamp-semantics review
 

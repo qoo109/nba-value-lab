@@ -1,1 +1,49 @@
-placeholder
+name: Fetch 2025-26 fixture results for informal proxy test v1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/fetch-2025-26-fixture-results-proxy-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-results:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download public 2025-26 fixture results
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nbavl-fixture-results
+          curl --fail --location --retry 3 \
+            --output /tmp/nbavl-fixture-results/nba-2025-UTC.csv \
+            https://fixturedownload.com/download/nba-2025-UTC.csv
+
+      - name: Validate result file
+        run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+
+          path = Path('/tmp/nbavl-fixture-results/nba-2025-UTC.csv')
+          assert path.exists() and path.stat().st_size > 50_000, path.stat().st_size
+          with path.open(newline='', encoding='utf-8-sig') as handle:
+              rows = list(csv.DictReader(handle))
+          assert len(rows) >= 1_190, len(rows)
+          completed = [row for row in rows if row.get('Result', '').strip()]
+          assert len(completed) >= 1_190, len(completed)
+          assert {'Date', 'Home Team', 'Away Team', 'Result'} <= set(rows[0]), rows[0].keys()
+          print({'rows': len(rows), 'completed': len(completed), 'bytes': path.stat().st_size})
+          PY
+
+      - name: Upload fixture result Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nba-2025-26-fixture-results-proxy-input-v1
+          path: /tmp/nbavl-fixture-results/nba-2025-UTC.csv
+          if-no-files-found: error
+          retention-days: 1

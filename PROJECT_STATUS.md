@@ -157,6 +157,16 @@ semantic corpus SHA-256: sha256:c0c48fe17d843714209c822422b9675eadbff8b6be048782
 corpus freeze executed: true / SEMANTIC MANIFEST ONLY
 adopted Gold Artifact expiry: 2026-08-06T03:14:00Z
 timestamped bookmaker odds: POLICY ONLY / REAL OBSERVED_AT DATA NOT ACQUIRED
+bloombet public review: COMPLETED / BLOCKED
+bloombet free tier public claim: USD 0 / 500 requests per month / no credit card / NBA + NFL / live + historical / 15+ providers
+bloombet public response schema: NOT VERIFIED
+bloombet provider timestamp semantics: NOT VERIFIED
+bloombet historical coverage: NOT VERIFIED
+bloombet terms, retention and redistribution rights: NOT VERIFIED
+bloombet zero-cost schema probe request design: VALIDATED / AWAITING EXPLICIT USER APPROVAL
+bloombet account creation authorized: false
+bloombet private API key connection authorized: false
+bloombet probe execution count: 0 / 1
 injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate
 team submission completeness ledger: REQUIRED BEFORE FORMAL INJURY HOLDOUT
 silver builder repair required: false
@@ -184,9 +194,46 @@ Required prerequisite:
 TIMESTAMPED_BOOKMAKER_ODDS_REAL_OBSERVED_AT_DATA_ACQUISITION_REQUIRED
 ```
 
+Active prerequisite sub-mainline:
+
+```text
+BLOOMBET_FREE_API_ZERO_COST_SCHEMA_PROBE_AWAITING_EXPLICIT_USER_APPROVAL
+```
+
+Current prerequisite status:
+
+```text
+BLOCKED — ACCOUNT CREATION AND PRIVATE API KEY CONNECTION NOT AUTHORIZED
+```
+
 The complete governed five-season Historical Gold corpus is now bound by a validated semantic freeze manifest. The one-time request was consumed successfully and its executor was retired. Market backtesting remains blocked because real timestamped bookmaker odds with `observed_at`, bookmaker provenance and opening/closing identity have not been acquired or separately authorized. Injury-model activation, model retraining, betting-edge claims and Stake above `0` remain unauthorized.
 
 ## Completed Evidence
+
+### BloomBet Free API public schema, terms and timestamp-semantics review
+
+```text
+formal state: BLOOMBET_FREE_API_PUBLIC_REVIEW_BLOCKED
+public homepage reviewed: true
+public API documentation landing page reviewed: true
+free tier publicly claimed: USD 0 / 500 requests per month / no credit card
+NBA and historical access publicly claimed: true
+bookmaker/provider identity publicly claimed: true / 15+ providers
+response schema verified: false
+provider observed_at semantics verified: false
+historical coverage verified: false
+terms and retention rights verified: false
+qualified for historical backfill: false
+qualified for point-in-time join: false
+qualified for market backtest: false
+account created: false
+API key connected: false
+API requests executed: 0
+market metrics executed: false
+formal Stake: 0
+```
+
+Public marketing pages establish a promising zero-cost tier, but the publicly accessible material does not establish the request/response schema, provider-level timestamp meaning, historical retention window, or quote retention and redistribution rights required by the frozen qualification policy. A separate maximum-three-request schema probe has therefore been designed but remains disabled until explicit user approval and private secret setup.
 
 ### G1.2.0 EV-primary live output implementation and fixture validation
 

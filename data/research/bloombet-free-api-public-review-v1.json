@@ -1,0 +1,76 @@
+{
+  "schema_version": "bloombet-free-api-public-review-v1",
+  "reviewed_at": "2026-07-24",
+  "formal_state": "BLOOMBET_FREE_API_PUBLIC_REVIEW_BLOCKED",
+  "source_id": "bloombet_free_api",
+  "official_pages_reviewed": [
+    "https://getbloombet.com/",
+    "https://getbloombet.com/api/documentation",
+    "https://getbloombet.com/about"
+  ],
+  "public_claims": {
+    "free_price_usd_per_month": 0,
+    "free_requests_per_month": 500,
+    "credit_card_required": false,
+    "sports_claimed": [
+      "NBA",
+      "NFL"
+    ],
+    "live_access_claimed": true,
+    "historical_access_claimed": true,
+    "provider_count_claimed_minimum": 15,
+    "example_providers_claimed": [
+      "Pinnacle",
+      "FanDuel",
+      "DraftKings"
+    ],
+    "moneyline_scope_claimed": true
+  },
+  "public_review_findings": {
+    "api_documentation_landing_page_publicly_reachable": true,
+    "machine_readable_endpoint_schema_publicly_verified": false,
+    "request_parameter_schema_verified": false,
+    "response_field_schema_verified": false,
+    "bookmaker_key_field_verified": false,
+    "same_bookmaker_two_sided_h2h_verified": false,
+    "provider_snapshot_timestamp_field_verified": false,
+    "provider_timestamp_semantics_verified": false,
+    "scheduled_tipoff_field_verified": false,
+    "stable_source_event_id_verified": false,
+    "historical_coverage_start_verified": false,
+    "historical_retention_window_verified": false,
+    "opening_closing_identity_verified": false,
+    "terms_of_service_publicly_located_in_review": false,
+    "automated_research_use_rights_verified": false,
+    "private_quote_retention_rights_verified": false,
+    "public_redistribution_rights_verified": false
+  },
+  "qualification_gate_result": {
+    "zero_cost_gate": "PASS_PUBLIC_CLAIM_ONLY",
+    "no_card_gate": "PASS_PUBLIC_CLAIM_ONLY",
+    "bookmaker_identity_gate": "UNVERIFIED_SCHEMA",
+    "two_sided_h2h_gate": "UNVERIFIED_SCHEMA",
+    "real_observed_at_gate": "UNVERIFIED",
+    "strict_pre_tip_gate": "UNVERIFIED",
+    "scheduled_tipoff_gate": "UNVERIFIED",
+    "historical_coverage_gate": "UNVERIFIED",
+    "terms_and_retention_gate": "UNVERIFIED",
+    "overall": "BLOCKED"
+  },
+  "decision": {
+    "qualified_for_historical_backfill": false,
+    "qualified_for_point_in_time_odds_join": false,
+    "qualified_for_forward_collection": false,
+    "qualified_for_market_backtest": false,
+    "account_creation_authorized": false,
+    "api_key_connection_authorized": false,
+    "api_request_execution_authorized": false,
+    "quote_download_authorized": false,
+    "raw_quote_retention_authorized": false,
+    "market_metrics_allowed": false,
+    "clv_ev_roi_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_exact_task": "Obtain explicit user approval for a separately validated zero-cost schema probe. The user must create the free account and store the key privately; at most three official API requests may be used, with no raw quote rows committed or uploaded."
+}

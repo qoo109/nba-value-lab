@@ -1,0 +1,82 @@
+{
+  "schema_version": "bloombet-free-api-zero-cost-schema-probe-request-v1",
+  "request_id": "BLOOMBET-FREE-API-ZERO-COST-SCHEMA-PROBE-2026-07-24-001",
+  "created_at": "2026-07-24",
+  "formal_state": "BLOOMBET_FREE_API_ZERO_COST_SCHEMA_PROBE_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL",
+  "parent_review": "data/research/bloombet-free-api-public-review-v1.json",
+  "purpose": "Use no more than three official BloomBet free-tier API requests to verify response schema, bookmaker identity, two-sided h2h structure, timestamp semantics, scheduled tipoff, stable event identity, historical coverage and retention boundaries. This is schema qualification only.",
+  "approval": {
+    "explicit_user_approval_required": true,
+    "approval_granted": false,
+    "approval_recorded_at": null,
+    "account_creation_authorized": false,
+    "private_api_key_connection_authorized": false,
+    "execution_enabled": false
+  },
+  "user_only_setup": {
+    "user_creates_free_account": true,
+    "user_accepts_provider_terms": true,
+    "secret_name": "BLOOMBET_API_KEY",
+    "secret_storage_target": "GitHub Actions repository secret or equivalent private runtime secret",
+    "secret_may_be_pasted_into_chat": false,
+    "secret_may_be_committed": false,
+    "secret_may_appear_in_logs_or_artifacts": false
+  },
+  "execution_limits": {
+    "maximum_execution_count": 1,
+    "execution_count": 0,
+    "maximum_api_requests": 3,
+    "bulk_history_download_allowed": false,
+    "pagination_allowed": false,
+    "paid_upgrade_allowed": false,
+    "credit_card_allowed": false,
+    "subscription_allowed": false,
+    "automatic_retry_allowed": false
+  },
+  "allowed_probe_outputs": {
+    "endpoint_names_and_official_documentation_paths": true,
+    "request_parameter_names_and_types": true,
+    "response_field_names_and_types": true,
+    "redacted_single_response_shape": true,
+    "provider_timestamp_semantics_evidence": true,
+    "historical_coverage_metadata": true,
+    "quota_metadata": true,
+    "aggregate_gate_result": true
+  },
+  "forbidden_outputs": [
+    "API key or authentication header",
+    "raw quote-level dataset",
+    "bulk historical rows",
+    "public quote-level Artifact",
+    "model edge",
+    "EV",
+    "CLV",
+    "ROI",
+    "drawdown",
+    "bet count",
+    "profit ranking",
+    "stake recommendation"
+  ],
+  "fail_closed_conditions": [
+    "official endpoint cannot be identified",
+    "free tier requires payment or credit card",
+    "terms cannot be reviewed or accepted by the user",
+    "provider timestamp meaning remains ambiguous",
+    "bookmaker identity is absent or inferred",
+    "same-bookmaker two-sided h2h cannot be proven",
+    "scheduled tipoff or stable event identity is absent",
+    "API key would be exposed in repository, logs, artifact or chat",
+    "request count would exceed three"
+  ],
+  "activation_boundary": {
+    "this_request_creates_account": false,
+    "this_request_connects_api_key": false,
+    "this_request_executes_api_calls": false,
+    "this_request_downloads_quotes": false,
+    "this_request_unlocks_market_backtest": false,
+    "this_request_unlocks_betting_claims": false,
+    "separate_approval_record_required": true,
+    "separate_execution_implementation_required": true,
+    "formal_stake": 0
+  }
+}

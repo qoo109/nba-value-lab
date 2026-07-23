@@ -1,0 +1,65 @@
+name: Validate G1.2.0 EV-primary activation v1
+
+on:
+  pull_request:
+    paths:
+      - "models/g1/1.2.0/**"
+      - "models/manifest.json"
+      - "data/research/g1.2.0-ev-primary-season-activation-decision-v1.json"
+      - "docs/g1.2.0-ev-primary-season-activation-v1.md"
+      - "scripts/validate_g1_2_0_ev_primary_activation_v1.py"
+      - ".github/workflows/validate-g1-2-0-ev-primary-activation-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "models/g1/1.2.0/**"
+      - "models/manifest.json"
+      - "data/research/g1.2.0-ev-primary-season-activation-decision-v1.json"
+      - "scripts/validate_g1_2_0_ev_primary_activation_v1.py"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-activation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_g1_2_0_ev_primary_activation_v1.py
+
+      - name: Validate G1.2.0 activation contract
+        run: |
+          mkdir -p /tmp/g1-2-0-activation
+          python scripts/validate_g1_2_0_ev_primary_activation_v1.py \
+            | tee /tmp/g1-2-0-activation/g1-2-0-activation-validation.json
+
+      - name: Confirm formal boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('data/research/g1.2.0-ev-primary-season-activation-decision-v1.json')
+          d = json.loads(p.read_text(encoding='utf-8'))
+          assert d['boundaries']['formal_stake'] == 0
+          assert d['boundaries']['real_money_execution_authorized'] is False
+          assert d['boundaries']['betting_edge_claim_authorized'] is False
+          assert d['activation']['fallback_to_ungated_selection_allowed'] is False
+          PY
+
+      - name: Upload aggregate validation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1-2-0-ev-primary-activation-validation-v1
+          path: /tmp/g1-2-0-activation/g1-2-0-activation-validation.json
+          if-no-files-found: error
+          retention-days: 14

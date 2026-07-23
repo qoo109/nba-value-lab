@@ -1,0 +1,50 @@
+{
+  "schema_version": "g1.2.0-ev-primary-season-activation-decision-v1",
+  "recorded_at": "2026-07-23",
+  "formal_state": "G1_2_0_EV_PRIMARY_USER_APPROVED_FOR_2026_27_SEASON",
+  "user_decision": {
+    "approved": true,
+    "intent": "Use the EV-primary G version as the primary G system when the next NBA regular season starts",
+    "requested_name": "G1.1",
+    "canonical_version": "G1.2.0",
+    "canonical_revision_id": "G1.2.0-20260723",
+    "renaming_reason": "G1.1.1 already exists and remains immutable"
+  },
+  "activation": {
+    "season": "2026-27",
+    "trigger": "first_2026_27_regular_season_game_with_complete_T60_data_gate",
+    "primary_engine_after_trigger": "G1.2.0-20260723",
+    "control_engine_after_trigger": "G1.1.1-20260719",
+    "control_role": "parallel_control_shadow",
+    "fallback_to_ungated_selection_allowed": false,
+    "data_insufficient_output_allowed": true
+  },
+  "ev_thresholds": {
+    "candidate_min_ev": 0.05,
+    "grade_m_min_ev": 0.05,
+    "grade_p_min_ev": 0.07,
+    "grade_b_min_ev": 0.10,
+    "pp_guard_min_percentage_points": 2.0,
+    "post_result_threshold_tuning_forbidden": true
+  },
+  "unchanged_hard_gates": {
+    "coverage_min_pct": 85,
+    "comparison_sources_min": 3,
+    "injury_and_rotation_confirmation_required": true,
+    "news_risk_max": 1,
+    "same_book_same_market_same_time_two_sided_odds_required": true,
+    "out_of_distribution_allowed": false,
+    "stale_warning_allowed": false,
+    "official_main_target": 2,
+    "official_main_max": 3,
+    "allow_zero_main": true
+  },
+  "boundaries": {
+    "model_retraining_authorized": false,
+    "probability_blending_authorized": false,
+    "real_money_execution_authorized": false,
+    "betting_edge_claim_authorized": false,
+    "formal_stake": 0,
+    "current_active_G_before_season_trigger": "G1.1.1-20260719"
+  }
+}

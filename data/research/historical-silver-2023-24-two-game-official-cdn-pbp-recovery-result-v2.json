@@ -1,0 +1,119 @@
+{
+  "baseline_seasons": {
+    "2019-20": {
+      "games": 1056,
+      "ready": true,
+      "team_game_features": 2112
+    },
+    "2020-21": {
+      "games": 1080,
+      "ready": true,
+      "team_game_features": 2160
+    },
+    "2021-22": {
+      "games": 1230,
+      "ready": true,
+      "team_game_features": 2460
+    },
+    "2022-23": {
+      "games": 1230,
+      "ready": true,
+      "team_game_features": 2460
+    },
+    "2023-24": {
+      "games": 1230,
+      "ready": true,
+      "team_game_features": 2456
+    }
+  },
+  "boundaries": {
+    "formal_stake": 0,
+    "manual_or_synthetic_feature_rows": false,
+    "market_backtest_executed": false,
+    "model_retraining_executed": false,
+    "official_alternate_pbp_source_used": true,
+    "raw_game_identifiers_emitted_in_aggregate_report": false,
+    "repository_database_modified": false,
+    "source_archives_committed": false
+  },
+  "created_at": "2026-07-23T03:14:00+00:00",
+  "decision": {
+    "betting_edge_claim": false,
+    "documented_exception_count_after_recovery": 0,
+    "formal_stake": 0,
+    "historical_gold_complete_for_governed_five_season_scope": true,
+    "historical_silver_complete_for_governed_five_season_scope": true,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "ready_for_separate_artifact_adoption_record": true,
+    "two_source_exceptions_resolved": true
+  },
+  "final_outputs": {
+    "gold_artifact_file": "historical-gold-multiseason-recovered-v1.sqlite.gz",
+    "gold_matchup_features": 5826,
+    "gold_point_in_time_passed": true,
+    "gold_point_in_time_violations": 0,
+    "gold_team_game_features": 11652,
+    "silver_artifact_file": "historical-silver-multiseason-recovered-v1.sqlite.gz",
+    "silver_games": 5826,
+    "silver_seasons": [
+      "2019-20",
+      "2020-21",
+      "2021-22",
+      "2022-23",
+      "2023-24"
+    ],
+    "silver_team_game_features": 11652
+  },
+  "formal_state": "HISTORICAL_SILVER_2023_24_TWO_GAME_OFFICIAL_CDN_PBP_RECOVERY_PASS",
+  "recovery": {
+    "archive_csv_rows_scanned": 674937,
+    "duplicate_team_feature_rows": 0,
+    "game_dates_emitted_in_report": false,
+    "game_identifiers_emitted_in_report": false,
+    "per_game_diagnostics": [
+      {
+        "away_possessions": 103,
+        "event_rows": 563,
+        "home_possessions": 103,
+        "possession_segments": 206,
+        "terminal_score_match": true,
+        "two_team_features_created": true,
+        "valid_possession_rows": 561
+      },
+      {
+        "away_possessions": 102,
+        "event_rows": 545,
+        "home_possessions": 104,
+        "possession_segments": 206,
+        "terminal_score_match": true,
+        "two_team_features_created": true,
+        "valid_possession_rows": 543
+      }
+    ],
+    "possession_rows_added": 412,
+    "possession_rows_after": 242777,
+    "possession_rows_before": 242365,
+    "recovered_game_dates": 2,
+    "recovered_games": 2,
+    "remaining_games_without_team_features": 0,
+    "remaining_recovered_games_without_dates": 0,
+    "target_event_rows_found": 1108,
+    "target_game_count_found": 2,
+    "target_games": 2,
+    "team_feature_rows_added": 4,
+    "team_feature_rows_after": 2460,
+    "team_feature_rows_before": 2456
+  },
+  "recovery_version": "v2",
+  "schema_version": "historical-silver-2023-24-two-game-official-cdn-pbp-recovery-result-v2",
+  "source": {
+    "archive_bytes": 18598380,
+    "archive_member_count": 1,
+    "archive_sha256": "33d49fefc809f73d5d6cbad6d1d6690e0df6c89fe2b5a4d814ecc9ea4df6101b",
+    "provider": "shufinskiy/nba_data archive of official cdn.nba.com play-by-play",
+    "raw_archive_committed": false,
+    "source_key": "cdnnba_2023",
+    "url": "https://github.com/shufinskiy/nba_data/raw/main/datasets/cdnnba_2023.tar.xz"
+  }
+}

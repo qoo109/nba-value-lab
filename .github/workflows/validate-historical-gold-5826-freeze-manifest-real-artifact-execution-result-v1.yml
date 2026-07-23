@@ -1,0 +1,66 @@
+name: Validate Historical Gold 5826 real Artifact execution result v1
+
+on:
+  pull_request:
+    paths:
+      - "PROJECT_STATUS.md"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-receipt-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-current-status-v2.json"
+      - "scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_result_v1.py"
+      - ".github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml"
+      - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.yml"
+      - "docs/historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.md"
+  push:
+    branches:
+      - main
+    paths:
+      - "PROJECT_STATUS.md"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-receipt-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-current-status-v2.json"
+      - ".github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml"
+      - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-recorded-result:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile result validator
+        run: |
+          python -m py_compile scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_result_v1.py
+
+      - name: Validate consumed execution result and semantic freeze
+        run: |
+          rm -rf /tmp/nbavl-gold-5826-result-qa
+          mkdir -p /tmp/nbavl-gold-5826-result-qa
+          python scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_result_v1.py \
+            --output /tmp/nbavl-gold-5826-result-qa/historical-gold-5826-freeze-manifest-real-artifact-execution-result-qa-v1.json
+
+      - name: Confirm consumed executor is absent
+        run: |
+          test ! -e .github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml
+
+      - name: Upload aggregate result QA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-5826-freeze-manifest-real-artifact-execution-result-qa-v1
+          path: /tmp/nbavl-gold-5826-result-qa
+          if-no-files-found: error
+          retention-days: 14

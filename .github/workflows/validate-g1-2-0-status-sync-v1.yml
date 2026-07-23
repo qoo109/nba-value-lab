@@ -1,0 +1,31 @@
+name: Validate G1.2.0 status sync v1
+
+on:
+  pull_request:
+    paths:
+      - PROJECT_STATUS.md
+      - README.md
+      - models/manifest.json
+      - docs/handoffs/nba_value_lab_handoff_2026-07-24_g1_2_0_status_sync.md
+      - scripts/validate_g1_2_0_status_sync_v1.py
+      - .github/workflows/validate-g1-2-0-status-sync-v1.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate status synchronization
+        run: python scripts/validate_g1_2_0_status_sync_v1.py
+
+      - name: Upload aggregate QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1-2-0-status-sync-validation-v1
+          path: build/g1-2-0-status-sync-validation-v1.json
+          retention-days: 14

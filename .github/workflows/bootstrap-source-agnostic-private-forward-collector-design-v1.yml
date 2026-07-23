@@ -19,7 +19,7 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: Patch PROJECT_STATUS for collector design
+      - name: Patch collector design status and documentation
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -84,15 +84,24 @@ jobs:
           if text.count(evidence_anchor) != 1:
               raise SystemExit('unexpected completed evidence anchor count')
           text = text.replace(evidence_anchor, evidence, 1)
-
           path.write_text(text, encoding='utf-8')
+
+          doc_path = Path('docs/source-agnostic-private-forward-odds-collector-v1.md')
+          doc = doc_path.read_text(encoding='utf-8')
+          old_rule = 'collector_fetched_at_utc ≠ provider observed_at'
+          new_rule = """collector_fetched_at_utc ≠ provider observed_at
+          collector_fetched_at_utc NEVER substitutes quote_observed_at_utc"""
+          if doc.count(old_rule) != 1:
+              raise SystemExit('unexpected collector timestamp rule anchor count')
+          doc = doc.replace(old_rule, new_rule, 1)
+          doc_path.write_text(doc, encoding='utf-8')
           PY
 
-      - name: Commit PROJECT_STATUS update
+      - name: Commit status and documentation update
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add PROJECT_STATUS.md
+          git add PROJECT_STATUS.md docs/source-agnostic-private-forward-odds-collector-v1.md
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else

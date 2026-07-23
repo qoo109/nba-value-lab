@@ -1,0 +1,111 @@
+{
+  "schema_version": "historical-gold-5826-freeze-manifest-synthetic-implementation-result-v1",
+  "recorded_at": "2026-07-23",
+  "formal_state": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_SYNTHETIC_VALIDATED",
+  "implementation_binding": {
+    "implementation_design_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-MANIFEST-IMPLEMENTATION-DESIGN-2026-07-23-001",
+    "policy_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-POLICY-2026-07-23-001",
+    "implementation_pr": 139,
+    "implementation_merge_commit": "b561c941b5fc27a0bda3fa790244ff92c35b5c0b",
+    "validated_head_sha": "04fdbe44f642af85bc287a02a2f978f12bf62cb0",
+    "builder_path": "scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py",
+    "builder_sha256": "sha256:ca4c21316711897121f480165227cea6f6059db808706f4084c853e428418a21",
+    "synthetic_suite_path": "scripts/test_build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py",
+    "synthetic_suite_sha256": "sha256:29edb2c7fac27a905edea6728a5cb46a7fddd3767464bacb042c5229dcfc3212"
+  },
+  "validation_evidence": {
+    "workflow_run_id": 29984329419,
+    "workflow_job_id": 89132779309,
+    "workflow_job_name": "validate-synthetic-implementation",
+    "workflow_conclusion": "success",
+    "artifact_id": 8554394051,
+    "artifact_name": "historical-gold-5826-freeze-manifest-synthetic-implementation-validation-v1",
+    "artifact_digest": "sha256:1ecf4862ff87c3eb23ccb8d6b1c9860a229b54b8c76c469930dd2723da213f6f",
+    "artifact_expires_at": "2026-08-06T06:12:27Z",
+    "artifact_files": [
+      "historical-gold-5826-freeze-manifest-synthetic-validation-v1.json"
+    ]
+  },
+  "synthetic_validation": {
+    "tests_total": 20,
+    "tests_passed": 20,
+    "tests_failed": 0,
+    "failed_tests": [],
+    "required_tests": {
+      "stable_digest_repeats_identically": true,
+      "row_insertion_order_does_not_change_digest": true,
+      "volatile_feature_generated_at_change_does_not_change_digest": true,
+      "policy_excluded_metadata_change_does_not_change_digest": true,
+      "stable_feature_change_changes_table_and_corpus_digest": true,
+      "stable_metadata_change_changes_metadata_and_corpus_digest": true,
+      "missing_required_table_blocks": true,
+      "unexpected_schema_column_blocks": true,
+      "missing_stable_schema_column_blocks": true,
+      "wrong_row_count_blocks": true,
+      "duplicate_team_game_key_blocks": true,
+      "orphan_or_incomplete_matchup_blocks": true,
+      "wrong_season_set_blocks": true,
+      "blank_date_blocks": true,
+      "non_finite_real_blocks": true,
+      "blob_value_blocks": true,
+      "database_write_attempt_blocks": true,
+      "database_sha_change_blocks": true,
+      "forbidden_output_key_blocks": true,
+      "output_size_limit_blocks": true
+    }
+  },
+  "implementation_controls": {
+    "python_standard_library_only": true,
+    "sqlite_read_only_uri": true,
+    "sqlite_immutable": true,
+    "sqlite_query_only": true,
+    "sqlite_integrity_check": true,
+    "pre_post_database_sha256_equality_required": true,
+    "exact_table_and_schema_validation": true,
+    "exact_unique_key_validation": true,
+    "exact_row_count_and_season_validation": true,
+    "canonical_type_tagged_json_lines": true,
+    "unicode_nfc": true,
+    "finite_float_hex_encoding": true,
+    "aggregate_output_only": true,
+    "maximum_output_bytes": 1048576
+  },
+  "governed_corpus_reference": {
+    "gold_matchups": 5826,
+    "gold_team_game_features": 11652,
+    "remaining_source_exceptions": 0,
+    "point_in_time_violations": 0,
+    "seasons": [
+      "2019-20",
+      "2020-21",
+      "2021-22",
+      "2022-23",
+      "2023-24"
+    ]
+  },
+  "boundaries": {
+    "synthetic_sqlite_only": true,
+    "real_artifact_downloaded": false,
+    "real_artifact_read": false,
+    "real_gold_database_read": false,
+    "real_execution_workflow_created": false,
+    "real_artifact_execution_approved": false,
+    "real_artifact_execution_count": 0,
+    "canonical_semantic_manifest_created": false,
+    "corpus_frozen": false,
+    "market_backtest_executed": false,
+    "model_training_or_retraining_executed": false,
+    "injury_candidate_activated": false,
+    "betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "decision": {
+    "implementation_synthetic_valid": true,
+    "ready_for_real_artifact_execution_request_design": true,
+    "ready_for_real_artifact_execution": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "next_research_step": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_READY_FOR_DESIGN",
+    "formal_stake": 0
+  }
+}

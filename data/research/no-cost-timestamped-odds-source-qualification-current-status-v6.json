@@ -25,6 +25,14 @@
     "provider_requests_executed": 0,
     "real_quotes_retained": 0
   },
+  "offline_validation_contract": {
+    "synthetic_contract_tests_expected": 12,
+    "temporary_private_sqlite_required": true,
+    "aggregate_only_artifact_required": true,
+    "real_provider_payloads_allowed": false,
+    "network_requests_allowed": false,
+    "market_metrics_allowed": false
+  },
   "qualified_for_historical_backfill": [],
   "qualified_for_existing_frozen_gold_point_in_time_join": [],
   "forward_only_candidates_not_authorized": [

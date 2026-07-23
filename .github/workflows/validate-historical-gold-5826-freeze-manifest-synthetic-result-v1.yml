@@ -1,0 +1,94 @@
+name: Validate Historical Gold 5826 freeze manifest synthetic result v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json"
+      - "docs/historical-gold-5826-freeze-manifest-synthetic-validation-result-v1.md"
+      - "scripts/validate_historical_gold_5826_freeze_manifest_synthetic_result_v1.py"
+      - ".github/workflows/validate-historical-gold-5826-freeze-manifest-synthetic-result-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json"
+      - "scripts/validate_historical_gold_5826_freeze_manifest_synthetic_result_v1.py"
+      - ".github/workflows/validate-historical-gold-5826-freeze-manifest-synthetic-result-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-synthetic-result:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile result validator
+        run: python -m py_compile scripts/validate_historical_gold_5826_freeze_manifest_synthetic_result_v1.py
+
+      - name: Validate result, current status, and mutation tests
+        run: |
+          mkdir -p validation-output
+          python scripts/validate_historical_gold_5826_freeze_manifest_synthetic_result_v1.py \
+            --result data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json \
+            --current-status data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
+            --self-test \
+            --output validation-output/historical-gold-5826-freeze-manifest-synthetic-result-validation-v1.json
+
+      - name: Enforce result boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path(
+              "validation-output/historical-gold-5826-freeze-manifest-synthetic-result-validation-v1.json"
+          ).read_text())
+          assert report["checks_failed"] == 0, report
+          assert report["formal_state"] == "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_SYNTHETIC_RESULT_VALID", report
+          assert report["tests_total"] == 20, report
+          assert report["tests_passed"] == 20, report
+          assert report["tests_failed"] == 0, report
+          assert report["ready_for_real_artifact_execution_request_design"] is True, report
+          assert report["ready_for_real_artifact_execution"] is False, report
+          assert report["ready_for_market_backtest"] is False, report
+          assert report["ready_for_model_retraining"] is False, report
+          assert report["formal_stake"] == 0, report
+          assert all(report["self_test"].values()), report
+          PY
+
+      - name: Confirm implementation, policy, design, and builders unchanged
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
+            scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py \
+            scripts/test_build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py \
+            .github/workflows/validate-historical-gold-5826-freeze-manifest-synthetic-implementation-v1.yml \
+            data/research/historical-gold-5826-complete-corpus-freeze-policy-v1.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-design-v1.json \
+            scripts/historical_gold_schema.py \
+            scripts/build_historical_gold_multiseason.py
+
+      - name: Confirm no real execution workflow or canonical manifest exists
+        run: |
+          test ! -e .github/workflows/build-historical-gold-5826-complete-corpus-freeze-manifest-v1.yml
+          test ! -e data/research/historical-gold-5826-complete-corpus-freeze-manifest-v1.json
+
+      - name: Upload aggregate result validation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-5826-freeze-manifest-synthetic-result-validation-v1
+          path: validation-output/historical-gold-5826-freeze-manifest-synthetic-result-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

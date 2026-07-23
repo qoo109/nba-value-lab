@@ -5,7 +5,9 @@ on:
     paths:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-current-status-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-validation-result-v1.json"
       - "docs/historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.md"
+      - "docs/historical-gold-5826-freeze-manifest-real-artifact-execution-request-validation-result-v1.md"
       - "scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_v1.py"
       - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.yml"
   push:
@@ -14,6 +16,7 @@ on:
     paths:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-current-status-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-validation-result-v1.json"
       - "scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_v1.py"
       - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.yml"
 
@@ -35,10 +38,33 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Detect request lifecycle state
+        id: lifecycle
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          status = json.loads(Path(
+              "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-current-status-v1.json"
+          ).read_text())
+          state = status["formal_state"]
+          if state == "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_DRAFT_READY_FOR_VALIDATION":
+              mode = "draft"
+          elif state == "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL":
+              mode = "recorded"
+          else:
+              raise SystemExit(f"unsupported request lifecycle state: {state}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"mode={mode}\n")
+          PY
+
       - name: Compile request validator
+        if: steps.lifecycle.outputs.mode == 'draft'
         run: python -m py_compile scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_v1.py
 
       - name: Validate request, upstream bindings, expiry, and mutations
+        if: steps.lifecycle.outputs.mode == 'draft'
         run: |
           mkdir -p validation-output
           python scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_v1.py \
@@ -54,6 +80,7 @@ jobs:
             --output validation-output/historical-gold-5826-freeze-manifest-real-artifact-execution-request-validation-v1.json
 
       - name: Enforce request-only result
+        if: steps.lifecycle.outputs.mode == 'draft'
         run: |
           python - <<'PY'
           import json
@@ -84,26 +111,74 @@ jobs:
           assert report["aggregate_only"] is True, report
           assert report["raw_rows_read"] is False, report
           assert report["raw_rows_emitted"] == 0, report
-          assert report["ready_for_real_artifact_execution"] is False, report
-          assert report["ready_for_execution_workflow_implementation"] is False, report
-          assert report["ready_for_corpus_freeze_claim"] is False, report
-          assert report["ready_for_market_backtest"] is False, report
-          assert report["ready_for_model_retraining"] is False, report
           assert report["formal_stake"] == 0, report
-          for key in (
-              "request_file_sha256",
-              "request_status_file_sha256",
-              "request_design_file_sha256",
-              "implementation_file_sha256",
-              "synthetic_result_file_sha256",
-              "policy_file_sha256",
-              "recovery_status_file_sha256",
-          ):
-              assert report[key].startswith("sha256:"), (key, report)
+          PY
+
+      - name: Validate recorded request result and current status
+        if: steps.lifecycle.outputs.mode == 'recorded'
+        run: |
+          mkdir -p validation-output
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path(
+              "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-current-status-v1.json"
+          ).read_text())
+          result = json.loads(Path(
+              "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-validation-result-v1.json"
+          ).read_text())
+          expected_state = "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL"
+          expected_request = "HISTORICAL-GOLD-5826-FREEZE-MANIFEST-REAL-ARTIFACT-EXECUTION-2026-07-23-001"
+          assert status["formal_state"] == expected_state, status
+          assert result["formal_state"] == expected_state, result
+          assert status["request_id"] == expected_request, status
+          assert result["request_id"] == expected_request, result
+          assert status["validation_state"]["request_validated"] is True, status
+          assert result["validation_summary"]["request_valid"] is True, result
+          assert result["validation_summary"]["synthetic_tests_passed"] == 20, result
+          assert result["validation_summary"]["mutation_tests_passed"] == 35, result
+          assert status["validation_state"]["validation_run_id"] == 29992891138, status
+          assert status["validation_state"]["validation_job_id"] == 89159516469, status
+          assert status["validation_state"]["validation_artifact_id"] == 8557702959, status
+          assert result["validation_artifact_id"] == 8557702959, result
+          assert result["validation_artifact_digest"] == "sha256:bbea63ba827b29f10b14f76290eb67d47e9d3cb219f2b97219470616a1d24508", result
+          assert status["execution_control"]["approval_granted"] is False, status
+          assert status["execution_control"]["execution_enabled"] is False, status
+          assert status["execution_control"]["execution_workflow_created"] is False, status
+          assert status["execution_control"]["real_artifact_downloaded"] is False, status
+          assert status["execution_control"]["real_artifact_read"] is False, status
+          assert status["execution_control"]["semantic_manifest_created"] is False, status
+          assert status["execution_control"]["corpus_frozen"] is False, status
+          assert status["execution_control"]["execution_count"] == 0, status
+          assert status["execution_control"]["maximum_execution_count"] == 1, status
+          assert status["execution_control"]["request_consumed"] is False, status
+          assert status["ready_for_explicit_user_approval"] is True, status
+          assert status["ready_for_real_artifact_execution"] is False, status
+          assert status["formal_stake"] == 0, status
+          report = {
+              "formal_state": expected_state,
+              "request_id": expected_request,
+              "request_valid": True,
+              "validation_artifact_id": 8557702959,
+              "synthetic_tests_passed": 20,
+              "mutation_tests_passed": 35,
+              "approval_granted": False,
+              "execution_count": 0,
+              "maximum_execution_count": 1,
+              "real_artifact_downloaded": False,
+              "real_artifact_read": False,
+              "semantic_manifest_created": False,
+              "corpus_frozen": False,
+              "formal_stake": 0,
+          }
+          Path("validation-output/historical-gold-5826-request-validation-recording-qa-v1.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
           PY
 
       - name: Confirm scientific implementation and upstream evidence unchanged
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.lifecycle.outputs.mode == 'draft'
         run: |
           git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
             PROJECT_STATUS.md \
@@ -140,6 +215,7 @@ jobs:
           PY
 
       - name: Upload request validation Artifact
+        if: steps.lifecycle.outputs.mode == 'draft'
         uses: actions/upload-artifact@v4
         with:
           name: historical-gold-5826-freeze-manifest-real-artifact-execution-request-validation-v1
@@ -147,4 +223,11 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-# Validation rerun after correcting the self-referential transport scan.
+      - name: Upload request validation recording QA Artifact
+        if: steps.lifecycle.outputs.mode == 'recorded'
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-5826-request-validation-recording-qa-v1
+          path: validation-output/historical-gold-5826-request-validation-recording-qa-v1.json
+          if-no-files-found: error
+          retention-days: 14

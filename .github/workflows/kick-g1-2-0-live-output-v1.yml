@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Extract and execute implementation steps
+      - name: Extract implementation steps
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -47,6 +47,20 @@ jobs:
               Path(f'/tmp/g120-step-{number}.sh').write_text('set -euo pipefail\n' + script, encoding='utf-8')
           print(f'extracted {len(scripts)} implementation steps')
           PY
-          bash /tmp/g120-step-1.sh
-          bash /tmp/g120-step-2.sh
-          bash /tmp/g120-step-3.sh
+      - name: Run implementation with diagnostic capture
+        run: |
+          set +e
+          bash /tmp/g120-step-1.sh > /tmp/g120-step-1.log 2>&1
+          code=$?
+          echo "$code" > /tmp/g120-step-1.exit
+          tail -120 /tmp/g120-step-1.log
+          exit 0
+      - name: Upload bootstrap diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1-2-0-bootstrap-diagnostic
+          path: |
+            /tmp/g120-step-1.log
+            /tmp/g120-step-1.exit
+          if-no-files-found: error
+          retention-days: 1

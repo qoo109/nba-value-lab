@@ -142,3 +142,5 @@ jobs:
           path: validation-output/historical-gold-5826-freeze-manifest-real-artifact-execution-request-validation-v1.json
           if-no-files-found: error
           retention-days: 14
+
+# Rerun validation after correcting the policy Stake binding path.

@@ -1,0 +1,133 @@
+name: Validate Historical Gold 5826 freeze manifest synthetic implementation v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py"
+      - "scripts/test_build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py"
+      - "docs/historical-gold-5826-freeze-manifest-synthetic-implementation-v1.md"
+      - ".github/workflows/validate-historical-gold-5826-freeze-manifest-synthetic-implementation-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py"
+      - "scripts/test_build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py"
+      - ".github/workflows/validate-historical-gold-5826-freeze-manifest-synthetic-implementation-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-synthetic-implementation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile builder and synthetic suite
+        run: |
+          python -m py_compile scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py
+          python -m py_compile scripts/test_build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py
+
+      - name: Enforce offline standard-library implementation boundary
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+
+          builder_path = Path("scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py")
+          source = builder_path.read_text(encoding="utf-8")
+          tree = ast.parse(source)
+          allowed = {
+              "__future__", "argparse", "hashlib", "json", "math",
+              "sqlite3", "unicodedata", "pathlib", "typing",
+          }
+          imports = set()
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Import):
+                  imports.update(alias.name.split(".", 1)[0] for alias in node.names)
+              elif isinstance(node, ast.ImportFrom) and node.module:
+                  imports.add(node.module.split(".", 1)[0])
+          assert imports <= allowed, sorted(imports - allowed)
+          forbidden = (
+              "requests", "urllib", "http.client", "socket", "subprocess",
+              "urlopen", "curl ", "wget ", "ATTACH DATABASE", "VACUUM",
+          )
+          assert not any(token in source for token in forbidden), forbidden
+          assert "mode=ro&immutable=1" in source
+          assert "PRAGMA query_only=ON" in source
+          assert "PRAGMA integrity_check" in source
+          assert "database SHA-256 changed during read-only processing" in source
+          assert "feature_generated_at" in source
+          assert "row_level_hashes" in source
+          assert "formal_stake" in source
+          PY
+
+      - name: Run synthetic SQLite validation suite
+        run: |
+          mkdir -p validation-output
+          python scripts/test_build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py \
+            --policy data/research/historical-gold-5826-complete-corpus-freeze-policy-v1.json \
+            --output validation-output/historical-gold-5826-freeze-manifest-synthetic-validation-v1.json
+
+      - name: Enforce synthetic-only validation result
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path(
+              "validation-output/historical-gold-5826-freeze-manifest-synthetic-validation-v1.json"
+          ).read_text())
+          assert report["formal_state"] == "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_IMPLEMENTATION_SYNTHETIC_VALID", report
+          assert report["tests_total"] == 20, report
+          assert report["tests_passed"] == 20, report
+          assert report["tests_failed"] == 0, report
+          assert all(report["tests"].values()), report
+          assert report["real_artifact_read"] is False, report
+          assert report["real_artifact_downloaded"] is False, report
+          assert report["real_execution_workflow_created"] is False, report
+          assert report["semantic_manifest_created"] is False, report
+          assert report["corpus_frozen"] is False, report
+          assert report["ready_for_real_artifact_execution_request_design"] is True, report
+          assert report["ready_for_real_artifact_execution"] is False, report
+          assert report["ready_for_market_backtest"] is False, report
+          assert report["ready_for_model_retraining"] is False, report
+          assert report["formal_stake"] == 0, report
+          PY
+
+      - name: Confirm no real Artifact workflow or canonical manifest exists
+        run: |
+          test ! -e .github/workflows/build-historical-gold-5826-complete-corpus-freeze-manifest-v1.yml
+          test ! -e data/research/historical-gold-5826-complete-corpus-freeze-manifest-v1.json
+          test ! -e historical-gold-5826-complete-corpus-freeze-manifest-v1.json
+
+      - name: Confirm policy, design, status, Gold schema, and builders unchanged
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
+            PROJECT_STATUS.md \
+            data/research/historical-gold-5826-complete-corpus-freeze-policy-v1.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-design-v1.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
+            scripts/historical_gold_schema.py \
+            scripts/build_historical_gold.py \
+            scripts/build_historical_gold_multiseason.py
+
+      - name: Upload aggregate synthetic validation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-5826-freeze-manifest-synthetic-implementation-validation-v1
+          path: validation-output/historical-gold-5826-freeze-manifest-synthetic-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

@@ -41,6 +41,12 @@
     "secret_reader_included": false,
     "provider_requests_executed": 0
   },
+  "offline_design_validation": {
+    "synthetic_contract_tests_expected": 8,
+    "real_provider_payloads_allowed": false,
+    "network_requests_allowed": false,
+    "artifact_scope": "aggregate_only"
+  },
   "qualified_for_historical_backfill": [],
   "qualified_for_existing_frozen_gold_point_in_time_join": [],
   "forward_only_candidates_not_authorized": [

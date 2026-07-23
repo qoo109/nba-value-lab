@@ -1,6 +1,6 @@
 # NBA Value Lab — Project Status
 
-狀態核對日期：2026-07-23  
+狀態核對日期：2026-07-24  
 研究定位：**Research Candidate / Pre-Market-Backtest**  
 正式 Stake：**0**
 
@@ -9,13 +9,18 @@
 ## Latest G1.2.0 Milestone
 
 ```text
-G1.2.0 live decision output: IMPLEMENTED / FIXTURE VALIDATION REQUIRED
+G1.2.0 live decision output: IMPLEMENTED / FIXTURE VALIDATED / REAL GOVERNED INPUT VALIDATION REQUIRED
+G1.2.0 validation formal state: G1_2_0_LIVE_OUTPUT_IMPLEMENTATION_VALID
+G1.2.0 validation run: 30025555150
+G1.2.0 validation artifact: 8571205516
+G1.2.0 validation artifact digest: sha256:0d5d4d65f8b50e9bc81057b1aaa96620d2f3b40c5a75df66357cbe58432b8ccb
 G1.2.0 season resolver: season=2026-27 + competition_type=regular_season
 pre-trigger primary: G1.1.1
 pre-trigger parallel: G1.2.0 scheduled shadow
 post-trigger primary: G1.2.0 EV-primary
 post-trigger parallel: G1.1.1 control shadow
 prediction record schema: 1.4.0
+current real-input status: BLOCKED / REAL GOVERNED INPUT NOT AVAILABLE
 formal Stake: 0
 next unique mainline: VALIDATE_G1_2_0_END_TO_END_WITH_REAL_GOVERNED_2026_27_T60_INPUT
 ```
@@ -24,6 +29,9 @@ next unique mainline: VALIDATE_G1_2_0_END_TO_END_WITH_REAL_GOVERNED_2026_27_T60_
 
 ```text
 current work mode: OFFSEASON_DATA_CONSTRUCTION
+active offseason G: G1.1.1
+scheduled next G: G1.2.0 / first 2026-27 regular-season game with complete T-60 data gate
+real governed 2026-27 T-60 input: NOT AVAILABLE
 legacy source role: ROLE_LIMITED_LEGACY_MARKET_ARCHIVE_ELIGIBLE
 candidate cross-source scientific gates: PASS
 candidate formal result: REFERENCE COVERAGE COMPLETE / MARKET EVALUATION NOT AUTHORIZED
@@ -161,6 +169,18 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
+VALIDATE_G1_2_0_END_TO_END_WITH_REAL_GOVERNED_2026_27_T60_INPUT
+```
+
+Current status:
+
+```text
+BLOCKED — REAL GOVERNED INPUT NOT AVAILABLE
+```
+
+Required prerequisite:
+
+```text
 TIMESTAMPED_BOOKMAKER_ODDS_REAL_OBSERVED_AT_DATA_ACQUISITION_REQUIRED
 ```
 
@@ -168,6 +188,20 @@ The complete governed five-season Historical Gold corpus is now bound by a valid
 
 ## Completed Evidence
 
+### G1.2.0 EV-primary live output implementation and fixture validation
+
+```text
+PR: 153 / merged
+merge commit: bcb66ba5b207d6a86cf87b3aeed18f3f3c2c0115
+formal state: G1_2_0_LIVE_OUTPUT_IMPLEMENTATION_VALID
+validation run: 30025555150
+validation artifact: 8571205516
+validation artifact digest: sha256:0d5d4d65f8b50e9bc81057b1aaa96620d2f3b40c5a75df66357cbe58432b8ccb
+real governed 2026-27 T-60 validation executed: false
+formal Stake: 0
+```
+
+The implementation, contract, executable T-60/T-5 fixtures, frontend routing, model registry and repository-hygiene boundaries passed. This does not substitute for a real governed 2026-27 regular-season T-60 input.
 
 ### Historical Gold 5,826 real Artifact semantic freeze execution
 
@@ -229,7 +263,9 @@ Formal records:
 - `docs/historical-gold-5826-freeze-manifest-real-artifact-execution-result-v1.md`
 
 
-### Historical Gold 5,826 real Artifact execution request validation
+### Historical Gold 5,826 real Artifact execution request validation — historical pre-execution snapshot
+
+> Historical evidence only. This snapshot was superseded by the completed, consumed execution recorded above.
 
 ```text
 formal state: HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_VALID_AWAITING_EXPLICIT_USER_APPROVAL

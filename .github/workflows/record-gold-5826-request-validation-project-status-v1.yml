@@ -1,0 +1,40 @@
+name: Record Gold 5826 request validation PROJECT_STATUS v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/record_gold_5826_request_validation_project_status_v1.py"
+      - ".github/workflows/record-gold-5826-request-validation-project-status-v1.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: record-gold-5826-request-validation-project-status-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  record-project-status:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out recording branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: record-gold-5826-real-artifact-request-validation-v1
+
+      - name: Record validated request state
+        run: python scripts/record_gold_5826_request_validation_project_status_v1.py
+
+      - name: Enforce PROJECT_STATUS-only generated diff
+        run: test "$(git diff --name-only)" = "PROJECT_STATUS.md"
+
+      - name: Commit generated status
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PROJECT_STATUS.md
+          git commit -m "Record Gold 5826 request validation in PROJECT_STATUS [skip ci]"
+          git push origin HEAD:record-gold-5826-real-artifact-request-validation-v1

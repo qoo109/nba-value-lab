@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qoo109.github.io/nba-value-lab/schemas/private-forward-odds-quote-v1.schema.json",
+  "title": "NBA Value Lab Private Forward Odds Quote v1",
+  "description": "Provider-neutral private quote record. collector_fetched_at_utc is never a substitute for a verified provider-origin quote timestamp.",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "collector_run_id",
+    "quote_snapshot_id",
+    "source_id",
+    "adapter_id",
+    "adapter_version",
+    "source_event_id",
+    "canonical_game_id",
+    "league",
+    "season_label",
+    "competition_type",
+    "home_team_source",
+    "away_team_source",
+    "scheduled_tipoff_utc",
+    "bookmaker_key",
+    "market_key",
+    "home_price_decimal",
+    "away_price_decimal",
+    "provider_snapshot_at_utc",
+    "bookmaker_last_update_utc",
+    "collector_fetched_at_utc",
+    "quote_observed_at_utc",
+    "quote_time_authority",
+    "point_in_time_eligible",
+    "mapping_state",
+    "source_rights_state",
+    "raw_payload_retained",
+    "raw_payload_sha256",
+    "normalized_row_sha256",
+    "quality_flags"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "private-forward-odds-quote-v1"
+    },
+    "collector_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quote_snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adapter_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adapter_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonical_game_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "league": {
+      "const": "NBA"
+    },
+    "season_label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "competition_type": {
+      "enum": [
+        "regular_season",
+        "play_in",
+        "playoffs",
+        "preseason",
+        null
+      ]
+    },
+    "home_team_source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "away_team_source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scheduled_tipoff_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "bookmaker_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "market_key": {
+      "const": "h2h"
+    },
+    "home_price_decimal": {
+      "type": "number",
+      "minimum": 1.001,
+      "maximum": 100.0
+    },
+    "away_price_decimal": {
+      "type": "number",
+      "minimum": 1.001,
+      "maximum": 100.0
+    },
+    "provider_snapshot_at_utc": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "bookmaker_last_update_utc": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "collector_fetched_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "quote_observed_at_utc": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "quote_time_authority": {
+      "enum": [
+        "provider_snapshot",
+        "bookmaker_last_update",
+        "unverified"
+      ]
+    },
+    "point_in_time_eligible": {
+      "type": "boolean"
+    },
+    "mapping_state": {
+      "enum": [
+        "unmapped",
+        "exact",
+        "quarantined"
+      ]
+    },
+    "source_rights_state": {
+      "enum": [
+        "unreviewed",
+        "private_research_allowed",
+        "private_retention_restricted",
+        "blocked"
+      ]
+    },
+    "raw_payload_retained": {
+      "type": "boolean"
+    },
+    "raw_payload_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "normalized_row_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "quality_flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "quote_time_authority": {
+            "const": "provider_snapshot"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "provider_snapshot_at_utc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "quote_observed_at_utc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "quote_time_authority": {
+            "const": "bookmaker_last_update"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "bookmaker_last_update_utc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "quote_observed_at_utc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "quote_time_authority": {
+            "const": "unverified"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "quote_observed_at_utc": {
+            "type": "null"
+          },
+          "point_in_time_eligible": {
+            "const": false
+          }
+        }
+      }
+    }
+  ]
+}

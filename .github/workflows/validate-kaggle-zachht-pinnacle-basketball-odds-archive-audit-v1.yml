@@ -1,0 +1,52 @@
+name: Validate Kaggle ZachHT Pinnacle archive audit v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json"
+      - "docs/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.md"
+      - "scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py"
+      - ".github/workflows/validate-kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json"
+      - "scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py
+
+      - name: Validate aggregate archive audit
+        run: python scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py
+
+      - name: Confirm no raw odds archive or quote rows were committed
+        run: |
+          test ! -e archive.zip
+          test ! -e data/raw/kaggle-zachht-pinnacle
+          test ! -e data/normalized/kaggle-zachht-pinnacle
+          python - <<'PY'
+          from pathlib import Path
+          allowed = {
+              Path('data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json'),
+              Path('docs/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.md'),
+          }
+          for path in allowed:
+              assert path.stat().st_size < 100_000, path
+          PY

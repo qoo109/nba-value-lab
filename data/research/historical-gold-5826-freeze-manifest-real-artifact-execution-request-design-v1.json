@@ -1,0 +1,279 @@
+{
+  "schema_version": "historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1",
+  "created_at": "2026-07-23",
+  "formal_state": "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_DESIGN_READY",
+  "design_role": "ONE_TIME_EXACT_GITHUB_ARTIFACT_READ_ONLY_SEMANTIC_FREEZE_REQUEST_CONTRACT",
+  "triggering_state": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_SYNTHETIC_VALIDATED_READY_FOR_REAL_ARTIFACT_EXECUTION_REQUEST_DESIGN",
+  "triggering_status": "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json",
+  "triggering_result": "data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json",
+  "implementation_module": "scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py",
+  "implementation_git_blob_sha": "ebec2d9582961531eb72297ffac922bd38bb1382",
+  "future_request_contract": {
+    "request_id_prefix": "HISTORICAL-GOLD-5826-FREEZE-MANIFEST-REAL-ARTIFACT-EXECUTION",
+    "request_schema_version": "historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1",
+    "maximum_execution_count": 1,
+    "initial_execution_count": 0,
+    "workflow_dispatch_only": true,
+    "manual_dispatch_branch": "main",
+    "explicit_user_approval_required": true,
+    "approval_must_be_separate_from_request": true,
+    "approval_must_bind_exact_request_id": true,
+    "approval_must_bind_exact_request_file_sha256": true,
+    "approval_must_bind_exact_implementation_file_sha256": true,
+    "approval_must_bind_exact_synthetic_result_file_sha256": true,
+    "approval_must_bind_exact_policy_file_sha256": true,
+    "approval_must_bind_exact_source_recovery_status_file_sha256": true,
+    "request_reuse_after_any_execution_attempt": false,
+    "request_consumed_after_any_execution_attempt": true,
+    "workflow_rerun_allowed": false,
+    "automatic_dispatch_allowed": false,
+    "approval_before_artifact_expiry_required": true,
+    "execution_before_artifact_expiry_required": true
+  },
+  "exact_artifact_binding": {
+    "repository": "qoo109/nba-value-lab",
+    "source_workflow_run_id": 29976204693,
+    "source_workflow_job_id": 89108363564,
+    "artifact_id": 8551587005,
+    "artifact_name": "historical-silver-gold-two-game-official-cdn-recovery-v2",
+    "artifact_archive_size_bytes": 374591375,
+    "artifact_archive_digest": "sha256:3ed2d28da3af58b8b72d805860a144541ac5f38106653cfbda593e16bbaa8e8d",
+    "artifact_created_at": "2026-07-23T03:14:03Z",
+    "artifact_expires_at": "2026-08-06T03:14:00Z",
+    "artifact_expiry_policy": "FAIL_CLOSED_NO_SILENT_REBUILD_OR_SUBSTITUTION",
+    "download_selector": {
+      "action": "actions/download-artifact@v4",
+      "repository": "qoo109/nba-value-lab",
+      "run_id": 29976204693,
+      "artifact_name": "historical-silver-gold-two-game-official-cdn-recovery-v2",
+      "github_token_required": true
+    }
+  },
+  "required_artifact_file_set": {
+    "exact_file_count": 3,
+    "additional_files_allowed": false,
+    "files": [
+      {
+        "role": "HISTORICAL_SILVER_REFERENCE",
+        "filename": "historical-silver-multiseason-recovered-v1.sqlite.gz",
+        "size_bytes": 369318173,
+        "sha256": "sha256:48c032339402d5f75e43d7aaf8e977784aee9eceff74c9e7da952af8e1680eb8",
+        "read_allowed": false,
+        "reason": "SILVER_IS_BOUND_EVIDENCE_ONLY_NOT_NEEDED_FOR_MANIFEST_EXECUTION"
+      },
+      {
+        "role": "HISTORICAL_GOLD_EXECUTION_INPUT",
+        "filename": "historical-gold-multiseason-recovered-v1.sqlite.gz",
+        "size_bytes": 5268851,
+        "sha256": "sha256:a4e94fab1681b53817f305d08c196995d406fa0566ab70d6083aa5cebfc52085",
+        "read_allowed": true,
+        "decompress_to_temporary_sqlite_only": true
+      },
+      {
+        "role": "AGGREGATE_RECOVERY_RESULT",
+        "filename": "two-game-official-cdn-pbp-recovery-result-v2.json",
+        "size_bytes": 3751,
+        "sha256": "sha256:97d292d56f6ee8b6f0a2d4e4471990f7c953cca7c324eb64c129066695df7c30",
+        "read_allowed": true,
+        "committed_copy": "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-result-v2.json",
+        "committed_copy_sha256_must_match": true
+      }
+    ]
+  },
+  "allowed_execution_steps": {
+    "checkout_exact_main_commit": true,
+    "setup_python_3_12": true,
+    "read_github_artifact_metadata": true,
+    "download_exact_bound_artifact": true,
+    "verify_artifact_not_expired": true,
+    "verify_exact_file_set": true,
+    "verify_all_file_sizes_and_sha256": true,
+    "read_only_decompress_gold_gzip": true,
+    "execute_validated_manifest_builder_once": true,
+    "validate_aggregate_manifest": true,
+    "create_aggregate_execution_receipt": true,
+    "upload_exactly_one_output_artifact": true,
+    "temporary_files_must_be_deleted_by_runner_cleanup": true
+  },
+  "network_and_permissions_policy": {
+    "github_actions_permissions": {
+      "contents": "read",
+      "actions": "read"
+    },
+    "external_network_allowed": false,
+    "generic_http_client_allowed": false,
+    "curl_allowed": false,
+    "wget_allowed": false,
+    "package_install_allowed": false,
+    "source_archive_download_allowed": false,
+    "odds_or_injury_download_allowed": false,
+    "github_artifact_transport_only": true,
+    "allowed_external_actions": [
+      "actions/checkout@v4",
+      "actions/setup-python@v5",
+      "actions/download-artifact@v4",
+      "actions/upload-artifact@v4"
+    ]
+  },
+  "read_only_execution_scope": {
+    "gold_gzip_read_allowed": true,
+    "gold_sqlite_read_allowed": true,
+    "silver_gzip_read_allowed": false,
+    "repository_database_write_allowed": false,
+    "artifact_file_write_allowed": false,
+    "sqlite_write_allowed": false,
+    "raw_row_export_allowed": false,
+    "row_level_hash_output_allowed": false,
+    "database_rebuild_allowed": false,
+    "source_recovery_rerun_allowed": false,
+    "builder_modification_allowed": false,
+    "policy_modification_allowed": false,
+    "synthetic_result_modification_allowed": false
+  },
+  "manifest_validation_scope": {
+    "expected_manifest_schema": "historical-gold-5826-complete-corpus-freeze-manifest-v1",
+    "expected_policy_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-POLICY-2026-07-23-001",
+    "expected_implementation_design_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-MANIFEST-IMPLEMENTATION-DESIGN-2026-07-23-001",
+    "expected_gold_matchup_rows": 5826,
+    "expected_gold_team_rows": 11652,
+    "expected_seasons": [
+      "2019-20",
+      "2020-21",
+      "2021-22",
+      "2022-23",
+      "2023-24"
+    ],
+    "expected_remaining_source_exceptions": 0,
+    "expected_point_in_time_violations": 0,
+    "expected_duplicate_violations": 0,
+    "expected_aggregate_validation_passed": true,
+    "expected_privacy_boundaries_passed": true,
+    "maximum_manifest_bytes": 1048576,
+    "fail_closed_on_any_mismatch": true,
+    "partial_manifest_allowed": false
+  },
+  "allowed_output_artifact": {
+    "artifact_name": "historical-gold-5826-complete-corpus-freeze-manifest-real-artifact-execution-v1",
+    "exact_file_count": 2,
+    "additional_files_allowed": false,
+    "maximum_total_uncompressed_bytes": 1048576,
+    "files": [
+      {
+        "filename": "historical-gold-5826-complete-corpus-freeze-manifest-v1.json",
+        "role": "CANONICAL_AGGREGATE_SEMANTIC_MANIFEST"
+      },
+      {
+        "filename": "historical-gold-5826-freeze-manifest-real-artifact-execution-receipt-v1.json",
+        "role": "ONE_TIME_EXECUTION_RECEIPT"
+      }
+    ],
+    "receipt_required_fields": [
+      "schema_version",
+      "formal_outcome",
+      "request_id",
+      "workflow_run_id",
+      "workflow_run_attempt",
+      "workflow_ref",
+      "github_sha",
+      "execution_count_for_request",
+      "maximum_execution_count_for_request",
+      "request_consumed",
+      "repeat_execution_allowed",
+      "source_workflow_run_id",
+      "source_artifact_id",
+      "source_artifact_name",
+      "source_artifact_archive_digest",
+      "gold_gzip_sha256",
+      "gold_gzip_size_bytes",
+      "decompressed_gold_sqlite_sha256",
+      "manifest_sha256",
+      "manifest_size_bytes",
+      "real_artifact_read",
+      "gold_sqlite_read_only",
+      "database_modified",
+      "raw_rows_emitted",
+      "formal_stake"
+    ],
+    "prohibited_fields": [
+      "game_id",
+      "game_date",
+      "home_team_abbr",
+      "away_team_abbr",
+      "team_code",
+      "feature_id",
+      "matchup_feature_id",
+      "raw_row",
+      "sample_row",
+      "row_level_hash",
+      "individual_feature_value",
+      "player_information",
+      "market_price"
+    ]
+  },
+  "approval_and_execution_separation": {
+    "this_design_creates_request": false,
+    "this_design_grants_approval": false,
+    "this_design_creates_execution_workflow": false,
+    "this_design_enables_execution": false,
+    "future_request_grants_approval": false,
+    "future_request_enables_execution": false,
+    "future_approval_may_enable_exactly_one_manual_dispatch": true,
+    "manual_dispatch_before_valid_request_and_approval": false,
+    "manual_dispatch_after_artifact_expiry": false
+  },
+  "failure_semantics": {
+    "artifact_expired_or_missing": "BLOCK_BEFORE_DOWNLOAD_OR_READ_AND_REQUIRE_NEW_GOVERNED_REBUILD_LANE",
+    "artifact_metadata_mismatch": "BLOCK_BEFORE_GOLD_READ",
+    "artifact_file_set_mismatch": "BLOCK_BEFORE_GOLD_READ",
+    "file_hash_or_size_mismatch": "BLOCK_BEFORE_GOLD_READ",
+    "request_or_approval_binding_failure": "BLOCK_BEFORE_ARTIFACT_DOWNLOAD",
+    "manifest_validation_failure": "EMIT_AGGREGATE_FAIL_CLOSED_RECEIPT_NO_CANONICAL_FREEZE_CLAIM",
+    "privacy_boundary_failure": "BLOCK_OUTPUT_ARTIFACT",
+    "workflow_rerun_attempt": "BLOCK_AS_REQUEST_CONSUMED_OR_REPEAT_DISALLOWED",
+    "scientific_claim_on_failure": false
+  },
+  "non_authorizations": {
+    "request_draft_created": false,
+    "approval_record_created": false,
+    "execution_workflow_created": false,
+    "artifact_downloaded": false,
+    "real_gold_database_read": false,
+    "canonical_manifest_created": false,
+    "corpus_frozen": false,
+    "repository_database_modified": false,
+    "source_recovery_rerun": false,
+    "gold_rebuild": false,
+    "market_backtest": false,
+    "opening_or_closing_semantics": false,
+    "clv_ev_roi_drawdown": false,
+    "model_training_or_retraining": false,
+    "injury_candidate_activation": false,
+    "betting_edge_claim": false,
+    "formal_stake_above_zero": false
+  },
+  "design_validation_requirements": {
+    "synthetic_request_fixture_tests_required": true,
+    "mutation_tests_required": true,
+    "minimum_mutation_test_count": 15,
+    "validate_no_request_record_created": true,
+    "validate_no_approval_record_created": true,
+    "validate_no_execution_workflow_created": true,
+    "validate_no_artifact_downloaded_or_read": true,
+    "validate_exact_artifact_and_file_bindings": true,
+    "validate_expiry_fail_closed": true,
+    "validate_one_time_consumption": true,
+    "validate_aggregate_only_output": true,
+    "validate_formal_stake_zero": true
+  },
+  "next_state_if_valid": {
+    "formal_state": "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_DESIGN_VALIDATED",
+    "next_research_step": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_READY_FOR_DRAFT",
+    "ready_for_request_draft": true,
+    "ready_for_explicit_user_approval": false,
+    "ready_for_real_artifact_execution": false,
+    "ready_for_corpus_freeze_claim": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "formal_stake": 0
+  }
+}

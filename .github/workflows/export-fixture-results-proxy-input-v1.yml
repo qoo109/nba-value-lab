@@ -1,0 +1,40 @@
+name: Export fixture results proxy input v1
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/export-fixture-results-proxy-input-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate fixture input
+        run: |
+          test -s data/research/tmp/nba-2025-UTC-proxy-input.csv
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+          p = Path('data/research/tmp/nba-2025-UTC-proxy-input.csv')
+          with p.open(newline='', encoding='utf-8-sig') as f:
+              rows = list(csv.DictReader(f))
+          completed = [r for r in rows if (r.get('Result') or '').strip()]
+          assert len(rows) >= 1190, len(rows)
+          assert len(completed) >= 1190, len(completed)
+          print({'rows': len(rows), 'completed': len(completed), 'bytes': p.stat().st_size})
+          PY
+
+      - name: Upload fixture input
+        uses: actions/upload-artifact@v4
+        with:
+          name: nba-2025-26-fixture-results-proxy-input-v1
+          path: data/research/tmp/nba-2025-UTC-proxy-input.csv
+          if-no-files-found: error
+          retention-days: 1

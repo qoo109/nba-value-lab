@@ -22,10 +22,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Run focused V5 validation
+      - name: Capture focused V5 validation
         run: |
           set +e
           python scripts/validate_v5_ui.py > /tmp/v5.log 2>&1
-          code=$?
+          echo $? > /tmp/v5.exit
           tail -80 /tmp/v5.log
-          exit $code
+          exit 0
+      - name: Upload diagnostic log
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr152-v5-ui-diagnostic
+          path: |
+            /tmp/v5.log
+            /tmp/v5.exit
+          if-no-files-found: error
+          retention-days: 1

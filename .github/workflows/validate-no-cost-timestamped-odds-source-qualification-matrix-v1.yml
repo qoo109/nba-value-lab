@@ -1,0 +1,58 @@
+name: Validate no-cost timestamped odds source qualification matrix v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/no-cost-timestamped-odds-source-qualification-matrix-v1.json"
+      - "docs/no-cost-timestamped-odds-source-qualification-matrix-v1.md"
+      - "scripts/validate_no_cost_timestamped_odds_source_qualification_matrix_v1.py"
+      - ".github/workflows/validate-no-cost-timestamped-odds-source-qualification-matrix-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/no-cost-timestamped-odds-source-qualification-matrix-v1.json"
+      - "scripts/validate_no_cost_timestamped_odds_source_qualification_matrix_v1.py"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_no_cost_timestamped_odds_source_qualification_matrix_v1.py
+
+      - name: Validate fail-closed source matrix
+        run: python scripts/validate_no_cost_timestamped_odds_source_qualification_matrix_v1.py
+
+      - name: Confirm no paid client or quote data was added
+        run: |
+          test ! -e data/raw/timestamped-odds
+          test ! -e data/normalized/timestamped-odds
+          python - <<'PY'
+          from pathlib import Path
+          prohibited = [
+              "THE_ODDS_API_KEY",
+              "BLOOMBET_API_KEY",
+              "HOOPSAPI_KEY",
+          ]
+          paths = [
+              Path("data/research/no-cost-timestamped-odds-source-qualification-matrix-v1.json"),
+              Path("docs/no-cost-timestamped-odds-source-qualification-matrix-v1.md"),
+          ]
+          for path in paths:
+              text = path.read_text(encoding="utf-8")
+              for token in prohibited:
+                  assert token not in text, (path, token)
+          PY

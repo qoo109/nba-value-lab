@@ -35,7 +35,9 @@ jobs:
       - name: Determine lifecycle state
         id: lifecycle
         run: |
-          if test -f data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json; then
+          if test -f data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json; then
+            echo "state=manifest_design" >> "$GITHUB_OUTPUT"
+          elif test -f data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json; then
             echo "state=freeze_policy" >> "$GITHUB_OUTPUT"
           elif test -f data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json; then
             echo "state=recovery" >> "$GITHUB_OUTPUT"
@@ -143,6 +145,64 @@ jobs:
           )
           PY
 
+      - name: Validate superseding freeze-manifest design lifecycle
+        if: steps.lifecycle.outputs.state == 'manifest_design'
+        run: |
+          mkdir -p validation-output
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          status = Path("PROJECT_STATUS.md").read_text(encoding="utf-8")
+          recovery = json.loads(Path(
+              "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json"
+          ).read_text())
+          freeze = json.loads(Path(
+              "data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json"
+          ).read_text())
+          design = json.loads(Path(
+              "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json"
+          ).read_text())
+          assert recovery["source_exception_state"]["previous_documented_exception_count"] == 2, recovery
+          assert recovery["source_exception_state"]["remaining_documented_exception_count"] == 0, recovery
+          assert freeze["formal_state"] == (
+              "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_POLICY_VALIDATED_READY_FOR_IMPLEMENTATION_DESIGN"
+          ), freeze
+          assert design["formal_state"] == (
+              "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_DESIGN_VALIDATED_READY_FOR_SYNTHETIC_VALIDATION"
+          ), design
+          assert design["governed_corpus"]["gold_matchup_features"] == 5826, design
+          assert design["governed_corpus"]["remaining_source_exceptions"] == 0, design
+          assert design["implementation_state"]["corpus_frozen"] is False, design
+          assert design["implementation_state"]["real_artifact_execution_count"] == 0, design
+          assert design["ready_for_real_artifact_execution"] is False, design
+          assert design["ready_for_market_backtest"] is False, design
+          assert design["formal_stake"] == 0, design
+          assert "real-reference validation request: EXECUTED / PASS / CONSUMED" in status
+          assert "source gap exception historical count: 2" in status
+          assert "source gap exception remaining count: 0" in status
+          assert "freeze manifest implementation design: VALIDATED / DESIGN ONLY" in status
+          assert "real Artifact execution approved: false" in status
+          assert "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_READY_FOR_SYNTHETIC_VALIDATION" in status
+          report = {
+              "schema_version": "project-status-source-gap-lifecycle-compatibility-v4",
+              "formal_state": "PROJECT_STATUS_SOURCE_GAP_HISTORY_PRESERVED_MANIFEST_DESIGN_SUPERSEDED",
+              "original_request_consumed": True,
+              "historical_exception_count": 2,
+              "remaining_exception_count": 0,
+              "current_gold_matchups": 5826,
+              "freeze_policy_validated": True,
+              "manifest_design_validated": True,
+              "real_artifact_execution_approved": False,
+              "corpus_freeze_executed": False,
+              "ready_for_market_backtest": False,
+              "formal_stake": 0,
+          }
+          Path("validation-output/project-status-source-gap-real-reference-validation-v1.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n"
+          )
+          PY
+
       - name: Confirm historical records and scientific implementation unchanged
         if: github.event_name == 'pull_request'
         run: |
@@ -154,6 +214,8 @@ jobs:
             data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-v1.json \
             data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-result-v1.json \
             data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-current-status-v3.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
             scripts/analyze_historical_gold_silver_coverage_v1.py \
             scripts/integrate_historical_silver_source_gap_exception_v1.py \
             scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py \

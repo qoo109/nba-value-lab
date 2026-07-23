@@ -54,7 +54,7 @@ REQUIRED_EVIDENCE = (
 BLOCKED = (
     "Artifact `8551587005` must not be downloaded or read",
     "no canonical manifest or corpus freeze may occur without a later separate explicit approval",
-    "market backtesting",
+    "Market backtesting",
     "injury-model activation",
     "model retraining",
     "betting-edge claims",

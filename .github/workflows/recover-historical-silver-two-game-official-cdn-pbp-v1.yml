@@ -8,13 +8,18 @@ on:
       - "scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py"
       - ".github/workflows/recover-historical-silver-two-game-official-cdn-pbp-v1.yml"
       - "docs/historical-silver-two-game-official-cdn-pbp-recovery-v1.md"
+  pull_request:
+    paths:
+      - "scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py"
+      - ".github/workflows/recover-historical-silver-two-game-official-cdn-pbp-v1.yml"
+      - "docs/historical-silver-two-game-official-cdn-pbp-recovery-v1.md"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: historical-silver-two-game-official-cdn-pbp-recovery-v1
+  group: historical-silver-two-game-official-cdn-pbp-recovery-v1-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:

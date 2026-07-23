@@ -1,0 +1,88 @@
+name: Validate Historical Silver two-game official CDN PBP recovery result v2
+
+on:
+  pull_request:
+    paths:
+      - "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-result-v2.json"
+      - "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json"
+      - "docs/historical-silver-two-game-official-cdn-pbp-recovery-result-v2.md"
+      - "scripts/validate_historical_silver_two_game_official_cdn_pbp_recovery_result_v2.py"
+      - ".github/workflows/validate-historical-silver-two-game-official-cdn-pbp-recovery-result-v2.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-result-v2.json"
+      - "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json"
+      - "scripts/validate_historical_silver_two_game_official_cdn_pbp_recovery_result_v2.py"
+      - ".github/workflows/validate-historical-silver-two-game-official-cdn-pbp-recovery-result-v2.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-recovery-result:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile recovery result validator
+        run: python -m py_compile scripts/validate_historical_silver_two_game_official_cdn_pbp_recovery_result_v2.py
+
+      - name: Validate adopted recovery result and mutation tests
+        run: |
+          mkdir -p validation-output
+          python scripts/validate_historical_silver_two_game_official_cdn_pbp_recovery_result_v2.py \
+            --result data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-result-v2.json \
+            --current-status data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json \
+            --self-test \
+            --output validation-output/two-game-official-cdn-recovery-validation-v2.json
+
+      - name: Enforce adopted result boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("validation-output/two-game-official-cdn-recovery-validation-v2.json").read_text()
+          )
+          assert report["checks_failed"] == 0, report
+          assert report["formal_state"] == "HISTORICAL_SILVER_TWO_GAME_OFFICIAL_CDN_RECOVERY_RESULT_VALID_ADOPTED", report
+          assert report["source_exceptions_remaining"] == 0, report
+          assert report["historical_gold_matchups"] == 5826, report
+          assert report["ready_for_complete_corpus_freeze_policy_design"] is True, report
+          assert report["ready_for_market_backtest"] is False, report
+          assert report["formal_stake"] == 0, report
+          assert all(report["self_test"].values()), report
+          PY
+
+      - name: Confirm old result evidence and scientific builders unchanged
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
+            data/research/historical-gold-silver-coverage-real-reference-result-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-result-v1.json \
+            scripts/historical_silver_runner.py \
+            scripts/historical_silver_pbpstats.py \
+            scripts/combine_historical_silver.py \
+            scripts/build_historical_gold.py \
+            scripts/build_historical_gold_multiseason.py
+
+      - name: Upload aggregate recovery validation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-silver-two-game-official-cdn-recovery-validation-v2
+          path: validation-output/two-game-official-cdn-recovery-validation-v2.json
+          if-no-files-found: error
+          retention-days: 14

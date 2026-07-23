@@ -29,12 +29,13 @@ jobs:
           echo $? > /tmp/v5.exit
           tail -80 /tmp/v5.log
           exit 0
-      - name: Upload diagnostic log
+      - name: Upload diagnostic files
         uses: actions/upload-artifact@v4
         with:
           name: pr152-v5-ui-diagnostic
           path: |
             /tmp/v5.log
             /tmp/v5.exit
+            scripts/validate_v5_ui.py
           if-no-files-found: error
           retention-days: 1

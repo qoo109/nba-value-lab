@@ -174,6 +174,12 @@ hoopsapi historical snapshots on free tier: false
 hoopsapi provider observed_at in public example: false
 hoopsapi raw odds redistribution: PROHIBITED BY PUBLIC TERMS
 hoopsapi provider requests executed: 0
+forward odds collector design: VALIDATED / SOURCE-AGNOSTIC / PRIVATE
+forward collector quote schema: schemas/private-forward-odds-quote-v1.schema.json
+forward collector fetched_at substitution: PROHIBITED
+forward collector public quote rows: PROHIBITED
+forward collector network client: false
+forward collector provider requests executed: 0
 injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate
 team submission completeness ledger: REQUIRED BEFORE FORMAL INJURY HOLDOUT
 silver builder repair required: false
@@ -204,18 +210,42 @@ TIMESTAMPED_BOOKMAKER_ODDS_REAL_OBSERVED_AT_DATA_ACQUISITION_REQUIRED
 Active prerequisite sub-mainline:
 
 ```text
-DESIGN_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_V1
+IMPLEMENT_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_OFFLINE_CORE_V1
 ```
 
 Current prerequisite status:
 
 ```text
-READY — DESIGN ONLY / NO ACCOUNT OR API KEY REQUIRED
+READY — OFFLINE IMPLEMENTATION ONLY / NETWORK DISABLED
 ```
 
 The complete governed five-season Historical Gold corpus is now bound by a validated semantic freeze manifest. The one-time request was consumed successfully and its executor was retired. Market backtesting remains blocked because real timestamped bookmaker odds with `observed_at`, bookmaker provenance and opening/closing identity have not been acquired or separately authorized. Injury-model activation, model retraining, betting-edge claims and Stake above `0` remain unauthorized.
 
 ## Completed Evidence
+
+### Source-agnostic private forward odds collector design
+
+```text
+formal state: SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_DESIGN_VALIDATED
+direction: FORWARD ONLY
+provider binding: NONE
+canonical private quote schema: schemas/private-forward-odds-quote-v1.schema.json
+collector_fetched_at may substitute provider observed_at: false
+exact event mapping required for PIT eligibility: true
+fuzzy or nearest-time mapping allowed: false
+Closing-only substitution for T-60 or T-5: false
+private normalized quote storage: REQUIRED
+public quote-level rows: PROHIBITED
+HTTP client included: false
+secret reader included: false
+provider requests executed: 0
+real quotes retained: 0
+market metrics executed: false
+formal Stake: 0
+next unique sub-mainline: IMPLEMENT_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_OFFLINE_CORE_V1
+```
+
+The design preserves three distinct timestamp concepts: provider snapshot time, bookmaker last-update time and collector fetch time. Collector fetch time proves only receipt and can never be promoted to canonical `observed_at`. Rows with unverified provider-origin time remain private forward observations and are not point-in-time eligible.
 
 ### HoopsAPI Free public forward-collection review
 

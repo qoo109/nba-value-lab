@@ -103,6 +103,7 @@ Collector 本身不能解鎖 Market Backtest。
 
 ```text
 collector_fetched_at_utc ≠ provider observed_at
+collector_fetched_at_utc NEVER substitutes quote_observed_at_utc
 ```
 
 它永遠不能代替 `quote_observed_at_utc`。

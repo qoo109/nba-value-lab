@@ -1,0 +1,183 @@
+{
+  "schema_version": "source-agnostic-private-forward-odds-collector-design-v1",
+  "design_id": "SOURCE-AGNOSTIC-PRIVATE-FORWARD-ODDS-COLLECTOR-2026-07-24-001",
+  "created_at": "2026-07-24",
+  "formal_state": "SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_DESIGN_VALIDATED",
+  "objective": "Define a provider-neutral, private, forward-only NBA moneyline collection contract that can accumulate future timestamped quotes without creating an account, connecting a key, executing network requests, exposing raw prices publicly or unlocking market evaluation.",
+  "compatibility": {
+    "point_in_time_layer": "docs/point-in-time-odds-layer-v1.md",
+    "canonical_csv_template": "data/templates/point-in-time-odds-template.csv",
+    "paid_historical_policy": "data/timestamped-odds-acquisition-v1.json",
+    "hoopsapi_public_review": "data/research/hoopsapi-free-forward-collection-public-review-v1.json"
+  },
+  "v1_scope": {
+    "sport": "basketball",
+    "league": "NBA",
+    "market_key": "h2h",
+    "odds_format": "decimal",
+    "direction": "forward_only",
+    "historical_backfill": false,
+    "existing_frozen_gold_join": false,
+    "opening_inference": false,
+    "closing_substitution_for_t60_or_t5": false
+  },
+  "architecture": {
+    "scheduler": "provider-neutral target-time manifest; no cadence is authorized by this design",
+    "adapter": "one provider adapter maps source payloads into the canonical private quote record",
+    "private_store": "SQLite or equivalent local private store excluded from Git",
+    "qualification_layer": "separately decides whether a stored row is point-in-time eligible",
+    "public_output": "aggregate QA only"
+  },
+  "adapter_contract": {
+    "required_identity": [
+      "source_id",
+      "adapter_id",
+      "adapter_version",
+      "source_event_id",
+      "home_team_source",
+      "away_team_source",
+      "scheduled_tipoff_utc",
+      "bookmaker_key",
+      "market_key"
+    ],
+    "required_prices": [
+      "home_price_decimal",
+      "away_price_decimal"
+    ],
+    "required_collection_timestamp": "collector_fetched_at_utc",
+    "optional_provider_timestamps": [
+      "provider_snapshot_at_utc",
+      "bookmaker_last_update_utc"
+    ],
+    "network_client_included": false,
+    "secret_reader_included": false,
+    "provider_selection_logic_included": false
+  },
+  "timestamp_contract": {
+    "collector_fetched_at_utc": "Required collector receipt time. It proves only when NBA Value Lab fetched the payload.",
+    "provider_snapshot_at_utc": "Optional provider-origin snapshot time. It may become quote_observed_at_utc only after source-specific semantics are documented and qualified.",
+    "bookmaker_last_update_utc": "Optional bookmaker-origin update time. It may become quote_observed_at_utc only after source-specific semantics are documented and qualified.",
+    "quote_observed_at_utc": "Nullable canonical quote time. It must never be populated from collector_fetched_at_utc.",
+    "authority_values": [
+      "provider_snapshot",
+      "bookmaker_last_update",
+      "unverified"
+    ],
+    "eligibility_rules": [
+      "provider_snapshot authority requires a documented provider timestamp field",
+      "bookmaker_last_update authority requires documented bookmaker update semantics",
+      "unverified authority requires quote_observed_at_utc to be null",
+      "collector_fetched_at_utc may never substitute for quote_observed_at_utc",
+      "quote_observed_at_utc must be strictly before scheduled_tipoff_utc",
+      "collector_fetched_at_utc must be equal to or after every populated provider-origin timestamp",
+      "rows without verified quote time may be retained privately as forward observation records but are not point-in-time eligible"
+    ]
+  },
+  "event_mapping_contract": {
+    "canonical_game_id_nullable_at_ingest": true,
+    "mapping_states": [
+      "unmapped",
+      "exact",
+      "quarantined"
+    ],
+    "exact_mapping_requires": [
+      "exact normalized home team",
+      "exact normalized away team",
+      "exact scheduled tipoff",
+      "single matching canonical game"
+    ],
+    "fuzzy_matching_allowed": false,
+    "nearest_time_matching_allowed": false,
+    "season_or_competition_inference_allowed": false,
+    "point_in_time_eligibility_requires_exact_mapping": true
+  },
+  "quote_contract": {
+    "schema_path": "schemas/private-forward-odds-quote-v1.schema.json",
+    "same_book_two_sided_required": true,
+    "single_sided_quote_allowed": false,
+    "minimum_decimal_price": 1.001,
+    "maximum_decimal_price": 100.0,
+    "deduplication_key_fields": [
+      "source_id",
+      "source_event_id",
+      "bookmaker_key",
+      "market_key",
+      "quote_time_authority",
+      "quote_observed_at_utc",
+      "collector_fetched_at_utc",
+      "home_price_decimal",
+      "away_price_decimal"
+    ],
+    "snapshot_label_at_ingest": false,
+    "snapshot_label_rule": "T-60, T-5 and Closing labels are derived later from qualified rows at or before predeclared target times; they are not trusted from provider marketing labels."
+  },
+  "private_storage_contract": {
+    "default_path": "var/private/odds/forward-odds.sqlite",
+    "git_excluded_by_extension": true,
+    "append_only_quote_rows": true,
+    "raw_payload_retention_default": false,
+    "raw_payload_retention_requires_source_rights_review": true,
+    "normalized_quote_rows_private_only": true,
+    "encryption_recommended": true,
+    "public_repository_quote_rows_allowed": false,
+    "public_artifact_quote_rows_allowed": false
+  },
+  "public_aggregate_contract": {
+    "allowed_fields": [
+      "collector run count",
+      "request success and failure counts",
+      "source and adapter version",
+      "event mapping counts",
+      "timestamp authority counts",
+      "point-in-time eligible row count",
+      "duplicate and quarantine counts",
+      "coverage counts without prices",
+      "response hashes without payloads or prices"
+    ],
+    "forbidden_fields": [
+      "API key",
+      "authentication header",
+      "raw provider payload",
+      "bookmaker quote prices",
+      "quote-level team and event rows",
+      "downloadable odds archive",
+      "model edge",
+      "EV",
+      "CLV",
+      "ROI",
+      "drawdown",
+      "bet count",
+      "stake recommendation"
+    ]
+  },
+  "fail_closed_conditions": [
+    "source rights are unknown for private retention",
+    "stable source event identity is absent",
+    "home or away identity is missing or reversed",
+    "scheduled tipoff is absent or ambiguous",
+    "bookmaker identity is absent",
+    "same-book two-sided moneyline cannot be proven",
+    "decimal price is invalid",
+    "provider timestamp semantics are undocumented",
+    "quote time is at or after tipoff",
+    "collector fetch time precedes a provider-origin timestamp",
+    "duplicate canonical quote key is detected",
+    "public output would expose quote-level prices or raw payloads"
+  ],
+  "activation_boundary": {
+    "account_creation_authorized": false,
+    "provider_terms_acceptance_authorized": false,
+    "api_key_connection_authorized": false,
+    "network_requests_authorized": false,
+    "scheduler_activation_authorized": false,
+    "real_quote_ingestion_authorized": false,
+    "historical_backfill_authorized": false,
+    "market_backtest_authorized": false,
+    "model_retraining_authorized": false,
+    "clv_ev_roi_authorized": false,
+    "betting_claim_authorized": false,
+    "formal_stake": 0
+  },
+  "next_unique_mainline": "IMPLEMENT_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_OFFLINE_CORE_V1",
+  "next_task_boundary": "Implement only an offline core with synthetic adapters, schema validation, deterministic deduplication, private SQLite writes and aggregate-only QA. Do not include an HTTP client, secret reader, scheduler activation or real provider payload."
+}

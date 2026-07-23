@@ -1,0 +1,68 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v5",
+  "updated_at": "2026-07-24",
+  "formal_state": "NO_COST_TIMESTAMPED_ODDS_PRIVATE_FORWARD_COLLECTOR_DESIGN_VALIDATED",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v4.json",
+  "recording_pr": 157,
+  "user_decisions": {
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED"
+  },
+  "completed_source_reviews": [
+    {
+      "source_id": "kaggle_zachht_basketball_odds_history",
+      "formal_result": "KAGGLE_ZACHHT_PINNACLE_BASKETBALL_ODDS_ARCHIVE_RESEARCH_BLOCKED",
+      "qualified": false
+    },
+    {
+      "source_id": "bloombet_free_api",
+      "formal_result": "BLOOMBET_FREE_API_PUBLIC_REVIEW_BLOCKED",
+      "qualified": false,
+      "schema_probe_deferred": true
+    },
+    {
+      "source_id": "hoopsapi_free_forward_collection",
+      "formal_result": "HOOPSAPI_FREE_PUBLIC_REVIEW_FORWARD_ONLY_CANDIDATE",
+      "qualified_for_historical_backfill": false,
+      "structurally_promising_for_private_forward_collection": true,
+      "forward_collection_authorized": false
+    }
+  ],
+  "collector_design": {
+    "path": "data/research/source-agnostic-private-forward-odds-collector-design-v1.json",
+    "quote_schema": "schemas/private-forward-odds-quote-v1.schema.json",
+    "formal_state": "SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_DESIGN_VALIDATED",
+    "source_agnostic": true,
+    "forward_only": true,
+    "private_storage_only": true,
+    "collector_fetched_at_may_substitute_observed_at": false,
+    "public_quote_rows_allowed": false,
+    "network_client_included": false,
+    "secret_reader_included": false,
+    "provider_requests_executed": 0
+  },
+  "offline_design_validation": {
+    "synthetic_contract_tests_expected": 8,
+    "real_provider_payloads_allowed": false,
+    "network_requests_allowed": false,
+    "artifact_scope": "aggregate_only"
+  },
+  "qualified_for_historical_backfill": [],
+  "qualified_for_existing_frozen_gold_point_in_time_join": [],
+  "forward_only_candidates_not_authorized": [
+    "hoopsapi_free_forward_collection"
+  ],
+  "next_unique_mainline": "IMPLEMENT_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_OFFLINE_CORE_V1",
+  "next_task_requires_account_or_api_key": false,
+  "next_task_executes_provider_requests": false,
+  "next_task_allows_only_synthetic_inputs": true,
+  "account_creation_authorized": false,
+  "api_key_connection_authorized": false,
+  "provider_request_execution_authorized": false,
+  "real_quote_ingestion_authorized": false,
+  "raw_quote_publication_authorized": false,
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

@@ -1,4 +1,4 @@
-name: Validate PROJECT_STATUS after Gold 5826 freeze policy v1
+name: Validate PROJECT_STATUS after Gold 5826 real Artifact request design result v1
 
 on:
   pull_request:
@@ -7,7 +7,7 @@ on:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-result-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json"
       - "scripts/validate_project_status_after_gold_5826_real_artifact_request_design_result_v1.py"
-      - ".github/workflows/validate-project-status-after-gold-5826-freeze-policy-v1.yml"
+      - ".github/workflows/validate-project-status-after-gold-5826-real-artifact-request-design-result-v1.yml"
   push:
     branches:
       - main
@@ -16,7 +16,7 @@ on:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-result-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json"
       - "scripts/validate_project_status_after_gold_5826_real_artifact_request_design_result_v1.py"
-      - ".github/workflows/validate-project-status-after-gold-5826-freeze-policy-v1.yml"
+      - ".github/workflows/validate-project-status-after-gold-5826-real-artifact-request-design-result-v1.yml"
 
 permissions:
   contents: read
@@ -36,10 +36,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Compile current lifecycle validator
+      - name: Compile status validator
         run: python -m py_compile scripts/validate_project_status_after_gold_5826_real_artifact_request_design_result_v1.py
 
-      - name: Validate current state and preserved freeze-policy history
+      - name: Validate status and mutation tests
         run: |
           mkdir -p validation-output
           python scripts/validate_project_status_after_gold_5826_real_artifact_request_design_result_v1.py \
@@ -47,17 +47,16 @@ jobs:
             --request-design-status data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json \
             --request-design-result data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-result-v1.json \
             --self-test \
-            --output validation-output/project-status-gold-5826-freeze-policy-v1.json
-          grep -F "complete corpus freeze policy: VALIDATED / DESIGN ONLY" PROJECT_STATUS.md
-          grep -F "raw Historical Gold matchups: 5,826" PROJECT_STATUS.md
-          grep -F "documented source gap exceptions remaining: 0" PROJECT_STATUS.md
+            --output validation-output/project-status-gold-5826-real-artifact-request-design-result-v1.json
 
-      - name: Enforce current lifecycle boundaries
+      - name: Enforce request-design status boundaries
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          report = json.loads(Path("validation-output/project-status-gold-5826-freeze-policy-v1.json").read_text())
+          report = json.loads(Path(
+              "validation-output/project-status-gold-5826-real-artifact-request-design-result-v1.json"
+          ).read_text())
           assert report["checks_failed"] == 0, report
           assert report["formal_state"] == "PROJECT_STATUS_GOLD_5826_REAL_ARTIFACT_REQUEST_DESIGN_RESULT_SYNC_VALID", report
           assert report["gold_matchups"] == 5826, report
@@ -67,16 +66,38 @@ jobs:
           assert report["execution_workflow_created"] is False, report
           assert report["real_artifact_read"] is False, report
           assert report["ready_for_request_draft"] is True, report
+          assert report["ready_for_explicit_user_approval"] is False, report
           assert report["ready_for_real_artifact_execution"] is False, report
+          assert report["ready_for_corpus_freeze_claim"] is False, report
           assert report["ready_for_market_backtest"] is False, report
+          assert report["ready_for_model_retraining"] is False, report
           assert report["formal_stake"] == 0, report
+          assert len(report["self_test"]) >= 18, report
           assert all(report["self_test"].values()), report
           PY
 
-      - name: Upload lifecycle validation Artifact
+      - name: Confirm upstream design and scientific implementation unchanged
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
+            data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json \
+            scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py \
+            scripts/build_historical_gold_multiseason.py \
+            scripts/historical_gold_schema.py
+
+      - name: Confirm no request, approval, execution workflow, or manifest exists
+        run: |
+          test ! -e data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.json
+          test ! -e data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json
+          test ! -e .github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml
+          test ! -e data/research/historical-gold-5826-complete-corpus-freeze-manifest-v1.json
+
+      - name: Upload status validation Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: project-status-after-gold-5826-freeze-policy-v1
-          path: validation-output/project-status-gold-5826-freeze-policy-v1.json
+          name: project-status-after-gold-5826-real-artifact-request-design-result-v1
+          path: validation-output/project-status-gold-5826-real-artifact-request-design-result-v1.json
           if-no-files-found: error
           retention-days: 14

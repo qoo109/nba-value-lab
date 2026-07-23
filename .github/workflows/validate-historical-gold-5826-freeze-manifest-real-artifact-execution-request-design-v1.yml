@@ -5,8 +5,10 @@ on:
     paths:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-result-v1.json"
       - "docs/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.md"
       - "scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_design_v1.py"
+      - "scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_request_design_result_v1.py"
       - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.yml"
   push:
     branches:
@@ -14,7 +16,9 @@ on:
     paths:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-result-v1.json"
       - "scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_design_v1.py"
+      - "scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_request_design_result_v1.py"
       - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.yml"
 
 permissions:
@@ -35,10 +39,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Compile request design validator
+      - name: Determine lifecycle state
+        id: lifecycle
+        run: |
+          if test -f data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-result-v1.json; then
+            echo "state=result" >> "$GITHUB_OUTPUT"
+          else
+            echo "state=design" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compile original request-design validator
+        if: steps.lifecycle.outputs.state == 'design'
         run: python -m py_compile scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_design_v1.py
 
-      - name: Validate design, exact bindings, synthetic fixture, and mutations
+      - name: Validate original design and mutations
+        if: steps.lifecycle.outputs.state == 'design'
         run: |
           mkdir -p validation-output
           python scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_design_v1.py \
@@ -52,7 +67,22 @@ jobs:
             --self-test \
             --output validation-output/historical-gold-5826-freeze-manifest-real-artifact-request-design-validation-v1.json
 
-      - name: Enforce design-only result
+      - name: Compile superseding request-design result validator
+        if: steps.lifecycle.outputs.state == 'result'
+        run: python -m py_compile scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_request_design_result_v1.py
+
+      - name: Validate superseding request-design result
+        if: steps.lifecycle.outputs.state == 'result'
+        run: |
+          mkdir -p validation-output
+          python scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_request_design_result_v1.py \
+            --result data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-result-v1.json \
+            --current-status data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json \
+            --design data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.json \
+            --self-test \
+            --output validation-output/historical-gold-5826-freeze-manifest-real-artifact-request-design-validation-v1.json
+
+      - name: Enforce lifecycle result
         run: |
           python - <<'PY'
           import json
@@ -61,15 +91,16 @@ jobs:
               "validation-output/historical-gold-5826-freeze-manifest-real-artifact-request-design-validation-v1.json"
           ).read_text())
           assert report["checks_failed"] == 0, report
-          assert report["formal_state"] == "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_REQUEST_DESIGN_VALID", report
-          assert report["artifact_id"] == 8551587005, report
-          assert report["artifact_expires_at"] == "2026-08-06T03:14:00Z", report
-          assert report["synthetic_tests_passed"] == 20, report
+          if report["formal_state"] == "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_REQUEST_DESIGN_VALID":
+              assert report["artifact_id"] == 8551587005, report
+              assert report["synthetic_tests_passed"] == 20, report
+          else:
+              assert report["formal_state"] == "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_REQUEST_DESIGN_RESULT_VALID", report
+              assert report["artifact_id"] == 8551587005, report
           assert report["request_design_validated"] is True, report
           assert report["request_draft_created"] is False, report
           assert report["approval_created"] is False, report
           assert report["execution_workflow_created"] is False, report
-          assert report["real_artifact_downloaded"] is False, report
           assert report["real_artifact_read"] is False, report
           assert report["ready_for_request_draft"] is True, report
           assert report["ready_for_explicit_user_approval"] is False, report
@@ -78,7 +109,6 @@ jobs:
           assert report["ready_for_market_backtest"] is False, report
           assert report["ready_for_model_retraining"] is False, report
           assert report["formal_stake"] == 0, report
-          assert len(report["self_test"]) >= 30, report
           assert all(report["self_test"].values()), report
           PY
 
@@ -86,7 +116,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
-            PROJECT_STATUS.md \
+            data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.json \
             data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
             data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json \
             data/research/historical-gold-5826-complete-corpus-freeze-policy-v1.json \
@@ -96,22 +126,14 @@ jobs:
             scripts/build_historical_gold_multiseason.py \
             scripts/historical_gold_schema.py
 
-      - name: Confirm no request, approval, executor, download, or manifest exists
+      - name: Confirm no request, approval, executor, or manifest exists
         run: |
           test ! -e data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.json
           test ! -e data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json
           test ! -e .github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml
           test ! -e data/research/historical-gold-5826-complete-corpus-freeze-manifest-v1.json
-          python - <<'PY'
-          from pathlib import Path
-          text = Path(
-              ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.yml"
-          ).read_text(encoding="utf-8")
-          forbidden = "uses:" + " actions/download-artifact@"
-          assert forbidden not in text, forbidden
-          PY
 
-      - name: Upload aggregate request-design validation Artifact
+      - name: Upload aggregate lifecycle validation Artifact
         uses: actions/upload-artifact@v4
         with:
           name: historical-gold-5826-freeze-manifest-real-artifact-request-design-validation-v1

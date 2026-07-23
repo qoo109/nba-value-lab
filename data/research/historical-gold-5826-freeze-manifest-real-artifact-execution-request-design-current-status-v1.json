@@ -1,8 +1,9 @@
 {
   "schema_version": "historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1",
   "updated_at": "2026-07-23",
-  "formal_state": "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_DESIGN_READY_FOR_VALIDATION",
+  "formal_state": "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_DESIGN_VALIDATED_READY_FOR_REQUEST_DRAFT",
   "design_path": "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.json",
+  "result_path": "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-result-v1.json",
   "triggering_evidence": {
     "synthetic_result_path": "data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json",
     "synthetic_result_git_blob_sha": "e96874e04dfbdb107ef379280c2404bf6be8bd80",
@@ -17,8 +18,22 @@
     "synthetic_tests_total": 20,
     "synthetic_tests_passed": 20,
     "synthetic_tests_failed": 0,
-    "result_recording_pr": 140,
-    "result_recording_merge_commit": "7f603a92790166238476e76f50b8b112af731eec"
+    "synthetic_result_recording_pr": 140,
+    "synthetic_result_recording_merge_commit": "7f603a92790166238476e76f50b8b112af731eec"
+  },
+  "design_validation_evidence": {
+    "design_pr": 141,
+    "design_merge_commit": "5c6431110b7085dec1663cf6303df5393fd4dd97",
+    "validated_head_sha": "f84a217b0f4b2d144c58032f5edc793a2b92553b",
+    "workflow_run_id": 29986783982,
+    "workflow_job_id": 89140319716,
+    "validation_artifact_id": 8555320565,
+    "validation_artifact_digest": "sha256:a4c0dce31c951fc0913bffc084411a9353928468fe1baafc0a412e050283c3e9",
+    "validation_artifact_expires_at": "2026-08-06T06:59:00Z",
+    "checks_failed": 0,
+    "mutation_test_count_at_least": 30,
+    "all_mutation_tests_passed": true,
+    "result_recording_pr": 142
   },
   "exact_artifact_binding": {
     "source_workflow_run_id": 29976204693,
@@ -34,7 +49,7 @@
   },
   "request_lifecycle": {
     "request_design_created": true,
-    "request_design_validated": false,
+    "request_design_validated": true,
     "request_draft_created": false,
     "request_validated": false,
     "approval_record_created": false,
@@ -70,8 +85,8 @@
     "betting_edge_claim": false,
     "formal_stake": 0
   },
-  "next_research_step_if_valid": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_READY_FOR_DRAFT",
-  "ready_for_request_draft": false,
+  "next_research_step": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_READY_FOR_DRAFT",
+  "ready_for_request_draft": true,
   "ready_for_explicit_user_approval": false,
   "ready_for_real_artifact_execution": false,
   "ready_for_corpus_freeze_claim": false,

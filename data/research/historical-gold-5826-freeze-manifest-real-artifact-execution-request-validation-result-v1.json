@@ -62,6 +62,6 @@
     "ready_for_model_retraining": false
   },
   "next_research_step": "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_EXPLICIT_USER_APPROVAL_REQUIRED",
-  "recording_pr": null,
+  "recording_pr": 145,
   "recording_merge_commit": null
 }

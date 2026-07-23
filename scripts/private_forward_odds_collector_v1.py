@@ -78,37 +78,24 @@ def nonblank(value: Any, field: str) -> str:
 
 
 def canonical_hash_payload(record: dict[str, Any]) -> dict[str, Any]:
+    """Return the frozen provider-neutral dedup key from the design contract.
+
+    Run identity and adapter metadata are deliberately excluded so the same quote
+    observed again in a later collector run is counted as a duplicate rather than
+    inserted as a second coverage row.
+    """
     return {
         key: record.get(key)
         for key in (
-            "schema_version",
-            "collector_run_id",
             "source_id",
-            "adapter_id",
-            "adapter_version",
             "source_event_id",
-            "canonical_game_id",
-            "league",
-            "season_label",
-            "competition_type",
-            "home_team_source",
-            "away_team_source",
-            "scheduled_tipoff_utc",
             "bookmaker_key",
             "market_key",
+            "quote_time_authority",
+            "quote_observed_at_utc",
+            "collector_fetched_at_utc",
             "home_price_decimal",
             "away_price_decimal",
-            "provider_snapshot_at_utc",
-            "bookmaker_last_update_utc",
-            "collector_fetched_at_utc",
-            "quote_observed_at_utc",
-            "quote_time_authority",
-            "point_in_time_eligible",
-            "mapping_state",
-            "source_rights_state",
-            "raw_payload_retained",
-            "raw_payload_sha256",
-            "quality_flags",
         )
     }
 

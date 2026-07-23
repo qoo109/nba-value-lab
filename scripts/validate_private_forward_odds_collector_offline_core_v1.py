@@ -99,6 +99,21 @@ def main() -> None:
         assert raw_payload_rows == 0
         assert quarantine_rows == 2
 
+        second = collect_offline(
+            [fixture["quotes"][0]],
+            collector_run_id="SYNTHETIC-OFFLINE-COLLECTOR-2026-07-24-002",
+            private_db_path=db_path,
+            started_at_utc="2026-07-24T00:05:00Z",
+        )
+        assert second.aggregate_qa["normalized_private_records"] == 0
+        assert second.aggregate_qa["duplicate_records"] == 1
+        connection = sqlite3.connect(str(db_path))
+        try:
+            assert connection.execute("SELECT COUNT(*) FROM quotes").fetchone()[0] == 3
+            assert connection.execute("SELECT COUNT(*) FROM collector_runs").fetchone()[0] == 2
+        finally:
+            connection.close()
+
     assert current["formal_state"] == "NO_COST_TIMESTAMPED_ODDS_PRIVATE_FORWARD_COLLECTOR_OFFLINE_CORE_VALIDATED"
     assert isinstance(current["recording_pr"], int) and current["recording_pr"] > 0
     assert current["offline_core"]["network_client_included"] is False
@@ -135,6 +150,7 @@ def main() -> None:
         "synthetic_contract_tests": 12,
         "sqlite_private_write_valid": True,
         "deduplication_valid": True,
+        "cross_run_deduplication_valid": True,
         "quarantine_valid": True,
         "unverified_timestamp_fail_closed": True,
         "aggregate_only_output_valid": True,

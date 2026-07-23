@@ -11,7 +11,7 @@ SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_OFFLINE_CORE_VALIDATED
 - Provider-neutral synthetic adapter and normalizer.
 - `collector_fetched_at_utc NEVER substitutes quote_observed_at_utc`.
 - Exact mapping and timestamp eligibility gates.
-- Deterministic hash, duplicate handling and quarantine.
+- Deterministic hash, same-run and cross-run duplicate handling, and quarantine.
 - Temporary private SQLite append-only storage.
 - Aggregate-only QA with no quote prices or quote-level identities.
 - Twelve synthetic contract tests.

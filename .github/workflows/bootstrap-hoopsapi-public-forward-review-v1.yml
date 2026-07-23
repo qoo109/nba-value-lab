@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]' && github.head_ref == 'research/hoopsapi-public-forward-review-v1'
+    if: ${{ github.actor != 'github-actions[bot]' && github.head_ref == 'research/hoopsapi-public-forward-review-v1' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

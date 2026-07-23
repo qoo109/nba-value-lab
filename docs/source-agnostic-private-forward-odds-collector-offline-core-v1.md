@@ -15,7 +15,7 @@ Formal Stake：`0`
 - exact mapping 與 point-in-time eligibility fail-closed；
 - deterministic SHA-256 row hash；
 - SQLite append-only private store；
-- duplicate 計數與 quarantine；
+- 同一 quote 跨 collector run 的 deterministic duplicate 計數與 quarantine；
 - aggregate-only QA。
 
 正式時間規則：
@@ -47,7 +47,7 @@ Offline core 只接受呼叫端提供的私人 SQLite path。CI 使用 temporary
 5. exact mapping gate；
 6. temporary private SQLite write；
 7. deterministic hash；
-8. duplicate 不重複計 coverage；
+8. duplicate 在同一或不同 collector run 都不重複計 coverage；
 9. post-tipoff quote quarantine；
 10. invalid decimal price quarantine；
 11. raw payload retention disabled；

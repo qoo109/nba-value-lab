@@ -23,7 +23,8 @@
     "aggregate_only_qa": true,
     "synthetic_contract_tests": 12,
     "provider_requests_executed": 0,
-    "real_quotes_retained": 0
+    "real_quotes_retained": 0,
+    "cross_run_deduplication": true
   },
   "offline_validation_contract": {
     "synthetic_contract_tests_expected": 12,
@@ -31,7 +32,9 @@
     "aggregate_only_artifact_required": true,
     "real_provider_payloads_allowed": false,
     "network_requests_allowed": false,
-    "market_metrics_allowed": false
+    "market_metrics_allowed": false,
+    "cross_run_deduplication_required": true,
+    "cross_run_validation_isolated": true
   },
   "qualified_for_historical_backfill": [],
   "qualified_for_existing_frozen_gold_point_in_time_join": [],

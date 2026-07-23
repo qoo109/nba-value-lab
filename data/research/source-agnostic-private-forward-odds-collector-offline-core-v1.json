@@ -17,7 +17,8 @@
     "deduplication": true,
     "quarantine": true,
     "temporary_private_sqlite_write": true,
-    "aggregate_only_qa": true
+    "aggregate_only_qa": true,
+    "cross_run_deduplication": true
   },
   "network_client_included": false,
   "secret_reader_included": false,

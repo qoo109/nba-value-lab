@@ -21,39 +21,33 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Extract implementation step
+      - name: Extract raw implementation block
         run: |
-          set +e
-          python -m pip install --quiet pyyaml > /tmp/extract.log 2>&1
-          python - <<'PY' >> /tmp/extract.log 2>&1
+          python - <<'PY'
           from pathlib import Path
-          import yaml
-          payload = yaml.safe_load(Path('.github/workflows/apply-g1-2-0-live-output-v1.yml').read_text(encoding='utf-8'))
-          steps = payload['jobs']['apply']['steps']
-          step = next(item for item in steps if item.get('name') == 'Implement G1.2.0 live output')
-          Path('/tmp/g120-step-1.sh').write_text('set -euo pipefail\n' + step['run'] + '\n', encoding='utf-8')
-          print(f"extracted {len(step['run'].splitlines())} implementation lines")
+          text = Path('.github/workflows/apply-g1-2-0-live-output-v1.yml').read_text(encoding='utf-8')
+          start = text.index('      - name: Implement G1.2.0 live output\n        run: |\n')
+          start = text.index('\n', start + len('      - name: Implement G1.2.0 live output\n        run: |')) + 1
+          end = text.index('\n      - name: Run local validation before commit\n', start)
+          block = text[start:end]
+          lines = [line[10:] if line.startswith('          ') else line for line in block.splitlines()]
+          Path('/tmp/g120-step-1.sh').write_text('set -euo pipefail\n' + '\n'.join(lines) + '\n', encoding='utf-8')
+          print(f'extracted {len(lines)} implementation lines')
           PY
-          echo $? > /tmp/extract.exit
-          tail -120 /tmp/extract.log
-          exit 0
       - name: Run implementation with diagnostic capture
-        if: hashFiles('/tmp/g120-step-1.sh') != ''
         run: |
           set +e
           bash /tmp/g120-step-1.sh > /tmp/g120-step-1.log 2>&1
           code=$?
           echo "$code" > /tmp/g120-step-1.exit
-          tail -160 /tmp/g120-step-1.log
+          tail -200 /tmp/g120-step-1.log
           exit 0
       - name: Upload bootstrap diagnostic
         uses: actions/upload-artifact@v4
         with:
           name: g1-2-0-bootstrap-diagnostic
           path: |
-            /tmp/extract.log
-            /tmp/extract.exit
             /tmp/g120-step-1.log
             /tmp/g120-step-1.exit
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 1

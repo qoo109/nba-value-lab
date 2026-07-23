@@ -8,19 +8,22 @@ on:
       - ".github/workflows/fetch-2025-26-fixture-results-proxy-v1.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   fetch-results:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
       - name: Download public 2025-26 fixture results
         run: |
           set -euo pipefail
-          mkdir -p /tmp/nbavl-fixture-results
+          mkdir -p data/research/tmp
           curl --fail --location --retry 3 \
-            --output /tmp/nbavl-fixture-results/nba-2025-UTC.csv \
+            --output data/research/tmp/nba-2025-UTC-proxy-input.csv \
             https://fixturedownload.com/download/nba-2025-UTC.csv
 
       - name: Validate result file
@@ -29,7 +32,7 @@ jobs:
           import csv
           from pathlib import Path
 
-          path = Path('/tmp/nbavl-fixture-results/nba-2025-UTC.csv')
+          path = Path('data/research/tmp/nba-2025-UTC-proxy-input.csv')
           assert path.exists() and path.stat().st_size > 50_000, path.stat().st_size
           with path.open(newline='', encoding='utf-8-sig') as handle:
               rows = list(csv.DictReader(handle))
@@ -40,10 +43,10 @@ jobs:
           print({'rows': len(rows), 'completed': len(completed), 'bytes': path.stat().st_size})
           PY
 
-      - name: Upload fixture result Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: nba-2025-26-fixture-results-proxy-input-v1
-          path: /tmp/nbavl-fixture-results/nba-2025-UTC.csv
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit temporary fixture input
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add data/research/tmp/nba-2025-UTC-proxy-input.csv
+          git commit -m "Add temporary 2025-26 fixture input for informal proxy test [skip ci]"
+          git push

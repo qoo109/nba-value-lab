@@ -1,0 +1,40 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v3",
+  "updated_at": "2026-07-24",
+  "formal_state": "NO_COST_TIMESTAMPED_ODDS_QUALIFICATION_BLOOMBET_PUBLIC_REVIEW_BLOCKED_AWAITING_SCHEMA_PROBE_APPROVAL",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v2.json",
+  "completed_source_reviews": [
+    {
+      "source_id": "kaggle_zachht_basketball_odds_history",
+      "result_path": "data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json",
+      "formal_result": "KAGGLE_ZACHHT_PINNACLE_BASKETBALL_ODDS_ARCHIVE_RESEARCH_BLOCKED",
+      "qualified": false
+    },
+    {
+      "source_id": "bloombet_free_api",
+      "result_path": "data/research/bloombet-free-api-public-review-v1.json",
+      "formal_result": "BLOOMBET_FREE_API_PUBLIC_REVIEW_BLOCKED",
+      "qualified": false
+    }
+  ],
+  "qualified_for_historical_backfill": [],
+  "qualified_for_point_in_time_join": [],
+  "active_request_design": {
+    "path": "data/research/bloombet-free-api-zero-cost-schema-probe-request-v1.json",
+    "request_id": "BLOOMBET-FREE-API-ZERO-COST-SCHEMA-PROBE-2026-07-24-001",
+    "approval_granted": false,
+    "execution_enabled": false,
+    "execution_count": 0,
+    "maximum_execution_count": 1,
+    "maximum_api_requests": 3
+  },
+  "next_unique_mainline": "BLOOMBET_FREE_API_ZERO_COST_SCHEMA_PROBE_AWAITING_EXPLICIT_USER_APPROVAL",
+  "required_user_decision": "APPROVE_OR_DECLINE_USER_CREATED_FREE_ACCOUNT_PRIVATE_SECRET_AND_MAX_THREE_SCHEMA_REQUESTS",
+  "account_creation_authorized": false,
+  "free_api_key_connection_authorized": false,
+  "quote_download_authorized": false,
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

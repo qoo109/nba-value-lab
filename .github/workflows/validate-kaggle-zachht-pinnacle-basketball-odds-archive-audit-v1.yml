@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json"
+      - "data/research/no-cost-timestamped-odds-source-qualification-current-status-v2.json"
       - "docs/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.md"
       - "scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py"
       - ".github/workflows/validate-kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.yml"
@@ -12,6 +13,7 @@ on:
       - main
     paths:
       - "data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json"
+      - "data/research/no-cost-timestamped-odds-source-qualification-current-status-v2.json"
       - "scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py"
 
 permissions:
@@ -36,6 +38,26 @@ jobs:
       - name: Validate aggregate archive audit
         run: python scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py
 
+      - name: Validate no-cost qualification status
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('data/research/no-cost-timestamped-odds-source-qualification-current-status-v2.json')
+          status = json.loads(path.read_text(encoding='utf-8'))
+          assert status['formal_state'] == 'NO_COST_TIMESTAMPED_ODDS_QUALIFICATION_CONTINUES_ZACHHT_RESEARCH_BLOCKED'
+          assert status['qualified_for_historical_backfill'] == []
+          assert status['promising_for_next_public_review'] == ['bloombet_free_api']
+          assert status['next_unique_mainline'] == 'BLOOMBET_FREE_API_PUBLIC_SCHEMA_TERMS_AND_TIMESTAMP_SEMANTICS_REVIEW_REQUIRED'
+          assert status['account_creation_authorized'] is False
+          assert status['free_api_key_connection_authorized'] is False
+          assert status['quote_download_authorized'] is False
+          assert status['market_backtest_unlocked'] is False
+          assert status['clv_ev_roi_unlocked'] is False
+          assert status['betting_edge_claim_allowed'] is False
+          assert status['formal_stake'] == 0
+          PY
+
       - name: Confirm no raw odds archive or quote rows were committed
         run: |
           test ! -e archive.zip
@@ -45,6 +67,7 @@ jobs:
           from pathlib import Path
           allowed = {
               Path('data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json'),
+              Path('data/research/no-cost-timestamped-odds-source-qualification-current-status-v2.json'),
               Path('docs/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.md'),
           }
           for path in allowed:

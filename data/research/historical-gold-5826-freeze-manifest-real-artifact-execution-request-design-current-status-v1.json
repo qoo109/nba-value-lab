@@ -32,7 +32,8 @@
     "validation_artifact_expires_at": "2026-08-06T06:59:00Z",
     "checks_failed": 0,
     "mutation_test_count_at_least": 30,
-    "all_mutation_tests_passed": true
+    "all_mutation_tests_passed": true,
+    "result_recording_pr": 142
   },
   "exact_artifact_binding": {
     "source_workflow_run_id": 29976204693,

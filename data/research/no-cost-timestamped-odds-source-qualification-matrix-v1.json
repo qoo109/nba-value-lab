@@ -1,0 +1,169 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-matrix-v1",
+  "updated_at": "2026-07-23",
+  "formal_state": "NO_COST_TIMESTAMPED_ODDS_SOURCE_QUALIFICATION_MATRIX_RESEARCH_ONLY",
+  "roadmap_parent": "TIMESTAMPED_BOOKMAKER_ODDS_REAL_OBSERVED_AT_DATA_ACQUISITION_REQUIRED",
+  "user_decision": "PAID_PILOT_NOT_APPROVED",
+  "objective": "Identify a lawful no-cost source that can provide auditable pre-tip two-sided NBA h2h quotes with bookmaker identity and real observation timestamps without lowering any existing gate.",
+  "qualification_gates": {
+    "cost_usd": 0,
+    "account_or_free_api_key_may_be_required": true,
+    "credit_card_or_paid_trial_allowed": false,
+    "historical_or_forward_timestamped_quotes_required": true,
+    "real_observed_at_required": true,
+    "bookmaker_identity_required": true,
+    "two_sided_same_bookmaker_h2h_required": true,
+    "strictly_pre_tip_required": true,
+    "future_snapshot_fill_allowed": false,
+    "opening_inference_allowed": false,
+    "fuzzy_matching_allowed": false,
+    "terms_or_access_control_bypass_allowed": false,
+    "public_quote_level_redistribution_allowed_without_rights": false
+  },
+  "candidates": [
+    {
+      "source_id": "bloombet_free_api",
+      "name": "BloomBet Free API",
+      "url": "https://getbloombet.com/",
+      "checked_at": "2026-07-23",
+      "claimed_free_limit": "500 requests per month",
+      "claimed_scope": "NBA and NFL live and historical moneyline odds from 15+ providers",
+      "card_required": false,
+      "bookmaker_identity_claimed": true,
+      "historical_access_claimed": true,
+      "observed_at_semantics_verified": false,
+      "opening_closing_identity_verified": false,
+      "coverage_years_verified": false,
+      "terms_review_complete": false,
+      "decision": "PROMISING_NEEDS_ZERO_COST_SCHEMA_AND_TERMS_PILOT",
+      "allowed_next_action": "Review official endpoint schema and terms, then perform at most three free metadata/schema requests only after the user creates a free account and connects the key privately.",
+      "market_metrics_allowed": false
+    },
+    {
+      "source_id": "kaggle_zachht_basketball_odds_history",
+      "name": "Kaggle Basketball-odds-history",
+      "url": "https://www.kaggle.com/datasets/zachht/wnba-odds-history",
+      "checked_at": "2026-07-23",
+      "claimed_cost": "free download",
+      "claimed_license": "CC0 on Kaggle dataset card",
+      "claimed_collection_start": "2025-08-24",
+      "claimed_collection_frequency": "scraping attempted every 7 minutes",
+      "claimed_scope": "global, NBA, college and WNBA basketball odds",
+      "dataset_size_observed": "approximately 95.79 MB and 550 files on the Kaggle data page",
+      "bookmaker_identity_verified": false,
+      "observation_timestamp_column_verified": false,
+      "nba_file_schema_verified": false,
+      "underlying_source_and_terms_verified": false,
+      "decision": "PROMISING_NEEDS_FILE_SCHEMA_AND_PROVENANCE_REVIEW",
+      "allowed_next_action": "Manually download the public dataset and inspect only the NBA files, notebook, timestamps, bookmaker fields and upstream provenance before any ingestion decision.",
+      "market_metrics_allowed": false
+    },
+    {
+      "source_id": "hoopsapi_free_forward_collection",
+      "name": "HoopsAPI Free",
+      "url": "https://hoopsapi.com/",
+      "checked_at": "2026-07-23",
+      "free_limit": "10 requests per day",
+      "free_scope": "current multi-provider moneyline, handicap and totals",
+      "historical_snapshots_on_free_tier": false,
+      "full_history_plan": "Data plan at EUR 249 per month",
+      "terms_raw_redistribution_allowed": false,
+      "decision": "FORWARD_COLLECTION_CANDIDATE_ONLY_NOT_HISTORICAL_BACKFILL",
+      "allowed_next_action": "Consider a later private forward-only collector that records fetched_at as observed_at, subject to a separate design and account approval.",
+      "market_metrics_allowed": false
+    },
+    {
+      "source_id": "balldontlie_nba_odds",
+      "name": "BALLDONTLIE NBA Betting Odds",
+      "url": "https://docs.balldontlie.io/",
+      "checked_at": "2026-07-23",
+      "free_odds_access": false,
+      "historical_opening_endpoint_tier": "GOAT",
+      "goat_price_usd_per_month": 39.99,
+      "decision": "REJECT_NO_COST_HISTORICAL_GATE",
+      "market_metrics_allowed": false
+    },
+    {
+      "source_id": "the_odds_api_historical_v4",
+      "name": "The Odds API Historical v4",
+      "url": "https://the-odds-api.com/liveapi/guides/v4/",
+      "checked_at": "2026-07-23",
+      "historical_endpoint_paid_only": true,
+      "decision": "REJECT_USER_DECLINED_PAID_PATH",
+      "market_metrics_allowed": false
+    },
+    {
+      "source_id": "kaggle_christophertreasure_nba_odds",
+      "name": "Kaggle Christopher Treasure NBA Odds Data",
+      "url": "https://www.kaggle.com/datasets/christophertreasure/nba-odds-data",
+      "checked_at": "2026-07-23",
+      "cost": "free download",
+      "bookmaker_identity_available": false,
+      "observed_at_available": false,
+      "opening_intraday_closing_identity_verified": false,
+      "existing_project_role": "closing forecast benchmark only",
+      "decision": "REJECT_POINT_IN_TIME_QUALIFICATION_RETAIN_CLOSING_BENCHMARK",
+      "market_metrics_allowed": false
+    },
+    {
+      "source_id": "kaggle_cviaxmiwnptr_nba_betting_data",
+      "name": "Kaggle NBA Betting Data October 2007 to June 2025",
+      "url": "https://www.kaggle.com/datasets/cviaxmiwnptr/nba-betting-data-october-2007-to-june-2024",
+      "checked_at": "2026-07-23",
+      "cost": "free download",
+      "bookmaker_identity_available": false,
+      "observed_at_available": false,
+      "opening_intraday_closing_identity_verified": false,
+      "existing_project_role": "role-limited legacy market archive",
+      "decision": "REJECT_POINT_IN_TIME_QUALIFICATION_RETAIN_LEGACY_QA_ROLE",
+      "market_metrics_allowed": false
+    },
+    {
+      "source_id": "oddsportal_manual_reference",
+      "name": "OddsPortal",
+      "url": "https://www.oddsportal.com/",
+      "checked_at": "2026-07-23",
+      "automation_allowed": false,
+      "auditable_observed_at_available": false,
+      "decision": "REJECT_AUTOMATED_ACQUISITION_MANUAL_QA_ONLY",
+      "market_metrics_allowed": false
+    },
+    {
+      "source_id": "covers_sports_odds_history_nba",
+      "name": "Covers Sports Odds History NBA",
+      "url": "https://www.covers.com/sportsoddshistory/nba-odds/",
+      "checked_at": "2026-07-23",
+      "nba_game_level_timestamped_h2h_available": false,
+      "scope": "futures, season wins and playoff series prices",
+      "decision": "REJECT_GAME_LEVEL_POINT_IN_TIME_GATE_RETAIN_FUTURES_REFERENCE",
+      "market_metrics_allowed": false
+    },
+    {
+      "source_id": "oddscrowd_current_comparison",
+      "name": "OddsCrowd NBA Odds Comparison",
+      "url": "https://oddscrowd.com/odds-comparison/basketball/leagues/nba/bet-types/moneyline-fullgame",
+      "checked_at": "2026-07-23",
+      "current_multi_book_display_claimed": true,
+      "historical_archive_verified": false,
+      "auditable_observed_at_verified": false,
+      "automation_terms_verified": false,
+      "decision": "MANUAL_CURRENT_REFERENCE_ONLY_PENDING_TERMS_AND_TIMESTAMP_PROOF",
+      "market_metrics_allowed": false
+    }
+  ],
+  "summary": {
+    "qualified_for_historical_backfill": [],
+    "promising_for_next_review": [
+      "bloombet_free_api",
+      "kaggle_zachht_basketball_odds_history"
+    ],
+    "forward_only_candidate": [
+      "hoopsapi_free_forward_collection"
+    ],
+    "market_backtest_unlocked": false,
+    "clv_ev_roi_unlocked": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_exact_task": "Inspect the ZachHT Kaggle NBA files and BloomBet free API schema/terms without paid access; qualify neither source until bookmaker identity, timestamps, two-sided quotes, coverage and rights all pass."
+}

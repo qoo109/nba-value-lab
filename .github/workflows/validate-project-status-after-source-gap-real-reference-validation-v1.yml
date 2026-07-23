@@ -11,7 +11,7 @@ on:
       - main
     paths:
       - "PROJECT_STATUS.md"
-      - "scripts/validate_project_status_after_source_gap_real-reference-validation-v1.py"
+      - "scripts/validate_project_status_after_source_gap_real_reference_validation_v1.py"
       - ".github/workflows/validate-project-status-after-source-gap-real-reference-validation-v1.yml"
 
 permissions:

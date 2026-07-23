@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "registry_version": "1.4.0",
-  "updated_at": "2026-07-23T23:30:00+08:00",
+  "registry_version": "1.5.0",
+  "updated_at": "2026-07-24T00:30:00+08:00",
   "active": {
     "V": {
       "engine_id": "V",
@@ -30,6 +30,13 @@
       "primary_after_activation": true,
       "previous_G1.1.1_role_after_activation": "parallel_control_shadow",
       "formal_stake_fraction": 0
+    },
+    "coordination": {
+      "coordination_id": "V3.1.1_X_G1.2.0-20260724",
+      "version": "1.3.0",
+      "config": "models/coordination/v3.1.1-g1.2.0/config.json",
+      "spec": "models/coordination/v3.1.1-g1.2.0/spec.md",
+      "activation_trigger": "first_2026_27_regular_season_game_with_complete_T60_data_gate"
     }
   },
   "coordination": {
@@ -53,7 +60,7 @@
   },
   "compatibility": {
     "frontend_min": "4.10.0",
-    "prediction_record_schema": "1.3.0",
+    "prediction_record_schema": "1.4.0",
     "requires_separate_engine_grades": true,
     "supports_multiple_main_selections": true
   },

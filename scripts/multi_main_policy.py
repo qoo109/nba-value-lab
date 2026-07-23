@@ -28,11 +28,15 @@ def load_active_configs(root: Path, manifest_path: Path) -> tuple[dict[str, Any]
 
 
 def record_rank(record: dict[str, Any]) -> tuple[Any, ...]:
+    ev_primary = record.get("g_decision_metric") == "conservative_ev"
+    primary_value = record.get("g_conservative_ev") if ev_primary else record.get("g_threshold_distance_pp")
+    safety_value = record.get("g_pp_guard_surplus_pp") if ev_primary else record.get("g_threshold_distance_pp")
     return (
         float(record.get("data_age_minutes") or 9999),
         -int(bool(record.get("injury_confirmed") and record.get("starters_confirmed") and record.get("minutes_limit_confirmed"))),
         (float(record.get("p_optimistic") or 0) - float(record.get("p_conservative") or 0)) * 100,
-        -float(record.get("g_threshold_distance_pp") if record.get("g_threshold_distance_pp") is not None else -999),
+        -float(primary_value if primary_value is not None else -999),
+        -float(safety_value if safety_value is not None else -999),
         float(record.get("model_market_gap_pp") or 999),
         -int(bool(record.get("reverse_path_resolved"))),
         -float(record.get("similar_case_stability_score") or 0),

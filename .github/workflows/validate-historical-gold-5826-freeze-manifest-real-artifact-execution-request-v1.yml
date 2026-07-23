@@ -15,7 +15,7 @@ on:
     paths:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-current-status-v1.json"
-      - "scripts/validate_historical_gold_5826_freeze_manifest_real-artifact-execution-request-v1.py"
+      - "scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_v1.py"
       - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.yml"
 
 permissions:
@@ -144,4 +144,4 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-# Rerun validation after correcting the policy Stake binding path.
+# Push-triggered rerun after correcting the policy Stake binding path.

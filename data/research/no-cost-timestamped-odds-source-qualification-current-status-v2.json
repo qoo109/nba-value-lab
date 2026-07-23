@@ -1,0 +1,40 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v2",
+  "updated_at": "2026-07-23",
+  "formal_state": "NO_COST_TIMESTAMPED_ODDS_QUALIFICATION_CONTINUES_ZACHHT_RESEARCH_BLOCKED",
+  "upstream_matrix": {
+    "path": "data/research/no-cost-timestamped-odds-source-qualification-matrix-v1.json",
+    "recording_pr": 148,
+    "merge_commit": "4c7a4baf1726ef9c6db22aa0fd8d8c9fd6b16d90"
+  },
+  "completed_file_audits": [
+    {
+      "source_id": "kaggle_zachht_basketball_odds_history",
+      "result_path": "data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json",
+      "formal_result": "KAGGLE_ZACHHT_PINNACLE_BASKETBALL_ODDS_ARCHIVE_RESEARCH_BLOCKED",
+      "qualified": false,
+      "blocking_reasons": [
+        "Pinnacle terms prohibit scraping and unauthorized automated access",
+        "notebook uses undetected-chromedriver and webdriver masking",
+        "scheduled tipoff is not stored",
+        "strict pre-tip and T-minus identity cannot be proven from the archive alone",
+        "archive does not overlap the frozen 2019-20 through 2023-24 Gold/OOF population"
+      ]
+    }
+  ],
+  "qualified_for_historical_backfill": [],
+  "promising_for_next_public_review": [
+    "bloombet_free_api"
+  ],
+  "forward_only_candidates_not_authorized": [
+    "hoopsapi_free_forward_collection"
+  ],
+  "next_unique_mainline": "BLOOMBET_FREE_API_PUBLIC_SCHEMA_TERMS_AND_TIMESTAMP_SEMANTICS_REVIEW_REQUIRED",
+  "account_creation_authorized": false,
+  "free_api_key_connection_authorized": false,
+  "quote_download_authorized": false,
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

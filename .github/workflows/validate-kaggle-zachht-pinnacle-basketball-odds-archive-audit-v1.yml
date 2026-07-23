@@ -1,0 +1,75 @@
+name: Validate Kaggle ZachHT Pinnacle archive audit v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json"
+      - "data/research/no-cost-timestamped-odds-source-qualification-current-status-v2.json"
+      - "docs/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.md"
+      - "scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py"
+      - ".github/workflows/validate-kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json"
+      - "data/research/no-cost-timestamped-odds-source-qualification-current-status-v2.json"
+      - "scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py
+
+      - name: Validate aggregate archive audit
+        run: python scripts/validate_kaggle_zachht_pinnacle_basketball_odds_archive_audit_v1.py
+
+      - name: Validate no-cost qualification status
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('data/research/no-cost-timestamped-odds-source-qualification-current-status-v2.json')
+          status = json.loads(path.read_text(encoding='utf-8'))
+          assert status['formal_state'] == 'NO_COST_TIMESTAMPED_ODDS_QUALIFICATION_CONTINUES_ZACHHT_RESEARCH_BLOCKED'
+          assert status['qualified_for_historical_backfill'] == []
+          assert status['promising_for_next_public_review'] == ['bloombet_free_api']
+          assert status['next_unique_mainline'] == 'BLOOMBET_FREE_API_PUBLIC_SCHEMA_TERMS_AND_TIMESTAMP_SEMANTICS_REVIEW_REQUIRED'
+          assert status['account_creation_authorized'] is False
+          assert status['free_api_key_connection_authorized'] is False
+          assert status['quote_download_authorized'] is False
+          assert status['market_backtest_unlocked'] is False
+          assert status['clv_ev_roi_unlocked'] is False
+          assert status['betting_edge_claim_allowed'] is False
+          assert status['formal_stake'] == 0
+          PY
+
+      - name: Confirm no raw odds archive or quote rows were committed
+        run: |
+          test ! -e archive.zip
+          test ! -e data/raw/kaggle-zachht-pinnacle
+          test ! -e data/normalized/kaggle-zachht-pinnacle
+          python - <<'PY'
+          from pathlib import Path
+          allowed = {
+              Path('data/research/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.json'),
+              Path('data/research/no-cost-timestamped-odds-source-qualification-current-status-v2.json'),
+              Path('docs/kaggle-zachht-pinnacle-basketball-odds-archive-audit-v1.md'),
+          }
+          for path in allowed:
+              assert path.stat().st_size < 100_000, path
+          PY

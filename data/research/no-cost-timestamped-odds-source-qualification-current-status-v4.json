@@ -3,6 +3,7 @@
   "updated_at": "2026-07-24",
   "formal_state": "NO_COST_TIMESTAMPED_ODDS_QUALIFICATION_FORWARD_COLLECTOR_DESIGN_READY",
   "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v3.json",
+  "recording_pr": 156,
   "user_decisions": {
     "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
     "paid_odds_path": "NOT_APPROVED"

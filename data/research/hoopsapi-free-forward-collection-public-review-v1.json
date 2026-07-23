@@ -1,0 +1,80 @@
+{
+  "schema_version": "hoopsapi-free-forward-collection-public-review-v1",
+  "reviewed_at": "2026-07-24",
+  "formal_state": "HOOPSAPI_FREE_PUBLIC_REVIEW_FORWARD_ONLY_CANDIDATE",
+  "source_id": "hoopsapi_free_forward_collection",
+  "official_pages_reviewed": [
+    "https://hoopsapi.com/",
+    "https://hoopsapi.com/docs",
+    "https://hoopsapi.com/legal/terms"
+  ],
+  "public_plan_claims": {
+    "free_price_eur_per_month": 0,
+    "free_requests_per_day": 10,
+    "credit_card_required": false,
+    "all_competitions_and_providers_claimed": true,
+    "moneyline_available": true,
+    "handicap_available": true,
+    "over_under_available": true,
+    "provider_refresh_minutes_claimed": 5,
+    "canonical_game_refresh_minutes_claimed": 15,
+    "full_history_and_snapshots_free_tier": false,
+    "full_history_and_snapshots_plan": "Data",
+    "full_history_and_snapshots_price_eur_per_month": 249
+  },
+  "public_schema_evidence": {
+    "games_endpoint_example_public": true,
+    "game_id_present": true,
+    "competition_present": true,
+    "home_team_present": true,
+    "away_team_present": true,
+    "scheduled_start_time_present": true,
+    "provider_object_present": true,
+    "same_provider_two_sided_moneyline_shape_present": true,
+    "provider_identity_list_endpoint_claimed": true,
+    "quote_level_observed_at_present_in_public_example": false,
+    "provider_last_update_present_in_public_example": false,
+    "historical_snapshot_endpoint_available_on_free_tier": false
+  },
+  "terms_findings": {
+    "terms_last_updated": "2026-04-13",
+    "account_required": true,
+    "api_key_required": true,
+    "own_purpose_license_claimed": true,
+    "raw_odds_resale_prohibited": true,
+    "raw_odds_redistribution_prohibited": true,
+    "raw_odds_sublicensing_prohibited": true,
+    "competing_odds_aggregation_service_prohibited": true,
+    "rate_limit_bypass_prohibited": true,
+    "public_raw_quote_artifact_allowed": false
+  },
+  "qualification_assessment": {
+    "zero_cost_forward_access": "PASS_PUBLIC_CLAIM_ONLY",
+    "historical_backfill": "FAIL_FREE_TIER_NO_HISTORY",
+    "stable_event_identity": "PASS_PUBLIC_SCHEMA_EXAMPLE",
+    "scheduled_tipoff": "PASS_PUBLIC_SCHEMA_EXAMPLE",
+    "same_provider_two_sided_h2h": "PASS_PUBLIC_SCHEMA_EXAMPLE",
+    "provider_observed_at": "FAIL_NOT_PRESENT_IN_PUBLIC_EXAMPLE",
+    "collector_fetched_at_as_observed_at": "DESIGN_REQUIRED",
+    "private_retention": "NEEDS_USER_ACCEPTED_TERMS_AND_RUNTIME_POLICY",
+    "public_redistribution": "FAIL_TERMS_PROHIBIT_RAW_REDISTRIBUTION",
+    "overall": "FORWARD_ONLY_CANDIDATE_NOT_AUTHORIZED"
+  },
+  "decision": {
+    "qualified_for_historical_backfill": false,
+    "qualified_for_existing_frozen_gold_point_in_time_join": false,
+    "qualified_for_market_backtest": false,
+    "structurally_promising_for_private_forward_collection": true,
+    "forward_collection_authorized": false,
+    "account_creation_authorized": false,
+    "api_key_connection_authorized": false,
+    "api_request_execution_authorized": false,
+    "raw_quote_publication_authorized": false,
+    "paid_data_plan_authorized": false,
+    "market_metrics_allowed": false,
+    "clv_ev_roi_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_exact_task": "Design a source-agnostic private forward odds collector that records collector-generated fetched_at as observed_at, preserves provider and scheduled tipoff identity, writes no secrets or raw quotes to public artifacts, and performs no provider request until separate user approval."
+}

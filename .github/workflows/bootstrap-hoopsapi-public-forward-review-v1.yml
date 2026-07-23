@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   patch:
-    if: ${{ github.actor != 'github-actions[bot]' && github.head_ref == 'research/hoopsapi-public-forward-review-v1' }}
+    if: ${{ github.head_ref == 'research/hoopsapi-public-forward-review-v1' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,76 +19,8 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: Patch PROJECT_STATUS for deferred BloomBet and HoopsAPI review
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('PROJECT_STATUS.md')
-          text = path.read_text(encoding='utf-8')
-
-          old_facts = """bloombet probe execution count: 0 / 1
-injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate"""
-          new_facts = """bloombet probe execution count: 0 / 1
-bloombet schema probe: DEFERRED BY USER / NO EXECUTION
-hoopsapi public review: COMPLETED / FORWARD-ONLY CANDIDATE
-hoopsapi free tier public claim: 10 requests per day / no card / current multi-provider markets
-hoopsapi historical snapshots on free tier: false
-hoopsapi provider observed_at in public example: false
-hoopsapi raw odds redistribution: PROHIBITED BY PUBLIC TERMS
-hoopsapi provider requests executed: 0
-injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate"""
-          if text.count(old_facts) != 1:
-              raise SystemExit('unexpected PROJECT_STATUS fact anchor count')
-          text = text.replace(old_facts, new_facts, 1)
-
-          old_mainline = 'BLOOMBET_FREE_API_ZERO_COST_SCHEMA_PROBE_AWAITING_EXPLICIT_USER_APPROVAL'
-          new_mainline = 'DESIGN_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_V1'
-          if text.count(old_mainline) < 1:
-              raise SystemExit('missing BloomBet sub-mainline anchor')
-          text = text.replace(old_mainline, new_mainline, 1)
-
-          old_status = 'BLOCKED — ACCOUNT CREATION AND PRIVATE API KEY CONNECTION NOT AUTHORIZED'
-          new_status = 'READY — DESIGN ONLY / NO ACCOUNT OR API KEY REQUIRED'
-          if text.count(old_status) != 1:
-              raise SystemExit('unexpected prerequisite status anchor count')
-          text = text.replace(old_status, new_status, 1)
-
-          evidence_anchor = '## Completed Evidence\n\n### BloomBet Free API public schema, terms and timestamp-semantics review'
-          evidence = """## Completed Evidence
-
-### HoopsAPI Free public forward-collection review
-
-```text
-formal state: HOOPSAPI_FREE_PUBLIC_REVIEW_FORWARD_ONLY_CANDIDATE
-free tier publicly claimed: 10 requests per day / no card
-current markets publicly claimed: moneyline / handicap / over-under
-public sample game_id and start_time: present
-same-provider two-sided moneyline shape: present
-quote-level observed_at in public example: false
-full history and snapshots on free tier: false
-paid Data plan required for history: EUR 249 per month / not authorized
-raw odds resale or redistribution: prohibited by public Terms
-qualified for historical backfill: false
-qualified for frozen-Gold point-in-time join: false
-structurally promising for private forward collection: true
-forward collection authorized: false
-account created: false
-API key connected: false
-provider requests executed: 0
-market metrics executed: false
-formal Stake: 0
-```
-
-HoopsAPI cannot repair the historical timestamped-odds gap because free access exposes current markets rather than full historical snapshots. Its public shape is sufficient to justify a provider-neutral private forward-collector design, but collector-generated `fetched_at` must remain explicitly distinct from a provider-origin timestamp. No account, key or request execution is authorized.
-
-### BloomBet Free API public schema, terms and timestamp-semantics review"""
-          if text.count(evidence_anchor) != 1:
-              raise SystemExit('unexpected completed evidence anchor count')
-          text = text.replace(evidence_anchor, evidence, 1)
-
-          path.write_text(text, encoding='utf-8')
-          PY
+      - name: Patch PROJECT_STATUS
+        run: python scripts/patch_hoopsapi_project_status_v1.py
 
       - name: Commit PROJECT_STATUS update
         run: |

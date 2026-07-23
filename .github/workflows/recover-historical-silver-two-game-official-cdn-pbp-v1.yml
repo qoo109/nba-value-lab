@@ -1,4 +1,4 @@
-name: Recover Historical Silver two-game official CDN PBP v1
+name: Recover Historical Silver two-game official CDN PBP v2
 
 on:
   push:
@@ -6,11 +6,13 @@ on:
       - recover-two-2023-24-official-cdn-pbp-games
     paths:
       - "scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py"
+      - "scripts/recover_historical_silver_two_game_official_cdn_pbp_v2.py"
       - ".github/workflows/recover-historical-silver-two-game-official-cdn-pbp-v1.yml"
       - "docs/historical-silver-two-game-official-cdn-pbp-recovery-v1.md"
   pull_request:
     paths:
       - "scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py"
+      - "scripts/recover_historical_silver_two_game_official_cdn_pbp_v2.py"
       - ".github/workflows/recover-historical-silver-two-game-official-cdn-pbp-v1.yml"
       - "docs/historical-silver-two-game-official-cdn-pbp-recovery-v1.md"
   workflow_dispatch:
@@ -19,7 +21,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: historical-silver-two-game-official-cdn-pbp-recovery-v1-${{ github.event.pull_request.number || github.ref }}
+  group: historical-silver-two-game-official-cdn-pbp-recovery-v2-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -37,12 +39,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Compile recovery runner
-        run: python -m py_compile scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py
+      - name: Compile recovery runners
+        run: |
+          python -m py_compile scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py
+          python -m py_compile scripts/recover_historical_silver_two_game_official_cdn_pbp_v2.py
 
       - name: Run offline parser self-test
         run: |
-          python scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py \
+          python scripts/recover_historical_silver_two_game_official_cdn_pbp_v2.py \
             --self-test \
             --output-root recovery-self-test
 
@@ -50,7 +54,7 @@ jobs:
         id: recovery
         run: |
           set +e
-          python scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py \
+          python scripts/recover_historical_silver_two_game_official_cdn_pbp_v2.py \
             --output-root recovery-output
           CODE=$?
           echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
@@ -63,17 +67,20 @@ jobs:
           import json
           from pathlib import Path
 
-          path = Path("recovery-output/artifacts/two-game-official-cdn-pbp-recovery-result-v1.json")
+          path = Path("recovery-output/artifacts/two-game-official-cdn-pbp-recovery-result-v2.json")
           assert path.is_file(), "aggregate recovery result missing"
           result = json.loads(path.read_text())
           print(json.dumps(result, indent=2, sort_keys=True))
           assert result["formal_state"] == (
               "HISTORICAL_SILVER_2023_24_TWO_GAME_OFFICIAL_CDN_PBP_RECOVERY_PASS"
           ), result
+          assert result["recovery_version"] == "v2", result
           assert result["recovery"]["target_games"] == 2, result
           assert result["recovery"]["recovered_games"] == 2, result
+          assert result["recovery"]["recovered_game_dates"] == 2, result
           assert result["recovery"]["team_feature_rows_added"] == 4, result
           assert result["recovery"]["remaining_games_without_team_features"] == 0, result
+          assert result["recovery"]["remaining_recovered_games_without_dates"] == 0, result
           assert result["recovery"]["duplicate_team_feature_rows"] == 0, result
           assert result["final_outputs"]["silver_games"] == 5826, result
           assert result["final_outputs"]["silver_team_game_features"] == 11652, result
@@ -100,7 +107,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: historical-silver-gold-two-game-official-cdn-recovery-v1
+          name: historical-silver-gold-two-game-official-cdn-recovery-v2
           path: recovery-output/artifacts/
           if-no-files-found: error
           retention-days: 14

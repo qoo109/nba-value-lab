@@ -1,0 +1,49 @@
+name: Bootstrap G1.2.0 status sync from PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]' && github.head_ref == 'docs/sync-g1-2-0-status-v1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Execute bootstrap patch from tracked workflow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          import textwrap
+
+          source = Path('.github/workflows/bootstrap-g1-2-0-status-sync.yml')
+          text = source.read_text(encoding='utf-8')
+          start = "      - name: Patch status documents and add validation\n        run: |\n"
+          end = "\n      - name: Commit synchronized status"
+          if start not in text or end not in text:
+              raise SystemExit('bootstrap run block markers not found')
+          block = text.split(start, 1)[1].split(end, 1)[0]
+          shell_script = textwrap.dedent(block)
+          subprocess.run(shell_script, shell=True, check=True, executable='/bin/bash')
+          Path('.github/workflows/bootstrap-g1-2-0-status-sync-pr.yml').unlink()
+          Path('.github/status-sync-trigger').unlink(missing_ok=True)
+          PY
+
+      - name: Commit synchronized status
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Sync G1.2.0 status documentation and QA"
+          git push origin HEAD:${{ github.head_ref }}

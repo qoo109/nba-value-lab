@@ -36,22 +36,11 @@ jobs:
           lines[0] = lines[0].replace("python - <<'PY'", "python - <<'G120PY'", 1)
           lines[-1] = 'G120PY'
           script = '\n'.join(lines) + '\n'
-          old = '''          def replace_once(path: str, old: str, new: str) -> None:
-              target = ROOT / path
-              text = target.read_text(encoding='utf-8')
-              if text.count(old) != 1:
-                  raise RuntimeError(f'{path}: expected one match, got {text.count(old)} for {old!r}')
-              target.write_text(text.replace(old, new), encoding='utf-8')'''
-          new = '''          def replace_once(path: str, old: str, new: str) -> None:
-              target = ROOT / path
-              text = target.read_text(encoding='utf-8')
-              count = text.count(old)
-              if count < 1:
-                  raise RuntimeError(f'{path}: expected at least one match for {old!r}')
-              target.write_text(text.replace(old, new), encoding='utf-8')'''
-          if old not in script:
-              raise SystemExit('replace_once helper block not found')
-          script = script.replace(old, new, 1)
+          needle = 'if text.count(old) != 1:'
+          if needle not in script:
+              raise SystemExit('replace_once count check not found')
+          script = script.replace(needle, 'if text.count(old) < 1:', 1)
+          script = script.replace("expected one match, got {text.count(old)}", "expected at least one match, got {text.count(old)}", 1)
           Path('/tmp/g120-step-1.sh').write_text('set -euo pipefail\n' + script, encoding='utf-8')
           print(f'extracted {len(lines)} implementation lines')
           PY

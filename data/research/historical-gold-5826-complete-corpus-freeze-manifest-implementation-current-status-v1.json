@@ -1,0 +1,88 @@
+{
+  "schema_version": "historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1",
+  "updated_at": "2026-07-23",
+  "formal_state": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_DESIGN_VALIDATED_READY_FOR_SYNTHETIC_VALIDATION",
+  "design_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-MANIFEST-IMPLEMENTATION-DESIGN-2026-07-23-001",
+  "design_path": "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-design-v1.json",
+  "policy_binding": {
+    "policy_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-POLICY-2026-07-23-001",
+    "policy_recording_pr": 135,
+    "policy_recording_merge_commit": "b6edf9b8acaf51b1287d6976c6e42cac056dc726",
+    "policy_validation_run_id": 29978555275,
+    "policy_validation_artifact_id": 8552326235,
+    "policy_validation_artifact_digest": "sha256:96fdcee4b39f6ca03b9597677aa01db2e47b15d6d8f780f2e4525be978dd3722"
+  },
+  "governed_corpus": {
+    "gold_matchup_features": 5826,
+    "gold_team_game_features": 11652,
+    "remaining_source_exceptions": 0,
+    "point_in_time_violations": 0,
+    "seasons": [
+      "2019-20",
+      "2020-21",
+      "2021-22",
+      "2022-23",
+      "2023-24"
+    ]
+  },
+  "implementation_state": {
+    "design_validated": true,
+    "implementation_module_created": false,
+    "synthetic_sqlite_tests_executed": false,
+    "real_artifact_execution_workflow_created": false,
+    "real_artifact_execution_approved": false,
+    "real_artifact_execution_count": 0,
+    "semantic_manifest_created": false,
+    "corpus_frozen": false,
+    "repeat_execution_allowed": false
+  },
+  "design_controls": {
+    "read_only_sqlite_required": true,
+    "policy_driven_column_exclusions_required": true,
+    "type_tagged_canonical_json_lines_required": true,
+    "incremental_sha256_required": true,
+    "row_level_output_forbidden": true,
+    "aggregate_manifest_maximum_bytes": 1048576,
+    "pre_and_post_database_sha256_equality_required": true,
+    "python_standard_library_only": true
+  },
+  "remaining_data_dependencies": {
+    "required_before_synthetic_implementation": [],
+    "required_before_real_artifact_execution": [
+      "VALIDATED_SYNTHETIC_IMPLEMENTATION",
+      "SEPARATE_EXPLICIT_REAL_ARTIFACT_EXECUTION_APPROVAL",
+      "UNEXPIRED_EXACT_ARTIFACT_8551587005_OR_NEW_GOVERNED_REBUILD_WITH_COMPLETE_SOURCE_HASH_MANIFEST"
+    ],
+    "required_before_market_backtest": [
+      "LEGAL_AUDITABLE_TIMESTAMPED_BOOKMAKER_ODDS_WITH_RELIABLE_OBSERVED_AT"
+    ],
+    "required_before_injury_aware_holdout": [
+      "AT_LEAST_100_INDEPENDENT_FEATURE_READY_GAMES",
+      "POINT_IN_TIME_TEAM_SUBMISSION_COMPLETENESS_LEDGER"
+    ]
+  },
+  "boundaries": {
+    "design_only": true,
+    "real_artifact_downloaded": false,
+    "real_gold_database_read": false,
+    "database_modified": false,
+    "raw_rows_emitted": false,
+    "row_hashes_emitted": false,
+    "game_ids_emitted": false,
+    "dates_emitted": false,
+    "team_codes_emitted": false,
+    "semantic_manifest_created": false,
+    "corpus_freeze_executed": false,
+    "market_backtest_executed": false,
+    "model_training_or_retraining_executed": false,
+    "injury_candidate_activated": false,
+    "betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_research_step": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_READY_FOR_SYNTHETIC_VALIDATION",
+  "ready_for_synthetic_implementation": true,
+  "ready_for_real_artifact_execution": false,
+  "ready_for_market_backtest": false,
+  "ready_for_model_retraining": false,
+  "formal_stake": 0
+}

@@ -1,0 +1,100 @@
+name: Validate Historical Gold 5826 freeze manifest implementation design v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-design-v1.json"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json"
+      - "docs/historical-gold-5826-complete-corpus-freeze-manifest-implementation-design-v1.md"
+      - "scripts/validate_historical_gold_5826_freeze_manifest_implementation_design_v1.py"
+      - ".github/workflows/validate-historical-gold-5826-freeze-manifest-implementation-design-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-design-v1.json"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json"
+      - "scripts/validate_historical_gold_5826_freeze_manifest_implementation_design_v1.py"
+      - ".github/workflows/validate-historical-gold-5826-freeze-manifest-implementation-design-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-implementation-design:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile implementation design validator
+        run: python -m py_compile scripts/validate_historical_gold_5826_freeze_manifest_implementation_design_v1.py
+
+      - name: Validate design, upstream bindings, and mutation tests
+        run: |
+          mkdir -p validation-output
+          python scripts/validate_historical_gold_5826_freeze_manifest_implementation_design_v1.py \
+            --design data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-design-v1.json \
+            --current-status data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
+            --policy-status data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json \
+            --recovery-status data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json \
+            --self-test \
+            --output validation-output/historical-gold-5826-freeze-manifest-implementation-design-validation-v1.json
+
+      - name: Enforce design-only boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path(
+              "validation-output/historical-gold-5826-freeze-manifest-implementation-design-validation-v1.json"
+          ).read_text())
+          assert report["checks_failed"] == 0, report
+          assert report["formal_state"] == "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_IMPLEMENTATION_DESIGN_VALID", report
+          assert report["gold_matchups"] == 5826, report
+          assert report["gold_team_rows"] == 11652, report
+          assert report["remaining_exceptions"] == 0, report
+          assert report["design_only"] is True, report
+          assert report["ready_for_synthetic_implementation"] is True, report
+          assert report["ready_for_real_artifact_execution"] is False, report
+          assert report["ready_for_market_backtest"] is False, report
+          assert report["ready_for_model_retraining"] is False, report
+          assert report["formal_stake"] == 0, report
+          assert all(report["self_test"].values()), report
+          PY
+
+      - name: Confirm upstream policy, recovery evidence, status, and builders unchanged
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
+            PROJECT_STATUS.md \
+            data/research/historical-gold-5826-complete-corpus-freeze-policy-v1.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json \
+            data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-result-v2.json \
+            data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json \
+            scripts/build_historical_gold.py \
+            scripts/build_historical_gold_multiseason.py \
+            scripts/historical_gold_schema.py
+
+      - name: Verify no implementation executor, real workflow, or manifest exists
+        run: |
+          test ! -e scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py
+          test ! -e .github/workflows/build-historical-gold-5826-complete-corpus-freeze-manifest-v1.yml
+          test ! -e data/research/historical-gold-5826-complete-corpus-freeze-manifest-v1.json
+
+      - name: Upload aggregate design validation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-5826-freeze-manifest-implementation-design-validation-v1
+          path: validation-output/historical-gold-5826-freeze-manifest-implementation-design-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

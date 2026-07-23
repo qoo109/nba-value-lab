@@ -1,6 +1,9 @@
 name: Diagnose V5 UI PR152
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/diagnose-v5-ui-pr152.yml"
   push:
     branches:
       - model/g1.2.0-ev-primary-activation

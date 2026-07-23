@@ -1,0 +1,113 @@
+name: Validate Historical Gold 5826 freeze manifest real Artifact request design v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json"
+      - "docs/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.md"
+      - "scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_design_v1.py"
+      - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.json"
+      - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json"
+      - "scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_design_v1.py"
+      - ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-request-design:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile request design validator
+        run: python -m py_compile scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_design_v1.py
+
+      - name: Validate design, exact bindings, synthetic fixture, and mutations
+        run: |
+          mkdir -p validation-output
+          python scripts/validate_historical_gold_5826_freeze_manifest_real_artifact_execution_request_design_v1.py \
+            --design data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.json \
+            --current-status data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json \
+            --implementation-status data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
+            --synthetic-result data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json \
+            --recovery-status data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json \
+            --policy data/research/historical-gold-5826-complete-corpus-freeze-policy-v1.json \
+            --builder scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py \
+            --self-test \
+            --output validation-output/historical-gold-5826-freeze-manifest-real-artifact-request-design-validation-v1.json
+
+      - name: Enforce design-only result
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path(
+              "validation-output/historical-gold-5826-freeze-manifest-real-artifact-request-design-validation-v1.json"
+          ).read_text())
+          assert report["checks_failed"] == 0, report
+          assert report["formal_state"] == "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_REAL_ARTIFACT_REQUEST_DESIGN_VALID", report
+          assert report["artifact_id"] == 8551587005, report
+          assert report["artifact_expires_at"] == "2026-08-06T03:14:00Z", report
+          assert report["synthetic_tests_passed"] == 20, report
+          assert report["request_design_validated"] is True, report
+          assert report["request_draft_created"] is False, report
+          assert report["approval_created"] is False, report
+          assert report["execution_workflow_created"] is False, report
+          assert report["real_artifact_downloaded"] is False, report
+          assert report["real_artifact_read"] is False, report
+          assert report["ready_for_request_draft"] is True, report
+          assert report["ready_for_explicit_user_approval"] is False, report
+          assert report["ready_for_real_artifact_execution"] is False, report
+          assert report["ready_for_corpus_freeze_claim"] is False, report
+          assert report["ready_for_market_backtest"] is False, report
+          assert report["ready_for_model_retraining"] is False, report
+          assert report["formal_stake"] == 0, report
+          assert len(report["self_test"]) >= 30, report
+          assert all(report["self_test"].values()), report
+          PY
+
+      - name: Confirm upstream evidence and implementation unchanged
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
+            PROJECT_STATUS.md \
+            data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json \
+            data/research/historical-gold-5826-complete-corpus-freeze-policy-v1.json \
+            data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json \
+            scripts/build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py \
+            scripts/test_build_historical_gold_5826_complete_corpus_freeze_manifest_v1.py \
+            scripts/build_historical_gold_multiseason.py \
+            scripts/historical_gold_schema.py
+
+      - name: Confirm no request, approval, executor, download, or manifest exists
+        run: |
+          test ! -e data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.json
+          test ! -e data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json
+          test ! -e .github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml
+          test ! -e data/research/historical-gold-5826-complete-corpus-freeze-manifest-v1.json
+          ! grep -F "uses: actions/download-artifact@" .github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.yml
+
+      - name: Upload aggregate request-design validation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-gold-5826-freeze-manifest-real-artifact-request-design-validation-v1
+          path: validation-output/historical-gold-5826-freeze-manifest-real-artifact-request-design-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

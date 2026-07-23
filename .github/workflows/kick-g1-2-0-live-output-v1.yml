@@ -29,11 +29,10 @@ jobs:
           markers = [
               ('      - name: Implement G1.2.0 live output\n        run: |\n', '\n      - name: Run local validation before commit\n'),
               ('      - name: Run local validation before commit\n        run: |\n', '\n      - name: Commit implementation\n'),
-              ('      - name: Commit implementation\n        run: |\n', None),
           ]
           for number, (start_marker, end_marker) in enumerate(markers, start=1):
               start = text.index(start_marker) + len(start_marker)
-              end = text.index(end_marker, start) if end_marker else len(text)
+              end = text.index(end_marker, start)
               block = text[start:end]
               lines = [line[10:] if line.startswith('          ') else line for line in block.splitlines()]
               script = '\n'.join(lines) + '\n'
@@ -66,5 +65,10 @@ jobs:
           PY
       - name: Validate
         run: bash /tmp/g120-step-2.sh
-      - name: Commit and push implementation
-        run: bash /tmp/g120-step-3.sh
+      - name: Commit and push verified implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PROJECT_STATUS.md data docs js models schemas scripts
+          git commit -m "Implement G1.2.0 EV-primary live output"
+          git push origin HEAD:implement/g1-2-0-live-output-v1

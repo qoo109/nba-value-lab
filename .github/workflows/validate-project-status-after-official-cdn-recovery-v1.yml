@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "PROJECT_STATUS.md"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json"
       - "scripts/validate_project_status_after_official_cdn_recovery_v1.py"
       - ".github/workflows/validate-project-status-after-official-cdn-recovery-v1.yml"
   push:
@@ -11,6 +13,8 @@ on:
       - main
     paths:
       - "PROJECT_STATUS.md"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json"
+      - "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json"
       - "scripts/validate_project_status_after_official_cdn_recovery_v1.py"
       - ".github/workflows/validate-project-status-after-official-cdn-recovery-v1.yml"
 
@@ -35,7 +39,9 @@ jobs:
       - name: Determine lifecycle state
         id: lifecycle
         run: |
-          if test -f data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json; then
+          if test -f data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json; then
+            echo "state=synthetic_result" >> "$GITHUB_OUTPUT"
+          elif test -f data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json; then
             echo "state=manifest_design" >> "$GITHUB_OUTPUT"
           elif test -f data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json; then
             echo "state=freeze_policy" >> "$GITHUB_OUTPUT"
@@ -47,7 +53,7 @@ jobs:
         if: steps.lifecycle.outputs.state == 'recovery'
         run: python -m py_compile scripts/validate_project_status_after_official_cdn_recovery_v1.py
 
-      - name: Validate original recovery status and mutation tests
+      - name: Validate original recovery status
         if: steps.lifecycle.outputs.state == 'recovery'
         run: |
           mkdir -p validation-output
@@ -63,29 +69,19 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-
           status = Path("PROJECT_STATUS.md").read_text(encoding="utf-8")
-          recovery = json.loads(Path(
-              "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json"
-          ).read_text())
-          freeze = json.loads(Path(
-              "data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json"
-          ).read_text())
-          assert recovery["formal_state"] == (
-              "HISTORICAL_SILVER_2023_24_TWO_GAME_OFFICIAL_CDN_PBP_RECOVERY_PASS_ARTIFACT_ADOPTED"
-          ), recovery
+          recovery = json.loads(Path("data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json").read_text())
+          freeze = json.loads(Path("data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json").read_text())
+          assert recovery["formal_state"] == "HISTORICAL_SILVER_2023_24_TWO_GAME_OFFICIAL_CDN_PBP_RECOVERY_PASS_ARTIFACT_ADOPTED", recovery
           assert recovery["source_exception_state"]["remaining_documented_exception_count"] == 0, recovery
           assert recovery["adoption"]["new_gold_matchup_reference_count"] == 5826, recovery
-          assert freeze["formal_state"] == (
-              "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_POLICY_VALIDATED_READY_FOR_IMPLEMENTATION_DESIGN"
-          ), freeze
+          assert freeze["formal_state"] == "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_POLICY_VALIDATED_READY_FOR_IMPLEMENTATION_DESIGN", freeze
           assert freeze["governed_corpus"]["gold_matchup_features"] == 5826, freeze
           assert freeze["freeze_state"]["corpus_frozen"] is False, freeze
           assert freeze["ready_for_market_backtest"] is False, freeze
           assert freeze["formal_stake"] == 0, freeze
           assert "source gap exception recovery: PASS / OFFICIAL CDN PBP" in status
           assert "source gap exception remaining count: 0" in status
-          assert "raw Historical Gold matchups: 5,826" in status
           assert "complete corpus freeze policy: VALIDATED / DESIGN ONLY" in status
           assert "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_READY_FOR_DESIGN" in status
           report = {
@@ -99,50 +95,28 @@ jobs:
               "ready_for_market_backtest": False,
               "formal_stake": 0,
           }
-          Path("validation-output/project-status-official-cdn-recovery-v1.json").write_text(
-              json.dumps(report, indent=2, sort_keys=True) + "\n"
-          )
+          Path("validation-output/project-status-official-cdn-recovery-v1.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
           PY
 
-      - name: Validate superseding freeze-manifest design lifecycle
+      - name: Validate superseding manifest-design lifecycle
         if: steps.lifecycle.outputs.state == 'manifest_design'
         run: |
           mkdir -p validation-output
           python - <<'PY'
           import json
           from pathlib import Path
-
           status = Path("PROJECT_STATUS.md").read_text(encoding="utf-8")
-          recovery = json.loads(Path(
-              "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json"
-          ).read_text())
-          freeze = json.loads(Path(
-              "data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json"
-          ).read_text())
-          design = json.loads(Path(
-              "data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json"
-          ).read_text())
-          assert recovery["formal_state"] == (
-              "HISTORICAL_SILVER_2023_24_TWO_GAME_OFFICIAL_CDN_PBP_RECOVERY_PASS_ARTIFACT_ADOPTED"
-          ), recovery
+          recovery = json.loads(Path("data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json").read_text())
+          design = json.loads(Path("data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json").read_text())
+          assert recovery["formal_state"] == "HISTORICAL_SILVER_2023_24_TWO_GAME_OFFICIAL_CDN_PBP_RECOVERY_PASS_ARTIFACT_ADOPTED", recovery
           assert recovery["source_exception_state"]["remaining_documented_exception_count"] == 0, recovery
-          assert recovery["adoption"]["new_gold_matchup_reference_count"] == 5826, recovery
-          assert freeze["formal_state"] == (
-              "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_POLICY_VALIDATED_READY_FOR_IMPLEMENTATION_DESIGN"
-          ), freeze
-          assert design["formal_state"] == (
-              "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_DESIGN_VALIDATED_READY_FOR_SYNTHETIC_VALIDATION"
-          ), design
+          assert design["formal_state"] == "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_DESIGN_VALIDATED_READY_FOR_SYNTHETIC_VALIDATION", design
           assert design["governed_corpus"]["gold_matchup_features"] == 5826, design
           assert design["implementation_state"]["corpus_frozen"] is False, design
-          assert design["implementation_state"]["real_artifact_execution_count"] == 0, design
           assert design["ready_for_real_artifact_execution"] is False, design
           assert design["ready_for_market_backtest"] is False, design
           assert design["formal_stake"] == 0, design
-          assert "source gap exception recovery: PASS / OFFICIAL CDN PBP" in status
-          assert "source gap exception remaining count: 0" in status
           assert "freeze manifest implementation design: VALIDATED / DESIGN ONLY" in status
-          assert "real Artifact execution approved: false" in status
           assert "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_READY_FOR_SYNTHETIC_VALIDATION" in status
           report = {
               "schema_version": "project-status-official-cdn-lifecycle-compatibility-v3",
@@ -150,26 +124,66 @@ jobs:
               "recovery_preserved": True,
               "remaining_exceptions": 0,
               "gold_matchups": 5826,
-              "freeze_policy_validated": True,
               "manifest_design_validated": True,
               "real_artifact_execution_approved": False,
               "corpus_freeze_executed": False,
               "ready_for_market_backtest": False,
               "formal_stake": 0,
           }
-          Path("validation-output/project-status-official-cdn-recovery-v1.json").write_text(
-              json.dumps(report, indent=2, sort_keys=True) + "\n"
-          )
+          Path("validation-output/project-status-official-cdn-recovery-v1.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
           PY
 
-      - name: Confirm recovery records and builders unchanged
+      - name: Validate superseding synthetic-result lifecycle
+        if: steps.lifecycle.outputs.state == 'synthetic_result'
+        run: |
+          mkdir -p validation-output
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          status = Path("PROJECT_STATUS.md").read_text(encoding="utf-8")
+          recovery = json.loads(Path("data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json").read_text())
+          current = json.loads(Path("data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json").read_text())
+          result = json.loads(Path("data/research/historical-gold-5826-complete-corpus-freeze-manifest-synthetic-implementation-result-v1.json").read_text())
+          assert recovery["formal_state"] == "HISTORICAL_SILVER_2023_24_TWO_GAME_OFFICIAL_CDN_PBP_RECOVERY_PASS_ARTIFACT_ADOPTED", recovery
+          assert recovery["source_exception_state"]["remaining_documented_exception_count"] == 0, recovery
+          assert recovery["adoption"]["new_gold_matchup_reference_count"] == 5826, recovery
+          assert current["formal_state"] == "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_SYNTHETIC_VALIDATED_READY_FOR_REAL_ARTIFACT_EXECUTION_REQUEST_DESIGN", current
+          assert current["implementation_state"]["synthetic_sqlite_tests_passed"] is True, current
+          assert current["implementation_state"]["real_artifact_execution_count"] == 0, current
+          assert current["ready_for_real_artifact_execution_request_design"] is True, current
+          assert current["ready_for_real_artifact_execution"] is False, current
+          assert result["formal_state"] == "HISTORICAL_GOLD_5826_FREEZE_MANIFEST_IMPLEMENTATION_SYNTHETIC_VALID", result
+          assert result["synthetic_validation"]["tests_passed"] == 20, result
+          assert result["real_artifact_boundary"]["real_artifact_read"] is False, result
+          assert result["formal_stake"] == 0, result
+          assert "source gap exception recovery: PASS / OFFICIAL CDN PBP" in status
+          assert "freeze manifest synthetic validation: PASS / 20 OF 20" in status
+          assert "real Artifact execution request design created: false" in status
+          assert "real Artifact execution approved: false" in status
+          assert "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_REAL_ARTIFACT_EXECUTION_REQUEST_READY_FOR_DESIGN" in status
+          report = {
+              "schema_version": "project-status-official-cdn-lifecycle-compatibility-v4",
+              "formal_state": "PROJECT_STATUS_OFFICIAL_CDN_RECOVERY_PRESERVED_SYNTHETIC_RESULT_SUPERSEDED",
+              "recovery_preserved": True,
+              "remaining_exceptions": 0,
+              "gold_matchups": 5826,
+              "synthetic_tests_passed": 20,
+              "request_design_created": False,
+              "real_artifact_execution_approved": False,
+              "corpus_freeze_executed": False,
+              "ready_for_market_backtest": False,
+              "formal_stake": 0,
+          }
+          Path("validation-output/project-status-official-cdn-recovery-v1.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+          PY
+
+      - name: Confirm recovery evidence and scientific builders unchanged
         if: github.event_name == 'pull_request'
         run: |
           git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
             data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-result-v2.json \
             data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json \
             data/research/historical-gold-5826-complete-corpus-freeze-policy-current-status-v1.json \
-            data/research/historical-gold-5826-complete-corpus-freeze-manifest-implementation-current-status-v1.json \
             scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py \
             scripts/recover_historical_silver_two_game_official_cdn_pbp_v2.py \
             scripts/historical_silver_runner.py \

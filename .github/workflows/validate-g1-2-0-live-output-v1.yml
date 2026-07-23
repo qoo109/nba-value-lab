@@ -1,0 +1,109 @@
+name: Validate G1.2.0 live output v1
+
+on:
+  pull_request:
+    paths:
+      - "models/g1/1.2.0/**"
+      - "models/coordination/v3.1.1-g1.2.0/**"
+      - "models/manifest.json"
+      - "schemas/prediction-record.schema.json"
+      - "scripts/g1_2_0_runtime.py"
+      - "scripts/lock_t60_snapshot_g120.py"
+      - "scripts/recheck_t5_snapshot_g120.py"
+      - "scripts/lock_t60_snapshot_v410.py"
+      - "scripts/recheck_t5_snapshot_v410.py"
+      - "scripts/multi_main_policy.py"
+      - "scripts/test_g1_2_0_live_output.py"
+      - "scripts/test_frontend_model_decisions.js"
+      - "scripts/validate_g1_2_0_live_output_v1.py"
+      - "scripts/validate_model_registry.py"
+      - "js/v4-11-g1-2-0-ev-primary.js"
+      - "js/v4-init.js"
+      - "data/fixtures/*g1-2-0*"
+      - ".github/workflows/validate-g1-2-0-live-output-v1.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "models/coordination/v3.1.1-g1.2.0/**"
+      - "models/manifest.json"
+      - "schemas/prediction-record.schema.json"
+      - "scripts/g1_2_0_runtime.py"
+      - "scripts/lock_t60_snapshot_g120.py"
+      - "scripts/recheck_t5_snapshot_g120.py"
+      - "scripts/lock_t60_snapshot_v410.py"
+      - "scripts/recheck_t5_snapshot_v410.py"
+      - "scripts/multi_main_policy.py"
+      - "scripts/test_g1_2_0_live_output.py"
+      - "scripts/test_frontend_model_decisions.js"
+      - "scripts/validate_g1_2_0_live_output_v1.py"
+      - "scripts/validate_model_registry.py"
+      - "js/v4-11-g1-2-0-ev-primary.js"
+      - "js/v4-init.js"
+      - "data/fixtures/*g1-2-0*"
+      - ".github/workflows/validate-g1-2-0-live-output-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile implementation
+        run: |
+          python -m py_compile \
+            scripts/g1_2_0_runtime.py \
+            scripts/lock_t60_snapshot_g120.py \
+            scripts/recheck_t5_snapshot_g120.py \
+            scripts/validate_g1_2_0_live_output_v1.py
+      - name: Validate contract
+        run: |
+          mkdir -p /tmp/g120-live
+          python scripts/validate_g1_2_0_live_output_v1.py \
+            | tee /tmp/g120-live/contract.json
+          python scripts/validate_model_registry.py \
+            | tee /tmp/g120-live/model-registry.txt
+      - name: Run T-60 and T-5 executable fixtures
+        run: |
+          python scripts/test_g1_2_0_live_output.py \
+            | tee /tmp/g120-live/executable-tests.txt
+      - name: Validate frontend
+        run: |
+          node --check js/v4-11-g1-2-0-ev-primary.js
+          node --check js/v4-init.js
+          node scripts/test_frontend_model_decisions.js \
+            | tee /tmp/g120-live/frontend-tests.txt
+      - name: Confirm repository hygiene and boundaries
+        run: |
+          test ! -d scripts/__pycache__
+          test ! -e .github/workflows/apply-g1-2-0-live-output-v1.yml
+          test ! -e .github/workflows/kick-g1-2-0-live-output-v1.yml
+          python - <<'PY' | tee /tmp/g120-live/boundaries.json
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path('models/manifest.json').read_text(encoding='utf-8'))
+          config = json.loads(Path('models/g1/1.2.0/config.json').read_text(encoding='utf-8'))
+          assert manifest['active']['G']['version'] == '1.1.1'
+          assert manifest['scheduled_next']['G']['version'] == '1.2.0'
+          assert config['publication']['formal_stake_fraction'] == 0
+          assert config['publication']['allow_formal_stake'] is False
+          assert config['activation']['automatic_real_money_activation'] is False
+          print(json.dumps({
+              'offseason_active_G': manifest['active']['G']['revision_id'],
+              'scheduled_G': manifest['scheduled_next']['G']['revision_id'],
+              'formal_stake': 0,
+              'real_money_execution_authorized': False,
+          }, indent=2))
+          PY
+      - name: Upload aggregate QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1-2-0-live-output-validation-v1
+          path: /tmp/g120-live
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,38 @@
+name: Sync PROJECT_STATUS after Gold 5826 execution
+
+on:
+  pull_request:
+    paths:
+      - "scripts/sync_project_status_after_gold_5826_execution.py"
+      - ".github/workflows/sync-project-status-after-gold-5826-execution.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-project-status:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          token: ${{ github.token }}
+
+      - name: Patch PROJECT_STATUS
+        run: python scripts/sync_project_status_after_gold_5826_execution.py
+
+      - name: Commit synchronized status
+        run: |
+          if git diff --quiet -- PROJECT_STATUS.md; then
+            echo "PROJECT_STATUS already synchronized"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PROJECT_STATUS.md
+          git commit -m "Synchronize PROJECT_STATUS after Gold 5826 execution"
+          git push origin "HEAD:${{ github.event.pull_request.head.ref }}"

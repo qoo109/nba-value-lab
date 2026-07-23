@@ -33,9 +33,14 @@ jobs:
           if start not in text or end not in text:
               raise SystemExit('bootstrap run block markers not found')
           block = text.split(start, 1)[1].split(end, 1)[0]
-          shell_script = textwrap.dedent(block)
+          lines = textwrap.dedent(block).splitlines()
+          excluded_prefixes = (
+              'Path(".github/workflows/validate-g1-2-0-status-sync-v1.yml")',
+              'Path(".github/workflows/bootstrap-g1-2-0-status-sync.yml")',
+          )
+          filtered = [line for line in lines if not line.startswith(excluded_prefixes)]
+          shell_script = "\n".join(filtered) + "\n"
           subprocess.run(shell_script, shell=True, check=True, executable='/bin/bash')
-          Path('.github/workflows/bootstrap-g1-2-0-status-sync-pr.yml').unlink()
           Path('.github/status-sync-trigger').unlink(missing_ok=True)
           PY
 

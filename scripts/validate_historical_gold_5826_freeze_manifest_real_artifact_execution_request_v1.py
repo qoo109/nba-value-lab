@@ -457,7 +457,7 @@ def validate_request(
     expect(policy, "immutable_evidence_bindings.adopted_artifact_id", ARTIFACT_ID)
     expect(policy, "immutable_evidence_bindings.adopted_artifact_digest", ARTIFACT_DIGEST)
     expect(policy, "immutable_evidence_bindings.historical_gold_sha256", GOLD_SHA)
-    expect(policy, "formal_stake", 0)
+    expect(policy, "decision.formal_stake", 0)
 
     expect(recovery, "formal_state", RECOVERY_STATE)
     expect(recovery, "source_exception_state.remaining_documented_exception_count", 0)

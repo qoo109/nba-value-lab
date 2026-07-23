@@ -40,6 +40,7 @@ assert review["decision"]["api_request_execution_authorized"] is False
 assert review["decision"]["formal_stake"] == 0
 
 assert current["formal_state"] == "NO_COST_TIMESTAMPED_ODDS_QUALIFICATION_FORWARD_COLLECTOR_DESIGN_READY"
+assert current["recording_pr"] == 156
 assert current["user_decisions"]["bloombet_schema_probe"] == "DEFERRED_BY_USER_NO_EXECUTION"
 assert current["next_unique_mainline"] == "DESIGN_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_V1"
 assert current["next_task_requires_account_or_api_key"] is False
@@ -72,6 +73,7 @@ for text, label in ((doc, "documentation"), (handoff, "handoff")):
 report = {
     "schema_version": 1,
     "formal_state": "HOOPSAPI_FREE_PUBLIC_FORWARD_REVIEW_VALID",
+    "recording_pr": 156,
     "public_review_valid": True,
     "bloombet_probe_deferred": True,
     "historical_backfill_qualified": False,

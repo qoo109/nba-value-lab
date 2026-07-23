@@ -16,7 +16,8 @@ candidate formal result: REFERENCE COVERAGE COMPLETE / MARKET EVALUATION NOT AUT
 Gold/Silver reconciliation result: SOURCE GAP RESOLVED VIA OFFICIAL CDN PBP RECOVERY
 reference coverage: 5,826 / 5,826
 2023-24 Silver games: 1,230
-2023-24 games without team features: 2
+2023-24 games without team features before recovery: 2
+2023-24 games without team features after recovery: 0
 root-cause implementation: VALIDATED
 root-cause request: EXECUTION ATTEMPTED / BLOCKED BY RUNNER FIELD-PATH BUG
 real root-cause execution count: 1 / 1

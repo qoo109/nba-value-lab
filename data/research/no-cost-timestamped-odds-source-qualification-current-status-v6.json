@@ -1,0 +1,54 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v6",
+  "updated_at": "2026-07-24",
+  "formal_state": "NO_COST_TIMESTAMPED_ODDS_PRIVATE_FORWARD_COLLECTOR_OFFLINE_CORE_VALIDATED",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v5.json",
+  "recording_pr": 159,
+  "user_decisions": {
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED"
+  },
+  "offline_core": {
+    "path": "data/research/source-agnostic-private-forward-odds-collector-offline-core-v1.json",
+    "module": "scripts/private_forward_odds_collector_v1.py",
+    "formal_state": "SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_OFFLINE_CORE_VALIDATED",
+    "offline_only": true,
+    "synthetic_inputs_only": true,
+    "network_client_included": false,
+    "secret_reader_included": false,
+    "scheduler_included": false,
+    "temporary_private_sqlite_write": true,
+    "deterministic_deduplication": true,
+    "quarantine": true,
+    "aggregate_only_qa": true,
+    "synthetic_contract_tests": 12,
+    "provider_requests_executed": 0,
+    "real_quotes_retained": 0
+  },
+  "offline_validation_contract": {
+    "synthetic_contract_tests_expected": 12,
+    "temporary_private_sqlite_required": true,
+    "aggregate_only_artifact_required": true,
+    "real_provider_payloads_allowed": false,
+    "network_requests_allowed": false,
+    "market_metrics_allowed": false
+  },
+  "qualified_for_historical_backfill": [],
+  "qualified_for_existing_frozen_gold_point_in_time_join": [],
+  "forward_only_candidates_not_authorized": [
+    "hoopsapi_free_forward_collection"
+  ],
+  "next_unique_mainline": "DESIGN_FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_V1",
+  "next_task_requires_account_or_api_key": false,
+  "next_task_executes_provider_requests": false,
+  "next_task_allows_only_design_artifacts": true,
+  "account_creation_authorized": false,
+  "api_key_connection_authorized": false,
+  "provider_request_execution_authorized": false,
+  "real_quote_ingestion_authorized": false,
+  "raw_quote_publication_authorized": false,
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

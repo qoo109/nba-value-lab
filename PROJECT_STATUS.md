@@ -180,6 +180,12 @@ forward collector fetched_at substitution: PROHIBITED
 forward collector public quote rows: PROHIBITED
 forward collector network client: false
 forward collector provider requests executed: 0
+forward odds collector offline core: VALIDATED / SYNTHETIC ONLY
+forward collector offline SQLite writes: TEMPORARY PRIVATE ONLY
+forward collector offline synthetic tests: 12 / PASS
+forward collector offline network client: false
+forward collector offline provider requests executed: 0
+forward collector offline real quotes retained: 0
 injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate
 team submission completeness ledger: REQUIRED BEFORE FORMAL INJURY HOLDOUT
 silver builder repair required: false
@@ -210,18 +216,45 @@ TIMESTAMPED_BOOKMAKER_ODDS_REAL_OBSERVED_AT_DATA_ACQUISITION_REQUIRED
 Active prerequisite sub-mainline:
 
 ```text
-IMPLEMENT_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_OFFLINE_CORE_V1
+DESIGN_FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_V1
 ```
 
 Current prerequisite status:
 
 ```text
-READY — OFFLINE IMPLEMENTATION ONLY / NETWORK DISABLED
+READY — DESIGN ONLY / NO PROVIDER EXECUTION
 ```
 
 The complete governed five-season Historical Gold corpus is now bound by a validated semantic freeze manifest. The one-time request was consumed successfully and its executor was retired. Market backtesting remains blocked because real timestamped bookmaker odds with `observed_at`, bookmaker provenance and opening/closing identity have not been acquired or separately authorized. Injury-model activation, model retraining, betting-edge claims and Stake above `0` remain unauthorized.
 
 ## Completed Evidence
+
+### Source-agnostic private forward odds collector offline core
+
+```text
+formal state: SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_OFFLINE_CORE_VALIDATED
+implementation: OFFLINE / SYNTHETIC ONLY
+canonical module: scripts/private_forward_odds_collector_v1.py
+timestamp authority validation: ENABLED
+collector_fetched_at may substitute provider observed_at: false
+deterministic row hash: ENABLED
+duplicate handling: PASS
+quarantine: PASS
+temporary private SQLite write: PASS
+synthetic contract tests: 12 / PASS
+HTTP client included: false
+secret reader included: false
+scheduler included: false
+provider requests executed: 0
+real provider payloads processed: 0
+real quotes retained: 0
+public quote rows emitted: 0
+market metrics executed: false
+formal Stake: 0
+next unique sub-mainline: DESIGN_FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_V1
+```
+
+The offline core validates timestamp authority, exact mapping eligibility, deterministic deduplication, quarantine and private SQLite writes using synthetic inputs only. It exposes only aggregate QA and cannot connect to a provider or unlock market evaluation.
 
 ### Source-agnostic private forward odds collector design
 
@@ -242,7 +275,7 @@ provider requests executed: 0
 real quotes retained: 0
 market metrics executed: false
 formal Stake: 0
-next unique sub-mainline: IMPLEMENT_SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_OFFLINE_CORE_V1
+next unique sub-mainline: DESIGN_FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_V1
 ```
 
 The design preserves three distinct timestamp concepts: provider snapshot time, bookmaker last-update time and collector fetch time. Collector fetch time proves only receipt and can never be promoted to canonical `observed_at`. Rows with unverified provider-origin time remain private forward observations and are not point-in-time eligible.

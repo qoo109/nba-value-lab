@@ -163,7 +163,8 @@ def main() -> int:
     require(order_positions == sorted(order_positions), "Dashboard sections are not in decision-candidate-market-explanation order")
     require('document.documentElement.dataset.uiVersion = "5.3.18"' in dashboard, "V5.3.18 UI version is missing")
     require("方法與資料說明" in dashboard, "Grouped explanation heading is missing")
-    require("if (market?.matches(\"details\")) market.open = true" in dashboard, "Market table must open by default")
+    require("function unwrapMarketDisclosure" in dashboard, "Market disclosure unwrapping is missing")
+    require('market.dataset.disclosureRemoved = "true"' in dashboard, "Market table is not kept permanently visible")
 
     bootstrap = (ROOT / "js/v5/bootstrap.js").read_text(encoding="utf-8")
     for module in ("performanceDashboard", "performanceTrends", "researchTimeline", "marketTrends", "router"):

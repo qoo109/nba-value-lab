@@ -102,7 +102,14 @@ jobs:
           test ! -e data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-approval-v1.json
           test ! -e .github/workflows/run-approved-historical-gold-5826-freeze-manifest-real-artifact-execution-once-v1.yml
           test ! -e data/research/historical-gold-5826-complete-corpus-freeze-manifest-v1.json
-          ! grep -F "uses: actions/download-artifact@" .github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.yml
+          python - <<'PY'
+          from pathlib import Path
+          text = Path(
+              ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-v1.yml"
+          ).read_text(encoding="utf-8")
+          forbidden = "uses:" + " actions/download-artifact@"
+          assert forbidden not in text, forbidden
+          PY
 
       - name: Upload aggregate request-design validation Artifact
         uses: actions/upload-artifact@v4

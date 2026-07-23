@@ -21,43 +21,39 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Extract raw implementation block
+      - name: Extract bootstrap steps
         run: |
           python - <<'PY'
           from pathlib import Path
           text = Path('.github/workflows/apply-g1-2-0-live-output-v1.yml').read_text(encoding='utf-8')
-          start = text.index('      - name: Implement G1.2.0 live output\n        run: |\n')
-          start = text.index('\n', start + len('      - name: Implement G1.2.0 live output\n        run: |')) + 1
-          end = text.index('\n      - name: Run local validation before commit\n', start)
-          block = text[start:end]
-          lines = [line[10:] if line.startswith('          ') else line for line in block.splitlines()]
-          if not lines or "python - <<'PY'" not in lines[0] or lines[-1].strip() != 'PY':
-              raise SystemExit('unexpected outer bootstrap heredoc')
-          lines[0] = lines[0].replace("python - <<'PY'", "python - <<'G120PY'", 1)
-          lines[-1] = 'G120PY'
-          script = '\n'.join(lines) + '\n'
-          needle = 'if text.count(old) != 1:'
-          if needle not in script:
-              raise SystemExit('replace_once count check not found')
-          script = script.replace(needle, 'if text.count(old) < 1:', 1)
-          script = script.replace("expected one match, got {text.count(old)}", "expected at least one match, got {text.count(old)}", 1)
-          Path('/tmp/g120-step-1.sh').write_text('set -euo pipefail\n' + script, encoding='utf-8')
-          print(f'extracted {len(lines)} implementation lines')
+          markers = [
+              ('      - name: Implement G1.2.0 live output\n        run: |\n', '\n      - name: Run local validation before commit\n'),
+              ('      - name: Run local validation before commit\n        run: |\n', '\n      - name: Commit implementation\n'),
+              ('      - name: Commit implementation\n        run: |\n', None),
+          ]
+          for number, (start_marker, end_marker) in enumerate(markers, start=1):
+              start = text.index(start_marker) + len(start_marker)
+              end = text.index(end_marker, start) if end_marker else len(text)
+              block = text[start:end]
+              lines = [line[10:] if line.startswith('          ') else line for line in block.splitlines()]
+              script = '\n'.join(lines) + '\n'
+              if number == 1:
+                  if "python - <<'PY'" not in lines[0] or lines[-1].strip() != 'PY':
+                      raise SystemExit('unexpected outer bootstrap heredoc')
+                  lines[0] = lines[0].replace("python - <<'PY'", "python - <<'G120PY'", 1)
+                  lines[-1] = 'G120PY'
+                  script = '\n'.join(lines) + '\n'
+                  needle = 'if text.count(old) != 1:'
+                  if needle not in script:
+                      raise SystemExit('replace_once count check not found')
+                  script = script.replace(needle, 'if text.count(old) < 1:', 1)
+                  script = script.replace("expected one match, got {text.count(old)}", "expected at least one match, got {text.count(old)}", 1)
+              Path(f'/tmp/g120-step-{number}.sh').write_text('set -euo pipefail\n' + script, encoding='utf-8')
+              print(f'extracted step {number}: {len(lines)} lines')
           PY
-      - name: Run implementation with diagnostic capture
-        run: |
-          set +e
-          bash /tmp/g120-step-1.sh > /tmp/g120-step-1.log 2>&1
-          code=$?
-          echo "$code" > /tmp/g120-step-1.exit
-          tail -200 /tmp/g120-step-1.log
-          exit 0
-      - name: Upload bootstrap diagnostic
-        uses: actions/upload-artifact@v4
-        with:
-          name: g1-2-0-bootstrap-diagnostic
-          path: |
-            /tmp/g120-step-1.log
-            /tmp/g120-step-1.exit
-          if-no-files-found: error
-          retention-days: 1
+      - name: Implement
+        run: bash /tmp/g120-step-1.sh
+      - name: Validate
+        run: bash /tmp/g120-step-2.sh
+      - name: Commit and push implementation
+        run: bash /tmp/g120-step-3.sh

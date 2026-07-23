@@ -1,0 +1,103 @@
+{
+  "aggregate_scope": {
+    "covered_or_documented_count": 5826,
+    "documented_source_gap_exception_count": 2,
+    "gold_dataset_complete": false,
+    "raw_gold_matchup_count": 5824,
+    "raw_missing_gold_for_silver": 2,
+    "raw_silver_game_count": 5826,
+    "silver_builder_repair_required": false,
+    "unexplained_missing_count_after_documentation": 0
+  },
+  "artifact_evidence": {
+    "artifact_archive_digest": null,
+    "artifact_id": null,
+    "artifact_json_file": "real-reference-validation-execution-result-v1.json",
+    "artifact_metadata_unavailable_not_guessed": true,
+    "artifact_name": "historical-silver-source-gap-exception-integration-real-reference-validation-execution-v1",
+    "artifact_payload_received_from_user": true,
+    "artifact_payload_sha256": "sha256:048149cd058c74c1ab441a99f3a4eec0972668500e469ff81ce663b3e5264340",
+    "artifact_payload_size_bytes": 4349
+  },
+  "boundaries": {
+    "betting_edge_claim": false,
+    "clv_ev_roi_drawdown": false,
+    "coverage_analyzer_modified": false,
+    "cross_source_audit_rerun": false,
+    "database_access": false,
+    "formal_stake": 0,
+    "formal_stake_above_zero": false,
+    "market_backtest": false,
+    "model_training_or_retraining": false,
+    "network_access": false,
+    "opening_or_closing_semantics": false,
+    "raw_csv_access": false,
+    "raw_files_emitted": false,
+    "raw_rows_emitted": 0,
+    "raw_rows_read": false,
+    "silver_or_gold_write": false,
+    "source_archive_access": false,
+    "transformer_modified": false
+  },
+  "downstream_state": {
+    "documented_exception_count_excluded_from_gold_eligibility": 2,
+    "eligible_gold_matchup_corpus_count": 5824,
+    "ready_for_betting_edge_claim": false,
+    "ready_for_cross_source_audit_rerun": false,
+    "ready_for_eligible_corpus_freeze_policy_design": true,
+    "ready_for_gold_rebuild": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false
+  },
+  "execution_evidence": {
+    "event": "workflow_dispatch",
+    "head_sha": "596ade65cd26cb148f8a3b9a0ffa6092b16a6737",
+    "job_conclusion": "success",
+    "job_name": "execute-once",
+    "observed_artifact_count": 1,
+    "observed_duration_seconds": 20,
+    "observed_via_user_screenshot": true,
+    "ref": "refs/heads/main",
+    "workflow_file": ".github/workflows/run-approved-historical-silver-source-gap-exception-integration-real-reference-validation-once-v1.yml",
+    "workflow_name": "Run approved Historical Silver source gap exception real-reference validation once v1",
+    "workflow_run_id": null,
+    "workflow_run_id_unavailable_not_guessed": true,
+    "workflow_run_number": 2
+  },
+  "execution_lifecycle": {
+    "automatic_dispatch_allowed": false,
+    "execution_count": 1,
+    "execution_enabled": false,
+    "maximum_execution_count": 1,
+    "real_reference_validation_executed": true,
+    "repeat_execution_allowed": false,
+    "request_consumed": true,
+    "workflow_dispatch_only": true
+  },
+  "formal_stake": 0,
+  "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_REAL_REFERENCE_VALIDATION_PASS_CONSUMED",
+  "immutable_bindings": {
+    "implementation_file_sha256": "sha256:c4bd7ccb05bcf78747a7210e0eefad083d599de2ca8b0d44c9c455006f084cbc",
+    "input_file_sha256": {
+      "aggregate_coverage_report": "sha256:14110a23c37c2d4da01020b3f656509e70d8a79816ecc49670172ee6ed8de98e",
+      "exception_manifest": "sha256:3a777eab04e85234c7b0718f33818eee3adfd6f2ad6d5315c21763be9691ff87",
+      "integration_policy": "sha256:28bf5fe4257a745652699fe827b96d0d0e10b74dda95874e1dfd6a6d6a8002fb"
+    },
+    "request_file_sha256": "sha256:192a06862fe830027686d149d36572b4ad76ea609f489c6a3d540b7ea4b27e97"
+  },
+  "next_research_step": "HISTORICAL_GOLD_5824_ELIGIBLE_CORPUS_FREEZE_AND_EXCEPTION_EXCLUSION_POLICY_READY_FOR_DESIGN",
+  "request_id": "HISTORICAL-SILVER-2023-24-SOURCE-GAP-EXCEPTION-INTEGRATION-REAL-REFERENCE-VALIDATION-2026-07-22-001",
+  "result_payload_sha256": "sha256:048149cd058c74c1ab441a99f3a4eec0972668500e469ff81ce663b3e5264340",
+  "result_payload_size_bytes": 4349,
+  "result_record": "data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-result-v1.json",
+  "schema_version": "historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-current-status-v3",
+  "updated_at": "2026-07-22",
+  "validation_result": {
+    "checks_failed": 0,
+    "documented_exception_state": "HISTORICAL_GOLD_SILVER_COVERAGE_DOCUMENTED_SOURCE_EXCEPTION_RECOGNIZED",
+    "documented_source_gap_exception_code": "SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT",
+    "execution_result_formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_REAL_REFERENCE_VALIDATION_PASS",
+    "failed_checks": [],
+    "recognition_gate_passed": true
+  }
+}

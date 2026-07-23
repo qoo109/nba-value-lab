@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-07-23T03:28:25.589217Z",
+    "generated_at": "2026-07-23T06:39:38.130023Z",
     "overall_status": "ok",
     "formal_model_publishable": false,
     "reason": "Schedule/status layer only; injuries, market consensus and model calibration are not yet connected."
@@ -11,7 +11,7 @@
       "url": "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_1.json",
       "status": "error",
       "observed_at": null,
-      "fetched_at": "2026-07-23T03:28:25.589233Z",
+      "fetched_at": "2026-07-23T06:39:38.130038Z",
       "data_age_hours": null,
       "stale": true,
       "raw_hash": null,
@@ -23,11 +23,11 @@
       "source_id": "espn_scoreboard_range",
       "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=YYYYMMDD",
       "status": "ok",
-      "observed_at": "2026-07-23T03:28:25.674494Z",
-      "fetched_at": "2026-07-23T03:28:25.674494Z",
+      "observed_at": "2026-07-23T06:39:38.230611Z",
+      "fetched_at": "2026-07-23T06:39:38.230611Z",
       "data_age_hours": 0.0,
       "stale": false,
-      "raw_hash": "9ca028169d61faea6d8285b85829f7b18f680423b52cab3db62aa596a9d33934",
+      "raw_hash": "9bc6e5c34aa03bad8228c641c093f5b8af4ea945f56626f09dcf6d414440cc30",
       "adapter_version": "nba-free-data-v2",
       "notes": "Free public JSON fallback; terms and schema must be monitored.",
       "error": "No events returned"
@@ -36,11 +36,11 @@
       "source_id": "nba_live_scoreboard_s3",
       "url": "https://nba-prod-us-east-1-mediaops-stats.s3.amazonaws.com/NBA/liveData/scoreboard/todaysScoreboard_00.json",
       "status": "ok",
-      "observed_at": "2026-07-22T11:28:21.282100Z",
-      "fetched_at": "2026-07-23T03:28:25.837276Z",
-      "data_age_hours": 16.0,
+      "observed_at": "2026-07-23T02:39:35.393500Z",
+      "fetched_at": "2026-07-23T06:39:38.677571Z",
+      "data_age_hours": 4.0,
       "stale": false,
-      "raw_hash": "7703458c39ebacd8d5d866c47d2fad87f94f14d530e3b04ac04e1420a32dcad1",
+      "raw_hash": "690cd22fc98a5b5843db619742e1c7654172b6fc826968a41722a802f1c19cfc",
       "adapter_version": "nba-free-data-v2",
       "notes": "Official same-day status fallback; may be stale during offseason.",
       "error": null

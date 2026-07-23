@@ -1,0 +1,36 @@
+name: Validate BloomBet free API public review v1
+
+on:
+  pull_request:
+    paths:
+      - PROJECT_STATUS.md
+      - data/research/bloombet-free-api-public-review-v1.json
+      - data/research/bloombet-free-api-zero-cost-schema-probe-request-v1.json
+      - data/research/no-cost-timestamped-odds-source-qualification-current-status-v3.json
+      - docs/bloombet-free-api-public-review-v1.md
+      - docs/handoffs/nba_value_lab_handoff_2026-07-24_bloombet_public_review.md
+      - scripts/validate_bloombet_free_api_public_review_v1.py
+      - .github/workflows/validate-bloombet-free-api-public-review-v1.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_bloombet_free_api_public_review_v1.py
+
+      - name: Validate public review and approval gate
+        run: python scripts/validate_bloombet_free_api_public_review_v1.py
+
+      - name: Upload aggregate QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: bloombet-free-api-public-review-validation-v1
+          path: build/bloombet-free-api-public-review-validation-v1.json
+          retention-days: 14

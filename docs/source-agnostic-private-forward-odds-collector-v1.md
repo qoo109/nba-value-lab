@@ -2,6 +2,7 @@
 
 更新日期：2026-07-24  
 狀態：**Design validated / Offline implementation not started**  
+Formal state：`SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_DESIGN_VALIDATED`  
 Formal Stake：`0`
 
 ## 目的

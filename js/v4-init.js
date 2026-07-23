@@ -69,6 +69,10 @@ function loadV46Coordination() {
   return loadScriptOnce("./js/v4-6-model-coordination.js?v=5.2", "data-v46-coordination", () => typeof vDecision === "function" && typeof gDecision === "function");
 }
 
+function loadG120Runtime() {
+  return loadScriptOnce("./js/v4-11-g1-2-0-ev-primary.js?v=1.0", "data-g120-runtime", () => typeof window.g120Decision === "function");
+}
+
 function loadV410MultiMain() {
   return loadScriptOnce("./js/v4-10-multi-main.js?v=5.2", "data-v410-multi-main", () => typeof renderMultiMainSummary === "function");
 }
@@ -131,6 +135,7 @@ function updateFallbackShell() {
 async function init() {
   loadReadabilityStyles();
   await loadV46Coordination();
+  await loadG120Runtime();
   await loadModelRegistry();
   await loadV410MultiMain();
   await loadV47ResearchLog();

@@ -3,7 +3,7 @@
   "$id": "https://qoo109.github.io/nba-value-lab/schemas/prediction-record.schema.json",
   "title": "NBA Value Lab Compact Prediction and Price Evaluation Record",
   "description": "Compact append-only history envelope. Prediction fields are immutable; price-only changes create a new price_evaluation_id.",
-  "schema_version": "1.3.0",
+  "schema_version": "1.4.0",
   "type": "object",
   "required": [
     "prediction_id",
@@ -21,60 +21,431 @@
     "g_grade"
   ],
   "properties": {
-    "prediction_id": { "type": "string", "minLength": 1 },
-    "price_evaluation_id": { "type": "string", "minLength": 1 },
-    "game_id": { "type": "string", "minLength": 1 },
-    "candidate_side": { "enum": ["home", "away"] },
-    "selection_team_id": { "type": "string", "minLength": 1 },
-    "opponent_team_id": { "type": ["string", "null"] },
-    "predicted_at": { "type": "string", "format": "date-time" },
-    "analysis_cutoff": { "type": ["string", "null"], "format": "date-time" },
-    "evaluation_stage": { "enum": ["Opening", "T-24h", "21:00", "T-6h", "T-60m", "T-5m", "event", "Closing"] },
-    "model_v": { "enum": ["3.1", "3.1.1"] },
-    "model_v_revision": { "type": ["string", "null"] },
-    "model_g": { "enum": ["1.0", "1.1", "1.1.1"] },
-    "model_g_revision": { "type": ["string", "null"] },
-    "coordination_version": { "type": ["string", "null"] },
-    "p_f": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
-    "p_market_consensus": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
-    "p_conservative": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
-    "p_neutral": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
-    "p_optimistic": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
-    "coverage_pct": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
-    "confidence": { "enum": ["高", "中", "低", "資料不足", null] },
-    "news_risk_level": { "type": ["integer", "null"], "minimum": 0, "maximum": 3 },
-    "target_odds": { "type": ["number", "null"], "exclusiveMinimum": 1 },
-    "opponent_odds": { "type": ["number", "null"], "exclusiveMinimum": 1 },
-    "observed_at": { "type": ["string", "null"], "format": "date-time" },
-    "v_price_segment": { "type": ["string", "null"] },
-    "g_price_segment": { "type": ["string", "null"] },
-    "v_grade": { "enum": ["ㄅ", "ㄆ", "ㄇ", "不支持", "資料不足"] },
-    "g_grade": { "enum": ["ㄅ", "ㄆ", "ㄇ", "不支持", "資料不足"] },
-    "coordination_grade": { "enum": ["ㄅ", "ㄆ", "ㄇ", "不支持", "資料不足", null] },
-    "coordination_label": { "type": ["string", "null"] },
-    "dual_side_conflict": { "type": ["boolean", "null"] },
-    "main_candidate": { "type": ["boolean", "null"] },
+    "prediction_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "price_evaluation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "game_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_side": {
+      "enum": [
+        "home",
+        "away"
+      ]
+    },
+    "selection_team_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "opponent_team_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "predicted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "analysis_cutoff": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "evaluation_stage": {
+      "enum": [
+        "Opening",
+        "T-24h",
+        "21:00",
+        "T-6h",
+        "T-60m",
+        "T-5m",
+        "event",
+        "Closing"
+      ]
+    },
+    "model_v": {
+      "enum": [
+        "3.1",
+        "3.1.1"
+      ]
+    },
+    "model_v_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "model_g": {
+      "enum": [
+        "1.0",
+        "1.1",
+        "1.1.1",
+        "1.2.0"
+      ]
+    },
+    "model_g_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "coordination_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "p_f": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "p_market_consensus": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "p_conservative": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "p_neutral": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "p_optimistic": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "coverage_pct": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 100
+    },
+    "confidence": {
+      "enum": [
+        "高",
+        "中",
+        "低",
+        "資料不足",
+        null
+      ]
+    },
+    "news_risk_level": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 3
+    },
+    "target_odds": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "exclusiveMinimum": 1
+    },
+    "opponent_odds": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "exclusiveMinimum": 1
+    },
+    "observed_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "v_price_segment": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "g_price_segment": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "v_grade": {
+      "enum": [
+        "ㄅ",
+        "ㄆ",
+        "ㄇ",
+        "不支持",
+        "資料不足"
+      ]
+    },
+    "g_grade": {
+      "enum": [
+        "ㄅ",
+        "ㄆ",
+        "ㄇ",
+        "不支持",
+        "資料不足"
+      ]
+    },
+    "coordination_grade": {
+      "enum": [
+        "ㄅ",
+        "ㄆ",
+        "ㄇ",
+        "不支持",
+        "資料不足",
+        null
+      ]
+    },
+    "coordination_label": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "dual_side_conflict": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "main_candidate": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
     "main_status": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "pattern": "^(主要場次待 T-5m 確認( [1-3]/[1-3])?|最終主要場次( [1-3]/[1-3])?|不通過)$"
     },
-    "ui_priority_candidate": { "type": ["boolean", "null"] },
-    "closing_odds": { "type": ["number", "null"], "exclusiveMinimum": 1 },
-    "clv_odds": { "type": ["number", "null"] },
-    "clv_probability": { "type": ["number", "null"] },
-    "won": { "type": ["boolean", "null"] },
-    "score": { "type": ["string", "null"] },
-    "data_version": { "type": ["string", "null"] },
-    "config_hash": { "type": ["string", "null"] }
+    "ui_priority_candidate": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "closing_odds": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "exclusiveMinimum": 1
+    },
+    "clv_odds": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "clv_probability": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "won": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "score": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "data_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "config_hash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "g_decision_metric": {
+      "enum": [
+        "threshold_distance_pp",
+        "conservative_ev",
+        null
+      ]
+    },
+    "g_conservative_ev": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "g_ev_grade_threshold": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "g_ev_threshold_distance_pp": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "g_pp_guard_min_pp": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "g_pp_guard_pass": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "g_pp_guard_surplus_pp": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "g_ev_candidate": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "g_minimum_candidate_odds": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "exclusiveMinimum": 1
+    },
+    "g_execution_status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "g_primary_after_trigger": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "g_parallel_role": {
+      "enum": [
+        "scheduled_shadow",
+        "control_shadow",
+        null
+      ]
+    },
+    "g_parallel_model": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "g_parallel_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "g_parallel_grade": {
+      "enum": [
+        "ㄅ",
+        "ㄆ",
+        "ㄇ",
+        "不支持",
+        "資料不足",
+        null
+      ]
+    },
+    "g_parallel_conclusion": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "g_parallel_threshold_distance_pp": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "g_parallel_conservative_ev": {
+      "type": [
+        "number",
+        "null"
+      ]
+    }
   },
   "allOf": [
     {
-      "if": { "properties": { "p_conservative": { "type": "number" }, "p_neutral": { "type": "number" }, "p_optimistic": { "type": "number" } } },
+      "if": {
+        "properties": {
+          "p_conservative": {
+            "type": "number"
+          },
+          "p_neutral": {
+            "type": "number"
+          },
+          "p_optimistic": {
+            "type": "number"
+          }
+        }
+      },
       "then": {
         "properties": {
-          "p_conservative": { "maximum": 1 },
-          "p_neutral": { "maximum": 1 },
-          "p_optimistic": { "maximum": 1 }
+          "p_conservative": {
+            "maximum": 1
+          },
+          "p_neutral": {
+            "maximum": 1
+          },
+          "p_optimistic": {
+            "maximum": 1
+          }
         }
       }
     }

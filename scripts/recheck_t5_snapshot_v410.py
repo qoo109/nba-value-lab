@@ -10,14 +10,13 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-import recheck_t5_snapshot as prior
+import recheck_t5_snapshot_g120 as prior
 from append_research_record_v410 import append_many
 from multi_main_policy import apply_multi_main, load_active_configs, rebuild_multi_lock_index
 
 ROOT = prior.ROOT
 LOCKS_DIR = prior.LOCKS_DIR
 LOCKS_INDEX = prior.LOCKS_DIR / "index.json"
-prior.load_active_configs = lambda: load_active_configs(ROOT, ROOT / "models" / "manifest.json")
 prior.append_many = append_many
 
 
@@ -47,7 +46,7 @@ def run(input_path: Path, *, dry_run: bool, previous_output: Path | None = None,
     manifest, _, g_config, _ = prior.load_active_configs()
     records = payload["records"]
     selection = apply_multi_main(records, payload["selection"], g_config, "T-5m")
-    selection["model_g_revision"] = manifest["active"]["G"]["revision_id"]
+    selection["model_g_revision"] = records[0]["model_g_revision"] if records else manifest["active"]["G"]["revision_id"]
     old_ids = previous_selected_ids(top, previous_output)
     selection["t60_selected_prediction_ids"] = old_ids
     selection["t60_selected_prediction_id"] = old_ids[0] if old_ids else None

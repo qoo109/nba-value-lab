@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-import lock_t60_snapshot_v49 as prior
+import lock_t60_snapshot_g120 as prior
 from append_research_record_v410 import append_many
 from multi_main_policy import apply_multi_main, load_active_configs, rebuild_multi_lock_index
 
@@ -18,7 +18,6 @@ base = prior.base
 ROOT = base.ROOT
 LOCKS_DIR = base.LOCKS_DIR
 LOCKS_INDEX = base.LOCKS_INDEX
-base.load_active_configs = lambda: load_active_configs(ROOT, base.MODELS_MANIFEST)
 
 
 def run(input_path: Path, *, dry_run: bool, output_path: Path | None = None) -> dict[str, Any]:
@@ -27,13 +26,13 @@ def run(input_path: Path, *, dry_run: bool, output_path: Path | None = None) -> 
         raise ValueError("fixture data can only run with --dry-run")
     with tempfile.TemporaryDirectory() as directory:
         raw_output = Path(directory) / "single-main-output.json"
-        base.run(input_path, dry_run=True, output_path=raw_output)
+        prior.run(input_path, dry_run=True, output_path=raw_output)
         payload = base.load_json(raw_output)
 
-    manifest, _, g_config, _ = base.load_active_configs()
+    manifest, _, g_config, _ = prior.load_active_configs()
     records = payload["records"]
     selection = apply_multi_main(records, payload["selection"], g_config, "T-60m")
-    selection["model_g_revision"] = manifest["active"]["G"]["revision_id"]
+    selection["model_g_revision"] = records[0]["model_g_revision"] if records else manifest["active"]["G"]["revision_id"]
     for trace in selection.get("ranking_trace", []):
         match = next((record for record in records if record["prediction_id"] == trace.get("prediction_id")), None)
         if match:

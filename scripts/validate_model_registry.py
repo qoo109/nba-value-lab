@@ -297,6 +297,16 @@ def main() -> int:
     require(str(active["V"]["version"]) in properties.get("model_v", {}).get("enum", []), "schema does not allow active V version")
     require(str(active["G"]["version"]) in properties.get("model_g", {}).get("enum", []), "schema does not allow active G version")
     require("coordination_grade" in properties, "schema must preserve coordination_grade")
+    scheduled_g = manifest.get("scheduled_next", {}).get("G")
+    scheduled_coordination = manifest.get("scheduled_next", {}).get("coordination")
+    if scheduled_g:
+        require((ROOT / scheduled_g["config"]).is_file(), "missing scheduled G config")
+        require((ROOT / scheduled_g["spec"]).is_file(), "missing scheduled G spec")
+        require(str(scheduled_g["version"]) in properties.get("model_g", {}).get("enum", []), "schema does not allow scheduled G version")
+    if scheduled_coordination:
+        scheduled_config = load_json(ROOT / scheduled_coordination["config"])
+        require(scheduled_config["engine_versions"]["G"] == scheduled_g["version"], "scheduled coordination G mismatch")
+        validate_spec_integrity(scheduled_config, ROOT / scheduled_coordination["spec"])
     label = f"V{active['V']['version']} × G{active['G']['version']}"
     revision = active["G"].get("revision_id")
     print(f"Model registry valid: {label}{' (' + revision + ')' if revision else ''}")

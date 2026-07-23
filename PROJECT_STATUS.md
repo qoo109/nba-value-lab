@@ -6,6 +6,20 @@
 
 最新 `main`、已合併 PR、GitHub Actions 與 Artifact QA 是正式 Source of Truth。
 
+## Latest G1.2.0 Milestone
+
+```text
+G1.2.0 live decision output: IMPLEMENTED / FIXTURE VALIDATION REQUIRED
+G1.2.0 season resolver: season=2026-27 + competition_type=regular_season
+pre-trigger primary: G1.1.1
+pre-trigger parallel: G1.2.0 scheduled shadow
+post-trigger primary: G1.2.0 EV-primary
+post-trigger parallel: G1.1.1 control shadow
+prediction record schema: 1.4.0
+formal Stake: 0
+next unique mainline: VALIDATE_G1_2_0_END_TO_END_WITH_REAL_GOVERNED_2026_27_T60_INPUT
+```
+
 ## Current Control Block
 
 ```text

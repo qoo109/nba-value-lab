@@ -11,7 +11,6 @@ on:
   push:
     branches:
       - main
-      - draft-gold-5826-freeze-manifest-real-artifact-request-v1
     paths:
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-current-status-v1.json"
@@ -130,10 +129,14 @@ jobs:
           workflow = Path(
               ".github/workflows/validate-historical-gold-5826-freeze-manifest-real-artifact-execution-request-v1.yml"
           ).read_text(encoding="utf-8")
-          assert "actions/download-artifact@" not in workflow
-          assert "curl " not in workflow
-          assert "wget " not in workflow
-          assert "pip install" not in workflow
+          forbidden = (
+              "actions/" + "download-artifact@",
+              "curl" + " ",
+              "wget" + " ",
+              "pip" + " install",
+          )
+          for token in forbidden:
+              assert token not in workflow, token
           PY
 
       - name: Upload request validation Artifact
@@ -143,5 +146,3 @@ jobs:
           path: validation-output/historical-gold-5826-freeze-manifest-real-artifact-execution-request-validation-v1.json
           if-no-files-found: error
           retention-days: 14
-
-# Push-triggered rerun after correcting the policy Stake binding path.

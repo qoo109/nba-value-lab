@@ -33,7 +33,8 @@
     "real_provider_payloads_allowed": false,
     "network_requests_allowed": false,
     "market_metrics_allowed": false,
-    "cross_run_deduplication_required": true
+    "cross_run_deduplication_required": true,
+    "cross_run_validation_isolated": true
   },
   "qualified_for_historical_backfill": [],
   "qualified_for_existing_frozen_gold_point_in_time_join": [],

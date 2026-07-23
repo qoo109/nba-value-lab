@@ -1,0 +1,112 @@
+{
+  "aggregate_result": {
+    "documented_exception_reporting": {
+      "covered_or_documented_count": 5826,
+      "documented_exception_state": "HISTORICAL_GOLD_SILVER_COVERAGE_DOCUMENTED_SOURCE_EXCEPTION_RECOGNIZED",
+      "documented_source_gap_exception_code": "SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT",
+      "documented_source_gap_exception_count": 2,
+      "exception_policy_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_POLICY_DESIGN_READY",
+      "exception_policy_version": "historical-silver-2023-24-source-gap-exception-integration-policy-v1",
+      "gold_dataset_complete": false,
+      "gold_matchup_count_after_documentation": 5824,
+      "recognition_failure_reasons": [],
+      "recognition_gate_passed": true,
+      "unexplained_missing_count_after_documentation": 0
+    },
+    "raw_coverage_report": {
+      "boundaries": {
+        "dates_emitted": false,
+        "game_ids_emitted": false,
+        "row_key_hashes_emitted": false,
+        "team_codes_emitted": false
+      },
+      "coverage": {
+        "covered_games": 5824,
+        "missing_by_reason": {
+          "missing_both_team_features": 2,
+          "other": 0
+        },
+        "missing_by_season": {
+          "2023-24": 2
+        },
+        "missing_by_season_and_reason": {
+          "2023-24": {
+            "missing_both_team_features": 2,
+            "other": 0
+          }
+        },
+        "missing_gold_for_silver": 2,
+        "unclassified_missing_games": 0
+      },
+      "decision": {
+        "builder_repair_required": false,
+        "formal_stake": 0
+      },
+      "formal_outcome": "HISTORICAL_GOLD_SILVER_COVERAGE_RECONCILIATION_SOURCE_DATA_GAP_CONFIRMED",
+      "schema_version": "historical-gold-silver-coverage-reconciliation-report-v1",
+      "scope": {
+        "gold_matchup_rows": 5824,
+        "season_labels": [
+          "2023-24"
+        ],
+        "silver_game_rows": 5826
+      }
+    },
+    "schema_version": "historical-gold-silver-coverage-with-documented-exceptions-v1"
+  },
+  "boundaries": {
+    "betting_edge_claim": false,
+    "coverage_analyzer_modified": false,
+    "cross_source_audit_rerun": false,
+    "database_access": false,
+    "formal_stake": 0,
+    "market_backtest": false,
+    "model_training_or_retraining": false,
+    "network_access": false,
+    "raw_csv_access": false,
+    "raw_files_emitted": false,
+    "raw_rows_emitted": 0,
+    "raw_rows_read": false,
+    "silver_or_gold_write": false,
+    "source_archive_access": false,
+    "transformer_modified": false
+  },
+  "checks": {
+    "admission_valid": true,
+    "aggregate_privacy": true,
+    "output_schema": true,
+    "raw_gap": true,
+    "raw_gold": true,
+    "raw_silver": true,
+    "reporting_covered_or_documented_count": true,
+    "reporting_documented_source_gap_exception_code": true,
+    "reporting_documented_source_gap_exception_count": true,
+    "reporting_gold_dataset_complete": true,
+    "reporting_gold_matchup_count_after_documentation": true,
+    "reporting_recognition_gate_passed": true,
+    "reporting_unexplained_missing_count_after_documentation": true
+  },
+  "checks_failed": 0,
+  "execution_receipt": {
+    "aggregate_only": true,
+    "execution_attempted": true,
+    "execution_count_for_request": 1,
+    "maximum_execution_count": 1,
+    "repeat_execution_allowed": false,
+    "request_consumed": true,
+    "workflow_dispatch_only": true
+  },
+  "failed_checks": [],
+  "formal_state": "HISTORICAL_SILVER_2023_24_SOURCE_GAP_EXCEPTION_INTEGRATION_REAL_REFERENCE_VALIDATION_PASS",
+  "immutable_bindings": {
+    "implementation_file_sha256": "sha256:c4bd7ccb05bcf78747a7210e0eefad083d599de2ca8b0d44c9c455006f084cbc",
+    "input_file_sha256": {
+      "aggregate_coverage_report": "sha256:14110a23c37c2d4da01020b3f656509e70d8a79816ecc49670172ee6ed8de98e",
+      "exception_manifest": "sha256:3a777eab04e85234c7b0718f33818eee3adfd6f2ad6d5315c21763be9691ff87",
+      "integration_policy": "sha256:28bf5fe4257a745652699fe827b96d0d0e10b74dda95874e1dfd6a6d6a8002fb"
+    },
+    "request_file_sha256": "sha256:192a06862fe830027686d149d36572b4ad76ea609f489c6a3d540b7ea4b27e97"
+  },
+  "request_id": "HISTORICAL-SILVER-2023-24-SOURCE-GAP-EXCEPTION-INTEGRATION-REAL-REFERENCE-VALIDATION-2026-07-22-001",
+  "schema_version": "historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-execution-result-v1"
+}

@@ -1,0 +1,104 @@
+{
+  "schema_version": "historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1",
+  "updated_at": "2026-07-23",
+  "formal_state": "HISTORICAL_SILVER_2023_24_TWO_GAME_OFFICIAL_CDN_PBP_RECOVERY_PASS_ARTIFACT_ADOPTED",
+  "source_exception_state": {
+    "previous_exception_code": "SOURCE_ARCHIVE_PBPSTATS_GAME_ABSENT",
+    "previous_documented_exception_count": 2,
+    "remaining_documented_exception_count": 0,
+    "two_source_exceptions_resolved": true,
+    "resolution_source": "OFFICIAL_CDN_NBA_PLAY_BY_PLAY_ALTERNATE_ARCHIVE"
+  },
+  "execution_evidence": {
+    "workflow_name": "Recover Historical Silver two-game official CDN PBP v2",
+    "workflow_run_id": 29976204693,
+    "job_id": 89108363564,
+    "job_name": "recover-and-rebuild",
+    "job_conclusion": "success",
+    "head_branch": "recover-two-2023-24-official-cdn-pbp-games",
+    "head_sha": "ad12518a55e6077295c4df1a099977a6e5cd024b",
+    "artifact_id": 8551587005,
+    "artifact_name": "historical-silver-gold-two-game-official-cdn-recovery-v2",
+    "artifact_archive_size_bytes": 374591375,
+    "artifact_archive_digest": "sha256:3ed2d28da3af58b8b72d805860a144541ac5f38106653cfbda593e16bbaa8e8d",
+    "artifact_created_at": "2026-07-23T03:14:03Z",
+    "artifact_expires_at": "2026-08-06T03:14:00Z"
+  },
+  "artifact_files": {
+    "historical_silver": {
+      "filename": "historical-silver-multiseason-recovered-v1.sqlite.gz",
+      "size_bytes": 369318173,
+      "sha256": "sha256:48c032339402d5f75e43d7aaf8e977784aee9eceff74c9e7da952af8e1680eb8",
+      "games": 5826,
+      "team_game_features": 11652,
+      "seasons": [
+        "2019-20",
+        "2020-21",
+        "2021-22",
+        "2022-23",
+        "2023-24"
+      ]
+    },
+    "historical_gold": {
+      "filename": "historical-gold-multiseason-recovered-v1.sqlite.gz",
+      "size_bytes": 5268851,
+      "sha256": "sha256:a4e94fab1681b53817f305d08c196995d406fa0566ab70d6083aa5cebfc52085",
+      "matchup_features": 5826,
+      "team_game_features": 11652,
+      "point_in_time_passed": true,
+      "point_in_time_violations": 0
+    },
+    "aggregate_result": {
+      "filename": "two-game-official-cdn-pbp-recovery-result-v2.json",
+      "size_bytes": 3751,
+      "sha256": "sha256:97d292d56f6ee8b6f0a2d4e4471990f7c953cca7c324eb64c129066695df7c30",
+      "committed_record": "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-result-v2.json"
+    }
+  },
+  "source_provenance": {
+    "source_key": "cdnnba_2023",
+    "provider": "shufinskiy/nba_data archive of official cdn.nba.com play-by-play",
+    "url": "https://github.com/shufinskiy/nba_data/raw/main/datasets/cdnnba_2023.tar.xz",
+    "archive_size_bytes": 18598380,
+    "archive_sha256": "sha256:33d49fefc809f73d5d6cbad6d1d6690e0df6c89fe2b5a4d814ecc9ea4df6101b",
+    "archive_member_count": 1,
+    "raw_archive_committed": false
+  },
+  "recovery_counts": {
+    "target_games": 2,
+    "target_games_found": 2,
+    "target_event_rows_found": 1108,
+    "recovered_games": 2,
+    "recovered_game_dates": 2,
+    "possession_rows_added": 412,
+    "team_feature_rows_added": 4,
+    "remaining_games_without_team_features": 0,
+    "remaining_recovered_games_without_dates": 0,
+    "duplicate_team_feature_rows": 0
+  },
+  "adoption": {
+    "canonical_rebuild_recipe": true,
+    "canonical_aggregate_result": true,
+    "canonical_binary_artifact_until_expiry": true,
+    "repository_database_committed": false,
+    "binary_may_be_rebuilt_deterministically_after_artifact_expiry": true,
+    "old_5824_gold_reference_superseded_for_coverage_counts": true,
+    "new_gold_matchup_reference_count": 5826,
+    "gold_complete_for_governed_five_season_scope": true
+  },
+  "boundaries": {
+    "manual_or_synthetic_feature_rows": false,
+    "source_archive_committed": false,
+    "repository_database_modified": false,
+    "raw_game_identifiers_emitted_in_public_aggregate_record": false,
+    "raw_game_dates_emitted_in_public_aggregate_record": false,
+    "market_backtest_executed": false,
+    "model_retraining_executed": false,
+    "betting_edge_claim": false,
+    "formal_stake": 0
+  },
+  "next_research_step": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_POLICY_READY_FOR_DESIGN",
+  "ready_for_market_backtest": false,
+  "ready_for_model_retraining": false,
+  "formal_stake": 0
+}

@@ -91,8 +91,8 @@ def main() -> int:
         require(relative in init_text, f"V5 loader is missing stylesheet {relative}")
 
     require("V5 UI failed to load; continuing with V4.10 UI" in init_text, "V4.10 fallback is missing")
-    require('dataset.appVersion = v5Ready ? "V5.3.4"' in init_text, "V5.3.4 app version is not active")
-    require("dashboard.js?v=5.3.4" in init_text, "V5.3.4 dashboard cache version is missing")
+    require('dataset.appVersion = v5Ready ? "V5.3.20"' in init_text, "V5.3.20 app version is not active")
+    require("dashboard.js?v=5.3.18" in init_text, "V5.3.18 dashboard cache version is missing")
     require("cards.js?v=5.3.1" in init_text, "V5 cards cache version is missing")
     require("v5-density-v53.css?v=5.3" in init_text, "V5.3 density stylesheet cache version is missing")
     require("v5-decision-group-v532.css?v=5.3.2" in init_text, "Decision-group stylesheet cache version is missing")
@@ -161,7 +161,7 @@ def main() -> int:
     ]
     order_positions = [order_block.index(token) for token in dashboard_order]
     require(order_positions == sorted(order_positions), "Dashboard sections are not in decision-candidate-market-explanation order")
-    require('document.documentElement.dataset.uiVersion = "5.3.4"' in dashboard, "V5.3.4 UI version is missing")
+    require('document.documentElement.dataset.uiVersion = "5.3.18"' in dashboard, "V5.3.18 UI version is missing")
     require("方法與資料說明" in dashboard, "Grouped explanation heading is missing")
     require("if (market?.matches(\"details\")) market.open = true" in dashboard, "Market table must open by default")
 
@@ -191,7 +191,7 @@ def main() -> int:
     require("env(safe-area-inset-bottom)" in mobile, "Mobile safe-area support is missing")
     require("position: fixed" in mobile, "Mobile bottom navigation is missing")
 
-    print("V5.3.4 model explanation grouping repair valid")
+    print("V5.3.20 shell / V5.3.18 dashboard UI validation valid")
     return 0
 
 

@@ -1,4 +1,4 @@
-name: Kick G1.2.0 live output implementation
+name: Clean G1.2.0 implementation branch
 
 on:
   pull_request:
@@ -10,65 +10,18 @@ permissions:
   contents: write
 
 jobs:
-  kick:
+  clean:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           ref: implement/g1-2-0-live-output-v1
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Extract bootstrap steps
+      - name: Remove generated Python cache
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          text = Path('.github/workflows/apply-g1-2-0-live-output-v1.yml').read_text(encoding='utf-8')
-          markers = [
-              ('      - name: Implement G1.2.0 live output\n        run: |\n', '\n      - name: Run local validation before commit\n'),
-              ('      - name: Run local validation before commit\n        run: |\n', '\n      - name: Commit implementation\n'),
-          ]
-          for number, (start_marker, end_marker) in enumerate(markers, start=1):
-              start = text.index(start_marker) + len(start_marker)
-              end = text.index(end_marker, start)
-              block = text[start:end]
-              lines = [line[10:] if line.startswith('          ') else line for line in block.splitlines()]
-              script = '\n'.join(lines) + '\n'
-              if number == 1:
-                  lines[0] = lines[0].replace("python - <<'PY'", "python - <<'G120PY'", 1)
-                  lines[-1] = 'G120PY'
-                  script = '\n'.join(lines) + '\n'
-                  script = script.replace('if text.count(old) != 1:', 'if text.count(old) < 1:', 1)
-                  script = script.replace("expected one match, got {text.count(old)}", "expected at least one match, got {text.count(old)}", 1)
-              Path(f'/tmp/g120-step-{number}.sh').write_text('set -euo pipefail\n' + script, encoding='utf-8')
-          PY
-      - name: Implement
-        run: bash /tmp/g120-step-1.sh
-      - name: Align frontend download expectations
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('scripts/test_frontend_model_decisions.js')
-          text = path.read_text(encoding='utf-8')
-          old = '["complete-rules", "v-spec", "g-spec", "source-registry", "source-json", "coordination-spec"],'
-          new = '["complete-rules", "v-spec", "g-spec", "source-registry", "source-json", "coordination-spec", "g120-spec"],'
-          if old not in text:
-              raise SystemExit('frontend download id expectation not found')
-          text = text.replace(old, new, 1)
-          anchor = 'assert.equal(downloadState[5].href, "./models/coordination/v3.1.1-g1.1.1/spec.md");'
-          if anchor not in text:
-              raise SystemExit('frontend coordination href assertion not found')
-          text = text.replace(anchor, anchor + '\nassert.equal(downloadState[6].href, "./models/g1/1.2.0/spec.md");', 1)
-          path.write_text(text, encoding='utf-8')
-          PY
-      - name: Validate
-        run: bash /tmp/g120-step-2.sh
-      - name: Commit and push verified implementation
-        run: |
+          git rm -r scripts/__pycache__
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add PROJECT_STATUS.md data docs js models schemas scripts
-          git commit -m "Implement G1.2.0 EV-primary live output"
+          git commit -m "Remove generated Python cache"
           git push origin HEAD:implement/g1-2-0-live-output-v1

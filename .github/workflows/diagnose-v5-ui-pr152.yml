@@ -1,0 +1,28 @@
+name: Diagnose V5 UI PR152
+
+on:
+  push:
+    branches:
+      - model/g1.2.0-ev-primary-activation
+    paths:
+      - ".github/workflows/diagnose-v5-ui-pr152.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run focused V5 validation
+        run: |
+          set +e
+          python scripts/validate_v5_ui.py > /tmp/v5.log 2>&1
+          code=$?
+          tail -80 /tmp/v5.log
+          exit $code

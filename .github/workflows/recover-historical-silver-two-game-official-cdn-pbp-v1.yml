@@ -22,7 +22,7 @@ permissions:
 
 concurrency:
   group: historical-silver-two-game-official-cdn-pbp-recovery-v2-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   recover-and-rebuild:

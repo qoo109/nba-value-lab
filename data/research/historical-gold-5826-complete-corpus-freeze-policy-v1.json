@@ -1,0 +1,207 @@
+{
+  "schema_version": "historical-gold-5826-complete-corpus-freeze-policy-v1",
+  "policy_id": "HISTORICAL-GOLD-5826-COMPLETE-CORPUS-FREEZE-POLICY-2026-07-23-001",
+  "created_at": "2026-07-23",
+  "formal_state": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_POLICY_DESIGN_VALIDATED",
+  "policy_role": "DESIGN_ONLY_NO_CORPUS_FREEZE_EXECUTION",
+  "governed_scope": {
+    "seasons": [
+      "2019-20",
+      "2020-21",
+      "2021-22",
+      "2022-23",
+      "2023-24"
+    ],
+    "silver_games": 5826,
+    "silver_team_game_features": 11652,
+    "gold_matchup_features": 5826,
+    "gold_team_game_features": 11652,
+    "missing_gold_for_silver": 0,
+    "documented_source_exceptions_remaining": 0,
+    "gold_point_in_time_violations": 0,
+    "gold_point_in_time_passed": true,
+    "corpus_complete_for_governed_scope": true,
+    "row_exclusions_allowed": false,
+    "partial_freeze_allowed": false
+  },
+  "immutable_evidence_bindings": {
+    "repository": "qoo109/nba-value-lab",
+    "policy_base_commit": "f19282040fb8e45326133c9b77afc1ff45c13bb4",
+    "recovery_recording_pr": 133,
+    "recovery_recording_merge_commit": "98bcb2538070eb57bba2ce79920262262c0924ef",
+    "recovery_result_path": "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-result-v2.json",
+    "recovery_result_sha256": "sha256:97d292d56f6ee8b6f0a2d4e4471990f7c953cca7c324eb64c129066695df7c30",
+    "recovery_current_status_path": "data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json",
+    "source_archive_key": "cdnnba_2023",
+    "source_archive_sha256": "sha256:33d49fefc809f73d5d6cbad6d1d6690e0df6c89fe2b5a4d814ecc9ea4df6101b",
+    "source_archive_bytes": 18598380,
+    "adopted_workflow_run_id": 29976204693,
+    "adopted_artifact_id": 8551587005,
+    "adopted_artifact_name": "historical-silver-gold-two-game-official-cdn-recovery-v2",
+    "adopted_artifact_digest": "sha256:3ed2d28da3af58b8b72d805860a144541ac5f38106653cfbda593e16bbaa8e8d",
+    "adopted_artifact_expires_at": "2026-08-06T03:14:00Z",
+    "historical_silver_filename": "historical-silver-multiseason-recovered-v1.sqlite.gz",
+    "historical_silver_bytes": 369318173,
+    "historical_silver_sha256": "sha256:48c032339402d5f75e43d7aaf8e977784aee9eceff74c9e7da952af8e1680eb8",
+    "historical_gold_filename": "historical-gold-multiseason-recovered-v1.sqlite.gz",
+    "historical_gold_bytes": 5268851,
+    "historical_gold_sha256": "sha256:a4e94fab1681b53817f305d08c196995d406fa0566ab70d6083aa5cebfc52085"
+  },
+  "freeze_identity_design": {
+    "binary_artifact_hash_role": "EXECUTION_INPUT_EVIDENCE_NOT_LONG_TERM_SEMANTIC_IDENTITY",
+    "reason_binary_hash_is_not_sufficient_alone": "feature_generated_at and generated metadata are volatile across rebuilds",
+    "required_manifest_type": "AGGREGATE_SEMANTIC_CORPUS_MANIFEST",
+    "required_tables": [
+      "gold_team_game_features",
+      "gold_matchup_features",
+      "gold_metadata"
+    ],
+    "team_table_expected_rows": 11652,
+    "matchup_table_expected_rows": 5826,
+    "team_table_sort_order": [
+      "season_label",
+      "game_date",
+      "game_id",
+      "team_abbr"
+    ],
+    "matchup_table_sort_order": [
+      "game_date",
+      "game_id"
+    ],
+    "included_columns_rule": "ALL_SCHEMA_COLUMNS_EXCEPT_EXPLICIT_VOLATILE_COLUMNS",
+    "volatile_columns_excluded_from_semantic_digest": [
+      "feature_generated_at"
+    ],
+    "volatile_metadata_keys_excluded_from_semantic_digest": [
+      "feature_generated_at"
+    ],
+    "required_metadata_keys": [
+      "pipeline_name",
+      "schema_version",
+      "feature_version",
+      "source_version",
+      "point_in_time_rule",
+      "same_day_games_policy",
+      "season_history_policy",
+      "season_labels"
+    ],
+    "canonical_text_normalization": "UTF8_UNICODE_NFC",
+    "canonical_null_encoding": "JSON_NULL",
+    "canonical_integer_encoding": "BASE10_NO_LEADING_ZERO",
+    "canonical_float_encoding": "IEEE754_FINITE_ROUND_TRIP_17_SIGNIFICANT_DIGITS_NEGATIVE_ZERO_NORMALIZED",
+    "canonical_row_encoding": "COMPACT_JSON_ARRAY_SCHEMA_COLUMN_ORDER_NEWLINE_DELIMITED",
+    "table_digest_algorithm": "SHA256",
+    "metadata_digest_algorithm": "SHA256",
+    "corpus_digest_algorithm": "SHA256_OF_CANONICAL_AGGREGATE_MANIFEST",
+    "nonfinite_numeric_values_allowed": false,
+    "duplicate_primary_keys_allowed": false,
+    "row_level_values_emitted_in_public_manifest": false,
+    "game_ids_emitted_in_public_manifest": false,
+    "dates_emitted_in_public_manifest": false,
+    "team_codes_emitted_in_public_manifest": false
+  },
+  "freeze_manifest_required_fields": {
+    "policy_id": true,
+    "source_artifact_id": true,
+    "source_artifact_digest": true,
+    "source_gold_binary_sha256": true,
+    "gold_schema_version": true,
+    "gold_feature_version": true,
+    "source_version": true,
+    "season_labels": true,
+    "table_row_counts": true,
+    "table_semantic_sha256": true,
+    "metadata_semantic_sha256": true,
+    "corpus_semantic_sha256": true,
+    "point_in_time_validation": true,
+    "duplicate_validation": true,
+    "privacy_boundaries": true,
+    "formal_stake": true
+  },
+  "implementation_access_policy": {
+    "preferred_input_path": "DOWNLOAD_ADOPTED_ARTIFACT_BEFORE_EXPIRY",
+    "artifact_download_allowed": true,
+    "network_access_allowed_only_for_exact_github_artifact": true,
+    "other_network_access_allowed": false,
+    "raw_source_archive_download_allowed": false,
+    "database_read_allowed": true,
+    "database_write_allowed": false,
+    "database_mutation_allowed": false,
+    "repository_database_commit_allowed": false,
+    "raw_row_artifact_upload_allowed": false,
+    "aggregate_manifest_max_bytes": 1048576,
+    "workflow_dispatch_only_for_real_artifact_execution": true,
+    "automatic_real_artifact_execution_allowed": false,
+    "maximum_real_artifact_execution_count": 1,
+    "repeat_execution_allowed": false,
+    "artifact_expiry_fallback": "BLOCK_AND_REQUIRE_NEW_GOVERNED_REBUILD_WITH_COMPLETE_SOURCE_HASH_MANIFEST",
+    "unbound_rebuild_after_expiry_allowed": false
+  },
+  "freeze_invalidation_rules": {
+    "gold_binary_sha256_change": "NEW_FREEZE_VERSION_REQUIRED",
+    "gold_schema_version_change": "NEW_FREEZE_VERSION_REQUIRED",
+    "gold_feature_version_change": "NEW_FREEZE_VERSION_REQUIRED",
+    "source_version_change": "NEW_FREEZE_VERSION_REQUIRED",
+    "season_scope_change": "NEW_FREEZE_VERSION_REQUIRED",
+    "row_count_change": "NEW_FREEZE_VERSION_REQUIRED",
+    "semantic_table_digest_change": "NEW_FREEZE_VERSION_REQUIRED",
+    "point_in_time_violation_above_zero": "FREEZE_BLOCKED",
+    "duplicate_primary_key_above_zero": "FREEZE_BLOCKED",
+    "missing_required_metadata": "FREEZE_BLOCKED",
+    "unexplained_missing_game_above_zero": "FREEZE_BLOCKED"
+  },
+  "downstream_data_dependency_ledger": {
+    "historical_silver_gold_corpus": {
+      "state": "COMPLETE_FOR_GOVERNED_FIVE_SEASON_SCOPE",
+      "blocks_freeze_policy": false
+    },
+    "timestamped_bookmaker_odds": {
+      "state": "MISSING_REAL_LEGAL_AUDITABLE_OBSERVED_AT_DATA",
+      "required_for": [
+        "MARKET_BACKTEST",
+        "CLV",
+        "EV",
+        "ROI",
+        "DRAWDOWN"
+      ],
+      "blocks_freeze_policy": false,
+      "blocks_market_backtest": true
+    },
+    "historical_multi_snapshot_injury_panel": {
+      "state": "PILOT_ONLY_BELOW_100_INDEPENDENT_GAME_ACTIVATION_GATE",
+      "independent_games_available": 41,
+      "primary_t60_selected_games": 31,
+      "required_for": [
+        "INJURY_AWARE_HOLDOUT",
+        "INJURY_FEATURE_MODEL_ACTIVATION"
+      ],
+      "blocks_freeze_policy": false,
+      "blocks_injury_model_activation": true
+    },
+    "team_submission_completeness_ledger": {
+      "state": "REQUIRED_BEFORE_FORMAL_INJURY_HOLDOUT",
+      "blocks_freeze_policy": false,
+      "blocks_formal_injury_holdout": true
+    }
+  },
+  "prohibited_interpretations": {
+    "policy_equals_frozen_corpus": false,
+    "policy_authorizes_market_backtest": false,
+    "policy_authorizes_model_training_or_retraining": false,
+    "policy_authorizes_injury_candidate_activation": false,
+    "policy_authorizes_probability_adjustment": false,
+    "policy_authorizes_betting_edge_claim": false,
+    "policy_authorizes_formal_stake_above_zero": false
+  },
+  "decision": {
+    "policy_design_valid": true,
+    "corpus_freeze_executed": false,
+    "semantic_freeze_manifest_created": false,
+    "ready_for_freeze_manifest_implementation_design": true,
+    "ready_for_real_artifact_freeze_execution": false,
+    "ready_for_market_backtest": false,
+    "ready_for_model_retraining": false,
+    "next_research_step": "HISTORICAL_GOLD_5826_COMPLETE_CORPUS_FREEZE_MANIFEST_IMPLEMENTATION_READY_FOR_DESIGN",
+    "formal_stake": 0
+  }
+}

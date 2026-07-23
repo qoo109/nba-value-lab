@@ -27,6 +27,10 @@ BloomBet remains promising but is not qualified for historical backfill, point-i
 
 ## Approval-gated next step
 
+```text
+BLOOMBET_FREE_API_ZERO_COST_SCHEMA_PROBE_AWAITING_EXPLICIT_USER_APPROVAL
+```
+
 A separate request design permits at most three official free-tier schema requests only after explicit user approval. The user must create the account and privately store `BLOOMBET_API_KEY`; the key must never be pasted into chat, committed, logged or uploaded as an Artifact.
 
 The probe may retain only endpoint names, parameter names/types, response field names/types, a redacted single-response shape, timestamp-semantics evidence, historical coverage metadata, quota metadata and an aggregate gate result. It may not retain or publish raw quote-level rows.

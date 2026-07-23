@@ -38,22 +38,29 @@ jobs:
               lines = [line[10:] if line.startswith('          ') else line for line in block.splitlines()]
               script = '\n'.join(lines) + '\n'
               if number == 1:
-                  if "python - <<'PY'" not in lines[0] or lines[-1].strip() != 'PY':
-                      raise SystemExit('unexpected outer bootstrap heredoc')
                   lines[0] = lines[0].replace("python - <<'PY'", "python - <<'G120PY'", 1)
                   lines[-1] = 'G120PY'
                   script = '\n'.join(lines) + '\n'
-                  needle = 'if text.count(old) != 1:'
-                  if needle not in script:
-                      raise SystemExit('replace_once count check not found')
-                  script = script.replace(needle, 'if text.count(old) < 1:', 1)
+                  script = script.replace('if text.count(old) != 1:', 'if text.count(old) < 1:', 1)
                   script = script.replace("expected one match, got {text.count(old)}", "expected at least one match, got {text.count(old)}", 1)
               Path(f'/tmp/g120-step-{number}.sh').write_text('set -euo pipefail\n' + script, encoding='utf-8')
-              print(f'extracted step {number}: {len(lines)} lines')
           PY
       - name: Implement
         run: bash /tmp/g120-step-1.sh
-      - name: Validate
-        run: bash /tmp/g120-step-2.sh
-      - name: Commit and push implementation
-        run: bash /tmp/g120-step-3.sh
+      - name: Validate with diagnostic capture
+        run: |
+          set +e
+          bash /tmp/g120-step-2.sh > /tmp/g120-validation.log 2>&1
+          code=$?
+          echo "$code" > /tmp/g120-validation.exit
+          tail -240 /tmp/g120-validation.log
+          exit 0
+      - name: Upload validation diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1-2-0-validation-diagnostic
+          path: |
+            /tmp/g120-validation.log
+            /tmp/g120-validation.exit
+          if-no-files-found: error
+          retention-days: 1

@@ -1,0 +1,52 @@
+name: Kick G1.2.0 live output implementation
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/kick-g1-2-0-live-output-v1.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  kick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: implement/g1-2-0-live-output-v1
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Extract and execute implementation steps
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('.github/workflows/apply-g1-2-0-live-output-v1.yml').read_text(encoding='utf-8').splitlines()
+          scripts = []
+          index = 0
+          while index < len(source):
+              if source[index].startswith('        run: |'):
+                  index += 1
+                  block = []
+                  while index < len(source):
+                      line = source[index]
+                      if line.startswith('      - ') or (line and not line.startswith('          ')):
+                          break
+                      block.append(line[10:] if line.startswith('          ') else '')
+                      index += 1
+                  scripts.append('\n'.join(block) + '\n')
+                  continue
+              index += 1
+          if len(scripts) != 3:
+              raise SystemExit(f'expected 3 run blocks, found {len(scripts)}')
+          for number, script in enumerate(scripts, start=1):
+              Path(f'/tmp/g120-step-{number}.sh').write_text('set -euo pipefail\n' + script, encoding='utf-8')
+          print(f'extracted {len(scripts)} implementation steps')
+          PY
+          bash /tmp/g120-step-1.sh
+          bash /tmp/g120-step-2.sh
+          bash /tmp/g120-step-3.sh

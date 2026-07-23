@@ -1,0 +1,84 @@
+name: Validate PROJECT_STATUS after official CDN recovery v1
+
+on:
+  pull_request:
+    paths:
+      - "PROJECT_STATUS.md"
+      - "scripts/validate_project_status_after_official_cdn_recovery_v1.py"
+      - ".github/workflows/validate-project-status-after-official-cdn-recovery-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "PROJECT_STATUS.md"
+      - "scripts/validate_project_status_after_official_cdn_recovery_v1.py"
+      - ".github/workflows/validate-project-status-after-official-cdn-recovery-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-project-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile status validator
+        run: python -m py_compile scripts/validate_project_status_after_official_cdn_recovery_v1.py
+
+      - name: Validate status and mutation tests
+        run: |
+          mkdir -p validation-output
+          python scripts/validate_project_status_after_official_cdn_recovery_v1.py \
+            --status PROJECT_STATUS.md \
+            --self-test \
+            --output validation-output/project-status-official-cdn-recovery-v1.json
+
+      - name: Enforce recovery status boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("validation-output/project-status-official-cdn-recovery-v1.json").read_text())
+          assert report["checks_failed"] == 0, report
+          assert report["formal_state"] == "PROJECT_STATUS_OFFICIAL_CDN_RECOVERY_SYNC_VALID", report
+          assert report["silver_games"] == 5826, report
+          assert report["gold_matchups"] == 5826, report
+          assert report["remaining_exceptions"] == 0, report
+          assert report["gold_complete_for_governed_scope"] is True, report
+          assert report["ready_for_complete_corpus_freeze_policy_design"] is True, report
+          assert report["ready_for_market_backtest"] is False, report
+          assert report["ready_for_model_retraining"] is False, report
+          assert report["formal_stake"] == 0, report
+          assert all(report["self_test"].values()), report
+          PY
+
+      - name: Confirm recovery records and builders unchanged
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
+            data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-result-v2.json \
+            data/research/historical-silver-2023-24-two-game-official-cdn-pbp-recovery-current-status-v1.json \
+            scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py \
+            scripts/recover_historical_silver_two_game_official_cdn_pbp_v2.py \
+            scripts/historical_silver_runner.py \
+            scripts/historical_silver_pbpstats.py \
+            scripts/combine_historical_silver.py \
+            scripts/build_historical_gold_multiseason.py
+
+      - name: Upload status validation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-status-after-official-cdn-recovery-v1
+          path: validation-output/project-status-official-cdn-recovery-v1.json
+          if-no-files-found: error
+          retention-days: 14

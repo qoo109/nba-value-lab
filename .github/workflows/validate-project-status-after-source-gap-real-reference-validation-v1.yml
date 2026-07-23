@@ -1,0 +1,99 @@
+name: Validate PROJECT_STATUS after source gap real-reference validation v1
+
+on:
+  pull_request:
+    paths:
+      - "PROJECT_STATUS.md"
+      - "scripts/validate_project_status_after_source_gap_real_reference_validation_v1.py"
+      - ".github/workflows/validate-project-status-after-source-gap-real-reference-validation-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "PROJECT_STATUS.md"
+      - "scripts/validate_project_status_after_source_gap_real_reference_validation_v1.py"
+      - ".github/workflows/validate-project-status-after-source-gap-real-reference-validation-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-project-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile PROJECT_STATUS validator
+        run: python -m py_compile scripts/validate_project_status_after_source_gap_real_reference_validation_v1.py
+
+      - name: Validate synchronized status and mutation tests
+        id: validate
+        run: |
+          mkdir -p validation-output
+          set +e
+          python scripts/validate_project_status_after_source_gap_real_reference_validation_v1.py \
+            --status PROJECT_STATUS.md \
+            --self-test \
+            --output validation-output/project-status-source-gap-real-reference-validation-v1.json
+          CODE=$?
+          echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Enforce status-sync boundaries
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("validation-output/project-status-source-gap-real-reference-validation-v1.json").read_text()
+          )
+          assert report["checks_failed"] == 0, report
+          assert report["formal_state"] == "PROJECT_STATUS_SOURCE_GAP_REAL_REFERENCE_VALIDATION_SYNC_VALID", report
+          assert report["request_consumed"] is True, report
+          assert report["execution_count"] == 1, report
+          assert report["maximum_execution_count"] == 1, report
+          assert report["eligible_gold_corpus_count"] == 5824, report
+          assert report["documented_exception_exclusion_count"] == 2, report
+          assert report["gold_dataset_complete"] is False, report
+          assert report["ready_for_policy_design"] is True, report
+          assert report["ready_for_market_backtest"] is False, report
+          assert report["formal_stake"] == 0, report
+          assert all(report["self_test"].values()), report
+          assert int("${{ steps.validate.outputs.exit_code }}") == 0, report
+          PY
+
+      - name: Confirm status-only scope and governed implementation unchanged
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --exit-code origin/${{ github.base_ref }}...HEAD -- \
+            data/research/historical-gold-silver-coverage-real-reference-result-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-manifest-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-integration-policy-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-request-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-approval-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-result-v1.json \
+            data/research/historical-silver-2023-24-source-gap-exception-integration-real-reference-validation-current-status-v3.json \
+            scripts/analyze_historical_gold_silver_coverage_v1.py \
+            scripts/integrate_historical_silver_source_gap_exception_v1.py \
+            scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v1.py \
+            scripts/run_historical_silver_source_gap_exception_integration_real_reference_validation_once_v2.py
+
+      - name: Upload status validation Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-status-after-source-gap-real-reference-validation-v1
+          path: validation-output/project-status-source-gap-real-reference-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

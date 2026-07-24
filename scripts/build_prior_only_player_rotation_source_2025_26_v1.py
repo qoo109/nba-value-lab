@@ -131,7 +131,13 @@ def run_official_import(
         "--max-workers",
         str(max_workers),
     ]
-    subprocess.run(command, check=True)
+    completed = subprocess.run(command, check=False)
+    report_path = output_dir / "official-player-participation-import-report.json"
+    if completed.returncode not in {0, 2} or not report_path.exists():
+        raise RuntimeError(
+            f"official participation import failed without a usable diagnostic report: "
+            f"returncode={completed.returncode}"
+        )
 
 
 def validate_and_emit(

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Fetch and normalize the official NBA 2025-26 schedule.
 
-The script performs one read-only request against each official NBA schedule
-candidate until a valid payload is found. It emits schedule metadata only;
-no odds or user-provided archive rows are involved.
+The script performs read-only requests against official NBA schedule candidates.
+It emits schedule metadata only; no odds or user-provided archive rows are sent.
 """
 from __future__ import annotations
 
@@ -11,9 +10,8 @@ import argparse
 import hashlib
 import json
 import sys
-import urllib.error
-import urllib.parse
 import urllib.request
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -27,8 +25,8 @@ CANDIDATES = (
 )
 HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     ),
     "Referer": "https://www.nba.com/",
     "Origin": "https://www.nba.com",
@@ -66,18 +64,29 @@ def iter_dicts(value: Any) -> Iterable[dict[str, Any]]:
             yield from iter_dicts(child)
 
 
+def raw_game_ids(payload: dict[str, Any]) -> list[str]:
+    values: set[str] = set()
+    for item in iter_dicts(payload):
+        value = item.get("gameId") or item.get("GAME_ID") or item.get("game_id")
+        if value is not None:
+            values.add(str(value).strip())
+    return sorted(values)
+
+
 def team_name(team: Any) -> str | None:
     if not isinstance(team, dict):
         return None
-    full = team.get("teamName") or team.get("team_name")
     city = team.get("teamCity") or team.get("team_city")
     name = team.get("teamName") or team.get("team_name") or team.get("nickname")
-    if isinstance(full, str) and full.strip() and city and full.lower().startswith(str(city).lower()):
-        return full.strip()
-    if isinstance(city, str) and isinstance(name, str) and city.strip() and name.strip():
-        return f"{city.strip()} {name.strip()}"
+    full = team.get("teamFullName") or team.get("team_full_name")
     if isinstance(full, str) and full.strip():
         return full.strip()
+    if isinstance(city, str) and isinstance(name, str) and city.strip() and name.strip():
+        if name.lower().startswith(city.lower()):
+            return name.strip()
+        return f"{city.strip()} {name.strip()}"
+    if isinstance(name, str) and name.strip():
+        return name.strip()
     return None
 
 
@@ -89,10 +98,8 @@ def normalize_game(item: dict[str, Any]) -> dict[str, Any] | None:
     if not game_id.startswith(REGULAR_GAME_ID_PREFIX):
         return None
 
-    home = item.get("homeTeam") or item.get("home_team")
-    away = item.get("awayTeam") or item.get("away_team")
-    home_name = team_name(home)
-    away_name = team_name(away)
+    home_name = team_name(item.get("homeTeam") or item.get("home_team"))
+    away_name = team_name(item.get("awayTeam") or item.get("away_team"))
     if not home_name or not away_name:
         return None
 
@@ -133,15 +140,15 @@ def extract_games(payload: dict[str, Any]) -> list[dict[str, Any]]:
         game = normalize_game(item)
         if game:
             by_id[game["official_game_id"]] = game
-    games = sorted(by_id.values(), key=lambda row: (row["scheduled_tipoff_utc"], row["official_game_id"]))
-    return games
+    return sorted(by_id.values(), key=lambda row: (row["scheduled_tipoff_utc"], row["official_game_id"]))
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--timeout", type=int, default=45)
+    parser.add_argument("--timeout", type=int, default=30)
     args = parser.parse_args()
+    args.output.parent.mkdir(parents=True, exist_ok=True)
 
     attempts: list[dict[str, Any]] = []
     selected_url: str | None = None
@@ -151,40 +158,59 @@ def main() -> int:
     for url in CANDIDATES:
         try:
             payload, raw = fetch_json(url, args.timeout)
+            ids = raw_game_ids(payload)
+            prefixes = Counter(value[:5] for value in ids if len(value) >= 5)
             candidate_games = extract_games(payload)
-            attempts.append({"url": url, "success": True, "regular_season_games": len(candidate_games)})
+            attempts.append({
+                "url": url,
+                "success": True,
+                "root_keys": sorted(payload.keys()),
+                "raw_unique_game_ids": len(ids),
+                "sample_game_ids": ids[:5],
+                "game_id_prefix_counts": dict(prefixes.most_common()),
+                "regular_season_games_normalized": len(candidate_games),
+                "payload_sha256": sha256_bytes(raw),
+            })
             if len(candidate_games) >= 1000:
                 selected_url = url
                 selected_raw = raw
                 games = candidate_games
                 break
-        except Exception as exc:  # network and schema evidence must be retained
-            attempts.append({"url": url, "success": False, "error_type": type(exc).__name__, "error": str(exc)[:300]})
+        except Exception as exc:
+            attempts.append({
+                "url": url,
+                "success": False,
+                "error_type": type(exc).__name__,
+                "error": str(exc)[:500],
+            })
 
-    if selected_url is None or selected_raw is None:
-        raise ScheduleFetchError(f"no official schedule candidate yielded >=1000 regular-season games: {attempts}")
-
+    valid = selected_url is not None and selected_raw is not None
     output = {
         "schema_version": "official-nba-schedule-2025-26-v1",
+        "formal_state": (
+            "OFFICIAL_NBA_2025_26_SCHEDULE_FETCH_VALID"
+            if valid
+            else "OFFICIAL_NBA_2025_26_SCHEDULE_FETCH_NOT_YET_VALID"
+        ),
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "season": SEASON,
         "league_id": "00",
         "game_id_filter": REGULAR_GAME_ID_PREFIX,
         "source_url": selected_url,
-        "source_payload_sha256": sha256_bytes(selected_raw),
+        "source_payload_sha256": sha256_bytes(selected_raw) if selected_raw else None,
         "source_attempts": attempts,
         "regular_season_game_count": len(games),
         "games": games,
     }
-    args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
-        "formal_state": "OFFICIAL_NBA_2025_26_SCHEDULE_FETCH_VALID",
+        "formal_state": output["formal_state"],
         "source_url": selected_url,
         "regular_season_game_count": len(games),
+        "source_attempts": attempts,
         "output": str(args.output),
     }, ensure_ascii=False, indent=2))
-    return 0
+    return 0 if valid else 1
 
 
 if __name__ == "__main__":

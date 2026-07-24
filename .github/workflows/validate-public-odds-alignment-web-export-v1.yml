@@ -1,0 +1,41 @@
+name: Validate public odds alignment web export v1
+
+on:
+  pull_request:
+    paths:
+      - "data/public/odds-alignment-summary-2025-26-v1.json"
+      - "odds-alignment.html"
+      - "js/v4-odds-alignment-public.js"
+      - "docs/public-private-odds-usage-v1.md"
+      - "scripts/build_public_odds_alignment_web_v1.py"
+      - "scripts/query_private_aligned_odds_v1.py"
+      - "scripts/validate_public_odds_alignment_web_export_v1.py"
+      - ".github/workflows/validate-public-odds-alignment-web-export-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile public and private utilities
+        run: |
+          python -m py_compile \
+            scripts/build_public_odds_alignment_web_v1.py \
+            scripts/query_private_aligned_odds_v1.py \
+            scripts/validate_public_odds_alignment_web_export_v1.py
+      - name: Validate public-safe export and private query contract
+        run: python scripts/validate_public_odds_alignment_web_export_v1.py
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-odds-alignment-web-export-validation-v1
+          path: artifacts/public-odds-alignment-web-export-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

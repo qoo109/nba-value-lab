@@ -1,0 +1,150 @@
+name: Build prior-only player rotation source 2025-26 v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/build_prior_only_player_rotation_source_2025_26_v1.py"
+      - "scripts/import_official_nba_participation_labels.py"
+      - "scripts/run_official_nba_participation_import.py"
+      - ".github/workflows/build-prior-only-player-rotation-source-2025-26-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      SILVER_2025_26_ARTIFACT_ID: "8591673536"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile and self-test source tooling
+        run: |
+          python -m py_compile \
+            scripts/import_official_nba_participation_labels.py \
+            scripts/run_official_nba_participation_import.py \
+            scripts/build_prior_only_player_rotation_source_2025_26_v1.py
+          rm -rf /tmp/nbavl-rotation-source-self-test
+          python scripts/import_official_nba_participation_labels.py \
+            --self-test \
+            --output-dir /tmp/nbavl-participation-core-self-test
+          python scripts/build_prior_only_player_rotation_source_2025_26_v1.py \
+            --self-test \
+            --output-dir /tmp/nbavl-rotation-source-self-test
+          test -f /tmp/nbavl-rotation-source-self-test/self-test.json
+      - name: Download governed 2025-26 Silver Artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/nbavl-rotation-source-input
+          mkdir -p /tmp/nbavl-rotation-source-input
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${SILVER_2025_26_ARTIFACT_ID}/zip" \
+            > /tmp/nbavl-rotation-source-input/silver.zip
+          unzip -q /tmp/nbavl-rotation-source-input/silver.zip \
+            -d /tmp/nbavl-rotation-source-input/silver
+          silver=$(find /tmp/nbavl-rotation-source-input/silver \
+            -type f -name 'historical-silver-2025-26.sqlite.gz' -print -quit)
+          test -n "$silver" && test -f "$silver"
+          echo "SILVER_PATH=$silver" >> "$GITHUB_ENV"
+      - name: Build official prior-only player rotation source
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/nbavl-prior-only-rotation-source
+          python scripts/build_prior_only_player_rotation_source_2025_26_v1.py \
+            --silver "$SILVER_PATH" \
+            --output-dir /tmp/nbavl-prior-only-rotation-source \
+            --max-workers 4
+      - name: Validate source qualification and preserved locks
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-prior-only-rotation-source')
+          report = json.loads(
+              (root / 'prior-only-player-rotation-source-2025-26-report-v1.json').read_text()
+          )
+          assert report['formal_state'] == 'PRIOR_ONLY_PLAYER_ROTATION_SOURCE_2025_26_PASS'
+          coverage = report['coverage']
+          assert coverage['requested_games'] == 1230
+          assert coverage['successful_games'] == 1230
+          assert coverage['failed_games'] == 0
+          assert coverage['team_game_rows'] == 2460
+          assert coverage['player_game_rows'] >= 30000
+          assert coverage['unique_player_ids'] >= 500
+          assert coverage['teams_represented'] == 30
+          assert coverage['months_covered'] >= 7
+
+          quality = report['quality']
+          for key in (
+              'duplicate_game_player_rows',
+              'missing_team_rows',
+              'unexpected_team_rows',
+              'invalid_team_rows',
+              'invalid_minutes',
+              'starter_without_play',
+              'starter_count_errors',
+              'minute_reconciliation_errors',
+              'official_import_team_mismatches',
+              'official_import_invalid_player_rows',
+              'official_import_duplicate_rows',
+          ):
+              assert quality[key] == 0, (key, quality[key])
+          assert quality['max_abs_team_minute_error'] <= 0.35
+          assert quality['player_names_retained'] is False
+          assert quality['not_playing_descriptions_retained'] is False
+          assert quality['raw_json_retained'] is False
+
+          time = report['time_authority']
+          assert time['source_game_end_timestamp_available'] is False
+          assert time['approved_fallback'] == 'source_game_date_et < target_game_date_et'
+          assert time['same_day_source_rows_allowed'] is False
+          assert time['future_source_rows_allowed'] is False
+          assert time['target_game_source_rows_allowed'] is False
+
+          qualification = report['qualification']
+          assert qualification['official_source_qualified_for_prior_only_rotation_v1'] is True
+          assert qualification['ready_for_prior_only_rotation_feature_build'] is True
+          assert qualification['real_feature_build_executed'] is False
+          assert qualification['residual_audit_executed'] is False
+          assert qualification['model_training_authorized'] is False
+          assert qualification['strict_t60_qualified'] is False
+          assert qualification['formal_market_backtest_allowed'] is False
+          assert qualification['betting_edge_claim_allowed'] is False
+          assert qualification['formal_stake'] == 0
+
+          source = root / 'prior-only-player-rotation-source-2025-26-v1.csv'
+          with source.open(newline='', encoding='utf-8') as handle:
+              rows = list(csv.DictReader(handle))
+          assert len(rows) == coverage['player_game_rows']
+          assert len({(row['source_game_id'], row['player_id']) for row in rows}) == len(rows)
+          assert all('player_name' not in row for row in rows)
+          print(json.dumps({
+              'formal_state': report['formal_state'],
+              'coverage': coverage,
+              'max_abs_team_minute_error': quality['max_abs_team_minute_error'],
+              'next': report['next_unique_sub_mainline'],
+              'formal_stake': 0,
+          }, indent=2))
+          PY
+      - name: Upload private rotation source Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-prior-only-player-rotation-source-2025-26-v1
+          path: |
+            /tmp/nbavl-prior-only-rotation-source/prior-only-player-rotation-source-2025-26-v1.csv
+            /tmp/nbavl-prior-only-rotation-source/prior-only-player-rotation-source-index-2025-26-v1.csv
+            /tmp/nbavl-prior-only-rotation-source/prior-only-player-rotation-source-2025-26-report-v1.json
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

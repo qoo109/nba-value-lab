@@ -68,8 +68,16 @@
     "formal_stake": 0
   },
   "validation": {
+    "recording_pr": 168,
+    "workflow_run": 30061807616,
+    "workflow_job": 89384780692,
+    "artifact_id": 8584793122,
+    "artifact_digest": "sha256:a654006ba35896bcd71817d18b9985f7e621a2884ef92bb63335de4159f6cb6e",
+    "artifact_formal_state": "G1_2_0_REAL_GOVERNED_T60_INPUT_INTAKE_VALIDATOR_CONTRACT_VALID",
+    "artifact_inspected": true,
     "contract_tests": 19,
     "contract_tests_expected_to_pass": 19,
+    "contract_tests_passed": 19,
     "contract_fixture_may_be_used_by_production_cli": false,
     "real_input_required_for_next_execution": true
   },

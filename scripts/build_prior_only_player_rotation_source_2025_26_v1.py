@@ -34,10 +34,8 @@ MIN_PLAYER_ROWS = 30000
 MIN_UNIQUE_PLAYERS = 500
 MINUTE_TOLERANCE = 0.35
 
-
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -46,11 +44,9 @@ def sha256(path: Path) -> str:
             digest.update(chunk)
     return f"sha256:{digest.hexdigest()}"
 
-
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8-sig") as handle:
         return [dict(row) for row in csv.DictReader(handle)]
-
 
 def write_csv(path: Path, rows: list[dict[str, Any]], fields: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -59,6 +55,57 @@ def write_csv(path: Path, rows: list[dict[str, Any]], fields: list[str]) -> None
         writer.writeheader()
         writer.writerows(rows)
 
+def subject_key(game_id: str, player_id: str) -> str:
+    value = f"{game_id}|{player_id}".encode("utf-8")
+    return f"sha256:{hashlib.sha256(value).hexdigest()}"
+
+def load_exceptions(path: Path) -> list[dict[str, Any]]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if payload.get("schema_version") != "prior-only-player-rotation-source-exceptions-2025-26-v1":
+        raise ValueError("unsupported rotation source exception manifest")
+    if payload.get("scope") != "ONE_FIELD_OFFICIAL_TO_OFFICIAL_RECONCILIATION_ONLY":
+        raise ValueError("exception manifest scope is not official-to-official only")
+    guardrails = payload.get("guardrails") or {}
+    required_false = (
+        "wildcard_matching_allowed",
+        "fuzzy_identity_allowed",
+        "unlisted_correction_allowed",
+        "non_official_evidence_allowed",
+        "public_player_name_retained",
+        "model_or_market_result_used_to_create_exception",
+    )
+    if any(guardrails.get(key) is not False for key in required_false):
+        raise ValueError("exception manifest guardrails are not fully locked")
+    exceptions = payload.get("exceptions")
+    if not isinstance(exceptions, list) or not exceptions:
+        raise ValueError("exception manifest contains no exceptions")
+    ids: set[str] = set()
+    keys: set[tuple[str, str, str]] = set()
+    for item in exceptions:
+        exception_id = str(item.get("exception_id") or "")
+        game_id = str(item.get("source_game_id") or "")
+        team = str(item.get("team_abbr") or "")
+        hashed_subject = str(item.get("subject_key_sha256") or "")
+        key = (game_id, team, hashed_subject)
+        if not exception_id or exception_id in ids:
+            raise ValueError("exception IDs must be unique and non-empty")
+        if key in keys:
+            raise ValueError("exception subject keys must be unique")
+        if item.get("field") != "minutes" or item.get("allowed_mutation") != "MINUTES_ONLY":
+            raise ValueError("only a minutes-only correction is allowed")
+        if item.get("played_flag_change_allowed") is not False:
+            raise ValueError("played flag mutation is prohibited")
+        if item.get("starter_flag_change_allowed") is not False:
+            raise ValueError("starter flag mutation is prohibited")
+        if item.get("identity_change_allowed") is not False:
+            raise ValueError("identity mutation is prohibited")
+        if item.get("official_evidence_source") != "NBA.com Official Game Box Score":
+            raise ValueError("exception evidence is not the approved official source")
+        if not str(item.get("official_evidence_url") or "").startswith("https://www.nba.com/game/"):
+            raise ValueError("exception evidence URL is not an NBA.com game page")
+        ids.add(exception_id)
+        keys.add(key)
+    return exceptions
 
 def resolve_sqlite(path: Path) -> tuple[Path, tempfile.TemporaryDirectory[str] | None]:
     if path.suffix != ".gz":
@@ -68,7 +115,6 @@ def resolve_sqlite(path: Path) -> tuple[Path, tempfile.TemporaryDirectory[str] |
     with gzip.open(path, "rb") as source, resolved.open("wb") as target:
         shutil.copyfileobj(source, target)
     return resolved, temp
-
 
 def load_governed_games(path: Path) -> list[dict[str, Any]]:
     sqlite_path, temp = resolve_sqlite(path)
@@ -102,7 +148,6 @@ def load_governed_games(path: Path) -> list[dict[str, Any]]:
         raise ValueError("governed Silver game IDs are not unique")
     return rows
 
-
 def selected_game_rows(games: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [
         {
@@ -113,7 +158,6 @@ def selected_game_rows(games: list[dict[str, Any]]) -> list[dict[str, Any]]:
         }
         for game in games
     ]
-
 
 def run_official_import(
     selected_path: Path,
@@ -139,13 +183,14 @@ def run_official_import(
             f"returncode={completed.returncode}"
         )
 
-
 def validate_and_emit(
     *,
     games: list[dict[str, Any]],
     import_dir: Path,
     output_dir: Path,
     silver_path: Path,
+    exceptions_path: Path,
+    exceptions: list[dict[str, Any]],
 ) -> dict[str, Any]:
     import_report_path = import_dir / "official-player-participation-import-report.json"
     labels_path = import_dir / "official-player-participation-labels.csv"
@@ -160,6 +205,17 @@ def validate_and_emit(
         game_id = str(row["game_id"]).zfill(10)
         expected_teams.add((game_id, str(row["home_team_abbr"])))
         expected_teams.add((game_id, str(row["away_team_abbr"])))
+
+    exception_by_key = {
+        (
+            str(item["source_game_id"]),
+            str(item["team_abbr"]),
+            str(item["subject_key_sha256"]),
+        ): item
+        for item in exceptions
+    }
+    applied_exception_ids: set[str] = set()
+    exception_value_mismatches = 0
 
     private_rows: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
@@ -182,9 +238,19 @@ def validate_and_emit(
         seen.add(key)
         if (game_id, team) not in expected_teams:
             invalid_team_rows += 1
-        minutes = float(row["actual_minutes"])
+        raw_minutes = float(row["actual_minutes"])
+        minutes = raw_minutes
         played = int(row["actual_played"])
         starter = int(row["actual_starter"])
+        source_exception_id = ""
+        exception = exception_by_key.get((game_id, team, subject_key(game_id, player_id)))
+        if exception is not None:
+            if abs(raw_minutes - float(exception["live_data_value"])) > 1e-6:
+                exception_value_mismatches += 1
+            else:
+                minutes = float(exception["reconciled_official_value"])
+                source_exception_id = str(exception["exception_id"])
+                applied_exception_ids.add(source_exception_id)
         if minutes < 0 or minutes > game_minutes.get(game_id, 60.0) + 0.01 or (played == 0 and minutes > 1e-9):
             invalid_minutes += 1
         if starter and not played:
@@ -206,12 +272,15 @@ def validate_and_emit(
                 "source_sha256": row["source_sha256"],
                 "retrieved_at": row["retrieved_at"],
                 "source_time_semantics": "STRICTLY_EARLIER_EASTERN_GAME_DATE_FALLBACK",
+                "source_reconciliation_exception_id": source_exception_id,
                 "source_version": VERSION,
             }
         )
 
     missing_team_rows = sorted(expected_teams - set(team_players))
     unexpected_team_rows = sorted(set(team_players) - expected_teams)
+    declared_exception_ids = {str(item["exception_id"]) for item in exceptions}
+    unmatched_exception_ids = sorted(declared_exception_ids - applied_exception_ids)
     starter_count_errors = [
         {"source_game_id": game_id, "team_abbr": team, "starter_count": count}
         for (game_id, team), count in sorted(team_starters.items())
@@ -260,6 +329,7 @@ def validate_and_emit(
             "source_sha256",
             "retrieved_at",
             "source_time_semantics",
+            "source_reconciliation_exception_id",
             "source_version",
         ],
     )
@@ -282,6 +352,9 @@ def validate_and_emit(
         and not unexpected_team_rows
         and not starter_count_errors
         and not minute_reconciliation_errors
+        and len(applied_exception_ids) == len(exceptions)
+        and not unmatched_exception_ids
+        and exception_value_mismatches == 0
         and report["quality"]["team_mismatches"] == 0
         and report["quality"]["invalid_player_rows"] == 0
         and report["quality"]["duplicate_official_game_player_rows"] == 0
@@ -297,6 +370,8 @@ def validate_and_emit(
             "expected_team_game_rows": EXPECTED_TEAM_ROWS,
             "official_source_provider": report["source"]["provider"],
             "official_source_url_template": report["source"]["url_template"],
+            "source_exception_manifest_sha256": sha256(exceptions_path),
+            "declared_source_exceptions": len(exceptions),
         },
         "coverage": {
             "requested_games": EXPECTED_GAMES,
@@ -318,6 +393,9 @@ def validate_and_emit(
             "starter_count_errors": len(starter_count_errors),
             "minute_reconciliation_errors": len(minute_reconciliation_errors),
             "max_abs_team_minute_error": round(max_abs_minute_error, 6),
+            "source_reconciliation_exceptions_applied": len(applied_exception_ids),
+            "unmatched_source_reconciliation_exceptions": len(unmatched_exception_ids),
+            "source_reconciliation_value_mismatches": exception_value_mismatches,
             "official_import_team_mismatches": report["quality"]["team_mismatches"],
             "official_import_invalid_player_rows": report["quality"]["invalid_player_rows"],
             "official_import_duplicate_rows": report["quality"]["duplicate_official_game_player_rows"],
@@ -332,6 +410,13 @@ def validate_and_emit(
             "same_day_source_rows_allowed": False,
             "future_source_rows_allowed": False,
             "target_game_source_rows_allowed": False,
+        },
+        "source_reconciliation": {
+            "policy": "EXACT_DEIDENTIFIED_SUBJECT_KEY_AND_EXACT_LIVE_VALUE_ONLY",
+            "official_to_official_only": True,
+            "applied_exception_ids": sorted(applied_exception_ids),
+            "unmatched_exception_ids": unmatched_exception_ids,
+            "player_names_retained": False,
         },
         "outputs": {
             "private_source_csv": source_output.name,
@@ -364,7 +449,6 @@ def validate_and_emit(
         raise SystemExit(2)
     return output_report
 
-
 def self_test(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     labels = []
@@ -395,6 +479,7 @@ def self_test(output_dir: Path) -> None:
             for team in ("AAA", "BBB")
         ),
         "no_names": all("player_name" not in row for row in labels),
+        "subject_hash": subject_key("0022500001", "1000").startswith("sha256:"),
         "locks": True,
     }
     if not all(checks.values()):
@@ -404,10 +489,10 @@ def self_test(output_dir: Path) -> None:
         encoding="utf-8",
     )
 
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--silver", type=Path)
+    parser.add_argument("--exceptions", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--max-workers", type=int, default=4)
     parser.add_argument("--self-test", action="store_true")
@@ -418,9 +503,12 @@ def main() -> int:
         return 0
     if args.silver is None:
         parser.error("--silver is required")
+    if args.exceptions is None:
+        parser.error("--exceptions is required")
     if not 1 <= args.max_workers <= 6:
         parser.error("--max-workers must be between 1 and 6")
     games = load_governed_games(args.silver)
+    exceptions = load_exceptions(args.exceptions)
     with tempfile.TemporaryDirectory() as temp_name:
         temp = Path(temp_name)
         selected_path = temp / "selected-games.csv"
@@ -436,9 +524,10 @@ def main() -> int:
             import_dir=import_dir,
             output_dir=args.output_dir,
             silver_path=args.silver,
+            exceptions_path=args.exceptions,
+            exceptions=exceptions,
         )
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

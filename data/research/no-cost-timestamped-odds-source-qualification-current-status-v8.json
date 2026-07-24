@@ -3,7 +3,7 @@
   "updated_at": "2026-07-24",
   "formal_state": "NO_COST_TIMESTAMPED_ODDS_HOOPSAPI_RUNTIME_PREFLIGHT_REQUEST_DESIGNED",
   "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v7.json",
-  "recording_pr": 0,
+  "recording_pr": 166,
   "user_decisions": {
     "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
     "paid_odds_path": "NOT_APPROVED",

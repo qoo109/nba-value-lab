@@ -1,0 +1,96 @@
+name: Build prior-only player rotation state features 2025-26 v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/build_prior_only_player_rotation_state_features_2025_26_v1.py"
+      - "scripts/validate_prior_only_player_rotation_state_features_2025_26_v1.py"
+      - "docs/prior-only-player-rotation-state-features-2025-26-v1.md"
+      - ".github/workflows/build-prior-only-player-rotation-state-features-2025-26-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SOURCE_ARTIFACT_ID: "8599479933"
+      SOURCE_ARTIFACT_SHA256: "6a5c78b1d744731b90ff83ab9518b898b4b34878f22a001c82092250e2b2be7f"
+      SOURCE_CSV_SHA256: "5c56c1a9b0d714f7d41da8bd49a7ee7cf364eb2f40c9b6514223062e5be91507"
+      SOURCE_INDEX_SHA256: "f4484c3b0d75c8cf693f87b2c4c3d00cfec32c1377935423f33ae3e601667bc7"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile feature tooling
+        run: |
+          python -m py_compile \
+            scripts/build_prior_only_player_rotation_state_features_2025_26_v1.py \
+            scripts/validate_prior_only_player_rotation_state_features_2025_26_v1.py
+
+      - name: Download governed private rotation source Artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/nbavl-rotation-features
+          mkdir -p /tmp/nbavl-rotation-features/input /tmp/nbavl-rotation-features/output
+
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${SOURCE_ARTIFACT_ID}/zip" \
+            > /tmp/nbavl-rotation-features/source.zip
+
+          echo "${SOURCE_ARTIFACT_SHA256}  /tmp/nbavl-rotation-features/source.zip" | sha256sum -c -
+          unzip -q /tmp/nbavl-rotation-features/source.zip \
+            -d /tmp/nbavl-rotation-features/input
+
+          source_csv=/tmp/nbavl-rotation-features/input/prior-only-player-rotation-source-2025-26-v1.csv
+          source_index=/tmp/nbavl-rotation-features/input/prior-only-player-rotation-source-index-2025-26-v1.csv
+          source_report=/tmp/nbavl-rotation-features/input/prior-only-player-rotation-source-2025-26-report-v1.json
+
+          test -f "$source_csv"
+          test -f "$source_index"
+          test -f "$source_report"
+          echo "${SOURCE_CSV_SHA256}  ${source_csv}" | sha256sum -c -
+          echo "${SOURCE_INDEX_SHA256}  ${source_index}" | sha256sum -c -
+
+          echo "ROTATION_SOURCE_CSV=${source_csv}" >> "$GITHUB_ENV"
+          echo "ROTATION_SOURCE_INDEX=${source_index}" >> "$GITHUB_ENV"
+
+      - name: Build strictly-prior private rotation features
+        run: |
+          set -euo pipefail
+          python scripts/build_prior_only_player_rotation_state_features_2025_26_v1.py \
+            --source "$ROTATION_SOURCE_CSV" \
+            --source-index "$ROTATION_SOURCE_INDEX" \
+            --output-dir /tmp/nbavl-rotation-features/output
+
+      - name: Validate aggregate feature-build result and preserved locks
+        run: |
+          set -euo pipefail
+          python scripts/validate_prior_only_player_rotation_state_features_2025_26_v1.py \
+            --report /tmp/nbavl-rotation-features/output/prior-only-player-rotation-state-features-2025-26-report-v1.json \
+            --output /tmp/nbavl-rotation-features/output/prior-only-player-rotation-state-features-2025-26-validation-v1.json
+
+      - name: Upload private feature Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-prior-only-player-rotation-state-features-2025-26-v1
+          path: |
+            /tmp/nbavl-rotation-features/output/prior-only-player-rotation-player-features-2025-26-v1.csv
+            /tmp/nbavl-rotation-features/output/prior-only-player-rotation-team-features-2025-26-v1.csv
+            /tmp/nbavl-rotation-features/output/prior-only-player-rotation-matchup-features-2025-26-v1.csv
+            /tmp/nbavl-rotation-features/output/prior-only-player-rotation-state-features-2025-26-report-v1.json
+            /tmp/nbavl-rotation-features/output/prior-only-player-rotation-state-features-2025-26-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

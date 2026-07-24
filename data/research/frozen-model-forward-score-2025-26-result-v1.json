@@ -1,0 +1,180 @@
+{
+  "schema_version": "frozen-model-forward-score-2025-26-result-v1",
+  "formal_state": "FROZEN_MODEL_FORWARD_SCORE_2025_26_PASS_RECORDED",
+  "recorded_at_utc": "2026-07-24T09:15:00+00:00",
+  "execution_evidence": {
+    "branch_head": "daacc74f5500f73b6816933af7e4fa8f3c9616f9",
+    "workflow_run": 30081647871,
+    "job": 89444366089,
+    "artifact_id": 8592067225,
+    "artifact_digest": "sha256:b366f12085208182845e96eeb9e6782415dd499ba2010146373ae23eb2278a9f",
+    "artifact_inspected": true,
+    "artifact_size_bytes": 1254484
+  },
+  "frozen_model": {
+    "artifact_id": 8396002523,
+    "artifact_sha256": "sha256:6063adac9851b47d339a93e35935115008b736a16925548d36a8c54a0353b41b",
+    "model_file_sha256": "sha256:007ce32cc5a80df3b87554d13847d388e2ca6cbf6122f00df2d4e87d5b49a343",
+    "version": "walk-forward-v2",
+    "training_seasons": [
+      "2019-20",
+      "2020-21",
+      "2021-22",
+      "2022-23",
+      "2023-24"
+    ],
+    "selected_probability_method": "raw_logistic_elo",
+    "fit_or_refit_calls_executed": 0,
+    "calibration_applied": false
+  },
+  "population": {
+    "frozen_training_elo_games": 5824,
+    "frozen_training_exclusions": [
+      "22301177",
+      "22301195"
+    ],
+    "state_update_games_2024_25": 1230,
+    "forward_scored_games_2025_26": 1230,
+    "first_game_date": "2025-10-21",
+    "last_game_date": "2026-04-12"
+  },
+  "forward_gold": {
+    "team_rows": 2460,
+    "matchup_rows": 1230,
+    "point_in_time_violations": 0,
+    "same_day_games_excluded": true,
+    "season_history_reset": true,
+    "mature_matchups_prior_20_both_sides": 921,
+    "low_evidence_matchups": 79,
+    "database_gzip_sha256": "sha256:3a9bd07dac35ff2a6c9e880d3637d37ae5e18b5602e740dcfc7e3d3be413aead"
+  },
+  "probability_quality": {
+    "model": {
+      "log_loss": 0.6008653315472677,
+      "brier_score": 0.2068232035389188,
+      "accuracy": 0.683739837398374,
+      "roc_auc": 0.7327177472868549,
+      "ece": 0.029773234611016167,
+      "mce": 0.13152799604577364
+    },
+    "elo_benchmark": {
+      "log_loss": 0.6082363613855102,
+      "brier_score": 0.20971473260025827,
+      "accuracy": 0.6780487804878049,
+      "roc_auc": 0.7254505854399896
+    },
+    "model_minus_elo": {
+      "log_loss": -0.007371029838242449,
+      "brier_score": -0.002891529061339465,
+      "accuracy": 0.005691056910569037,
+      "roc_auc": 0.0072671618468652666
+    },
+    "confidence_thresholds": [
+      {
+        "minimum_selected_side_probability": 0.5,
+        "rows": 1230,
+        "coverage": 1.0,
+        "accuracy": 0.683739837398374,
+        "mean_selected_side_probability": 0.6579433212583705
+      },
+      {
+        "minimum_selected_side_probability": 0.55,
+        "rows": 1016,
+        "coverage": 0.8260162601626017,
+        "accuracy": 0.7155511811023622,
+        "mean_selected_side_probability": 0.685808260320912
+      },
+      {
+        "minimum_selected_side_probability": 0.6,
+        "rows": 795,
+        "coverage": 0.6463414634146342,
+        "accuracy": 0.7396226415094339,
+        "mean_selected_side_probability": 0.7168648647185161
+      },
+      {
+        "minimum_selected_side_probability": 0.65,
+        "rows": 596,
+        "coverage": 0.4845528455284553,
+        "accuracy": 0.7667785234899329,
+        "mean_selected_side_probability": 0.7476249026909456
+      },
+      {
+        "minimum_selected_side_probability": 0.7,
+        "rows": 424,
+        "coverage": 0.34471544715447155,
+        "accuracy": 0.8018867924528302,
+        "mean_selected_side_probability": 0.7776308369480645
+      },
+      {
+        "minimum_selected_side_probability": 0.75,
+        "rows": 250,
+        "coverage": 0.2032520325203252,
+        "accuracy": 0.836,
+        "mean_selected_side_probability": 0.8151944322969769
+      },
+      {
+        "minimum_selected_side_probability": 0.8,
+        "rows": 140,
+        "coverage": 0.11382113821138211,
+        "accuracy": 0.8642857142857143,
+        "mean_selected_side_probability": 0.8466232267404022
+      }
+    ],
+    "paired_game_bootstrap_vs_elo": {
+      "resamples": 5000,
+      "seed": 20260724,
+      "model_minus_elo_log_loss": {
+        "mean": -0.00738750821067305,
+        "ci95": [
+          -0.013974048598649386,
+          -0.0009274601833351914
+        ],
+        "probability_model_better": 0.9884
+      },
+      "model_minus_elo_brier": {
+        "mean": -0.0028952886038990876,
+        "ci95": [
+          -0.005831273661785866,
+          -0.000021928921674366152
+        ],
+        "probability_model_better": 0.9764
+      },
+      "model_minus_elo_accuracy": {
+        "mean": 0.005737235772357722,
+        "ci95": [
+          -0.010569105691056846,
+          0.02276422764227637
+        ],
+        "probability_model_better": 0.7362
+      }
+    }
+  },
+  "private_outputs": {
+    "predictions_csv": "frozen-model-forward-predictions-2025-26.csv",
+    "predictions_csv_sha256": "sha256:c3764faf6eb3703374b12a5d8668c6ef889cd8f54070a2c6cf135b55559ca725",
+    "prediction_rows": 1230,
+    "forward_gold_sqlite_gzip": "forward-gold-2025-26.sqlite.gz",
+    "forward_gold_sqlite_gzip_sha256": "sha256:3a9bd07dac35ff2a6c9e880d3637d37ae5e18b5602e740dcfc7e3d3be413aead",
+    "public_prediction_rows_committed": 0,
+    "odds_rows_emitted": 0
+  },
+  "qualification": {
+    "model_only_forward_probability_diagnostic_valid": true,
+    "ready_for_private_same_game_odds_sensitivity_join": true,
+    "strict_t60_qualified": false,
+    "market_backtest_allowed": false,
+    "clv_allowed": false,
+    "roi_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "execution_boundaries": {
+    "model_retraining_executed": false,
+    "model_refit_executed": false,
+    "market_data_used_as_model_feature": false,
+    "odds_join_executed": false,
+    "provider_api_requests": 0
+  },
+  "interpretation": "These are model-only forward probability-quality results on completed 2025-26 games. Confidence-band accuracy is not a betting win rate and does not establish positive expected value.",
+  "next_unique_sub_mainline": "JOIN_2025_26_FORWARD_PROBABILITIES_TO_PRIVATE_ALIGNED_ODDS_FOR_TIME_BANDED_SENSITIVITY_ONLY"
+}

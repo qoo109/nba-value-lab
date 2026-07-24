@@ -3,20 +3,18 @@ name: Validate PROJECT_STATUS after Gold 5826 real Artifact request design resul
 on:
   pull_request:
     paths:
-      - "PROJECT_STATUS.md"
+      # Frozen historical lifecycle gate. Current status-doc changes must not
+      # reactivate the pre-request-design phase.
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-result-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json"
       - "scripts/validate_project_status_after_gold_5826_real_artifact_request_design_result_v1.py"
-      - ".github/workflows/validate-project-status-after-gold-5826-real-artifact-request-design-result-v1.yml"
   push:
     branches:
       - main
     paths:
-      - "PROJECT_STATUS.md"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-result-v1.json"
       - "data/research/historical-gold-5826-freeze-manifest-real-artifact-execution-request-design-current-status-v1.json"
       - "scripts/validate_project_status_after_gold_5826_real_artifact_request_design_result_v1.py"
-      - ".github/workflows/validate-project-status-after-gold-5826-real-artifact-request-design-result-v1.yml"
 
 permissions:
   contents: read

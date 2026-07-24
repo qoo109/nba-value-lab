@@ -3,14 +3,14 @@ name: Validate first provider private forward adapter qualification gate v1
 on:
   pull_request:
     paths:
-      - PROJECT_STATUS.md
+      # Historical provider-gate validator. Current project-status updates must
+      # not reset the gate to its pre-shell milestone.
       - data/research/first-provider-private-forward-adapter-qualification-gate-v1.json
       - data/research/no-cost-timestamped-odds-source-qualification-current-status-v7.json
       - data/research/hoopsapi-free-forward-collection-public-review-v1.json
       - docs/first-provider-private-forward-adapter-qualification-gate-v1.md
       - docs/handoffs/nba_value_lab_handoff_2026-07-24_first_provider_adapter_gate.md
       - scripts/validate_first_provider_private_forward_adapter_qualification_gate_v1.py
-      - .github/workflows/validate-first-provider-private-forward-adapter-qualification-gate-v1.yml
   workflow_dispatch:
 
 permissions:

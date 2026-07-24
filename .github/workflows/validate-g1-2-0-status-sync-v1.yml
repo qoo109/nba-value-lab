@@ -3,12 +3,11 @@ name: Validate G1.2.0 status sync v1
 on:
   pull_request:
     paths:
-      - PROJECT_STATUS.md
-      - README.md
+      # Historical milestone validator. Evolving top-level status documents are
+      # validated by the current research-status sync, not by this frozen gate.
       - models/manifest.json
       - docs/handoffs/nba_value_lab_handoff_2026-07-24_g1_2_0_status_sync.md
       - scripts/validate_g1_2_0_status_sync_v1.py
-      - .github/workflows/validate-g1-2-0-status-sync-v1.yml
   workflow_dispatch:
 
 permissions:

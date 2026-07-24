@@ -25,7 +25,8 @@ manual archive path: continue
 ## Milestone
 
 ```text
-IMPLEMENT_KAGGLE_BASKETBALL_ODDS_HISTORY_LOCAL_INSPECTOR_V1
+PR #171 — Add Kaggle basketball odds local archive inspector v1
+KAGGLE_BASKETBALL_ODDS_HISTORY_LOCAL_INSPECTOR_VALID
 ```
 
 Created:
@@ -52,6 +53,40 @@ public file count observed: 550
 ```
 
 These are dataset-page claims only. They do not verify upstream source rights, actual timestamp semantics, bookmaker identity or point-in-time suitability.
+
+## Dedicated validation and Artifact QA
+
+```text
+workflow run: 30065900883
+job: 89396695317 / success
+artifact: 8586216269
+artifact digest: sha256:b202cdf365caa1eebed5b1dfd543e695e5203c888a4570b1929a5c4e729fc9b6
+artifact formal state: KAGGLE_BASKETBALL_ODDS_HISTORY_LOCAL_INSPECTOR_VALID
+contract tests: 37 / 37 PASS
+artifact inspected: true
+```
+
+Aggregate-only QA confirms:
+
+```text
+offline only: true
+manual download required: true
+source archive outside repo required: true
+aggregate output outside repo until reviewed: true
+ZIP and directory supported: true
+synthetic contract only: true
+real archive inspected: false
+quote rows emitted: 0
+prices emitted: 0
+provider requests executed: 0
+timestamp semantics verified: false
+upstream provenance verified: false
+point-in-time qualified: false
+historical backfill qualified: false
+formal history write authorized: false
+market metrics executed: false
+Formal Stake: 0
+```
 
 ## No execution claims
 

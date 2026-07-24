@@ -104,29 +104,18 @@ def main() -> int:
         assert sealed_report["formal_stake"] == 0
         tests += 5
 
-        bad = valid_evidence()
-        bad["rights_reviewed_by_user"] = False
-        evidence_path.write_text(json.dumps(bad), encoding="utf-8")
-        expect_error(lambda: module.seal_evidence(input_path, evidence_path, raw_path, base / "bad-rights.json"), "unreviewed rights must fail")
-        tests += 1
-
-        bad = valid_evidence()
-        bad["provider_timestamp_semantics_verified"] = False
-        evidence_path.write_text(json.dumps(bad), encoding="utf-8")
-        expect_error(lambda: module.seal_evidence(input_path, evidence_path, raw_path, base / "bad-time.json"), "unverified timestamp must fail")
-        tests += 1
-
-        bad = valid_evidence()
-        bad["quote_time_authority"] = "collector_fetched_at"
-        evidence_path.write_text(json.dumps(bad), encoding="utf-8")
-        expect_error(lambda: module.seal_evidence(input_path, evidence_path, raw_path, base / "bad-authority.json"), "collector time authority must fail")
-        tests += 1
-
-        bad = valid_evidence()
-        bad["public_redistribution_allowed"] = True
-        evidence_path.write_text(json.dumps(bad), encoding="utf-8")
-        expect_error(lambda: module.seal_evidence(input_path, evidence_path, raw_path, base / "bad-public.json"), "public redistribution must fail")
-        tests += 1
+        mutations = [
+            ("rights_reviewed_by_user", False, "bad-rights.json"),
+            ("provider_timestamp_semantics_verified", False, "bad-time.json"),
+            ("quote_time_authority", "collector_fetched_at", "bad-authority.json"),
+            ("public_redistribution_allowed", True, "bad-public.json"),
+        ]
+        for key, value, filename in mutations:
+            bad = valid_evidence()
+            bad[key] = value
+            evidence_path.write_text(json.dumps(bad), encoding="utf-8")
+            expect_error(lambda f=filename: module.seal_evidence(input_path, evidence_path, raw_path, base / f), f"{key} mutation must fail")
+            tests += 1
 
         bad_input = real_input()
         bad_input["target_bookmaker_id"] = "placeholder"
@@ -141,7 +130,7 @@ def main() -> int:
         expect_error(lambda: module.seal_evidence(input_path, evidence_path, raw_path, base / "bad-template.json"), "template input must fail")
         tests += 1
 
-    assert tests == 17
+    assert tests == 18
     qa = {
         "schema_version": 1,
         "formal_state": "G1_2_0_PRIVATE_T60_BUNDLE_PREPARATION_HELPER_VALID",

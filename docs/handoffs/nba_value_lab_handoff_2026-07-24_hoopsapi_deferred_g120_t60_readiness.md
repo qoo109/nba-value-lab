@@ -54,7 +54,7 @@ real validation executed: false
 - 兩邊共用相同 provider-origin `observed_at`。
 - `observed_at <= analysis_cutoff < tipoff`。
 - provider timestamp semantics、source rights、source ID／URL、raw SHA-256 必須完整。
-- `collector_fetched_at` 不得冒充 `observed_at`。
+- `collector_fetched_at` 不得替代 `observed_at`，也不得冒充 provider-origin observation time。
 - Closing-only 不得冒充 T-60。
 - Fixture 不得寫入 formal history。
 

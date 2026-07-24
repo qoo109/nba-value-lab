@@ -31,34 +31,32 @@ jobs:
           status_path = Path('PROJECT_STATUS.md')
           text = status_path.read_text(encoding='utf-8')
 
-          old_facts = """forward collector offline real quotes retained: 0
-          injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate"""
-          new_facts = """forward collector offline real quotes retained: 0
+          facts_anchor = 'forward collector offline real quotes retained: 0\n'
+          facts_insert = '''forward collector offline real quotes retained: 0
           first provider adapter qualification gate: VALIDATED / HOOPSAPI / RUNTIME BLOCKED
           hoopsapi synthetic adapter shell: AUTHORIZED
           hoopsapi provider runtime qualified: false
           hoopsapi point-in-time qualified: false
           hoopsapi account, terms, key and requests: NOT AUTHORIZED
           first provider adapter requests executed: 0
-          injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate"""
-          if text.count(old_facts) != 1:
-              raise SystemExit('unexpected first provider fact anchor count')
-          text = text.replace(old_facts, new_facts, 1)
+          '''
+          if 'first provider adapter qualification gate: VALIDATED / HOOPSAPI / RUNTIME BLOCKED' not in text:
+              if facts_anchor not in text:
+                  raise SystemExit('missing first provider fact anchor')
+              text = text.replace(facts_anchor, facts_insert, 1)
 
-          old_mainline = 'DESIGN_FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_V1'
-          new_mainline = 'IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1'
-          if text.count(old_mainline) != 2:
-              raise SystemExit('unexpected first provider mainline anchor count')
-          text = text.replace(old_mainline, new_mainline, 2)
+          text = text.replace(
+              'DESIGN_FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_V1',
+              'IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1',
+          )
+          text = text.replace(
+              'READY — DESIGN ONLY / NO PROVIDER EXECUTION',
+              'READY — SYNTHETIC SHELL ONLY / NETWORK DISABLED',
+              1,
+          )
 
-          old_status = 'READY — DESIGN ONLY / NO PROVIDER EXECUTION'
-          new_status = 'READY — SYNTHETIC SHELL ONLY / NETWORK DISABLED'
-          if text.count(old_status) != 1:
-              raise SystemExit('unexpected first provider status anchor count')
-          text = text.replace(old_status, new_status, 1)
-
-          anchor = '## Completed Evidence\n\n### Source-agnostic private forward odds collector offline core'
-          evidence = """## Completed Evidence
+          section_anchor = '## Completed Evidence\n\n### Source-agnostic private forward odds collector offline core'
+          section = '''## Completed Evidence
 
           ### First provider private forward adapter qualification gate
 
@@ -92,10 +90,20 @@ jobs:
 
           The gate permits only a HoopsAPI-shaped synthetic adapter shell. It does not authorize account creation, provider terms acceptance, secret connection, network requests, real quote ingestion or point-in-time qualification. Missing provider timestamp semantics must remain `unverified` with null observed_at and point-in-time eligibility false.
 
-          ### Source-agnostic private forward odds collector offline core"""
-          if text.count(anchor) != 1:
-              raise SystemExit('unexpected completed evidence anchor count')
-          text = text.replace(anchor, evidence, 1)
+          ### Source-agnostic private forward odds collector offline core'''
+          if '### First provider private forward adapter qualification gate' not in text:
+              if section_anchor not in text:
+                  raise SystemExit('missing completed evidence anchor')
+              text = text.replace(section_anchor, section, 1)
+
+          required = (
+              'IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1',
+              'READY — SYNTHETIC SHELL ONLY / NETWORK DISABLED',
+              '### First provider private forward adapter qualification gate',
+          )
+          for item in required:
+              if item not in text:
+                  raise SystemExit(f'missing patched project status item: {item}')
           status_path.write_text(text, encoding='utf-8')
 
           current_path = Path('data/research/no-cost-timestamped-odds-source-qualification-current-status-v7.json')

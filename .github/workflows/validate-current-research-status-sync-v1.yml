@@ -30,12 +30,13 @@ jobs:
           status = Path("PROJECT_STATUS.md").read_text(encoding="utf-8")
           readme = Path("README.md").read_text(encoding="utf-8")
           current, marker, evidence = status.partition("## Completed Evidence")
+          mainline = "BUILD_PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURES_2025_26_V1_WITHOUT_MODEL_RETRAINING"
 
           checks = {
               "evidence_partition_present": bool(marker and evidence),
-              "rotation_mainline_current_once": current.count(
-                  "BUILD_PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURES_2025_26_V1_WITHOUT_MODEL_RETRAINING"
-              ) == 1,
+              "rotation_mainline_current_locations": current.count(mainline) == 2
+                  and f"current unique research mainline: {mainline}" in current
+                  and f"## Next Unique Mainline\n\n```text\n{mainline}" in current,
               "rotation_source_qualified": "prior-only rotation source: VALID / 1,230 OF 1,230 GAMES" in current,
               "rotation_build_not_executed": "real rotation feature build: NOT YET EXECUTED" in current,
               "gold_freeze_preserved_as_completed": "semantic freeze manifest created: true" in current
@@ -44,7 +45,7 @@ jobs:
               "g1_long_term_block_preserved": "VALIDATE_G1_2_0_END_TO_END_WITH_REAL_GOVERNED_2026_27_T60_INPUT" in current
                   and "current real-input status: BLOCKED / REAL GOVERNED INPUT NOT AVAILABLE" in current,
               "formal_stake_zero": "formal Stake: 0" in current and "正式 Stake：**0**" in status,
-              "readme_current_mainline": "BUILD_PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURES_2025_26_V1_WITHOUT_MODEL_RETRAINING" in readme,
+              "readme_current_mainline": mainline in readme,
               "readme_market_result_preserved": "NO_EVIDENCE_FROZEN_MODEL_BEATS_PRIVATE_MARKET_ARCHIVE" in readme,
               "no_model_retraining_authorization": "does not authorize residual promotion, model retraining" in status,
           }
@@ -58,7 +59,7 @@ jobs:
               "checks_passed": len(checks) - len(failed),
               "checks_failed": len(failed),
               "failed_checks": failed,
-              "current_mainline": "BUILD_PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURES_2025_26_V1_WITHOUT_MODEL_RETRAINING",
+              "current_mainline": mainline,
               "model_retraining_authorized": False,
               "market_backtest_authorized": False,
               "formal_stake": 0,

@@ -1,0 +1,59 @@
+{
+  "schema_version": "g1-2-0-private-t60-bundle-preparation-v1",
+  "updated_at": "2026-07-24",
+  "formal_state": "G1_2_0_PRIVATE_T60_BUNDLE_PREPARATION_HELPER_VALIDATED",
+  "recording_pr": 169,
+  "objective": "Prepare and cryptographically bind one private real-governed 2026-27 T-60 bundle without provider requests, public quote storage, formal history writes or market metrics.",
+  "user_decisions": {
+    "hoopsapi_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED",
+    "continue_non_provider_offline_preparation": true
+  },
+  "helper": {
+    "path": "scripts/g1_2_0_private_t60_bundle_preparation_v1.py",
+    "commands": ["init", "seal"],
+    "formal_state": "G1_2_0_PRIVATE_T60_BUNDLE_PREPARATION_HELPER_VALID",
+    "offline_only": true,
+    "network_client_included": false,
+    "secret_reader_included": false,
+    "formal_history_writer_included": false,
+    "market_metrics_included": false,
+    "private_paths_outside_repository_required": true,
+    "template_markers_rejected_before_sealing": true,
+    "rights_reviewed_by_user_required": true,
+    "provider_timestamp_semantics_verified_required": true,
+    "collector_fetched_at_substitution_allowed": false,
+    "exact_game_mapping_required": true,
+    "public_redistribution_allowed": false,
+    "normalized_input_sha256_bound": true,
+    "raw_source_sha256_bound": true,
+    "contract_tests": 18
+  },
+  "validation_evidence": {
+    "workflow_run": 30063718569,
+    "workflow_job": 89390390572,
+    "artifact_id": 8585461789,
+    "artifact_digest": "sha256:1b889354190c87ce720236a49e872a78b30bfe1bcc91418cca7c4d63aee62610",
+    "artifact_formal_state": "G1_2_0_PRIVATE_T60_BUNDLE_PREPARATION_HELPER_VALID",
+    "artifact_inspected": true
+  },
+  "public_artifact_policy": {
+    "aggregate_only": true,
+    "team_ids_allowed": false,
+    "bookmaker_prices_allowed": false,
+    "raw_provider_payload_allowed": false,
+    "api_keys_allowed": false,
+    "quote_level_rows_allowed": false
+  },
+  "execution_state": {
+    "provider_requests_executed": 0,
+    "real_quotes_retained": 0,
+    "real_input_validated": false,
+    "real_g120_dry_run_executed": false,
+    "formal_history_write_authorized": false,
+    "market_metrics_executed": false
+  },
+  "next_unique_mainline": "AWAIT_REAL_GOVERNED_2026_27_T60_INPUT_AND_QUALIFIED_TIMESTAMPED_ODDS",
+  "formal_stake": 0
+}

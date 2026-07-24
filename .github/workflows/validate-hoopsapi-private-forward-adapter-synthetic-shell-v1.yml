@@ -1,0 +1,38 @@
+name: Validate HoopsAPI private forward adapter synthetic shell v1
+
+on:
+  pull_request:
+    paths:
+      - PROJECT_STATUS.md
+      - scripts/hoopsapi_private_forward_adapter_v1.py
+      - scripts/private_forward_odds_collector_v1.py
+      - scripts/validate_hoopsapi_private_forward_adapter_synthetic_shell_v1.py
+      - tests/fixtures/hoopsapi_private_forward_synthetic_game_v1.json
+      - docs/hoopsapi-private-forward-adapter-synthetic-shell-v1.md
+      - docs/handoffs/nba_value_lab_handoff_2026-07-24_hoopsapi_synthetic_adapter_shell.md
+      - .github/workflows/validate-hoopsapi-private-forward-adapter-synthetic-shell-v1.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile adapter and validator
+        run: |
+          python -m py_compile scripts/hoopsapi_private_forward_adapter_v1.py
+          python -m py_compile scripts/validate_hoopsapi_private_forward_adapter_synthetic_shell_v1.py
+
+      - name: Validate synthetic adapter shell
+        run: python scripts/validate_hoopsapi_private_forward_adapter_synthetic_shell_v1.py
+
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: hoopsapi-private-forward-adapter-synthetic-shell-validation-v1
+          path: build/hoopsapi-private-forward-adapter-synthetic-shell-validation-v1.json
+          retention-days: 14

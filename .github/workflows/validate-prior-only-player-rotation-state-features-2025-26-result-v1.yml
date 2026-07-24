@@ -1,0 +1,34 @@
+name: Validate prior-only player rotation state features 2025-26 result v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/prior-only-player-rotation-state-features-2025-26-result-v1.json"
+      - "docs/prior-only-player-rotation-state-features-2025-26-result-v1.md"
+      - "scripts/validate_prior_only_player_rotation_state_features_2025_26_result_v1.py"
+      - ".github/workflows/validate-prior-only-player-rotation-state-features-2025-26-result-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate recorded aggregate result and preserved locks
+        run: |
+          python -m py_compile scripts/validate_prior_only_player_rotation_state_features_2025_26_result_v1.py
+          python scripts/validate_prior_only_player_rotation_state_features_2025_26_result_v1.py
+      - name: Upload aggregate result validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: prior-only-player-rotation-state-features-2025-26-result-v1
+          path: validation-output/prior-only-player-rotation-state-features-2025-26-result-v1.json
+          if-no-files-found: error
+          retention-days: 14

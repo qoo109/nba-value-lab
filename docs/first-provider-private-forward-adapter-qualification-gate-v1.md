@@ -59,7 +59,11 @@ quote_observed_at_utc = null
 point_in_time_eligible = false
 ```
 
-`collector_fetched_at_utc` **NEVER substitutes** `quote_observed_at_utc`。
+正式禁止規則：
+
+```text
+collector_fetched_at_utc NEVER substitutes quote_observed_at_utc
+```
 
 ## 3. Rights and Retention Gate
 

@@ -32,6 +32,14 @@
     "real_quote_ingestion_authorized": false,
     "public_raw_quote_rows_allowed": false
   },
+  "gate_validation_contract": {
+    "policy_scenarios_expected": 9,
+    "aggregate_only_artifact_required": true,
+    "real_provider_payloads_allowed": false,
+    "network_requests_allowed": false,
+    "runtime_activation_allowed": false,
+    "market_metrics_allowed": false
+  },
   "qualified_for_historical_backfill": [],
   "qualified_for_existing_frozen_gold_point_in_time_join": [],
   "forward_only_candidates_not_authorized": [

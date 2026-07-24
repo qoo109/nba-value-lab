@@ -1,0 +1,82 @@
+{
+  "schema_version": "the-odds-api-free-forward-public-review-v1",
+  "updated_at": "2026-07-24",
+  "formal_state": "THE_ODDS_API_FREE_FORWARD_PUBLIC_REVIEW_IMPLEMENTED_PENDING_VALIDATION",
+  "source_id": "the_odds_api_free_forward",
+  "source_name": "The Odds API",
+  "source_class": "zero_cost_forward_api_candidate",
+  "public_urls": {
+    "home": "https://the-odds-api.com/",
+    "docs_v4": "https://the-odds-api.com/liveapi/guides/v4/",
+    "terms": "https://the-odds-api.com/terms-and-conditions.html"
+  },
+  "public_plan_claims": {
+    "free_credits_per_month": 500,
+    "current_odds_included": true,
+    "historical_odds_included": false,
+    "all_sports": true,
+    "most_bookmakers": true,
+    "all_betting_markets": true,
+    "card_requirement_publicly_verified": false
+  },
+  "nba_forward_scope": {
+    "sport_key": "basketball_nba",
+    "region": "us",
+    "market": "h2h",
+    "odds_format": "decimal",
+    "endpoint": "/v4/sports/basketball_nba/odds",
+    "current_and_upcoming_only": true,
+    "historical_backfill_eligible": false
+  },
+  "public_schema_evidence": {
+    "event_id": "id",
+    "scheduled_tipoff": "commence_time",
+    "home_team": "home_team",
+    "away_team": "away_team",
+    "bookmaker_identity": "bookmakers[].key",
+    "bookmaker_last_update": "bookmakers[].last_update",
+    "market_key": "bookmakers[].markets[].key",
+    "two_sided_prices": "bookmakers[].markets[].outcomes[]",
+    "provider_snapshot_field_publicly_documented": false,
+    "bookmaker_last_update_field_publicly_documented": true
+  },
+  "terms_boundary": {
+    "analytical_tools_supported": true,
+    "standalone_resale_or_redistribution_prohibited": true,
+    "api_key_must_remain_private": true,
+    "public_quote_rows_allowed": false,
+    "private_research_rights_personally_reviewed_by_user": false
+  },
+  "runtime_state": {
+    "account_created": false,
+    "api_key_connected": false,
+    "provider_requests_executed": 0,
+    "real_quotes_retained": 0,
+    "provider_timestamp_semantics_verified": false,
+    "point_in_time_qualified": false,
+    "real_2026_27_t60_input_qualified": false
+  },
+  "decision": "PROMISING_ZERO_COST_FORWARD_CANDIDATE_REQUIRES_USER_TERMS_REVIEW_AND_CAPPED_RUNTIME_PREFLIGHT",
+  "adapter_shell": {
+    "path": "scripts/the_odds_api_free_forward_adapter_v1.py",
+    "synthetic_only": true,
+    "network_client_included": false,
+    "secret_reader_included": false,
+    "formal_history_writer_included": false
+  },
+  "preflight_request": {
+    "request_id": "THE-ODDS-API-FREE-FORWARD-PREFLIGHT-2026-07-24-001",
+    "execution_enabled": false,
+    "maximum_provider_requests": 2,
+    "requires_user_terms_review": true,
+    "requires_user_created_account": true,
+    "requires_private_key_connection": true,
+    "requires_separate_explicit_approval": true,
+    "nba_odds_request_must_wait_until_2026_27_markets_exist": true
+  },
+  "next_unique_mainline": "AWAIT_USER_TERMS_REVIEW_AND_CAPPED_THE_ODDS_API_FREE_FORWARD_PREFLIGHT_APPROVAL",
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

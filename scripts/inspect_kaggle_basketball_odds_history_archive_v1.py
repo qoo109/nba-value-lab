@@ -13,11 +13,10 @@ import csv
 import hashlib
 import io
 import json
-import os
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Iterator, Sequence
+from typing import Callable, Iterable, Iterator, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,7 +46,6 @@ TEAM_TOKENS = (
     "participant",
 )
 PRICE_TOKENS = ("odds", "price", "moneyline", "home_ml", "away_ml", "decimal")
-NBA_NAME_TOKENS = ("nba", "national_basketball_association")
 PLACEHOLDER_COLUMNS = {"", "unnamed", "column", "field"}
 
 
@@ -59,7 +57,7 @@ class ArchiveInspectionError(ValueError):
 class Member:
     name: str
     size: int
-    read_bytes: callable
+    read_bytes: Callable[[], bytes]
 
 
 def sha256_bytes(content: bytes) -> str:
@@ -76,7 +74,10 @@ def _is_within_repo(path: Path) -> bool:
 
 
 def _safe_relative_name(name: str) -> str:
-    normalized = name.replace("\\", "/").lstrip("/")
+    raw = name.replace("\\", "/")
+    if raw.startswith("/"):
+        raise ArchiveInspectionError("archive contains absolute member path")
+    normalized = raw.lstrip("/")
     if not normalized or ".." in Path(normalized).parts:
         raise ArchiveInspectionError("archive contains unsafe member path")
     return normalized
@@ -177,8 +178,9 @@ def _read_csv_metadata(member: Member) -> dict[str, object]:
 
 
 def _is_nba_candidate(name: str) -> bool:
-    lowered = name.lower().replace("-", "_")
-    return any(token in lowered for token in NBA_NAME_TOKENS)
+    """Match NBA files without accidentally matching WNBA filenames."""
+    basename = Path(name).name.lower().replace("-", "_")
+    return basename == "nba.csv" or basename.startswith("nba_")
 
 
 def _notebook_metadata(member: Member) -> dict[str, object]:
@@ -290,8 +292,9 @@ def main() -> int:
     if _is_within_repo(args.output):
         raise ArchiveInspectionError("aggregate inspection output must remain outside the public repository until reviewed")
     report = inspect_archive(args.source)
-    args.output.expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    resolved_output = args.output.expanduser().resolve()
+    resolved_output.parent.mkdir(parents=True, exist_ok=True)
+    resolved_output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({
         "formal_state": report["formal_state"],
         "nba_csv_file_count": report["nba_csv_file_count"],

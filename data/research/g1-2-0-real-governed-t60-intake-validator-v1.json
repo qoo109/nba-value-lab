@@ -1,0 +1,77 @@
+{
+  "schema_version": "g1-2-0-real-governed-t60-intake-validator-v1",
+  "created_at": "2026-07-24",
+  "formal_state": "G1_2_0_REAL_GOVERNED_T60_INPUT_INTAKE_VALIDATOR_IMPLEMENTED_CONTRACT_VALIDATED",
+  "objective": "Implement a provider-agnostic, offline and fail-closed intake validator for the first real governed 2026-27 regular-season T-60 input without executing a real input, writing formal history, requesting provider data, running market metrics or changing Stake.",
+  "upstream": {
+    "readiness_gate": "data/research/g1-2-0-real-governed-t60-input-readiness-gate-v1.json",
+    "readiness_gate_pr": 167,
+    "readiness_gate_merge": "cff7e4e82d34420592a2f386775e55859397af26",
+    "g1_2_0_runtime": "scripts/g1_2_0_runtime.py",
+    "t60_runtime": "scripts/lock_t60_snapshot_g120.py"
+  },
+  "implementation": {
+    "module": "scripts/g1_2_0_real_t60_intake_validator_v1.py",
+    "documentation_schema": "schemas/g1-2-0-real-governed-t60-intake-v1.schema.json",
+    "contract_input_fixture": "tests/fixtures/g1_2_0_real_t60_intake_contract_fixture_v1.json",
+    "contract_evidence_fixture": "tests/fixtures/g1_2_0_real_t60_source_evidence_contract_fixture_v1.json",
+    "contract_raw_source_fixture": "tests/fixtures/g1_2_0_real_t60_raw_source_contract_fixture_v1.json",
+    "offline_only": true,
+    "network_client_included": false,
+    "secret_reader_included": false,
+    "provider_adapter_included": false,
+    "formal_history_writer_included": false,
+    "market_metric_runner_included": false,
+    "contract_fixture_only": true
+  },
+  "intake_contract": {
+    "required_data_mode": "real_governed",
+    "required_season": "2026-27",
+    "required_competition_type": "regular_season",
+    "required_evaluation_stage": "T-60m",
+    "required_market": "moneyline_ot_included",
+    "required_lock_window_minutes": {
+      "min": 30,
+      "max": 90
+    },
+    "real_bookmaker_identity_required": true,
+    "same_book_two_sided_h2h_required": true,
+    "provider_origin_observed_at_required": true,
+    "collector_fetched_at_may_substitute_observed_at": false,
+    "source_rights_required_value": "private_research_allowed",
+    "provider_timestamp_semantics_verified_required": true,
+    "exact_mapping_required": true,
+    "normalized_input_sha256_required": true,
+    "raw_source_sha256_required": true,
+    "public_redistribution_allowed": false,
+    "at_least_one_fully_gated_game_required": true
+  },
+  "aggregate_only_output": {
+    "game_count_allowed": true,
+    "candidate_count_allowed": true,
+    "fully_gated_game_count_allowed": true,
+    "quote_prices_allowed": false,
+    "team_ids_allowed": false,
+    "raw_payload_allowed": false,
+    "api_key_allowed": false
+  },
+  "execution_boundary": {
+    "real_input_validated": false,
+    "real_g120_dry_run_executed": false,
+    "formal_history_write_authorized": false,
+    "provider_requests_executed": 0,
+    "raw_quote_rows_emitted": 0,
+    "model_retraining_authorized": false,
+    "injury_model_activation_authorized": false,
+    "market_metrics_executed": false,
+    "betting_edge_claim_authorized": false,
+    "formal_stake": 0
+  },
+  "validation": {
+    "contract_tests": 19,
+    "contract_tests_expected_to_pass": 19,
+    "contract_fixture_may_be_used_by_production_cli": false,
+    "real_input_required_for_next_execution": true
+  },
+  "next_unique_mainline": "AWAIT_REAL_GOVERNED_2026_27_T60_INPUT_AND_QUALIFIED_TIMESTAMPED_ODDS"
+}

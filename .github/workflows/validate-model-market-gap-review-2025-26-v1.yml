@@ -1,0 +1,52 @@
+name: Validate model market gap review 2025-26 v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/model-market-gap-review-2025-26-v1.json"
+      - "docs/model-market-gap-review-2025-26-v1.md"
+      - "docs/handoffs/nba_value_lab_handoff_2026-07-24_model_market_gap_review.md"
+      - "scripts/review_model_market_gap_2025_26_v1.py"
+      - "scripts/validate_model_market_gap_review_2025_26_v1.py"
+      - ".github/workflows/validate-model-market-gap-review-2025-26-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install diagnostic runtime
+        run: |
+          python -m pip install --disable-pip-version-check \
+            numpy pandas scikit-learn==1.9.0
+      - name: Compile tooling
+        run: |
+          python -m py_compile \
+            scripts/review_model_market_gap_2025_26_v1.py \
+            scripts/validate_model_market_gap_review_2025_26_v1.py
+      - name: Run analyzer synthetic self-test
+        run: |
+          rm -rf /tmp/nbavl-model-market-gap-self-test
+          python scripts/review_model_market_gap_2025_26_v1.py \
+            --self-test \
+            --output /tmp/nbavl-model-market-gap-self-test
+          test -f /tmp/nbavl-model-market-gap-self-test/self-test.json
+      - name: Validate aggregate result and locks
+        run: python scripts/validate_model_market_gap_review_2025_26_v1.py
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-market-gap-review-2025-26-validation-v1
+          path: |
+            artifacts/model-market-gap-review-2025-26-validation-v1.json
+            /tmp/nbavl-model-market-gap-self-test/self-test.json
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,129 @@
+{
+  "schema_version": "first-provider-private-forward-adapter-qualification-gate-v1",
+  "gate_id": "FIRST-PROVIDER-PRIVATE-FORWARD-ADAPTER-QUALIFICATION-GATE-2026-07-24-001",
+  "created_at": "2026-07-24",
+  "formal_state": "FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_VALIDATED",
+  "objective": "Define the fail-closed qualification gates for the first provider-specific private forward adapter without creating an account, accepting provider terms for the user, connecting a key, executing a request, retaining a real quote or unlocking market evaluation.",
+  "candidate_provider": {
+    "source_id": "hoopsapi_free_forward_collection",
+    "selection_reason": "BloomBet schema probing was deferred by the user. HoopsAPI remains the only reviewed no-cost source that is structurally promising for forward-only private collection while still being unqualified for runtime use.",
+    "public_review_path": "data/research/hoopsapi-free-forward-collection-public-review-v1.json",
+    "public_review_formal_state": "HOOPSAPI_FREE_PUBLIC_REVIEW_FORWARD_ONLY_CANDIDATE"
+  },
+  "compatible_assets": {
+    "provider_neutral_design": "data/research/source-agnostic-private-forward-odds-collector-design-v1.json",
+    "offline_core": "scripts/private_forward_odds_collector_v1.py",
+    "quote_schema": "schemas/private-forward-odds-quote-v1.schema.json",
+    "current_status": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v7.json"
+  },
+  "gate_contract": {
+    "structural_schema_gate": {
+      "required": [
+        "stable source event id",
+        "home team",
+        "away team",
+        "scheduled tipoff with timezone",
+        "provider or bookmaker identity",
+        "same-book two-sided moneyline",
+        "decimal prices or deterministic conversion inputs"
+      ],
+      "public_evidence_status": "PARTIAL_PASS",
+      "synthetic_adapter_shell_allowed": true,
+      "runtime_schema_qualification": false
+    },
+    "timestamp_authority_gate": {
+      "required_provider_evidence": [
+        "documented provider snapshot timestamp or bookmaker last-update timestamp",
+        "field semantics tied to the returned quote",
+        "timezone and precision",
+        "collector fetch time equal to or after provider-origin time"
+      ],
+      "public_evidence_status": "FAIL_NO_PROVIDER_OR_BOOKMAKER_UPDATE_TIMESTAMP",
+      "collector_fetched_at_may_substitute_observed_at": false,
+      "required_adapter_output_before_timestamp_qualification": {
+        "quote_time_authority": "unverified",
+        "quote_observed_at_utc": null,
+        "point_in_time_eligible": false
+      }
+    },
+    "rights_and_retention_gate": {
+      "public_terms_evidence": "OWN_PURPOSE_LICENSE_WITH_RAW_REDISTRIBUTION_PROHIBITED",
+      "user_must_accept_provider_terms_personally": true,
+      "private_normalized_retention_status": "PENDING_USER_ACCEPTED_TERMS_AND_RUNTIME_POLICY",
+      "raw_payload_retention_default": false,
+      "public_raw_quote_rows_allowed": false,
+      "public_downloadable_odds_archive_allowed": false
+    },
+    "access_and_secret_gate": {
+      "account_required_by_public_terms": true,
+      "api_key_required": true,
+      "account_creation_authorized": false,
+      "provider_terms_acceptance_authorized": false,
+      "api_key_connection_authorized": false,
+      "secret_may_be_committed_to_repository": false,
+      "secret_may_be_written_to_artifact": false,
+      "secret_setup_requires_separate_user_action": true
+    },
+    "quota_and_request_gate": {
+      "public_free_request_limit_per_day": 10,
+      "rate_limit_bypass_allowed": false,
+      "initial_schema_preflight_request_cap_if_later_approved": 3,
+      "initial_schema_preflight_authorized": false,
+      "provider_requests_executed": 0,
+      "scheduler_authorized": false
+    },
+    "event_mapping_gate": {
+      "exact_mapping_required": true,
+      "fuzzy_matching_allowed": false,
+      "nearest_time_matching_allowed": false,
+      "season_or_competition_inference_allowed": false,
+      "unmapped_rows_point_in_time_eligible": false
+    },
+    "market_gate": {
+      "league": "NBA",
+      "market_key": "h2h",
+      "same_book_two_sided_required": true,
+      "single_sided_quote_allowed": false,
+      "opening_inference_allowed": false,
+      "closing_substitution_for_t60_or_t5_allowed": false
+    },
+    "private_storage_gate": {
+      "caller_supplied_private_sqlite_required": true,
+      "repository_quote_rows_allowed": false,
+      "artifact_quote_rows_allowed": false,
+      "aggregate_only_qa_required": true,
+      "cross_run_deduplication_required": true
+    },
+    "activation_gate": {
+      "synthetic_adapter_shell_authorized": true,
+      "public_sample_fixture_authorized": true,
+      "real_provider_payload_authorized": false,
+      "provider_request_execution_authorized": false,
+      "real_quote_ingestion_authorized": false,
+      "point_in_time_qualification_authorized": false,
+      "market_backtest_authorized": false,
+      "model_retraining_authorized": false,
+      "clv_ev_roi_authorized": false,
+      "betting_claim_authorized": false,
+      "formal_stake": 0
+    }
+  },
+  "candidate_decision": {
+    "gate_design_valid": true,
+    "provider_selected_for_synthetic_shell": true,
+    "provider_runtime_qualified": false,
+    "provider_point_in_time_qualified": false,
+    "qualified_for_historical_backfill": false,
+    "qualified_for_existing_frozen_gold_join": false,
+    "blocking_reasons": [
+      "provider terms have not been personally accepted by the user",
+      "no private API key has been connected",
+      "no provider request has been authorized or executed",
+      "runtime response schema has not been verified",
+      "provider-origin quote timestamp semantics are not established",
+      "private normalized retention policy is not activated"
+    ]
+  },
+  "next_unique_mainline": "IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1",
+  "next_task_boundary": "Implement only an offline HoopsAPI-shaped adapter shell using a synthetic fixture derived from the public field shape. It must emit unverified timestamp authority, null quote_observed_at, point_in_time_eligible false, and may not include an HTTP client, secret reader, account workflow, real provider payload or market metric."
+}

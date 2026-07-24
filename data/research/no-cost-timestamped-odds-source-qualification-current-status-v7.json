@@ -1,0 +1,71 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v7",
+  "updated_at": "2026-07-24",
+  "formal_state": "NO_COST_TIMESTAMPED_ODDS_FIRST_PROVIDER_ADAPTER_GATE_VALIDATED",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v6.json",
+  "recording_pr": 163,
+  "user_decisions": {
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED"
+  },
+  "offline_core": {
+    "path": "data/research/source-agnostic-private-forward-odds-collector-offline-core-v1.json",
+    "module": "scripts/private_forward_odds_collector_v1.py",
+    "formal_state": "SOURCE_AGNOSTIC_PRIVATE_FORWARD_ODDS_COLLECTOR_OFFLINE_CORE_VALIDATED",
+    "cross_run_deduplication": true,
+    "provider_requests_executed": 0,
+    "real_quotes_retained": 0
+  },
+  "first_provider_adapter_gate": {
+    "path": "data/research/first-provider-private-forward-adapter-qualification-gate-v1.json",
+    "formal_state": "FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_VALIDATED",
+    "candidate_source_id": "hoopsapi_free_forward_collection",
+    "synthetic_adapter_shell_authorized": true,
+    "provider_runtime_qualified": false,
+    "provider_point_in_time_qualified": false,
+    "collector_fetched_at_may_substitute_observed_at": false,
+    "account_creation_authorized": false,
+    "provider_terms_acceptance_authorized": false,
+    "api_key_connection_authorized": false,
+    "provider_request_execution_authorized": false,
+    "provider_requests_executed": 0,
+    "real_quote_ingestion_authorized": false,
+    "public_raw_quote_rows_allowed": false
+  },
+  "gate_validation_contract": {
+    "policy_scenarios_expected": 9,
+    "aggregate_only_artifact_required": true,
+    "real_provider_payloads_allowed": false,
+    "network_requests_allowed": false,
+    "runtime_activation_allowed": false,
+    "market_metrics_allowed": false
+  },
+  "gate_validation_evidence": {
+    "isolated_validation_pr": 164,
+    "workflow_run": 30056117432,
+    "workflow_job": 89368048092,
+    "artifact_id": 8582807238,
+    "artifact_digest": "sha256:a612338e9834729360d334f5269d8a6c93d8a5a0802b0edbc7598ea0bc938c05",
+    "artifact_formal_state": "FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_VALID",
+    "policy_scenarios": 9,
+    "artifact_inspected": true
+  },
+  "qualified_for_historical_backfill": [],
+  "qualified_for_existing_frozen_gold_point_in_time_join": [],
+  "forward_only_candidates_not_authorized": [
+    "hoopsapi_free_forward_collection"
+  ],
+  "next_unique_mainline": "IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1",
+  "next_task_requires_account_or_api_key": false,
+  "next_task_executes_provider_requests": false,
+  "next_task_allows_only_synthetic_public_shape_fixture": true,
+  "account_creation_authorized": false,
+  "api_key_connection_authorized": false,
+  "provider_request_execution_authorized": false,
+  "real_quote_ingestion_authorized": false,
+  "raw_quote_publication_authorized": false,
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

@@ -1,0 +1,35 @@
+name: Fetch official NBA schedule 2025-26 v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/fetch_official_nba_schedule_2025_26_v1.py"
+      - ".github/workflows/fetch-official-nba-schedule-2025-26-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile official schedule fetcher
+        run: python -m py_compile scripts/fetch_official_nba_schedule_2025_26_v1.py
+      - name: Fetch and normalize official schedule
+        run: |
+          python scripts/fetch_official_nba_schedule_2025_26_v1.py \
+            --output artifacts/official-nba-schedule-2025-26-v1.json \
+            --timeout 45
+      - name: Upload official schedule metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-nba-schedule-2025-26-v1
+          path: artifacts/official-nba-schedule-2025-26-v1.json
+          if-no-files-found: error
+          retention-days: 14

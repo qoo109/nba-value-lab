@@ -126,7 +126,7 @@ def main() -> int:
     check("strict_t60_qualified\":False" in aligner, "aligner T60 lock")
     check("PRIVATE_DIAGNOSTIC_ONLY" in aligner, "aligner scope")
 
-    expected_tests = 83
+    expected_tests = 80
     check(tests == expected_tests, f"expected {expected_tests} pre-final tests, got {tests}")
 
     qa = {

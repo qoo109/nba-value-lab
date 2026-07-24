@@ -1,0 +1,117 @@
+name: Bootstrap first provider private forward adapter gate v1
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]' && github.head_ref == 'research/first-provider-private-forward-adapter-gate-v1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Patch project status and recording PR
+        env:
+          RECORDING_PR: ${{ github.event.pull_request.number }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          status_path = Path('PROJECT_STATUS.md')
+          text = status_path.read_text(encoding='utf-8')
+
+          old_facts = """forward collector offline real quotes retained: 0
+          injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate"""
+          new_facts = """forward collector offline real quotes retained: 0
+          first provider adapter qualification gate: VALIDATED / HOOPSAPI / RUNTIME BLOCKED
+          hoopsapi synthetic adapter shell: AUTHORIZED
+          hoopsapi provider runtime qualified: false
+          hoopsapi point-in-time qualified: false
+          hoopsapi account, terms, key and requests: NOT AUTHORIZED
+          first provider adapter requests executed: 0
+          injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate"""
+          if text.count(old_facts) != 1:
+              raise SystemExit('unexpected first provider fact anchor count')
+          text = text.replace(old_facts, new_facts, 1)
+
+          old_mainline = 'DESIGN_FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_V1'
+          new_mainline = 'IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1'
+          if text.count(old_mainline) != 2:
+              raise SystemExit('unexpected first provider mainline anchor count')
+          text = text.replace(old_mainline, new_mainline, 2)
+
+          old_status = 'READY — DESIGN ONLY / NO PROVIDER EXECUTION'
+          new_status = 'READY — SYNTHETIC SHELL ONLY / NETWORK DISABLED'
+          if text.count(old_status) != 1:
+              raise SystemExit('unexpected first provider status anchor count')
+          text = text.replace(old_status, new_status, 1)
+
+          anchor = '## Completed Evidence\n\n### Source-agnostic private forward odds collector offline core'
+          evidence = """## Completed Evidence
+
+          ### First provider private forward adapter qualification gate
+
+          ```text
+          formal state: FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_VALIDATED
+          candidate provider: hoopsapi_free_forward_collection
+          gate design: VALIDATED
+          synthetic adapter shell: AUTHORIZED
+          runtime schema qualification: false
+          provider runtime qualified: false
+          provider point-in-time qualified: false
+          collector_fetched_at may substitute provider observed_at: false
+          required pre-qualification time authority: unverified
+          required pre-qualification observed_at: null
+          required pre-qualification point-in-time eligible: false
+          user must personally accept provider terms: true
+          account creation authorized: false
+          provider terms acceptance authorized: false
+          API key connection authorized: false
+          provider request execution authorized: false
+          initial preflight request cap if separately approved: 3
+          provider requests executed: 0
+          real quotes retained: 0
+          public raw quote rows: PROHIBITED
+          historical backfill qualified: false
+          frozen Gold PIT join qualified: false
+          market metrics executed: false
+          formal Stake: 0
+          next unique sub-mainline: IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
+          ```
+
+          The gate permits only a HoopsAPI-shaped synthetic adapter shell. It does not authorize account creation, provider terms acceptance, secret connection, network requests, real quote ingestion or point-in-time qualification. Missing provider timestamp semantics must remain `unverified` with null observed_at and point-in-time eligibility false.
+
+          ### Source-agnostic private forward odds collector offline core"""
+          if text.count(anchor) != 1:
+              raise SystemExit('unexpected completed evidence anchor count')
+          text = text.replace(anchor, evidence, 1)
+          status_path.write_text(text, encoding='utf-8')
+
+          current_path = Path('data/research/no-cost-timestamped-odds-source-qualification-current-status-v7.json')
+          current = json.loads(current_path.read_text(encoding='utf-8'))
+          current['recording_pr'] = int(os.environ['RECORDING_PR'])
+          current_path.write_text(json.dumps(current, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit status updates
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add PROJECT_STATUS.md data/research/no-cost-timestamped-odds-source-qualification-current-status-v7.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Record first provider adapter qualification gate status"
+            git push origin HEAD:${{ github.head_ref }}
+          fi

@@ -1,0 +1,34 @@
+name: Validate frozen model forward score 2025-26 result v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/frozen-model-forward-score-2025-26-result-v1.json"
+      - "docs/frozen-model-forward-score-2025-26-result-v1.md"
+      - "docs/handoffs/nba_value_lab_handoff_2026-07-24_frozen_model_forward_score_2025_26.md"
+      - "scripts/validate_frozen_model_forward_score_2025_26_result_v1.py"
+      - ".github/workflows/validate-frozen-model-forward-score-2025-26-result-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile result validator
+        run: python -m py_compile scripts/validate_frozen_model_forward_score_2025_26_result_v1.py
+      - name: Validate aggregate result and preserved locks
+        run: python scripts/validate_frozen_model_forward_score_2025_26_result_v1.py
+      - name: Upload aggregate-only validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-model-forward-score-2025-26-result-validation-v1
+          path: artifacts/frozen-model-forward-score-2025-26-result-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

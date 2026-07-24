@@ -40,12 +40,22 @@ jobs:
             --self-test \
             --output-dir /tmp/nbavl-official-cdn-v3-self-test
       - name: Build real 2025-26 Silver
+        id: real_build
+        shell: bash
         run: |
           rm -rf /tmp/nbavl-official-cdn-v3-silver-2025-26
+          mkdir -p /tmp/nbavl-official-cdn-v3-silver-2025-26
+          set +e
           python scripts/build_official_cdn_v3_silver_2025_26_v1.py \
             --output-dir /tmp/nbavl-official-cdn-v3-silver-2025-26 \
-            --max-download-mb 600
+            --max-download-mb 600 \
+            > /tmp/nbavl-official-cdn-v3-silver-2025-26/build.log 2>&1
+          status=$?
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          tail -n 250 /tmp/nbavl-official-cdn-v3-silver-2025-26/build.log
+          exit 0
       - name: Validate real output
+        if: steps.real_build.outputs.exit_code == '0'
         run: |
           python - <<'PY'
           import gzip
@@ -100,6 +110,7 @@ jobs:
           }, indent=2))
           PY
       - name: Upload governed Silver and aggregate QA
+        if: steps.real_build.outputs.exit_code == '0'
         uses: actions/upload-artifact@v4
         with:
           name: official-cdn-v3-silver-2025-26-v1
@@ -110,3 +121,17 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
+      - name: Upload failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-cdn-v3-silver-2025-26-diagnostics
+          path: |
+            /tmp/nbavl-official-cdn-v3-silver-2025-26/build.log
+            /tmp/nbavl-official-cdn-v3-silver-2025-26/official-cdn-v3-silver-2025-26-build-report-v1.json
+          if-no-files-found: warn
+          retention-days: 3
+      - name: Enforce real build success
+        if: always()
+        run: |
+          test "${{ steps.real_build.outputs.exit_code }}" = "0"

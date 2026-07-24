@@ -1,0 +1,60 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v16",
+  "updated_at": "2026-07-24",
+  "formal_state": "KAGGLE_OFFICIAL_SCHEDULE_FULL_ALIGNMENT_DIAGNOSTIC_VALID",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v15.json",
+  "recording_pr": 174,
+  "user_decisions": {
+    "hoopsapi_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "the_odds_api_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED",
+    "kaggle_full_official_schedule_alignment": "APPROVED_AND_EXECUTED_PRIVATE_DIAGNOSTIC_ONLY"
+  },
+  "provider_execution_state": {
+    "odds_provider_requests_executed": 0,
+    "official_schedule_release_pdf_requests": 1,
+    "official_liveData_metadata_requests": 38,
+    "real_quote_rows_retained_in_public_repo": 0
+  },
+  "full_alignment": {
+    "aggregate_path": "data/research/kaggle-official-schedule-full-alignment-aggregate-v1.json",
+    "documentation_path": "docs/kaggle-official-schedule-full-alignment-v1.md",
+    "aligner_path": "scripts/align_kaggle_odds_to_official_schedule_2025_26_v1.py",
+    "source_archive_sha256": "sha256:36685fa53deaba112f93515fefffb971b02613f32f2f24d5a22dd0088863d419",
+    "raw_archive_committed": false,
+    "raw_quote_rows_committed": false,
+    "reconciled_schedule_rows": 1230,
+    "source_events_classified": 1199,
+    "regular_season_events_matched": 1112,
+    "unmatched_or_ambiguous": 0,
+    "regular_main_rows_enriched": 7713,
+    "regular_detailed_rows_enriched": 144034,
+    "true_official_nba_game_ids_added": 38,
+    "stable_official_schedule_row_ids_added": 1112,
+    "official_published_tipoffs_added": 1112,
+    "provider_origin_quote_time_verified": false,
+    "quote_level_exact_observed_at_verified": false,
+    "strict_t60_qualified": false,
+    "point_in_time_qualified": false,
+    "historical_backfill_qualified": false,
+    "formal_history_write_authorized": false,
+    "decision": "KEEP_PRIVATE_DIAGNOSTIC_ALIGNMENT_OFFICIAL_SCHEDULE_REPAIRED_QUOTE_TIME_UNRESOLVED"
+  },
+  "validation_evidence": {
+    "workflow_run": null,
+    "workflow_job": null,
+    "artifact_id": null,
+    "artifact_digest": null,
+    "artifact_formal_state": null,
+    "contract_tests": null,
+    "artifact_inspected": false
+  },
+  "qualified_for_real_2026_27_t60_input": [],
+  "qualified_for_historical_backfill": [],
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0,
+  "next_unique_mainline": "AWAIT_REAL_GOVERNED_2026_27_T60_INPUT_AND_QUALIFIED_TIMESTAMPED_ODDS"
+}

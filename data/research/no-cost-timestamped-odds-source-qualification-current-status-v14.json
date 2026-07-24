@@ -1,0 +1,45 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v14",
+  "updated_at": "2026-07-24",
+  "formal_state": "KAGGLE_BASKETBALL_ODDS_HISTORY_REAL_ARCHIVE_INSPECTED_NOT_QUALIFIED",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v13.json",
+  "recording_pr": null,
+  "user_decisions": {
+    "hoopsapi_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "the_odds_api_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED",
+    "kaggle_archive_uploaded_for_private_inspection": true
+  },
+  "provider_execution_state": {
+    "network_requests_executed": 0,
+    "provider_requests_executed": 0,
+    "real_quotes_retained_in_public_repo": 0
+  },
+  "kaggle_real_archive_inspection": {
+    "report_path": "data/research/kaggle-basketball-odds-history-real-archive-aggregate-inspection-v1.json",
+    "documentation_path": "docs/kaggle-basketball-odds-history-real-archive-inspection-v1.md",
+    "archive_sha256": "sha256:36685fa53deaba112f93515fefffb971b02613f32f2f24d5a22dd0088863d419",
+    "archive_inspected": true,
+    "aggregate_only": true,
+    "raw_archive_committed": false,
+    "schema_candidate": true,
+    "source_event_identity_recoverable": true,
+    "detailed_to_main_mapping_pct": 1.0,
+    "provider_origin_timestamp_verified": false,
+    "scheduled_tipoff_present": false,
+    "home_away_semantics_verified": false,
+    "upstream_rights_verified": false,
+    "point_in_time_qualified": false,
+    "historical_backfill_qualified": false,
+    "formal_history_write_authorized": false,
+    "decision": "KEEP_PRIVATE_RESEARCH_DIAGNOSTIC_ONLY_REJECT_FORMAL_POINT_IN_TIME_INGESTION"
+  },
+  "qualified_for_real_2026_27_t60_input": [],
+  "qualified_for_historical_backfill": [],
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0,
+  "next_unique_mainline": "AWAIT_REAL_GOVERNED_2026_27_T60_INPUT_AND_QUALIFIED_TIMESTAMPED_ODDS"
+}

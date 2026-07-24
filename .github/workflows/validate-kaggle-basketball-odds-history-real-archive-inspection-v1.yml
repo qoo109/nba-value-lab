@@ -1,0 +1,33 @@
+name: Validate Kaggle real archive inspection v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/kaggle-basketball-odds-history-real-archive-aggregate-inspection-v1.json"
+      - "docs/kaggle-basketball-odds-history-real-archive-inspection-v1.md"
+      - "scripts/validate_kaggle_basketball_odds_history_real_archive_inspection_v1.py"
+      - ".github/workflows/validate-kaggle-basketball-odds-history-real-archive-inspection-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_kaggle_basketball_odds_history_real_archive_inspection_v1.py
+      - name: Validate aggregate inspection record
+        run: python scripts/validate_kaggle_basketball_odds_history_real_archive_inspection_v1.py
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: kaggle-basketball-odds-history-real-archive-inspection-validation-v1
+          path: artifacts/kaggle-basketball-odds-history-real-archive-inspection-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

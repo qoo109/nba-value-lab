@@ -1,0 +1,35 @@
+name: Validate Kaggle official schedule alignment pilot v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/kaggle-official-schedule-alignment-pilot-v1.json"
+      - "data/research/no-cost-timestamped-odds-source-qualification-current-status-v15.json"
+      - "docs/kaggle-official-schedule-alignment-pilot-v1.md"
+      - "docs/handoffs/nba_value_lab_handoff_2026-07-24_kaggle_official_schedule_alignment_pilot.md"
+      - "scripts/validate_kaggle_official_schedule_alignment_pilot_v1.py"
+      - ".github/workflows/validate-kaggle-official-schedule-alignment-pilot-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_kaggle_official_schedule_alignment_pilot_v1.py
+      - name: Validate alignment pilot record
+        run: python scripts/validate_kaggle_official_schedule_alignment_pilot_v1.py
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: kaggle-official-schedule-alignment-pilot-validation-v1
+          path: artifacts/kaggle-official-schedule-alignment-pilot-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

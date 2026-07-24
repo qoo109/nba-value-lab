@@ -1,0 +1,36 @@
+{
+  "schema_version": "prior-only-player-rotation-source-exceptions-2025-26-v1",
+  "formal_state": "OFFICIAL_SOURCE_RECONCILIATION_EXCEPTION_MANIFEST_PREDECLARED",
+  "updated_at_utc": "2026-07-24T14:10:00Z",
+  "source_layer": "NBA Official LiveData Boxscore",
+  "scope": "ONE_FIELD_OFFICIAL_TO_OFFICIAL_RECONCILIATION_ONLY",
+  "exceptions": [
+    {
+      "exception_id": "OFFICIAL_LIVEDATA_PLAYER_MINUTES_DISCREPANCY_2025_26_001",
+      "source_game_id": "0022500093",
+      "team_abbr": "HOU",
+      "subject_key_sha256": "sha256:19332a24cfdfa087d5500b39d8826734696817585306ac8aaaf176fced8fe284",
+      "field": "minutes",
+      "live_data_value": 28.136667,
+      "reconciled_official_value": 36.8,
+      "difference_minutes": 8.663333,
+      "official_evidence_source": "NBA.com Official Game Box Score",
+      "official_evidence_url": "https://www.nba.com/game/DET-vs-HOU-0022500093/box-score",
+      "official_evidence_display": "36:48",
+      "evidence_checked_at_utc": "2026-07-24T14:05:00Z",
+      "allowed_mutation": "MINUTES_ONLY",
+      "played_flag_change_allowed": false,
+      "starter_flag_change_allowed": false,
+      "identity_change_allowed": false,
+      "reason": "The official LiveData player-minute field is 8:40 lower than the official NBA.com box score, causing the team total to reconcile to 231:20 instead of 240:00. The correction is narrowly scoped to this deidentified subject key and official game."
+    }
+  ],
+  "guardrails": {
+    "wildcard_matching_allowed": false,
+    "fuzzy_identity_allowed": false,
+    "unlisted_correction_allowed": false,
+    "non_official_evidence_allowed": false,
+    "public_player_name_retained": false,
+    "model_or_market_result_used_to_create_exception": false
+  }
+}

@@ -1,0 +1,56 @@
+name: Validate prior-only player rotation state feature layer v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/prior-only-player-rotation-state-feature-layer-v1.json"
+      - "docs/prior-only-player-rotation-state-feature-layer-v1.md"
+      - "scripts/validate_prior_only_player_rotation_state_feature_layer_v1.py"
+      - "docs/handoffs/nba_value_lab_handoff_2026-07-24_prior_only_player_rotation_state_design.md"
+      - ".github/workflows/validate-prior-only-player-rotation-state-feature-layer-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_prior_only_player_rotation_state_feature_layer_v1.py
+      - name: Validate predeclared design and locks
+        run: python scripts/validate_prior_only_player_rotation_state_feature_layer_v1.py
+      - name: Assert validation output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('artifacts/prior-only-player-rotation-state-feature-layer-v1-validation.json')
+          payload = json.loads(path.read_text())
+          assert payload['formal_state'] == 'PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURE_LAYER_V1_DESIGN_VALID'
+          assert payload['all_contract_tests_passed'] is True
+          assert payload['contract_tests'] >= 90
+          assert payload['design']['player_features'] == 10
+          assert payload['design']['team_features'] == 12
+          assert payload['design']['minimum_feature_ready_games'] == 1000
+          assert payload['preserved_locks']['real_feature_build_executed'] is False
+          assert payload['preserved_locks']['model_training_authorized'] is False
+          assert payload['preserved_locks']['strict_t60_qualified'] is False
+          assert payload['preserved_locks']['formal_market_backtest_allowed'] is False
+          assert payload['preserved_locks']['betting_edge_claim_allowed'] is False
+          assert payload['preserved_locks']['formal_stake'] == 0
+          print(json.dumps(payload, indent=2))
+          PY
+      - name: Upload aggregate-only design validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: prior-only-player-rotation-state-feature-layer-v1-validation
+          path: artifacts/prior-only-player-rotation-state-feature-layer-v1-validation.json
+          if-no-files-found: error
+          retention-days: 14

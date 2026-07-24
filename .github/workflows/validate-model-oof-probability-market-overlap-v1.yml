@@ -1,0 +1,38 @@
+name: Validate model OOF probability market overlap v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/model-oof-probability-market-overlap-diagnostic-v1.json"
+      - "docs/model-oof-probability-market-overlap-diagnostic-v1.md"
+      - "docs/handoffs/nba_value_lab_handoff_2026-07-24_model_oof_probability_overlap.md"
+      - "scripts/analyze_model_oof_probability_market_overlap_v1.py"
+      - "scripts/validate_model_oof_probability_market_overlap_v1.py"
+      - ".github/workflows/validate-model-oof-probability-market-overlap-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile offline diagnostic
+        run: |
+          python -m py_compile \
+            scripts/analyze_model_oof_probability_market_overlap_v1.py \
+            scripts/validate_model_oof_probability_market_overlap_v1.py
+      - name: Validate real aggregate record and synthetic overlap gate
+        run: python scripts/validate_model_oof_probability_market_overlap_v1.py
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-oof-probability-market-overlap-validation-v1
+          path: artifacts/model-oof-probability-market-overlap-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

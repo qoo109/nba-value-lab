@@ -129,7 +129,7 @@ def main() -> int:
     check("secondary_fixed_12_model", "12 fixed" in secondary["individual_feature_signed_residual"])
     check("secondary_fixed_12_market", "12 fixed" in secondary["individual_feature_market_relative_error"])
     check("quartile_secondary", "quartile" in secondary["quartile_contrast"])
-    check("brier_secondary", "Brier" in secondary["brier_sensitivity"])
+    check("brier_secondary", "brier" in secondary["brier_sensitivity"].lower())
     check("bh_fdr_q10", "Benjamini-Hochberg" in secondary["multiple_testing"] and "0.10" in secondary["multiple_testing"])
     check("secondary_diagnostic_only", secondary["secondary_results_are_diagnostic_only"] is True)
 

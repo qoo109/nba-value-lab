@@ -125,4 +125,18 @@ WITHOUT_MODEL_RETRAINING
 
 ## Validation evidence
 
-Pending branch-head workflow. Bind final head, run, job, Artifact and digest before merge.
+Initial validated branch head before evidence-binding commit:
+
+```text
+head: 0d2c9fac8b425a5910d38c418c718f149f04319b
+workflow run: 30092846352
+job: 89479813158
+conclusion: success
+Artifact: 8596349633
+Artifact digest: sha256:ce607cc1f4f7ad42d1ede5af1a4b41b402dabda2ae41cbcccb87bc4113654b78
+formal state: PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURE_LAYER_V1_DESIGN_VALID
+contract tests: 116 / 116 PASS
+Artifact inspected: true
+```
+
+A final branch-head validation must also pass after this evidence-binding commit before merge.

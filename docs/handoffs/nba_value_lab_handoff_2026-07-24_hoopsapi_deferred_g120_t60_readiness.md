@@ -29,6 +29,7 @@ PR #166 的 preflight design 保留在 repo 作為未來選項，但目前不繼
 ## Current milestone
 
 ```text
+PR #167 — Design G1.2.0 Real Governed T-60 Input Readiness Gate v1
 DESIGN_G1_2_0_REAL_GOVERNED_T60_INPUT_READINESS_GATE_V1
 ```
 
@@ -40,6 +41,33 @@ formal state: G1_2_0_REAL_GOVERNED_T60_INPUT_READINESS_GATE_DESIGN_VALIDATED
 design only: true
 real input available: false
 real validation executed: false
+```
+
+## Dedicated validation and Artifact QA
+
+```text
+workflow run: 30060877489
+job: 89382096283 / success
+artifact: 8584480110
+artifact digest: sha256:90f4666531f0d940662e0f5cf3ed061768d1d78e0a917bee794c4cff169df66e
+artifact formal state: G1_2_0_REAL_GOVERNED_T60_INPUT_READINESS_GATE_VALID
+policy scenarios: 19 / PASS
+artifact inspected: true
+```
+
+Aggregate-only QA confirmed：
+
+```text
+HoopsAPI deferred: true
+HoopsAPI provider requests executed: 0
+qualified timestamped odds sources: 0
+real input available: false
+fixture rejected as real input: true
+Closing-only rejected as T-60: true
+provider-origin observed_at required: true
+real validation executed: false
+market metrics executed: false
+Formal Stake：0
 ```
 
 ## Frozen readiness conditions

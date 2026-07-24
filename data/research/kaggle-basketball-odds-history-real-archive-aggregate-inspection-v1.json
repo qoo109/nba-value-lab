@@ -1,7 +1,7 @@
 {
   "schema_version": "kaggle-basketball-odds-history-real-archive-aggregate-inspection-v1",
   "updated_at": "2026-07-24",
-  "formal_state": "KAGGLE_BASKBALL_ODDS_HISTORY_REAL_ARCHIVE_INSPECTED_NOT_QUALIFIED",
+  "formal_state": "KAGGLE_BASKETBALL_ODDS_HISTORY_REAL_ARCHIVE_INSPECTED_NOT_QUALIFIED",
   "archive": {
     "sha256": "sha256:36685fa53deaba112f93515fefffb971b02613f32f2f24d5a22dd0088863d419",
     "size_bytes": 7477620,

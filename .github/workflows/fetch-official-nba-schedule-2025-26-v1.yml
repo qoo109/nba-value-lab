@@ -22,14 +22,20 @@ jobs:
       - name: Compile official schedule fetcher
         run: python -m py_compile scripts/fetch_official_nba_schedule_2025_26_v1.py
       - name: Fetch and normalize official schedule
+        id: fetch_schedule
+        continue-on-error: true
         run: |
           python scripts/fetch_official_nba_schedule_2025_26_v1.py \
             --output artifacts/official-nba-schedule-2025-26-v1.json \
-            --timeout 45
-      - name: Upload official schedule metadata
+            --timeout 30
+      - name: Upload official schedule metadata or diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: official-nba-schedule-2025-26-v1
           path: artifacts/official-nba-schedule-2025-26-v1.json
           if-no-files-found: error
           retention-days: 14
+      - name: Enforce successful official schedule fetch
+        if: steps.fetch_schedule.outcome != 'success'
+        run: exit 1

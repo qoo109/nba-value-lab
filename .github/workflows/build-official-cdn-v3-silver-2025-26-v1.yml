@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "scripts/build_official_cdn_v3_silver_2025_26_v1.py"
+      - "scripts/run_official_cdn_v3_silver_2025_26_v1.py"
       - "scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py"
       - "scripts/historical_silver_schema.py"
       - "scripts/historical_silver_nbastats.py"
@@ -28,6 +29,7 @@ jobs:
         run: |
           python -m py_compile \
             scripts/build_official_cdn_v3_silver_2025_26_v1.py \
+            scripts/run_official_cdn_v3_silver_2025_26_v1.py \
             scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py \
             scripts/historical_silver_schema.py \
             scripts/historical_silver_nbastats.py \
@@ -36,7 +38,7 @@ jobs:
       - name: Run adapter self-test
         run: |
           rm -rf /tmp/nbavl-official-cdn-v3-self-test
-          python scripts/build_official_cdn_v3_silver_2025_26_v1.py \
+          python scripts/run_official_cdn_v3_silver_2025_26_v1.py \
             --self-test \
             --output-dir /tmp/nbavl-official-cdn-v3-self-test
       - name: Build real 2025-26 Silver
@@ -46,7 +48,7 @@ jobs:
           rm -rf /tmp/nbavl-official-cdn-v3-silver-2025-26
           mkdir -p /tmp/nbavl-official-cdn-v3-silver-2025-26
           set +e
-          python scripts/build_official_cdn_v3_silver_2025_26_v1.py \
+          python scripts/run_official_cdn_v3_silver_2025_26_v1.py \
             --output-dir /tmp/nbavl-official-cdn-v3-silver-2025-26 \
             --max-download-mb 600 \
             > /tmp/nbavl-official-cdn-v3-silver-2025-26/build.log 2>&1

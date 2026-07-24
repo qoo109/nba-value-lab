@@ -3,7 +3,7 @@
   "updated_at": "2026-07-24",
   "formal_state": "G1_2_0_REAL_GOVERNED_T60_INPUT_INTAKE_VALIDATOR_CONTRACT_VALIDATED",
   "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v9.json",
-  "recording_pr": 0,
+  "recording_pr": 168,
   "user_decisions": {
     "hoopsapi_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
     "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
@@ -30,9 +30,18 @@
     "offline_only": true,
     "contract_fixture_only": true,
     "contract_tests": 19,
+    "contract_tests_passed": 19,
     "real_input_validated": false,
     "real_g120_dry_run_executed": false,
     "formal_history_write_authorized": false
+  },
+  "validation_evidence": {
+    "workflow_run": 30061807616,
+    "workflow_job": 89384780692,
+    "artifact_id": 8584793122,
+    "artifact_digest": "sha256:a654006ba35896bcd71817d18b9985f7e621a2884ef92bb63335de4159f6cb6e",
+    "artifact_formal_state": "G1_2_0_REAL_GOVERNED_T60_INPUT_INTAKE_VALIDATOR_CONTRACT_VALID",
+    "artifact_inspected": true
   },
   "next_unique_mainline": "AWAIT_REAL_GOVERNED_2026_27_T60_INPUT_AND_QUALIFIED_TIMESTAMPED_ODDS",
   "next_real_step": "When a lawful qualified source and one real governed T-60 bundle exist, run the intake validator privately and inspect aggregate-only QA before any G1.2.0 dry-run.",

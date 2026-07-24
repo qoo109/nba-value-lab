@@ -1,0 +1,21 @@
+{
+  "evidence_schema_version": "g1-2-0-real-t60-source-evidence-v1",
+  "contract_fixture_only": true,
+  "source_id": "contract_provider_current_odds",
+  "source_url": "https://example.invalid/contract-provider",
+  "source_rights_state": "private_research_allowed",
+  "rights_review_reference": "CONTRACT-FIXTURE-RIGHTS-REFERENCE-NOT-REAL",
+  "rights_reviewed_by_user": true,
+  "provider_timestamp_semantics_verified": true,
+  "provider_timestamp_semantics_note": "Contract-only timestamp explicitly represents provider snapshot time for validator tests.",
+  "quote_time_authority": "provider_snapshot",
+  "provider_observed_at_field": "snapshot_at",
+  "target_bookmaker_id": "contract_book_alpha",
+  "market_id": "moneyline_ot_included",
+  "includes_overtime": true,
+  "canonical_game_mapping_method": "exact",
+  "normalized_input_sha256": "sha256:068121f03ef44a25d1fadd7e20f8f12edf09e06e0f8ea4b81348bc486bebe1cc",
+  "raw_source_sha256": "sha256:1d1801da5b2830b670274b668b202ddc6ba6a0f57b2f8b908db6de95f37cfbf7",
+  "raw_source_retention_scope": "private_ephemeral",
+  "public_redistribution_allowed": false
+}

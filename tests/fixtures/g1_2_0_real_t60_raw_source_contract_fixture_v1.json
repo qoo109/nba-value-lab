@@ -1,0 +1,10 @@
+{
+  "contract_fixture_only": true,
+  "provider": "contract-provider",
+  "bookmaker": "contract_book_alpha",
+  "snapshot_at": "2026-10-23T00:55:00Z",
+  "event": "contract-event-001",
+  "market": "h2h",
+  "home": 2.5,
+  "away": 1.58
+}

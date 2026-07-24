@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qoo109.github.io/nba-value-lab/schemas/g1-2-0-real-governed-t60-intake-v1.schema.json",
+  "title": "G1.2.0 Real Governed T-60 Intake v1",
+  "description": "Documentation schema for a private normalized T-60 input and separate source-evidence manifest. Contract fixtures are never eligible as real inputs.",
+  "type": "object",
+  "required": [
+    "input",
+    "source_evidence"
+  ],
+  "properties": {
+    "input": {
+      "$ref": "#/$defs/input"
+    },
+    "source_evidence": {
+      "$ref": "#/$defs/evidence"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "input": {
+      "type": "object",
+      "required": [
+        "analysis_cutoff",
+        "candidates",
+        "competition_type",
+        "data_mode",
+        "data_version",
+        "evaluation_stage",
+        "includes_overtime",
+        "lock_window_minutes",
+        "market_id",
+        "schema_version",
+        "season",
+        "slate_date",
+        "slate_id",
+        "target_bookmaker_id"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string"
+        },
+        "contract_fixture_only": {
+          "type": "boolean",
+          "const": false
+        },
+        "data_mode": {
+          "const": "real_governed"
+        },
+        "slate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "slate_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "analysis_cutoff": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "evaluation_stage": {
+          "const": "T-60m"
+        },
+        "target_bookmaker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "market_id": {
+          "const": "moneyline_ot_included"
+        },
+        "includes_overtime": {
+          "const": true
+        },
+        "data_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lock_window_minutes": {
+          "type": "object",
+          "required": [
+            "min",
+            "max"
+          ],
+          "properties": {
+            "min": {
+              "const": 30
+            },
+            "max": {
+              "const": 90
+            }
+          },
+          "additionalProperties": false
+        },
+        "season": {
+          "const": "2026-27"
+        },
+        "competition_type": {
+          "const": "regular_season"
+        },
+        "candidates": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/candidate"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "candidate": {
+      "type": "object",
+      "required": [
+        "analysis_gate_status",
+        "candidate_side",
+        "comparison_sources",
+        "confidence",
+        "coverage_pct",
+        "data_age_minutes",
+        "game_id",
+        "independent_evidence_count",
+        "injury_confirmed",
+        "market_rules_complete",
+        "minutes_limit_confirmed",
+        "model_market_gap_pp",
+        "news_risk_level",
+        "observed_at",
+        "opponent_odds",
+        "opponent_team_id",
+        "out_of_distribution",
+        "p_conservative",
+        "p_neutral",
+        "p_optimistic",
+        "price_timestamp_valid",
+        "reverse_path_resolved",
+        "scheduled_at",
+        "selection_team_id",
+        "source_lineage_complete",
+        "stale_warning",
+        "starters_confirmed",
+        "target_odds"
+      ],
+      "properties": {
+        "game_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scheduled_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "candidate_side": {
+          "enum": [
+            "home",
+            "away"
+          ]
+        },
+        "selection_team_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "opponent_team_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_odds": {
+          "type": "number",
+          "exclusiveMinimum": 1
+        },
+        "opponent_odds": {
+          "type": "number",
+          "exclusiveMinimum": 1
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "p_conservative": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "p_neutral": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "p_optimistic": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "coverage_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "confidence": {
+          "enum": [
+            "高",
+            "中",
+            "低",
+            "資料不足"
+          ]
+        },
+        "news_risk_level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "analysis_gate_status": {
+          "enum": [
+            "可分析",
+            "條件式可分析",
+            "資料不足"
+          ]
+        },
+        "comparison_sources": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "injury_confirmed": {
+          "type": "boolean"
+        },
+        "starters_confirmed": {
+          "type": "boolean"
+        },
+        "minutes_limit_confirmed": {
+          "type": "boolean"
+        },
+        "source_lineage_complete": {
+          "const": true
+        },
+        "market_rules_complete": {
+          "const": true
+        },
+        "price_timestamp_valid": {
+          "const": true
+        },
+        "out_of_distribution": {
+          "type": "boolean"
+        },
+        "reverse_path_resolved": {
+          "type": "boolean"
+        },
+        "stale_warning": {
+          "type": "boolean"
+        },
+        "model_market_gap_pp": {
+          "type": "number"
+        },
+        "independent_evidence_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "data_age_minutes": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "canonical_game_mapping_method",
+        "contract_fixture_only",
+        "evidence_schema_version",
+        "includes_overtime",
+        "market_id",
+        "normalized_input_sha256",
+        "provider_observed_at_field",
+        "provider_timestamp_semantics_note",
+        "provider_timestamp_semantics_verified",
+        "public_redistribution_allowed",
+        "quote_time_authority",
+        "raw_source_retention_scope",
+        "raw_source_sha256",
+        "rights_review_reference",
+        "rights_reviewed_by_user",
+        "source_id",
+        "source_rights_state",
+        "source_url",
+        "target_bookmaker_id"
+      ],
+      "properties": {
+        "evidence_schema_version": {
+          "const": "g1-2-0-real-t60-source-evidence-v1"
+        },
+        "contract_fixture_only": {
+          "const": false
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "source_rights_state": {
+          "const": "private_research_allowed"
+        },
+        "rights_review_reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rights_reviewed_by_user": {
+          "const": true
+        },
+        "provider_timestamp_semantics_verified": {
+          "const": true
+        },
+        "provider_timestamp_semantics_note": {
+          "type": "string",
+          "minLength": 20
+        },
+        "quote_time_authority": {
+          "enum": [
+            "provider_snapshot",
+            "bookmaker_last_update"
+          ]
+        },
+        "provider_observed_at_field": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_bookmaker_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "market_id": {
+          "const": "moneyline_ot_included"
+        },
+        "includes_overtime": {
+          "const": true
+        },
+        "canonical_game_mapping_method": {
+          "const": "exact"
+        },
+        "normalized_input_sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "raw_source_sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "raw_source_retention_scope": {
+          "enum": [
+            "private_ephemeral",
+            "private_user_controlled"
+          ]
+        },
+        "public_redistribution_allowed": {
+          "const": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,41 @@
+name: Validate G1.2.0 real governed T-60 intake validator v1
+
+on:
+  pull_request:
+    paths:
+      - schemas/g1-2-0-real-governed-t60-intake-v1.schema.json
+      - scripts/g1_2_0_real_t60_intake_validator_v1.py
+      - scripts/validate_g1_2_0_real_t60_intake_validator_v1.py
+      - tests/fixtures/g1_2_0_real_t60_intake_contract_fixture_v1.json
+      - tests/fixtures/g1_2_0_real_t60_source_evidence_contract_fixture_v1.json
+      - tests/fixtures/g1_2_0_real_t60_raw_source_contract_fixture_v1.json
+      - data/research/g1-2-0-real-governed-t60-intake-validator-v1.json
+      - data/research/no-cost-timestamped-odds-source-qualification-current-status-v10.json
+      - docs/g1-2-0-real-governed-t60-intake-validator-v1.md
+      - docs/handoffs/nba_value_lab_handoff_2026-07-24_g120_real_t60_intake_validator.md
+      - .github/workflows/validate-g1-2-0-real-governed-t60-intake-validator-v1.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile intake validator
+        run: |
+          python -m py_compile scripts/g1_2_0_real_t60_intake_validator_v1.py
+          python -m py_compile scripts/validate_g1_2_0_real_t60_intake_validator_v1.py
+
+      - name: Validate contract fixtures and fail-closed boundaries
+        run: python scripts/validate_g1_2_0_real_t60_intake_validator_v1.py
+
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1-2-0-real-governed-t60-intake-validator-validation-v1
+          path: build/g1-2-0-real-governed-t60-intake-validator-validation-v1.json
+          retention-days: 14

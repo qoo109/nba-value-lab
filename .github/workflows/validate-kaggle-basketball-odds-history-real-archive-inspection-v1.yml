@@ -4,7 +4,9 @@ on:
   pull_request:
     paths:
       - "data/research/kaggle-basketball-odds-history-real-archive-aggregate-inspection-v1.json"
+      - "data/research/no-cost-timestamped-odds-source-qualification-current-status-v14.json"
       - "docs/kaggle-basketball-odds-history-real-archive-inspection-v1.md"
+      - "docs/handoffs/nba_value_lab_handoff_2026-07-24_kaggle_real_archive_inspection.md"
       - "scripts/validate_kaggle_basketball_odds_history_real_archive_inspection_v1.py"
       - ".github/workflows/validate-kaggle-basketball-odds-history-real-archive-inspection-v1.yml"
   workflow_dispatch:

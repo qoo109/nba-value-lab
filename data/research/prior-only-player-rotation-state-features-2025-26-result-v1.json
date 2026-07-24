@@ -1,0 +1,119 @@
+{
+  "schema_version": "prior-only-player-rotation-state-features-2025-26-result-v1",
+  "formal_state": "PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURES_2025_26_RESULT_VALID",
+  "recorded_at_utc": "2026-07-24T16:46:00Z",
+  "execution_evidence": {
+    "execution_mode": "GITHUB_ACTIONS_GOVERNED_PRIVATE_ARTIFACT_BUILD",
+    "branch_head": "0634c67d7b3a46598ba70acc5b6b9495755302f9",
+    "workflow_run": 30110090746,
+    "job": 89537194548,
+    "artifact_id": 8603174927,
+    "artifact_digest": "sha256:e164912d2330e9f915e27095d4ec7aa3ff0efe917c6dd406a697f7ce16f3ea0c",
+    "artifact_inspected": true,
+    "artifact_expiry": "2026-08-07T16:43:00Z",
+    "workflow_conclusion": "success"
+  },
+  "bound_source": {
+    "source_artifact_id": 8599479933,
+    "source_artifact_digest": "sha256:6a5c78b1d744731b90ff83ab9518b898b4b34878f22a001c82092250e2b2be7f",
+    "source_workflow_run": 30100700645,
+    "source_head": "1d2f560024a58e75d7d0350b5917169deb8713e7",
+    "source_csv_sha256": "sha256:5c56c1a9b0d714f7d41da8bd49a7ee7cf364eb2f40c9b6514223062e5be91507",
+    "source_index_sha256": "sha256:f4484c3b0d75c8cf693f87b2c4c3d00cfec32c1377935423f33ae3e601667bc7",
+    "source_player_game_rows": 43265,
+    "source_time_rule": "source_game_date_et < target_game_date_et"
+  },
+  "outputs": {
+    "private_player_feature_rows": 44196,
+    "private_team_feature_rows": 2460,
+    "private_matchup_feature_rows": 1230,
+    "private_player_features_sha256": "sha256:03a5300f5a8f415a00ce9e77ca7c682ad6fb792922bd775b63353c166259d1a5",
+    "private_team_features_sha256": "sha256:3196d4920149aa8929f8098960276086692f4a37fb62ffcddbfdc78ba82c98a8",
+    "private_matchup_features_sha256": "sha256:3e8ef30f3a9801fda92fc95a490228b73fa53603093c914207e884a933b2de02",
+    "public_player_rows_committed": 0,
+    "public_game_level_feature_rows_committed": 0
+  },
+  "coverage": {
+    "target_games": 1230,
+    "feature_ready_independent_games": 1075,
+    "feature_ready_rate": 0.87398374,
+    "teams_with_feature_ready_rows": 30,
+    "months_with_feature_ready_games": 6,
+    "ready_months": [
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04"
+    ],
+    "readiness_subgroups": {
+      "both_not_ready": 145,
+      "home_not_ready": 6,
+      "both_ready": 1075,
+      "away_not_ready": 4
+    },
+    "team_history_bands": {
+      "lt3": 90,
+      "3_to_4": 60,
+      "5_to_9": 150,
+      "gte10": 2160
+    }
+  },
+  "missingness": {
+    "subgroup_audit_completed": true,
+    "missing_source_row_policy": "UNKNOWN_NOT_ZERO",
+    "early_season_policy": "NULL_PLUS_SAMPLE_COUNTS",
+    "team_feature_null_counts": {
+      "minutes_allocation_volatility_prior_5": 150,
+      "new_team_rotation_players_prior_5": 150,
+      "recent_return_players_count": 150,
+      "role_change_magnitude_prior_3_vs_10": 300,
+      "rotation_entropy_prior_10": 300,
+      "rotation_entropy_prior_5": 150,
+      "rotation_players_prior_5": 150,
+      "starter_set_continuity_prior_5": 150,
+      "top5_minutes_share_prior_5": 150,
+      "top8_minutes_share_prior_10": 300,
+      "top8_minutes_share_prior_5": 150,
+      "top8_set_continuity_prior_5": 150
+    }
+  },
+  "quality": {
+    "validation_checks_passed": 38,
+    "validation_checks_failed": 0,
+    "duplicate_target_game_team_keys": 0,
+    "duplicate_target_game_keys": 0,
+    "duplicate_target_game_team_player_keys": 0,
+    "source_time_violations": 0,
+    "identity_ambiguities": 0,
+    "source_index_mismatches": 0,
+    "non_finite_feature_values": 0,
+    "bounded_feature_violations": 0,
+    "fuzzy_identity_rows": 0,
+    "target_game_source_rows_used": 0,
+    "same_day_source_rows_used": 0,
+    "future_source_rows_used": 0,
+    "market_feature_rows_used": 0,
+    "player_name_fields_found": 0
+  },
+  "acceptance": {
+    "minimum_feature_ready_games": 1000,
+    "minimum_feature_ready_rate": 0.8,
+    "minimum_teams": 30,
+    "minimum_months": 5,
+    "all_feature_construction_gates_passed": true,
+    "dataset_eligible_for_training_free_residual_audit": true
+  },
+  "preserved_locks": {
+    "model_training_authorized": false,
+    "model_retraining_executed": false,
+    "model_refit_executed": false,
+    "calibration_change_executed": false,
+    "strict_t60_qualified": false,
+    "formal_market_backtest_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_unique_mainline": "PREDECLARE_TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_2025_26_V1"
+}

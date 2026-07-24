@@ -3,13 +3,13 @@ name: Validate HoopsAPI free forward review v1
 on:
   pull_request:
     paths:
-      - PROJECT_STATUS.md
+      # Historical public-review validator. Current project-status updates do
+      # not reactivate this completed source review.
       - data/research/hoopsapi-free-forward-collection-public-review-v1.json
       - data/research/no-cost-timestamped-odds-source-qualification-current-status-v4.json
       - docs/hoopsapi-free-forward-collection-public-review-v1.md
       - docs/handoffs/nba_value_lab_handoff_2026-07-24_hoopsapi_public_forward_review.md
       - scripts/validate_hoopsapi_free_forward_collection_public_review_v1.py
-      - .github/workflows/validate-hoopsapi-free-forward-collection-public-review-v1.yml
   workflow_dispatch:
 
 permissions:

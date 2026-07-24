@@ -1,0 +1,34 @@
+name: Validate G1.2.0 real governed T-60 input readiness gate v1
+
+on:
+  pull_request:
+    paths:
+      - data/research/g1-2-0-real-governed-t60-input-readiness-gate-v1.json
+      - data/research/no-cost-timestamped-odds-source-qualification-current-status-v9.json
+      - docs/g1-2-0-real-governed-t60-input-readiness-gate-v1.md
+      - docs/handoffs/nba_value_lab_handoff_2026-07-24_hoopsapi_deferred_g120_t60_readiness.md
+      - scripts/validate_g1_2_0_real_governed_t60_input_readiness_gate_v1.py
+      - .github/workflows/validate-g1-2-0-real-governed-t60-input-readiness-gate-v1.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_g1_2_0_real_governed_t60_input_readiness_gate_v1.py
+
+      - name: Validate readiness design and fail-closed boundaries
+        run: python scripts/validate_g1_2_0_real_governed_t60_input_readiness_gate_v1.py
+
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: g1-2-0-real-governed-t60-input-readiness-gate-validation-v1
+          path: build/g1-2-0-real-governed-t60-input-readiness-gate-validation-v1.json
+          retention-days: 14

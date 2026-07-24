@@ -1,0 +1,72 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v9",
+  "updated_at": "2026-07-24",
+  "formal_state": "NO_COST_TIMESTAMPED_ODDS_PROVIDER_PATHS_DEFERRED_G1_2_0_T60_READINESS_GATE_DESIGNED",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v8.json",
+  "recording_pr": 167,
+  "user_decisions": {
+    "hoopsapi_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
+    "hoopsapi_request_id": "HOOPSAPI-PRIVATE-RUNTIME-PREFLIGHT-2026-07-24-001",
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED",
+    "continue_to_next_non_provider_step": true
+  },
+  "provider_execution_state": {
+    "hoopsapi_account_creation_authorized": false,
+    "hoopsapi_terms_acceptance_authorized": false,
+    "hoopsapi_api_key_connection_authorized": false,
+    "hoopsapi_preflight_execution_enabled": false,
+    "hoopsapi_preflight_execution_count": 0,
+    "hoopsapi_provider_requests_executed": 0,
+    "bloombet_probe_execution_count": 0,
+    "real_quotes_retained": 0
+  },
+  "source_qualification_state": {
+    "qualified_for_historical_backfill": [],
+    "qualified_for_existing_frozen_gold_point_in_time_join": [],
+    "qualified_for_real_2026_27_t60_input": [],
+    "zachht_kaggle_archive": "RESEARCH_BLOCKED",
+    "christopher_treasure_archive": "CLOSING_BENCHMARK_ONLY",
+    "legacy_market_archive": "REFERENCE_ONLY",
+    "hoopsapi": "DEFERRED_FORWARD_ONLY_UNQUALIFIED",
+    "bloombet": "DEFERRED_UNVERIFIED",
+    "market_backtest_unlocked": false
+  },
+  "next_non_provider_step": {
+    "path": "data/research/g1-2-0-real-governed-t60-input-readiness-gate-v1.json",
+    "gate_id": "G1-2-0-REAL-GOVERNED-T60-INPUT-READINESS-GATE-2026-07-24-001",
+    "formal_state": "G1_2_0_REAL_GOVERNED_T60_INPUT_READINESS_GATE_DESIGN_VALIDATED",
+    "design_only": true,
+    "real_input_available": false,
+    "real_validation_executed": false,
+    "fixture_substitution_allowed": false,
+    "closing_only_substitution_allowed": false
+  },
+  "validation_evidence": {
+    "workflow_run": 30060877489,
+    "workflow_job": 89382096283,
+    "artifact_id": 8584480110,
+    "artifact_digest": "sha256:90f4666531f0d940662e0f5cf3ed061768d1d78e0a917bee794c4cff169df66e",
+    "artifact_formal_state": "G1_2_0_REAL_GOVERNED_T60_INPUT_READINESS_GATE_VALID",
+    "policy_scenarios": 19,
+    "artifact_inspected": true
+  },
+  "activation_state": {
+    "active_g": "G1.1.1-20260719",
+    "scheduled_g": "G1.2.0-20260723",
+    "required_season": "2026-27",
+    "required_competition_type": "regular_season",
+    "early_activation_authorized": false,
+    "provider_origin_observed_at_required": true,
+    "real_governed_t60_input_ready": false
+  },
+  "next_unique_mainline": "AWAIT_REAL_GOVERNED_2026_27_T60_INPUT_AND_QUALIFIED_TIMESTAMPED_ODDS",
+  "next_task_executes_provider_requests": false,
+  "next_task_executes_real_g1_2_0_input": false,
+  "model_retraining_authorized": false,
+  "injury_model_activation_authorized": false,
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

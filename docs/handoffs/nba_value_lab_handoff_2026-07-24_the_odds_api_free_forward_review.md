@@ -24,7 +24,8 @@ provider requests executed before milestone: 0
 ## Milestone
 
 ```text
-REVIEW_THE_ODDS_API_FREE_FORWARD_CANDIDATE_V1
+PR #170 — Review The Odds API free forward candidate v1
+THE_ODDS_API_FREE_FORWARD_PUBLIC_REVIEW_AND_SYNTHETIC_ADAPTER_VALID
 ```
 
 Created:
@@ -53,6 +54,35 @@ Decision:
 
 ```text
 PROMISING_ZERO_COST_FORWARD_CANDIDATE_REQUIRES_USER_TERMS_REVIEW_AND_CAPPED_RUNTIME_PREFLIGHT
+```
+
+## Dedicated validation and Artifact QA
+
+```text
+workflow run: 30064853297
+job: 89393705197 / success
+artifact: 8585859838
+artifact digest: sha256:2da201ee26d0883949b47358d0d2c90683ef89a2a923f30f63009a09ba10e69a
+artifact formal state: THE_ODDS_API_FREE_FORWARD_PUBLIC_REVIEW_AND_SYNTHETIC_ADAPTER_VALID
+contract tests: 29 / 29 PASS
+artifact inspected: true
+```
+
+Aggregate-only QA confirms:
+
+```text
+public review only: true
+zero-cost forward candidate: true
+historical backfill eligible: false
+synthetic adapter only: true
+public schema has bookmaker last_update: true
+runtime provider timestamp semantics verified: false
+provider requests executed: 0
+real quotes retained: 0
+public quote rows emitted: 0
+formal history write authorized: false
+market metrics executed: false
+Formal Stake: 0
 ```
 
 ## No execution claims

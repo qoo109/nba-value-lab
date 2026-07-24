@@ -1,0 +1,65 @@
+{
+  "schema_version": "official-cdn-v3-terminal-score-exceptions-2025-26-v1",
+  "formal_state": "TWO_DOCUMENTED_V3_TERMINAL_SCORE_EXCEPTIONS_VALIDATED",
+  "season_label": "2025-26",
+  "exception_count": 2,
+  "authority_rule": "Official NBA final score and official CDN score remain authoritative. PlayByPlayV3 is retained for event and player identity; only the terminal-score equality gate is waived for the exact immutable game IDs below.",
+  "exceptions": [
+    {
+      "game_id": "0022500029",
+      "game_date_et": "2025-11-07",
+      "away_team_abbr": "CLE",
+      "home_team_abbr": "WAS",
+      "official_home_score": 114,
+      "official_away_score": 148,
+      "v3_terminal_home_score": 115,
+      "v3_terminal_away_score": 148,
+      "v3_max_score_home": 115,
+      "v3_max_score_away": 148,
+      "exception_code": "V3_HOME_SCORE_ONE_POINT_DRIFT",
+      "official_evidence": [
+        "https://cdn.nba.com/static/json/liveData/boxscore/boxscore_0022500029.json",
+        "https://www.nba.com/news/live-updates-2025-emirates-nba-cup-group-play-continues"
+      ],
+      "diagnostic_evidence": {
+        "workflow_run": 30079791244,
+        "artifact_id": 8591318366,
+        "artifact_digest": "sha256:588faf8cec24bcceac2e3d5584b237b5e61a5303a4f37bab415f93fc18b0ad5c"
+      }
+    },
+    {
+      "game_id": "0022500232",
+      "game_date_et": "2025-11-15",
+      "away_team_abbr": "DEN",
+      "home_team_abbr": "MIN",
+      "official_home_score": 112,
+      "official_away_score": 123,
+      "v3_terminal_home_score": 60,
+      "v3_terminal_away_score": 55,
+      "v3_max_score_home": 112,
+      "v3_max_score_away": 123,
+      "exception_code": "V3_PERIOD_END_SCORE_STALE_AFTER_COURTSIDE_STATS_SYSTEM_GLITCH",
+      "official_evidence": [
+        "https://www.nba.com/game/min-vs-den-0022500232",
+        "https://www.nba.com/game/den-vs-min-0022500232/play-by-play"
+      ],
+      "official_context": "The NBA game recap reports that the courtside statistics system froze late in the third quarter and final statistics were made available several hours after the game.",
+      "diagnostic_evidence": {
+        "workflow_run": 30079791244,
+        "artifact_id": 8591318366,
+        "artifact_digest": "sha256:588faf8cec24bcceac2e3d5584b237b5e61a5303a4f37bab415f93fc18b0ad5c"
+      }
+    }
+  ],
+  "boundaries": {
+    "exception_ids_are_immutable": true,
+    "wildcard_exceptions_allowed": false,
+    "new_exception_requires_new_manifest_version": true,
+    "v3_event_rows_modified": false,
+    "official_game_scores_modified": false,
+    "unexplained_terminal_score_mismatch_allowed": false,
+    "model_retraining_authorized": false,
+    "market_backtest_authorized": false,
+    "formal_stake": 0
+  }
+}

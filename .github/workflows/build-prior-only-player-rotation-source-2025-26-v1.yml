@@ -56,6 +56,8 @@ jobs:
           test -n "$silver" && test -f "$silver"
           echo "SILVER_PATH=$silver" >> "$GITHUB_ENV"
       - name: Build official prior-only player rotation source
+        id: source_build
+        continue-on-error: true
         run: |
           set -euo pipefail
           rm -rf /tmp/nbavl-prior-only-rotation-source
@@ -64,6 +66,7 @@ jobs:
             --output-dir /tmp/nbavl-prior-only-rotation-source \
             --max-workers 4
       - name: Validate source qualification and preserved locks
+        if: always()
         run: |
           python - <<'PY'
           import csv
@@ -71,9 +74,11 @@ jobs:
           from pathlib import Path
 
           root = Path('/tmp/nbavl-prior-only-rotation-source')
-          report = json.loads(
-              (root / 'prior-only-player-rotation-source-2025-26-report-v1.json').read_text()
-          )
+          report_path = root / 'prior-only-player-rotation-source-2025-26-report-v1.json'
+          assert report_path.is_file(), 'source build did not produce a diagnostic report'
+          report = json.loads(report_path.read_text())
+          print(json.dumps(report, indent=2))
+
           assert report['formal_state'] == 'PRIOR_ONLY_PLAYER_ROTATION_SOURCE_2025_26_PASS'
           coverage = report['coverage']
           assert coverage['requested_games'] == 1230
@@ -129,15 +134,9 @@ jobs:
           assert len(rows) == coverage['player_game_rows']
           assert len({(row['source_game_id'], row['player_id']) for row in rows}) == len(rows)
           assert all('player_name' not in row for row in rows)
-          print(json.dumps({
-              'formal_state': report['formal_state'],
-              'coverage': coverage,
-              'max_abs_team_minute_error': quality['max_abs_team_minute_error'],
-              'next': report['next_unique_sub_mainline'],
-              'formal_stake': 0,
-          }, indent=2))
           PY
       - name: Upload private rotation source Artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: private-prior-only-player-rotation-source-2025-26-v1
@@ -145,6 +144,6 @@ jobs:
             /tmp/nbavl-prior-only-rotation-source/prior-only-player-rotation-source-2025-26-v1.csv
             /tmp/nbavl-prior-only-rotation-source/prior-only-player-rotation-source-index-2025-26-v1.csv
             /tmp/nbavl-prior-only-rotation-source/prior-only-player-rotation-source-2025-26-report-v1.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
           compression-level: 0

@@ -1,0 +1,118 @@
+{
+  "schema_version": "training-free-prior-only-rotation-residual-audit-2025-26-v1-column-binding-amendment",
+  "formal_state": "TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_2025_26_V1_COLUMN_BINDING_AMENDMENT_PREDECLARED",
+  "recorded_at_utc": "2026-07-24T17:34:00Z",
+  "binding_history": {
+    "base_main": "ca7eedc794f5dbba2a28d96cfd98386125a1d539",
+    "binding_design_pr": 188,
+    "binding_design_state": "TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_2025_26_V1_DESIGN_VALID",
+    "binding_feature_pr": 187,
+    "feature_artifact_id": 8603761824,
+    "feature_artifact_digest": "sha256:e02cd15e9b3aa1d58d3cbee1f27f1caea461d7e2f8ec701389e6e5f969ba440a",
+    "matchup_csv_sha256": "sha256:3e8ef30f3a9801fda92fc95a490228b73fa53603093c914207e884a933b2de02",
+    "matchup_header_sha256": "sha256:81bbe7ab22a5e7892207b4eb765a084dc88c059407664532672ea93d9f51146d"
+  },
+  "reason": "Static schema review before any residual execution found that PR #188 used conceptual suffix-diff names while the bound PR #187 CSV physically stores the same twelve feature differences with a diff_ prefix. This amendment binds names only. No outcome, residual, market or hypothesis result was inspected.",
+  "execution_status_at_amendment": {
+    "private_residual_join_executed": false,
+    "residual_statistics_computed": false,
+    "outcomes_inspected_for_amendment": false,
+    "market_results_inspected_for_amendment": false,
+    "feature_set_changed": false,
+    "hypotheses_changed": false,
+    "population_gates_changed": false,
+    "decision_policy_changed": false
+  },
+  "canonical_to_physical_column_mapping": {
+    "rotation_players_prior_5_diff": "diff_rotation_players_prior_5",
+    "top5_minutes_share_prior_5_diff": "diff_top5_minutes_share_prior_5",
+    "top8_minutes_share_prior_5_diff": "diff_top8_minutes_share_prior_5",
+    "top8_minutes_share_prior_10_diff": "diff_top8_minutes_share_prior_10",
+    "rotation_entropy_prior_5_diff": "diff_rotation_entropy_prior_5",
+    "rotation_entropy_prior_10_diff": "diff_rotation_entropy_prior_10",
+    "top8_set_continuity_prior_5_diff": "diff_top8_set_continuity_prior_5",
+    "starter_set_continuity_prior_5_diff": "diff_starter_set_continuity_prior_5",
+    "minutes_allocation_volatility_prior_5_diff": "diff_minutes_allocation_volatility_prior_5",
+    "role_change_magnitude_prior_3_vs_10_diff": "diff_role_change_magnitude_prior_3_vs_10",
+    "recent_return_players_count_diff": "diff_recent_return_players_count",
+    "new_team_rotation_players_prior_5_diff": "diff_new_team_rotation_players_prior_5"
+  },
+  "identity_and_readiness_columns": {
+    "game_id": "target_game_id",
+    "game_date_et": "target_game_date_et",
+    "home_team": "home_team_abbr",
+    "away_team": "away_team_abbr",
+    "feature_ready_game": "feature_ready_game"
+  },
+  "stress_index_physical_components": [
+    {
+      "canonical": "rotation_players_prior_5_diff",
+      "physical": "diff_rotation_players_prior_5",
+      "sign": 1
+    },
+    {
+      "canonical": "top8_set_continuity_prior_5_diff",
+      "physical": "diff_top8_set_continuity_prior_5",
+      "sign": -1
+    },
+    {
+      "canonical": "starter_set_continuity_prior_5_diff",
+      "physical": "diff_starter_set_continuity_prior_5",
+      "sign": -1
+    },
+    {
+      "canonical": "minutes_allocation_volatility_prior_5_diff",
+      "physical": "diff_minutes_allocation_volatility_prior_5",
+      "sign": 1
+    },
+    {
+      "canonical": "role_change_magnitude_prior_3_vs_10_diff",
+      "physical": "diff_role_change_magnitude_prior_3_vs_10",
+      "sign": 1
+    },
+    {
+      "canonical": "recent_return_players_count_diff",
+      "physical": "diff_recent_return_players_count",
+      "sign": 1
+    },
+    {
+      "canonical": "new_team_rotation_players_prior_5_diff",
+      "physical": "diff_new_team_rotation_players_prior_5",
+      "sign": 1
+    }
+  ],
+  "mapping_rules": {
+    "mapping_cardinality": "ONE_TO_ONE",
+    "canonical_feature_count": 12,
+    "physical_feature_count": 12,
+    "duplicate_canonical_names_allowed": 0,
+    "duplicate_physical_columns_allowed": 0,
+    "unmapped_primary_features_allowed": 0,
+    "extra_primary_physical_columns_allowed": 0,
+    "runtime_column_guessing_allowed": false,
+    "prefix_or_suffix_inference_allowed": false,
+    "case_insensitive_fallback_allowed": false,
+    "fuzzy_column_matching_allowed": false
+  },
+  "preserved_design": {
+    "primary_model_population_expected_rows": 1075,
+    "primary_model_population_minimum_rows": 1000,
+    "primary_market_population_minimum_rows": 200,
+    "market_sensitivity_bands_minutes": [15, 30, 60],
+    "bootstrap_resamples": 5000,
+    "bootstrap_seed": 20260725,
+    "primary_h1_direction": "negative",
+    "primary_h2_direction": "positive",
+    "multiple_testing": "Benjamini-Hochberg q <= 0.10",
+    "public_output": "AGGREGATE_ONLY"
+  },
+  "preserved_locks": {
+    "model_training_authorized": false,
+    "model_promotion_authorized": false,
+    "strict_t60_qualified": false,
+    "formal_market_backtest_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_unique_mainline_after_amendment_validation": "IMPLEMENT_AND_EXECUTE_TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_2025_26_V1_USING_EXACT_COLUMN_BINDING"
+}

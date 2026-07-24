@@ -73,11 +73,14 @@ The current aligned odds can be compared in explicit timestamp-quality bands, bu
 
 ## Validation
 
+Latest validated branch head at handoff recording time:
+
 ```text
-workflow run: 30074414169
-job: 89421932089
-Artifact: 8589270746
-Artifact digest: sha256:b2877a1ee79a3b2e59bbeaa4892d30fbc090a027244a04d0d2ed4c397d25e010
+head: 50eb8002aa68c76a52d2ed336be4e8a3d0da1855
+workflow run: 30074523573
+job: 89422267703
+Artifact: 8589313990
+Artifact digest: sha256:e390c34e5a2612f15bfe504fd2c3dca525780476161caeec63b586fad3a78a17
 formal state: PUBLIC_ODDS_ALIGNMENT_WEB_EXPORT_VALID
 contract tests: 52 / 52 PASS
 Artifact inspected: yes

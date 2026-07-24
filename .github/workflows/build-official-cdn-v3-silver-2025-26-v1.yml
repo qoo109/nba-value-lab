@@ -5,6 +5,7 @@ on:
     paths:
       - "scripts/build_official_cdn_v3_silver_2025_26_v1.py"
       - "scripts/run_official_cdn_v3_silver_2025_26_v1.py"
+      - "data/research/official-cdn-v3-terminal-score-exceptions-2025-26-v1.json"
       - "scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py"
       - "scripts/historical_silver_schema.py"
       - "scripts/historical_silver_nbastats.py"
@@ -80,6 +81,13 @@ jobs:
           assert report['quality']['game_date_max'] == '2026-04-12'
           assert report['quality']['duplicate_team_feature_keys'] == 0
           assert report['quality']['core_feature_null_or_nonfinite_rows'] == 0
+          v3 = report['sources']['nbastatsv3_2025']
+          assert v3['documented_terminal_score_exceptions'] == 2
+          assert v3['documented_terminal_score_exception_ids'] == ['0022500029', '0022500232']
+          assert v3['terminal_score_exception_manifest'] == 'data/research/official-cdn-v3-terminal-score-exceptions-2025-26-v1.json'
+          assert v3['unexplained_terminal_score_mismatches'] == 0
+          assert v3['v3_event_rows_modified'] is False
+          assert v3['official_game_scores_modified'] is False
           assert report['decision']['ready_for_continuous_2024_25_to_2025_26_gold'] is True
           assert report['execution']['provider_api_requests'] == 0
           assert report['execution']['raw_archives_committed'] is False
@@ -107,6 +115,8 @@ jobs:
               'tables': report['outputs']['tables'],
               'game_date_min': report['quality']['game_date_min'],
               'game_date_max': report['quality']['game_date_max'],
+              'documented_v3_terminal_score_exceptions': v3['documented_terminal_score_exceptions'],
+              'unexplained_v3_terminal_score_mismatches': v3['unexplained_terminal_score_mismatches'],
               'next': report['next_unique_sub_mainline'],
               'formal_stake': 0,
           }, indent=2))

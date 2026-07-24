@@ -23,6 +23,7 @@ provider requests executed: 0
 ## Current milestone
 
 ```text
+PR #168 — Implement G1.2.0 Real Governed T-60 Intake Validator v1
 IMPLEMENT_G1_2_0_REAL_GOVERNED_T60_INPUT_INTAKE_VALIDATOR_V1
 ```
 
@@ -34,6 +35,31 @@ Implemented:
 - fail-closed contract validation;
 - aggregate-only GitHub Actions QA;
 - no network client, provider adapter, secret reader or formal history writer.
+
+## Dedicated validation and Artifact QA
+
+```text
+workflow run: 30061807616
+job: 89384780692 / success
+artifact: 8584793122
+artifact digest: sha256:a654006ba35896bcd71817d18b9985f7e621a2884ef92bb63335de4159f6cb6e
+artifact formal state: G1_2_0_REAL_GOVERNED_T60_INPUT_INTAKE_VALIDATOR_CONTRACT_VALID
+contract tests: 19 / 19 PASS
+artifact inspected: true
+```
+
+Aggregate-only QA confirmed:
+
+```text
+contract fixture only: true
+real input validated: false
+real G1.2.0 dry-run executed: false
+formal history write authorized: false
+provider requests executed: 0
+raw quote rows emitted: 0
+market metrics executed: false
+Formal Stake：0
+```
 
 ## Contract behavior
 
@@ -55,13 +81,11 @@ Required source evidence includes private research rights, verified provider tim
 ## Current execution state
 
 ```text
-contract fixture only: true
+qualified timestamped odds sources: none
 real input validated: false
 real G1.2.0 dry-run executed: false
-qualified timestamped odds sources: none
 formal history write authorized: false
 provider requests executed: 0
-raw quote rows emitted: 0
 Market Backtest: false
 Formal Stake：0
 ```

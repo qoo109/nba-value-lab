@@ -3,7 +3,7 @@
   "updated_at": "2026-07-24",
   "formal_state": "KAGGLE_OFFICIAL_SCHEDULE_ALIGNMENT_20_GAME_PILOT_VALID",
   "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v14.json",
-  "recording_pr": null,
+  "recording_pr": 173,
   "repository_state_before_milestone": {
     "main_sha": "061edd87523733c396690fe276537447015d4f7a",
     "latest_merged_pr": 172,
@@ -40,6 +40,15 @@
     "point_in_time_qualified": false,
     "historical_backfill_qualified": false,
     "formal_history_write_authorized": false
+  },
+  "validation_evidence": {
+    "workflow_run": 30068519668,
+    "workflow_job": 89404166037,
+    "artifact_id": 8587098668,
+    "artifact_digest": "sha256:35a298a3e3feebc123db618b21d864c7e36f726a0e0d8d3aac78961711351897",
+    "artifact_formal_state": "KAGGLE_OFFICIAL_SCHEDULE_ALIGNMENT_PILOT_RECORD_VALID",
+    "contract_tests": 45,
+    "artifact_inspected": true
   },
   "qualified_for_real_2026_27_t60_input": [],
   "qualified_for_historical_backfill": [],

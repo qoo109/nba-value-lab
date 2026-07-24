@@ -186,6 +186,12 @@ forward collector offline synthetic tests: 12 / PASS
 forward collector offline network client: false
 forward collector offline provider requests executed: 0
 forward collector offline real quotes retained: 0
+first provider adapter qualification gate: VALIDATED / HOOPSAPI / RUNTIME BLOCKED
+hoopsapi synthetic adapter shell: AUTHORIZED
+hoopsapi provider runtime qualified: false
+hoopsapi point-in-time qualified: false
+hoopsapi account, terms, key and requests: NOT AUTHORIZED
+first provider adapter requests executed: 0
 injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate
 team submission completeness ledger: REQUIRED BEFORE FORMAL INJURY HOLDOUT
 silver builder repair required: false
@@ -216,18 +222,50 @@ TIMESTAMPED_BOOKMAKER_ODDS_REAL_OBSERVED_AT_DATA_ACQUISITION_REQUIRED
 Active prerequisite sub-mainline:
 
 ```text
-DESIGN_FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_V1
+IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
 ```
 
 Current prerequisite status:
 
 ```text
-READY — DESIGN ONLY / NO PROVIDER EXECUTION
+READY — SYNTHETIC SHELL ONLY / NETWORK DISABLED
 ```
 
 The complete governed five-season Historical Gold corpus is now bound by a validated semantic freeze manifest. The one-time request was consumed successfully and its executor was retired. Market backtesting remains blocked because real timestamped bookmaker odds with `observed_at`, bookmaker provenance and opening/closing identity have not been acquired or separately authorized. Injury-model activation, model retraining, betting-edge claims and Stake above `0` remain unauthorized.
 
 ## Completed Evidence
+
+### First provider private forward adapter qualification gate
+
+```text
+formal state: FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_VALIDATED
+candidate provider: hoopsapi_free_forward_collection
+gate design: VALIDATED
+synthetic adapter shell: AUTHORIZED
+runtime schema qualification: false
+provider runtime qualified: false
+provider point-in-time qualified: false
+collector_fetched_at may substitute provider observed_at: false
+required pre-qualification time authority: unverified
+required pre-qualification observed_at: null
+required pre-qualification point-in-time eligible: false
+user must personally accept provider terms: true
+account creation authorized: false
+provider terms acceptance authorized: false
+API key connection authorized: false
+provider request execution authorized: false
+initial preflight request cap if separately approved: 3
+provider requests executed: 0
+real quotes retained: 0
+public raw quote rows: PROHIBITED
+historical backfill qualified: false
+frozen Gold PIT join qualified: false
+market metrics executed: false
+formal Stake: 0
+next unique sub-mainline: IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
+```
+
+The gate permits only a HoopsAPI-shaped synthetic adapter shell. It does not authorize account creation, provider terms acceptance, secret connection, network requests, real quote ingestion or point-in-time qualification. Missing provider timestamp semantics must remain `unverified` with null observed_at and point-in-time eligibility false.
 
 ### Source-agnostic private forward odds collector offline core
 
@@ -251,7 +289,7 @@ real quotes retained: 0
 public quote rows emitted: 0
 market metrics executed: false
 formal Stake: 0
-next unique sub-mainline: DESIGN_FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_V1
+next unique sub-mainline: IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
 ```
 
 The offline core validates timestamp authority, exact mapping eligibility, deterministic deduplication, quarantine and private SQLite writes using synthetic inputs only. It exposes only aggregate QA and cannot connect to a provider or unlock market evaluation.
@@ -275,7 +313,7 @@ provider requests executed: 0
 real quotes retained: 0
 market metrics executed: false
 formal Stake: 0
-next unique sub-mainline: DESIGN_FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_V1
+next unique sub-mainline: IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
 ```
 
 The design preserves three distinct timestamp concepts: provider snapshot time, bookmaker last-update time and collector fetch time. Collector fetch time proves only receipt and can never be promoted to canonical `observed_at`. Rows with unverified provider-origin time remain private forward observations and are not point-in-time eligible.

@@ -1,0 +1,137 @@
+{
+  "schema_version": "kaggle-official-schedule-full-alignment-aggregate-v1",
+  "updated_at": "2026-07-24",
+  "formal_state": "KAGGLE_OFFICIAL_SCHEDULE_FULL_ALIGNMENT_DIAGNOSTIC_VALID",
+  "recording_pr": 174,
+  "repository_state_before_milestone": {
+    "main_sha": "573d7782c270e4c7b5ffceb8ff1dd50c607b9c5b",
+    "latest_merged_pr": 173,
+    "open_prs_before_branch_creation": []
+  },
+  "private_input": {
+    "archive_sha256": "sha256:36685fa53deaba112f93515fefffb971b02613f32f2f24d5a22dd0088863d419",
+    "raw_archive_committed": false,
+    "raw_quote_rows_committed": false,
+    "main_rows": 8153,
+    "detailed_rows": 149752,
+    "source_events": 1199
+  },
+  "official_schedule_evidence": {
+    "schedule_release_source": "official NBA Communications 2025-26 day-by-day schedule release PDF",
+    "schedule_release_version_date": "2025-08-14",
+    "schedule_release_subject_to_change": true,
+    "schedule_release_rows": 1200,
+    "schedule_release_team_appearances_each": 80,
+    "schedule_release_neutral_site_rows": 3,
+    "schedule_release_payload_sha256": "sha256:98a06493d0a107cc410853ad230e67d48858777a2baf76ac77d089cbeaf2435d",
+    "schedule_workflow_run": 30069894231,
+    "schedule_workflow_job": 89408380286,
+    "schedule_artifact_id": 8587613624,
+    "schedule_artifact_digest": "sha256:59b20cd64180bbcf66002a41e666b7c2d79c112853e5696803808303e4da3931",
+    "structured_schedule_routes_valid": false,
+    "structured_schedule_routes_note": "Two official static JSON candidates returned HTTP 403 and ScheduleLeagueV2 timed out in the bounded workflow; the versioned official PDF fallback passed structural QA.",
+    "liveData_subset_requested": 38,
+    "liveData_subset_returned": 38,
+    "liveData_subset_workflow_run": 30070721110,
+    "liveData_subset_workflow_job": 89410820917,
+    "liveData_subset_artifact_id": 8587902294,
+    "liveData_subset_artifact_digest": "sha256:f032850ef1b311100f18af6ced8925bc246f421e4299112a459ba4b624f82be1",
+    "cup_determined_regular_season_games_added": 30,
+    "known_schedule_date_adjustments_reconciled": 4,
+    "known_schedule_time_adjustments_reconciled": 4,
+    "reconciled_schedule_rows": 1230,
+    "reconciled_schedule_unique_row_ids": 1230,
+    "duplicate_matchup_tipoff_rows": 0,
+    "schedule_provenance_row_counts": {
+      "OFFICIAL_SCHEDULE_RELEASE_PDF": 1192,
+      "NBA_CUP_DETERMINED_REGULAR_SEASON_GAME": 30,
+      "KNOWN_SCHEDULE_DATE_ADJUSTMENT_RECONCILIATION": 4,
+      "KNOWN_SCHEDULE_TIME_ADJUSTMENT_RECONCILIATION": 4
+    }
+  },
+  "event_alignment": {
+    "source_events_classified": 1199,
+    "unmatched_or_ambiguous": 0,
+    "regular_season_events_matched": 1112,
+    "classification_counts": {
+      "MATCHED_HIGH_CONFIDENCE_REGULAR_SEASON": 1102,
+      "MATCHED_SCHEDULE_ADJUSTED": 8,
+      "MATCHED_NEUTRAL_SITE_REGULAR_SEASON": 2,
+      "EXCLUDED_POSTSEASON_OR_PLAY_IN": 83,
+      "EXCLUDED_ALL_STAR": 3,
+      "EXCLUDED_NBA_CUP_CHAMPIONSHIP": 1
+    },
+    "regular_event_provenance_counts": {
+      "OFFICIAL_SCHEDULE_RELEASE_PDF": 1074,
+      "NBA_CUP_DETERMINED_REGULAR_SEASON_GAME": 30,
+      "KNOWN_SCHEDULE_DATE_ADJUSTMENT_RECONCILIATION": 4,
+      "KNOWN_SCHEDULE_TIME_ADJUSTMENT_RECONCILIATION": 4
+    },
+    "one_to_one_regular_event_schedule_matches": 1112,
+    "regular_events_with_published_tipoff": 1112,
+    "regular_events_with_stable_official_schedule_row_id": 1112,
+    "regular_events_with_true_official_nba_game_id": 38,
+    "regular_events_using_stable_pdf_schedule_row_id": 1074,
+    "archive_regular_schedule_coverage_pct": 90.40650406504065
+  },
+  "row_enrichment": {
+    "regular_main_rows_enriched": 7713,
+    "regular_detailed_rows_enriched": 144034,
+    "detailed_rows_mapped_to_main_event": 149752,
+    "detailed_rows_unmapped": 0,
+    "main_row_classification_counts": {
+      "MATCHED_HIGH_CONFIDENCE_REGULAR_SEASON": 7650,
+      "MATCHED_SCHEDULE_ADJUSTED": 47,
+      "MATCHED_NEUTRAL_SITE_REGULAR_SEASON": 16,
+      "EXCLUDED_POSTSEASON_OR_PLAY_IN": 424,
+      "EXCLUDED_ALL_STAR": 11,
+      "EXCLUDED_NBA_CUP_CHAMPIONSHIP": 5
+    },
+    "detailed_row_classification_counts": {
+      "MATCHED_HIGH_CONFIDENCE_REGULAR_SEASON": 142900,
+      "MATCHED_SCHEDULE_ADJUSTED": 846,
+      "MATCHED_NEUTRAL_SITE_REGULAR_SEASON": 288,
+      "EXCLUDED_POSTSEASON_OR_PLAY_IN": 5596,
+      "EXCLUDED_ALL_STAR": 32,
+      "EXCLUDED_NBA_CUP_CHAMPIONSHIP": 90
+    }
+  },
+  "batch_time_diagnostics": {
+    "source_timestamp_preserved": true,
+    "collector_timestamp_semantics": "LEAGUE_BATCH_TIMESTAMP_CREATED_BY_COLLECTOR_ASSUMED_UTC",
+    "quote_observation_time_semantics": "UNKNOWN_WITHIN_SEQUENTIAL_BATCH",
+    "regular_events_with_pretip_batch_candidate": 1111,
+    "regular_events_without_pretip_batch_candidate": 1,
+    "regular_events_with_at_or_post_tip_batch": 28,
+    "regular_main_rows_at_or_post_tip": 34,
+    "closest_batch_candidate_within_t60_plus_minus_5_minutes": 315,
+    "closest_batch_candidate_within_t60_plus_minus_15_minutes": 497,
+    "closest_batch_candidate_within_t60_plus_minus_30_minutes": 616,
+    "closest_batch_candidate_within_t60_plus_minus_60_minutes": 699,
+    "median_t60_batch_absolute_error_minutes": 23.516666666666666,
+    "provider_origin_quote_time_verified": false,
+    "quote_level_exact_observed_at_verified": false,
+    "quote_strictly_pre_tip_verified": false,
+    "strict_t60_qualified": false
+  },
+  "private_output_integrity": {
+    "official_nba_2025_26_reconciled_schedule_v1.csv": "sha256:e298d6f01e6f84f1f726979a3bd756436caf022004cd9b8a24601f07b3e6173a",
+    "kaggle_official_schedule_full_alignment_events_v1.csv": "sha256:5414e4cd05a070dcf2aecd4e9de93b7cc111a1097bf65b694aade089c00a9919",
+    "kaggle_nba_main_lines_officially_aligned_2025_26_v1.csv": "sha256:8ce1f53a39f9dc3a0adf65f3f91ba9eb6024fccfabd5282a50eea00a1292a0b3",
+    "kaggle_nba_detailed_odds_officially_aligned_2025_26_v1.csv": "sha256:3999b718a9a815f1d81326b24eeb6d0e8c808084928dfda3d2b1528eedc42583",
+    "kaggle_official_schedule_full_alignment_summary_v1.json": "sha256:5cd35d01092db9b15f433f8ee72953488c2a8773bc07ac3f9bbcb0a8b6c64c9d",
+    "kaggle_official_schedule_full_alignment_bundle_2025_26_v1.zip": "sha256:346e69f9f4ad559422d55add1b0d2b5c1a2dc38e22ef4575e1fc8ec87bf0df43"
+  },
+  "qualification_locks": {
+    "point_in_time_qualified": false,
+    "historical_backfill_qualified": false,
+    "formal_history_write_authorized": false,
+    "g1_2_0_real_input_qualified": false,
+    "market_backtest_unlocked": false,
+    "clv_ev_roi_drawdown_unlocked": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "decision": "KEEP_PRIVATE_DIAGNOSTIC_ALIGNMENT_OFFICIAL_SCHEDULE_REPAIRED_QUOTE_TIME_UNRESOLVED",
+  "next_unique_mainline": "AWAIT_REAL_GOVERNED_2026_27_T60_INPUT_AND_QUALIFIED_TIMESTAMPED_ODDS"
+}

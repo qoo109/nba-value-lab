@@ -1,0 +1,74 @@
+{
+  "schema_version": "official-cdn-v3-silver-2025-26-build-result-v1",
+  "formal_state": "OFFICIAL_CDN_V3_SILVER_2025_26_BUILD_PASS_RECORDED",
+  "recorded_at_utc": "2026-07-24T08:52:00+00:00",
+  "execution_evidence": {
+    "branch_head": "85477bb0f39188f48360fbc51d52ac58b423d190",
+    "workflow_run": 30080247460,
+    "job": 89439929496,
+    "artifact_id": 8591518327,
+    "artifact_digest": "sha256:880a3e9688a0035a7c6c8a5e934f32f6011ba44417ae5659c21b9d65fe00db6a",
+    "artifact_inspected": true,
+    "build_report_sha256": "sha256:9de72ae0ffc4056b405a9c8caf569cfb2eed2596390055c8542d6fc92ad52911",
+    "silver_database_gzip_sha256": "sha256:f0027956f6d0a1061955f2b00572d3295a8cfc4ef00de431290c38c80847a59a",
+    "silver_database_gzip_bytes": 84333787,
+    "sqlite_integrity_check": "ok"
+  },
+  "season_label": "2025-26",
+  "source_composition": {
+    "matchups_2025": "home_away_team_identity",
+    "cdnnba_2025": "official_event_time_score_progression_possession_and_action_features",
+    "nbastatsv3_2025": "event_player_identity_and_independent_team_score_qa"
+  },
+  "outputs": {
+    "games": 1230,
+    "pbp_events": 621887,
+    "player_aliases": 1006,
+    "possessions": 249957,
+    "team_game_features": 2460,
+    "games_with_two_team_features": 1230,
+    "games_with_official_terminal_score": 1230,
+    "game_date_min": "2025-10-21",
+    "game_date_max": "2026-04-12",
+    "game_date_rule": "earliest_timeActual_UTC_converted_to_America_New_York_date"
+  },
+  "quality": {
+    "all_three_source_game_count": 1230,
+    "all_three_source_game_ids_match": true,
+    "team_identity_cross_source_mismatches": 0,
+    "unexplained_terminal_score_cross_source_mismatches": 0,
+    "documented_v3_terminal_score_exceptions": 2,
+    "documented_v3_terminal_score_exception_ids": [
+      "0022500029",
+      "0022500232"
+    ],
+    "terminal_score_exception_manifest": "data/research/official-cdn-v3-terminal-score-exceptions-2025-26-v1.json",
+    "v3_event_rows_modified": false,
+    "official_game_scores_modified": false,
+    "duplicate_team_feature_keys": 0,
+    "core_feature_null_or_nonfinite_rows": 0,
+    "minimum_possession_segments_per_game": 167,
+    "maximum_possession_segments_per_game": 259
+  },
+  "exception_diagnostic_evidence": {
+    "workflow_run": 30079791244,
+    "job": 89438517519,
+    "artifact_id": 8591318366,
+    "artifact_digest": "sha256:588faf8cec24bcceac2e3d5584b237b5e61a5303a4f37bab415f93fc18b0ad5c"
+  },
+  "execution_boundaries": {
+    "raw_source_archives_committed": false,
+    "raw_source_rows_emitted": 0,
+    "provider_api_requests": 0,
+    "model_retraining_executed": false,
+    "model_scoring_executed": false,
+    "odds_join_executed": false,
+    "market_backtest_allowed": false,
+    "clv_allowed": false,
+    "roi_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "decision": "READY_TO_BUILD_CONTINUOUS_2024_25_TO_2025_26_GOLD_AND_SCORE_FROZEN_MODEL",
+  "next_unique_sub_mainline": "BUILD_CONTINUOUS_2024_25_TO_2025_26_GOLD_AND_SCORE_FROZEN_MODEL"
+}

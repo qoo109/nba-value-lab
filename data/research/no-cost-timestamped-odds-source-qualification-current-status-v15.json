@@ -1,0 +1,52 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v15",
+  "updated_at": "2026-07-24",
+  "formal_state": "KAGGLE_OFFICIAL_SCHEDULE_ALIGNMENT_20_GAME_PILOT_VALID",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v14.json",
+  "recording_pr": null,
+  "repository_state_before_milestone": {
+    "main_sha": "061edd87523733c396690fe276537447015d4f7a",
+    "latest_merged_pr": 172,
+    "open_prs": []
+  },
+  "user_decisions": {
+    "hoopsapi_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "the_odds_api_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED",
+    "kaggle_official_schedule_alignment_pilot": "APPROVED_AND_EXECUTED"
+  },
+  "provider_execution_state": {
+    "network_requests_by_project_code": 0,
+    "provider_odds_requests_executed": 0,
+    "real_quotes_retained_in_public_repo": 0
+  },
+  "pilot": {
+    "report_path": "data/research/kaggle-official-schedule-alignment-pilot-v1.json",
+    "documentation_path": "docs/kaggle-official-schedule-alignment-pilot-v1.md",
+    "official_schedule_games": 20,
+    "unique_matches": 20,
+    "home_away_orientation_verified": 20,
+    "official_published_tipoff_added": 20,
+    "closest_batch_within_t60_plus_minus_5_minutes": 4,
+    "closest_batch_within_t60_plus_minus_60_minutes": 6,
+    "median_t60_absolute_error_minutes": 64.35,
+    "main_detail_moneyline_exact_match": 19,
+    "main_detail_moneyline_exact_match_pct": 0.95,
+    "official_schedule_subject_to_change": true,
+    "provider_origin_quote_time_verified": false,
+    "quote_level_exact_observed_at_verified": false,
+    "strict_t60_qualified": false,
+    "point_in_time_qualified": false,
+    "historical_backfill_qualified": false,
+    "formal_history_write_authorized": false
+  },
+  "qualified_for_real_2026_27_t60_input": [],
+  "qualified_for_historical_backfill": [],
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0,
+  "decision": "OFFICIAL_SCHEDULE_ALIGNMENT_REPAIRS_GAME_ID_HOME_AWAY_AND_PUBLISHED_TIPOFF_BUT_NOT_QUOTE_TIME",
+  "next_unique_mainline": "EXPAND_KAGGLE_OFFICIAL_SCHEDULE_ALIGNMENT_TO_FULL_2025_26_REGULAR_SEASON_DIAGNOSTIC_ONLY"
+}

@@ -25,6 +25,24 @@ formal Stake: 0
 next unique mainline: VALIDATE_G1_2_0_END_TO_END_WITH_REAL_GOVERNED_2026_27_T60_INPUT
 ```
 
+## Latest Research Milestone — PR #179 through PR #185
+
+```text
+frozen 2025-26 forward scoring: VALID / 1,230 GAMES / NO REFIT
+private model-market time-banded sensitivity: VALID / 1,110 MATCHES
+market comparison result: NO_EVIDENCE_FROZEN_MODEL_BEATS_PRIVATE_MARKET_ARCHIVE
+model-market gap review: VALID / PRESERVE FROZEN BASELINE
+prior-only rotation feature design: VALID
+prior-only rotation source: VALID / 1,230 OF 1,230 GAMES
+private player-game source rows: 43,265
+public player rows: 0
+real rotation feature build: NOT YET EXECUTED
+current unique research mainline: BUILD_PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURES_2025_26_V1_WITHOUT_MODEL_RETRAINING
+formal Stake: 0
+```
+
+PR #179 scored the frozen `walk-forward-v2` model on all 1,230 governed 2025-26 games without training, refitting, calibration, or market features. PR #180 joined 1,110 valid two-sided pre-tip Moneyline games and found the proportional no-vig market had lower Log Loss and Brier Score in every predeclared time-error band. PR #181 preserved the frozen baseline and market-backtest lock. PR #183 validated the prior-only rotation feature design, and PR #185 qualified the deidentified official 2025-26 player minutes/starter source. The next step may build private prior-only rotation features and aggregate QA only; it does not authorize residual promotion, model retraining, strict T-60 qualification, market backtesting, betting-edge claims, or Stake above `0`.
+
 ## Current Control Block
 
 ```text
@@ -204,34 +222,30 @@ formal stake: 0
 ## Next Unique Mainline
 
 ```text
-VALIDATE_G1_2_0_END_TO_END_WITH_REAL_GOVERNED_2026_27_T60_INPUT
+BUILD_PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURES_2025_26_V1_WITHOUT_MODEL_RETRAINING
 ```
 
 Current status:
 
 ```text
-BLOCKED — REAL GOVERNED INPUT NOT AVAILABLE
+READY — QUALIFIED PRIVATE SOURCE AVAILABLE / FEATURE BUILD NOT YET EXECUTED
 ```
 
-Required prerequisite:
+Required point-in-time fallback:
 
 ```text
-TIMESTAMPED_BOOKMAKER_ODDS_REAL_OBSERVED_AT_DATA_ACQUISITION_REQUIRED
+source_game_date_et < target_game_date_et
 ```
 
-Active prerequisite sub-mainline:
+The feature build must exclude same-day, target-game, and future player rows. It may emit private feature rows and aggregate QA only. Activation requires at least 1,000 feature-ready games, at least 80% coverage, all 30 teams, at least five months, zero source-time violations, zero identity ambiguity, and the predeclared missingness and residual-direction audits. Passing those gates still does not authorize model retraining.
+
+Longer-term blocked milestone:
 
 ```text
-IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
+VALIDATE_G1_2_0_END_TO_END_WITH_REAL_GOVERNED_2026_27_T60_INPUT
 ```
 
-Current prerequisite status:
-
-```text
-READY — SYNTHETIC SHELL ONLY / NETWORK DISABLED
-```
-
-The complete governed five-season Historical Gold corpus is now bound by a validated semantic freeze manifest. The one-time request was consumed successfully and its executor was retired. Market backtesting remains blocked because real timestamped bookmaker odds with `observed_at`, bookmaker provenance and opening/closing identity have not been acquired or separately authorized. Injury-model activation, model retraining, betting-edge claims and Stake above `0` remain unauthorized.
+That milestone remains blocked by the absence of legally governed provider-origin `observed_at` bookmaker odds. HoopsAPI and The Odds API work completed to date is public-review or synthetic-only and does not qualify strict T-60, Historical Backfill, Frozen Gold PIT joins, or formal Market Backtesting.
 
 ## Completed Evidence
 

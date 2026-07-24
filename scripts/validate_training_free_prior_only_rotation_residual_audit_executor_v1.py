@@ -101,7 +101,7 @@ def main() -> int:
     check("h2_positive", design["primary_hypotheses"]["market_relative_error"]["predeclared_direction"] == "positive")
     check("bh_q10", "0.10" in design["secondary_tests"]["multiple_testing"])
     check("self_test_real_execution_false", '"real_private_residual_audit_executed": False' in source)
-    check("real_requires_market_join", "--market-join" in source and "required outside --self-test" in source)
+    check("real_requires_market_join", "--market-join" in source and "--features, --predictions and --market-join" in source and "outside --self-test" in source)
     check("no_committed_result_record", not Path("data/research/training-free-prior-only-rotation-residual-audit-2025-26-result-v1.json").exists())
 
     check("status_schema", status["schema_version"] == "training-free-prior-only-rotation-residual-audit-executor-status-v1")

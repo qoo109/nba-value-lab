@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "updated_at_utc": "2026-07-24T10:12:00+00:00",
+  "formal_state": "MODEL_MARKET_GAP_REVIEW_2025_26_RECORDED_AWAITING_PR_VALIDATION",
+  "prior_main": "d464bd0973974c9075e9a9bee9a14bb5fb2ac2d1",
+  "primary_rows": 310,
+  "market_better_log_loss": true,
+  "market_better_brier": true,
+  "market_better_auc": true,
+  "largest_descriptive_gap_bin": "10pp+",
+  "next_unique_research_design": "PREDECLARE_PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURE_LAYER_V1",
+  "strict_t60_qualified": false,
+  "formal_market_backtest_allowed": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

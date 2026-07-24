@@ -216,6 +216,7 @@ def main() -> None:
     assert request["next_unique_mainline"] == "AWAIT_HOOPSAPI_USER_SETUP_AND_EXPLICIT_PREFLIGHT_APPROVAL"
 
     assert status["formal_state"] == "NO_COST_TIMESTAMPED_ODDS_HOOPSAPI_RUNTIME_PREFLIGHT_REQUEST_DESIGNED"
+    assert status["recording_pr"] == 166
     assert status["synthetic_adapter_shell"]["merged_pr"] == 165
     assert status["synthetic_adapter_shell"]["provider_requests_executed"] == 0
     assert status["runtime_preflight_request"]["request_id"] == request["request_id"]
@@ -235,7 +236,7 @@ def main() -> None:
         "HOOPSAPI-PRIVATE-RUNTIME-PREFLIGHT-2026-07-24-001",
         "provider request cap: 3",
         "execution count: 0 / 1",
-        "collector_fetched_at_utc` NEVER substitutes `quote_observed_at_utc",
+        "`collector_fetched_at_utc` NEVER substitutes `quote_observed_at_utc`",
         "AWAIT_HOOPSAPI_USER_SETUP_AND_EXPLICIT_PREFLIGHT_APPROVAL",
         "Formal Stake：0",
     )

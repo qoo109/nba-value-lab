@@ -104,6 +104,22 @@ at/post-tip regular main rows: 34
 
 The original `timestamp` is preserved. It remains a collector-created league-batch timestamp assumed UTC. It is not a provider-origin or row-level quote timestamp.
 
+## Validation evidence
+
+```text
+workflow run: 30071992939
+workflow job: 89414627564 — success
+Artifact: 8588364774
+digest:
+sha256:99f48e85d931fd4b732b9c6d42d12c1b985f6a4b31e48bb60b6b3e6011dd0454
+formal state:
+KAGGLE_OFFICIAL_SCHEDULE_FULL_ALIGNMENT_RECORD_VALID
+contract tests: 81 / 81 PASS
+Artifact inspected: yes
+```
+
+The Artifact is aggregate-only. It confirms that no private archive or quote rows were committed and no market metrics were executed.
+
 ## Decision
 
 ```text

@@ -1,0 +1,35 @@
+name: Validate training-free prior-only rotation residual audit column binding v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/training-free-prior-only-rotation-residual-audit-2025-26-v1-column-binding-amendment.json"
+      - "docs/training-free-prior-only-rotation-residual-audit-2025-26-v1-column-binding-amendment.md"
+      - "scripts/validate_training_free_prior_only_rotation_residual_audit_column_binding_v1.py"
+      - ".github/workflows/validate-training-free-prior-only-rotation-residual-audit-column-binding-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate exact column binding and unchanged design locks
+        run: |
+          python -m py_compile scripts/validate_training_free_prior_only_rotation_residual_audit_column_binding_v1.py
+          python scripts/validate_training_free_prior_only_rotation_residual_audit_column_binding_v1.py
+      - name: Upload aggregate validation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-free-prior-only-rotation-residual-audit-column-binding-v1
+          path: validation-output/training-free-prior-only-rotation-residual-audit-column-binding-v1.json
+          if-no-files-found: error
+          retention-days: 14

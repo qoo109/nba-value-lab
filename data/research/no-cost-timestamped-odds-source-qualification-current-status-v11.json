@@ -40,10 +40,10 @@
     "formal_history_write_authorized": false
   },
   "validation_evidence": {
-    "workflow_run": 30063718569,
-    "workflow_job": 89390390572,
-    "artifact_id": 8585461789,
-    "artifact_digest": "sha256:1b889354190c87ce720236a49e872a78b30bfe1bcc91418cca7c4d63aee62610",
+    "workflow_run": 30063813865,
+    "workflow_job": 89390668957,
+    "artifact_id": 8585495681,
+    "artifact_digest": "sha256:a8acc00e94621a59e2fcaf105c579d25da4d397ca116cde809169d979be11dbf",
     "artifact_formal_state": "G1_2_0_PRIVATE_T60_BUNDLE_PREPARATION_HELPER_VALID",
     "artifact_inspected": true
   },

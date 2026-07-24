@@ -1,0 +1,48 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v11",
+  "updated_at": "2026-07-24",
+  "formal_state": "G1_2_0_PRIVATE_T60_BUNDLE_PREPARATION_HELPER_PENDING_VALIDATION",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v10.json",
+  "recording_pr": null,
+  "user_decisions": {
+    "hoopsapi_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED",
+    "continue_non_provider_offline_preparation": true
+  },
+  "provider_execution_state": {
+    "hoopsapi_provider_requests_executed": 0,
+    "bloombet_probe_execution_count": 0,
+    "network_requests_executed": 0,
+    "real_quotes_retained": 0
+  },
+  "source_qualification_state": {
+    "qualified_for_real_2026_27_t60_input": [],
+    "qualified_for_historical_backfill": [],
+    "qualified_for_existing_frozen_gold_point_in_time_join": [],
+    "market_backtest_unlocked": false
+  },
+  "private_bundle_preparation": {
+    "path": "scripts/g1_2_0_private_t60_bundle_preparation_v1.py",
+    "design_path": "data/research/g1-2-0-private-t60-bundle-preparation-v1.json",
+    "formal_state": "IMPLEMENTED_PENDING_VALIDATION",
+    "offline_only": true,
+    "private_paths_outside_repository_required": true,
+    "rights_review_required": true,
+    "provider_timestamp_semantics_required": true,
+    "collector_fetched_at_substitution_allowed": false,
+    "normalized_input_sha256_bound": true,
+    "raw_source_sha256_bound": true,
+    "provider_requests_executed": 0,
+    "real_input_validated": false,
+    "real_g120_dry_run_executed": false,
+    "formal_history_write_authorized": false
+  },
+  "next_unique_mainline": "AWAIT_REAL_GOVERNED_2026_27_T60_INPUT_AND_QUALIFIED_TIMESTAMPED_ODDS",
+  "model_retraining_authorized": false,
+  "injury_model_activation_authorized": false,
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

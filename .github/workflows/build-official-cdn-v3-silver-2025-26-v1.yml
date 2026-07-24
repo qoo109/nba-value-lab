@@ -1,0 +1,112 @@
+name: Build official CDN V3 Silver 2025-26 v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/build_official_cdn_v3_silver_2025_26_v1.py"
+      - "scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py"
+      - "scripts/historical_silver_schema.py"
+      - "scripts/historical_silver_nbastats.py"
+      - "scripts/historical_phase2_core.py"
+      - "scripts/player_identity_core.py"
+      - ".github/workflows/build-official-cdn-v3-silver-2025-26-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile adapter
+        run: |
+          python -m py_compile \
+            scripts/build_official_cdn_v3_silver_2025_26_v1.py \
+            scripts/recover_historical_silver_two_game_official_cdn_pbp_v1.py \
+            scripts/historical_silver_schema.py \
+            scripts/historical_silver_nbastats.py \
+            scripts/historical_phase2_core.py \
+            scripts/player_identity_core.py
+      - name: Run adapter self-test
+        run: |
+          rm -rf /tmp/nbavl-official-cdn-v3-self-test
+          python scripts/build_official_cdn_v3_silver_2025_26_v1.py \
+            --self-test \
+            --output-dir /tmp/nbavl-official-cdn-v3-self-test
+      - name: Build real 2025-26 Silver
+        run: |
+          rm -rf /tmp/nbavl-official-cdn-v3-silver-2025-26
+          python scripts/build_official_cdn_v3_silver_2025_26_v1.py \
+            --output-dir /tmp/nbavl-official-cdn-v3-silver-2025-26 \
+            --max-download-mb 600
+      - name: Validate real output
+        run: |
+          python - <<'PY'
+          import gzip
+          import json
+          import sqlite3
+          import tempfile
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-official-cdn-v3-silver-2025-26')
+          report = json.loads((root / 'official-cdn-v3-silver-2025-26-build-report-v1.json').read_text())
+          assert report['formal_state'] == 'OFFICIAL_CDN_V3_SILVER_2025_26_BUILD_PASS', report
+          assert report['outputs']['tables']['games'] == 1230
+          assert report['outputs']['tables']['team_game_features'] == 2460
+          assert report['outputs']['games_with_two_team_features'] == 1230
+          assert report['outputs']['games_with_terminal_score_cross_match'] == 1230
+          assert report['quality']['all_three_source_game_ids_match'] is True
+          assert report['quality']['team_identity_cross_source_mismatches'] == 0
+          assert report['quality']['terminal_score_cross_source_mismatches'] == 0
+          assert report['quality']['game_date_min'] == '2025-10-21'
+          assert report['quality']['game_date_max'] == '2026-04-12'
+          assert report['quality']['duplicate_team_feature_keys'] == 0
+          assert report['quality']['core_feature_null_or_nonfinite_rows'] == 0
+          assert report['decision']['ready_for_continuous_2024_25_to_2025_26_gold'] is True
+          assert report['execution']['provider_api_requests'] == 0
+          assert report['execution']['raw_archives_committed'] is False
+          assert report['execution']['raw_rows_emitted'] == 0
+          assert report['execution']['model_retraining_executed'] is False
+          assert report['execution']['model_scoring_executed'] is False
+          assert report['execution']['odds_join_executed'] is False
+          assert report['decision']['market_backtest_allowed'] is False
+          assert report['decision']['formal_stake'] == 0
+
+          gz = root / 'historical-silver-2025-26.sqlite.gz'
+          with tempfile.NamedTemporaryFile(suffix='.sqlite') as temp:
+              with gzip.open(gz, 'rb') as src:
+                  temp.write(src.read())
+                  temp.flush()
+              db = sqlite3.connect(temp.name)
+              assert db.execute('SELECT COUNT(*) FROM games').fetchone()[0] == 1230
+              assert db.execute('SELECT COUNT(*) FROM team_game_features').fetchone()[0] == 2460
+              assert db.execute('SELECT COUNT(*) FROM games WHERE score_match=1').fetchone()[0] == 1230
+              assert db.execute("SELECT MIN(game_date), MAX(game_date) FROM games").fetchone() == ('2025-10-21', '2026-04-12')
+              assert db.execute('SELECT COUNT(*) FROM player_aliases').fetchone()[0] >= 300
+              db.close()
+          print(json.dumps({
+              'formal_state': report['formal_state'],
+              'tables': report['outputs']['tables'],
+              'game_date_min': report['quality']['game_date_min'],
+              'game_date_max': report['quality']['game_date_max'],
+              'next': report['next_unique_sub_mainline'],
+              'formal_stake': 0,
+          }, indent=2))
+          PY
+      - name: Upload governed Silver and aggregate QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-cdn-v3-silver-2025-26-v1
+          path: |
+            /tmp/nbavl-official-cdn-v3-silver-2025-26/historical-silver-2025-26.sqlite.gz
+            /tmp/nbavl-official-cdn-v3-silver-2025-26/official-cdn-v3-silver-2025-26-build-report-v1.json
+            /tmp/nbavl-official-cdn-v3-silver-2025-26/silver-2025-26-aggregate-sample.json
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

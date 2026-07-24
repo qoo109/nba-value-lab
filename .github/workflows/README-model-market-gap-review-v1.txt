@@ -1,1 +1,0 @@
-This file intentionally documents that the validation workflow for the model/market gap review is pull-request scoped and aggregate-only. It performs no provider requests and emits no game-level or price rows.

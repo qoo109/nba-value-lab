@@ -26,9 +26,10 @@ jobs:
           python -m py_compile scripts/validate_training_free_prior_only_rotation_residual_audit_2025_26_v1.py
           python scripts/validate_training_free_prior_only_rotation_residual_audit_2025_26_v1.py
       - name: Upload aggregate design validation
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: training-free-prior-only-rotation-residual-audit-2025-26-v1
-          path: validation-output/training-free-prior-only-rotation-residual-audit-2025-26-v1.json
+          path: validation-output/prior-only-player-rotation-residual-audit-2025-26-v1.json
           if-no-files-found: error
           retention-days: 14

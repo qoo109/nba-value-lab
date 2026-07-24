@@ -1,7 +1,8 @@
 {
   "schema_version": "the-odds-api-free-forward-public-review-v1",
   "updated_at": "2026-07-24",
-  "formal_state": "THE_ODDS_API_FREE_FORWARD_PUBLIC_REVIEW_IMPLEMENTED_PENDING_VALIDATION",
+  "formal_state": "THE_ODDS_API_FREE_FORWARD_PUBLIC_REVIEW_AND_SYNTHETIC_ADAPTER_VALID",
+  "recording_pr": 170,
   "source_id": "the_odds_api_free_forward",
   "source_name": "The Odds API",
   "source_class": "zero_cost_forward_api_candidate",
@@ -73,6 +74,15 @@
     "requires_private_key_connection": true,
     "requires_separate_explicit_approval": true,
     "nba_odds_request_must_wait_until_2026_27_markets_exist": true
+  },
+  "validation_evidence": {
+    "workflow_run": 30064802088,
+    "workflow_job": 89393557308,
+    "artifact_id": 8585843230,
+    "artifact_digest": "sha256:1282abc225d10c859945b6d3275541481670bfdf06677beb3b06141dee516817",
+    "artifact_formal_state": "THE_ODDS_API_FREE_FORWARD_PUBLIC_REVIEW_AND_SYNTHETIC_ADAPTER_VALID",
+    "contract_tests": 29,
+    "artifact_inspected": true
   },
   "next_unique_mainline": "AWAIT_USER_TERMS_REVIEW_AND_CAPPED_THE_ODDS_API_FREE_FORWARD_PREFLIGHT_APPROVAL",
   "market_backtest_unlocked": false,

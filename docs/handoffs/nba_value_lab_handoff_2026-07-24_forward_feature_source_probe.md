@@ -22,18 +22,29 @@ Begin the 2024-25 and 2025-26 feature-chain work, using free public web sources 
 FORWARD_FEATURE_SOURCES_FOUND_2024_25_SILVER_VALID_2025_26_ADAPTER_READY
 ```
 
-## Real execution evidence
+## Final branch-head real execution evidence
 
 ```text
-branch head at real execution:
-bfd26126112d1a7036782db1dc0f1d608f07f02a
+branch head:
+849cd83d83d3e955414e806e4771ab2c2019bf59
 
-workflow run: 30077376058
-job: 89431003556
-Artifact: 8590420908
+workflow run: 30078039872
+job: 89433051409
+Artifact: 8590667307
 Artifact digest:
-sha256:b27b18cb5585a446007605a94865afc95b1a0685b54a81722e2e8a3247771f75
+sha256:1d3a271b148e2abd5f2d5ed0ef75ed2a6107363a3985cd05ad2d475e61eaa4ed
 Artifact inspected: yes
+```
+
+Record validator at the same branch head:
+
+```text
+workflow run: 30078039896
+job: 89433051513
+Artifact: 8590635291
+Artifact digest:
+sha256:565ab5d4753b0b9b12670c1b51bd04e61a5df5f7d2e6613d53400b2d18b72b1b
+result: PASS
 ```
 
 ## 2024-25 result

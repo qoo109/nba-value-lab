@@ -1,0 +1,25 @@
+{
+  "id": "synthetic-nba-event-001",
+  "sport_key": "basketball_nba",
+  "sport_title": "NBA",
+  "commence_time": "2026-10-21T00:00:00Z",
+  "home_team": "Example Home",
+  "away_team": "Example Away",
+  "bookmakers": [
+    {
+      "key": "example_book",
+      "title": "Example Book",
+      "last_update": "2026-10-20T22:59:00Z",
+      "markets": [
+        {
+          "key": "h2h",
+          "last_update": "2026-10-20T22:59:30Z",
+          "outcomes": [
+            {"name": "Example Away", "price": 2.15},
+            {"name": "Example Home", "price": 1.78}
+          ]
+        }
+      ]
+    }
+  ]
+}

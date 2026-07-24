@@ -1,0 +1,64 @@
+{
+  "schema_version": "no-cost-timestamped-odds-source-qualification-current-status-v12",
+  "updated_at": "2026-07-24",
+  "formal_state": "THE_ODDS_API_FREE_FORWARD_PUBLIC_REVIEW_AND_SYNTHETIC_ADAPTER_VALID",
+  "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v11.json",
+  "recording_pr": 170,
+  "user_decisions": {
+    "hoopsapi_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
+    "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
+    "paid_odds_path": "NOT_APPROVED",
+    "continue_non_provider_offline_preparation": true,
+    "start_next_source_review": true
+  },
+  "provider_execution_state": {
+    "hoopsapi_provider_requests_executed": 0,
+    "bloombet_probe_execution_count": 0,
+    "the_odds_api_provider_requests_executed": 0,
+    "network_requests_executed": 0,
+    "real_quotes_retained": 0
+  },
+  "source_qualification_state": {
+    "qualified_for_real_2026_27_t60_input": [],
+    "qualified_for_historical_backfill": [],
+    "qualified_for_existing_frozen_gold_point_in_time_join": [],
+    "market_backtest_unlocked": false
+  },
+  "the_odds_api_free_forward_review": {
+    "path": "data/research/the-odds-api-free-forward-public-review-v1.json",
+    "documentation_path": "docs/the-odds-api-free-forward-public-review-v1.md",
+    "adapter_path": "scripts/the_odds_api_free_forward_adapter_v1.py",
+    "formal_state": "THE_ODDS_API_FREE_FORWARD_PUBLIC_REVIEW_AND_SYNTHETIC_ADAPTER_VALID",
+    "decision": "PROMISING_ZERO_COST_FORWARD_CANDIDATE_REQUIRES_USER_TERMS_REVIEW_AND_CAPPED_RUNTIME_PREFLIGHT",
+    "free_credits_per_month": 500,
+    "current_odds_included": true,
+    "historical_odds_included": false,
+    "public_schema_has_bookmaker_last_update": true,
+    "provider_timestamp_semantics_runtime_verified": false,
+    "user_terms_review_completed": false,
+    "account_created": false,
+    "api_key_connected": false,
+    "runtime_preflight_enabled": false,
+    "maximum_preflight_requests": 2,
+    "provider_requests_executed": 0,
+    "real_input_validated": false,
+    "real_g120_dry_run_executed": false,
+    "formal_history_write_authorized": false
+  },
+  "validation_evidence": {
+    "workflow_run": 30064853297,
+    "workflow_job": 89393705197,
+    "artifact_id": 8585859838,
+    "artifact_digest": "sha256:2da201ee26d0883949b47358d0d2c90683ef89a2a923f30f63009a09ba10e69a",
+    "artifact_formal_state": "THE_ODDS_API_FREE_FORWARD_PUBLIC_REVIEW_AND_SYNTHETIC_ADAPTER_VALID",
+    "contract_tests": 29,
+    "artifact_inspected": true
+  },
+  "next_unique_mainline": "AWAIT_USER_TERMS_REVIEW_AND_CAPPED_THE_ODDS_API_FREE_FORWARD_PREFLIGHT_APPROVAL",
+  "model_retraining_authorized": false,
+  "injury_model_activation_authorized": false,
+  "market_backtest_unlocked": false,
+  "clv_ev_roi_unlocked": false,
+  "betting_edge_claim_allowed": false,
+  "formal_stake": 0
+}

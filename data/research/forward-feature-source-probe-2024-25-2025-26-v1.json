@@ -1,0 +1,119 @@
+{
+  "schema_version": "forward-feature-source-probe-record-v1",
+  "formal_state": "FORWARD_FEATURE_SOURCES_FOUND_2024_25_SILVER_VALID_2025_26_ADAPTER_READY",
+  "recorded_at_utc": "2026-07-24T08:14:00+00:00",
+  "execution_evidence": {
+    "workflow_run": 30078039872,
+    "job": 89433051409,
+    "artifact_id": 8590667307,
+    "artifact_digest": "sha256:1d3a271b148e2abd5f2d5ed0ef75ed2a6107363a3985cd05ad2d475e61eaa4ed",
+    "artifact_inspected": true,
+    "branch_head": "849cd83d83d3e955414e806e4771ab2c2019bf59"
+  },
+  "season_2024_25": {
+    "status": "GOVERNED_SILVER_READY_FOR_PRIVATE_FORWARD_FEATURE_PIPELINE",
+    "sources": {
+      "pbpstats_2024": {
+        "sha256": "3e124793cc7fbc279627926e207b634fd593e5b56a69b8d0324f21460913c5c6",
+        "bytes": 13739644,
+        "rows_after_exact_dedupe": 482470
+      },
+      "nbastats_2024": {
+        "sha256": "8f370da00ad0a6d4157921bd161d56ea32647a165d906516f2b36384a6a4989a",
+        "bytes": 8583784,
+        "rows_after_exact_dedupe": 574358
+      }
+    },
+    "tables": {
+      "games": 1230,
+      "pbp_events": 574358,
+      "player_aliases": 983,
+      "possessions": 243782,
+      "team_game_features": 2460
+    },
+    "quality": {
+      "team_inference_pass": true,
+      "official_score_coverage_rate": 1.0,
+      "feature_coverage_pass_98pct": true,
+      "incomplete_team_games": 0,
+      "player_alias_identity_pass": true,
+      "reconstruction_matched_games": 1029,
+      "reconstruction_mismatched_games": 201,
+      "reconstruction_match_rate": 0.836585,
+      "rating_points_source": "nbastats_official_final_score",
+      "possession_points_usage": "qa_only"
+    },
+    "derived_artifact": {
+      "path": "silver-2024-25/historical-silver.sqlite.gz",
+      "public_commit_allowed": false,
+      "artifact_retention_days": 14
+    }
+  },
+  "season_2025_26": {
+    "status": "OFFICIAL_CDN_V3_ADAPTER_IMPLEMENTATION_READY",
+    "all_three_game_id_intersection": 1230,
+    "game_id_union": 1230,
+    "sources": {
+      "cdnnba_2025": {
+        "role": "official_cdn_play_by_play",
+        "archive_sha256": "a5d1bed30778430816b755676649cb2e3690ea62df5d96f4d9d6e9a8b8839339",
+        "archive_bytes": 19290552,
+        "csv_bytes": 208091508,
+        "row_count": 708268,
+        "column_count": 57,
+        "unique_game_ids": 1230,
+        "unique_team_codes": 30,
+        "games_with_terminal_score_candidate": 1230,
+        "cdn_required_columns_present": true,
+        "v3_core_columns_present": true,
+        "date_value_min_lexical": "2025-10-21T23:43:24.700Z",
+        "date_value_max_lexical": "2026-04-13T03:05:51Z"
+      },
+      "nbastatsv3_2025": {
+        "role": "official_stats_v3_play_by_play",
+        "archive_sha256": "790a01ea3f0b2f8335d96bd687e21501551fc8cdea3ada83457ee3208a940671",
+        "archive_bytes": 8967164,
+        "csv_bytes": 93807532,
+        "row_count": 621887,
+        "column_count": 24,
+        "unique_game_ids": 1230,
+        "unique_team_codes": 30,
+        "games_with_terminal_score_candidate": 1230,
+        "cdn_required_columns_present": false,
+        "v3_core_columns_present": true,
+        "date_value_min_lexical": null,
+        "date_value_max_lexical": null
+      },
+      "matchups_2025": {
+        "role": "official_matchup_context_candidate",
+        "archive_sha256": "4c3ab0fb760f00238f6e9639761152a791b2f5a8eda3d14779f0bac41b7c92ef",
+        "archive_bytes": 4152096,
+        "csv_bytes": 59155841,
+        "row_count": 240839,
+        "column_count": 48,
+        "unique_game_ids": 1230,
+        "unique_team_codes": 0,
+        "games_with_terminal_score_candidate": 0,
+        "cdn_required_columns_present": false,
+        "v3_core_columns_present": false,
+        "date_value_min_lexical": null,
+        "date_value_max_lexical": null
+      }
+    }
+  },
+  "execution_boundaries": {
+    "provider_api_requests": 0,
+    "raw_archives_committed": false,
+    "raw_rows_emitted": 0,
+    "model_retraining_executed": false,
+    "model_scoring_executed": false,
+    "odds_join_executed": false,
+    "market_backtest_allowed": false,
+    "clv_allowed": false,
+    "roi_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "decision": "IMPLEMENT_OFFICIAL_CDN_V3_2025_26_SILVER_ADAPTER_AND_CONTINUOUS_GOLD_STATE",
+  "next_unique_sub_mainline": "IMPLEMENT_OFFICIAL_CDN_V3_2025_26_SILVER_ADAPTER_AND_CONTINUOUS_GOLD_STATE"
+}

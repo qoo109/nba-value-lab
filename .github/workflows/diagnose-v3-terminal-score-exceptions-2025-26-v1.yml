@@ -1,0 +1,60 @@
+name: Diagnose V3 terminal-score exceptions 2025-26 v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/diagnose_v3_terminal_score_exceptions_2025_26_v1.py"
+      - ".github/workflows/diagnose-v3-terminal-score-exceptions-2025-26-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile diagnostic
+        run: python -m py_compile scripts/diagnose_v3_terminal_score_exceptions_2025_26_v1.py
+      - name: Run focused real-source diagnostic
+        run: |
+          rm -rf /tmp/nbavl-v3-terminal-score-diagnostic
+          python scripts/diagnose_v3_terminal_score_exceptions_2025_26_v1.py \
+            --output-dir /tmp/nbavl-v3-terminal-score-diagnostic \
+            --max-download-mb 600
+      - name: Validate aggregate-only output
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('/tmp/nbavl-v3-terminal-score-diagnostic/v3-terminal-score-exception-diagnostic-2025-26-v1.json')
+          report = json.loads(path.read_text())
+          assert report['formal_state'] == 'V3_TERMINAL_SCORE_EXCEPTION_DIAGNOSTIC_COMPLETE'
+          assert report['target_game_ids'] == ['0022500029', '0022500232']
+          assert report['execution']['raw_archives_committed'] is False
+          assert report['execution']['raw_rows_emitted'] == 0
+          assert report['execution']['provider_api_requests'] == 0
+          assert report['execution']['formal_stake'] == 0
+          for game_id in report['target_game_ids']:
+              game = report['games'][game_id]
+              assert game['matchup_identity']['home_team_abbr']
+              assert game['matchup_identity']['away_team_abbr']
+              assert game['cdnnba']['last_score_by_archive_order']
+              assert game['nbastatsv3']['last_score_by_archive_order']
+          print(json.dumps({
+              game_id: report['games'][game_id]['comparisons']
+              for game_id in report['target_game_ids']
+          }, indent=2))
+          PY
+      - name: Upload aggregate score diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-terminal-score-exception-diagnostic-2025-26-v1
+          path: /tmp/nbavl-v3-terminal-score-diagnostic/v3-terminal-score-exception-diagnostic-2025-26-v1.json
+          if-no-files-found: error
+          retention-days: 7

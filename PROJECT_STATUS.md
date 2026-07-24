@@ -22,7 +22,7 @@ post-trigger parallel: G1.1.1 control shadow
 prediction record schema: 1.4.0
 current real-input status: BLOCKED / REAL GOVERNED INPUT NOT AVAILABLE
 formal Stake: 0
-next unique mainline: VALIDATE_G1_2_0_END_TO_END_WITH_REAL_GOVERNED_2026_27_T60_INPUT
+longer-term blocked milestone: VALIDATE_G1_2_0_END_TO_END_WITH_REAL_GOVERNED_2026_27_T60_INPUT
 ```
 
 ## Latest Research Milestone — PR #179 through PR #185
@@ -205,11 +205,19 @@ forward collector offline network client: false
 forward collector offline provider requests executed: 0
 forward collector offline real quotes retained: 0
 first provider adapter qualification gate: VALIDATED / HOOPSAPI / RUNTIME BLOCKED
-hoopsapi synthetic adapter shell: AUTHORIZED
+hoopsapi synthetic adapter shell: COMPLETED / SYNTHETIC ONLY
+hoopsapi synthetic shell validation run: 30059383153
+hoopsapi synthetic shell validation artifact: 8583951648
+hoopsapi synthetic shell validation digest: sha256:53a633b973538f7acaf827be0be806a0c48dfbef6ef1174912cf5a3a9197da9d
 hoopsapi provider runtime qualified: false
 hoopsapi point-in-time qualified: false
 hoopsapi account, terms, key and requests: NOT AUTHORIZED
 first provider adapter requests executed: 0
+the odds api public review: COMPLETED / SYNTHETIC ONLY
+the odds api validation run: 30064853297
+the odds api validation artifact: 8585859838
+the odds api provider requests executed: 0
+the odds api runtime qualified: false
 injury panel activation: 41 independent games / 31 T-60 selected / below 100-game gate
 team submission completeness ledger: REQUIRED BEFORE FORMAL INJURY HOLDOUT
 silver builder repair required: false
@@ -276,7 +284,7 @@ historical backfill qualified: false
 frozen Gold PIT join qualified: false
 market metrics executed: false
 formal Stake: 0
-next unique sub-mainline: IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
+historical next sub-mainline at this milestone: IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
 ```
 
 The gate permits only a HoopsAPI-shaped synthetic adapter shell. It does not authorize account creation, provider terms acceptance, secret connection, network requests, real quote ingestion or point-in-time qualification. Missing provider timestamp semantics must remain `unverified` with null observed_at and point-in-time eligibility false.
@@ -303,7 +311,7 @@ real quotes retained: 0
 public quote rows emitted: 0
 market metrics executed: false
 formal Stake: 0
-next unique sub-mainline: IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
+historical next sub-mainline at this milestone: IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
 ```
 
 The offline core validates timestamp authority, exact mapping eligibility, deterministic deduplication, quarantine and private SQLite writes using synthetic inputs only. It exposes only aggregate QA and cannot connect to a provider or unlock market evaluation.
@@ -327,7 +335,7 @@ provider requests executed: 0
 real quotes retained: 0
 market metrics executed: false
 formal Stake: 0
-next unique sub-mainline: IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
+historical next sub-mainline at this milestone: IMPLEMENT_HOOPSAPI_PRIVATE_FORWARD_ADAPTER_SYNTHETIC_SHELL_V1
 ```
 
 The design preserves three distinct timestamp concepts: provider snapshot time, bookmaker last-update time and collector fetch time. Collector fetch time proves only receipt and can never be promoted to canonical `observed_at`. Rows with unverified provider-origin time remain private forward observations and are not point-in-time eligible.
@@ -1098,13 +1106,14 @@ HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-21-001
 HISTORICAL-SILVER-2023-24-MISSING-BOTH-TEAM-FEATURES-ROOT-CAUSE-2026-07-22-002
 HISTORICAL-SILVER-2023-24-SOURCE-ARCHIVE-RECONCILIATION-2026-07-22-001
 HISTORICAL-SILVER-2023-24-SOURCE-GAP-EXCEPTION-INTEGRATION-REAL-REFERENCE-VALIDATION-2026-07-22-001
+EOIN-FULL-ADAPTER-2026-07-19-001
+HISTORICAL-GOLD-5826-FREEZE-MANIFEST-REAL-ARTIFACT-EXECUTION-2026-07-23-001
 ```
 
 ## Still Blocked
 
 - reuse, rerun, or re-dispatch of consumed real-reference validation Request `001`;
-- freeze-manifest implementation before a separately validated implementation design;
-- real Artifact freeze execution before a separately approved one-time workflow;
+- reuse, rerun, or re-dispatch of consumed Historical Gold freeze-manifest Request;
 - any unbound rebuild after Artifact `8551587005` expires;
 - Silver builder changes or manual row insertion outside the adopted official-CDN recovery recipe;
 - synthetic, copied, zero-imputed or manually entered source-gap rows;

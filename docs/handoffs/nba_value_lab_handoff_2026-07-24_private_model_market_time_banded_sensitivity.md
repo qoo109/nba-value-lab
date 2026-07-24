@@ -9,6 +9,7 @@ Formal Stake：**0**
 
 - Prior `main`: `a11e3800cbb718c3b1bd002b142e2887f6ee3ab4`
 - Prior merged milestone: PR #179 — frozen `walk-forward-v2` forward score on governed 2025-26 data
+- Recording PR: `#180`
 - Working branch: `research/private-odds-time-banded-sensitivity-2025-26-v1`
 - This handoff records an aggregate-only private diagnostic. It does not publish game-level prices or joined prediction rows.
 
@@ -114,12 +115,16 @@ The research conclusion is a negative market-comparison result, not a pipeline f
 
 ## Validation Evidence
 
-To be completed after the branch-head workflow succeeds:
+Initial aggregate-only branch validation:
 
-- PR: `pending`
-- final branch head: `pending`
-- validation run: `pending`
-- validation job: `pending`
-- validation Artifact: `pending`
-- validation Artifact digest: `pending`
+- PR: `#180`
+- validated execution head: `702fb1f3821e131a76360c77caa6431d521cbc5b`
+- validation run: `30083711574`
+- validation job: `89450876715` — success
+- validation Artifact: `8592827375`
+- validation Artifact digest: `sha256:b86927b36cf6702332606d4ff72035782a221ea21b64d0c07102a3720c5e5fa5`
+- validator contract tests: `85 / 85 PASS`
+- analyzer synthetic checks: `5 / 5 PASS`
 - formal validation state: `PRIVATE_MODEL_MARKET_TIME_BANDED_SENSITIVITY_2025_26_RESULT_VALID`
+
+A final branch-head regression must also pass after this evidence-binding commit before merge.

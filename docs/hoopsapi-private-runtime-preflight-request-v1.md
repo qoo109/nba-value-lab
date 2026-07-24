@@ -20,6 +20,8 @@ provider requests executed: 0
 formal Stake: 0
 ```
 
+Formal Stake：0
+
 本文件不會建立帳號、不會代表使用者接受 HoopsAPI Terms、不會連接 API Key，也不會執行任何網路請求。
 
 ## Upstream evidence

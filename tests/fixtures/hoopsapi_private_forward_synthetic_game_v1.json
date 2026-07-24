@@ -1,0 +1,29 @@
+{
+  "fixture_type": "synthetic_public-shape-only",
+  "id": "synthetic-hoopsapi-game-001",
+  "competition": {
+    "key": "nba",
+    "name": "NBA"
+  },
+  "homeTeam": {
+    "id": "synthetic-home",
+    "name": "Boston Celtics"
+  },
+  "awayTeam": {
+    "id": "synthetic-away",
+    "name": "New York Knicks"
+  },
+  "startTime": "2026-10-20T23:30:00Z",
+  "providers": [
+    {
+      "key": "synthetic-book-a",
+      "name": "Synthetic Book A",
+      "markets": {
+        "h2h": {
+          "home": 1.62,
+          "away": 2.35
+        }
+      }
+    }
+  ]
+}

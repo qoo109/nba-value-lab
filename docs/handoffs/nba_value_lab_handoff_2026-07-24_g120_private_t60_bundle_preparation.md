@@ -38,10 +38,10 @@ Created:
 ## Dedicated validation and Artifact QA
 
 ```text
-workflow run: 30063718569
-job: 89390390572 / success
-artifact: 8585461789
-artifact digest: sha256:1b889354190c87ce720236a49e872a78b30bfe1bcc91418cca7c4d63aee62610
+workflow run: 30063813865
+job: 89390668957 / success
+artifact: 8585495681
+artifact digest: sha256:a8acc00e94621a59e2fcaf105c579d25da4d397ca116cde809169d979be11dbf
 artifact formal state: G1_2_0_PRIVATE_T60_BUNDLE_PREPARATION_HELPER_VALID
 contract tests: 18 / 18 PASS
 artifact inspected: true

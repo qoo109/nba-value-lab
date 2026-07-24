@@ -1,0 +1,38 @@
+name: Validate The Odds API free forward public review v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/the-odds-api-free-forward-public-review-v1.json"
+      - "docs/the-odds-api-free-forward-public-review-v1.md"
+      - "scripts/the_odds_api_free_forward_adapter_v1.py"
+      - "scripts/validate_the_odds_api_free_forward_public_review_v1.py"
+      - "tests/fixtures/the_odds_api_free_forward_synthetic_event_v1.json"
+      - ".github/workflows/validate-the-odds-api-free-forward-public-review-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile public review and synthetic adapter
+        run: |
+          python -m py_compile \
+            scripts/the_odds_api_free_forward_adapter_v1.py \
+            scripts/validate_the_odds_api_free_forward_public_review_v1.py
+      - name: Validate public review and synthetic adapter
+        run: python scripts/validate_the_odds_api_free_forward_public_review_v1.py
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: the-odds-api-free-forward-public-review-validation-v1
+          path: artifacts/the-odds-api-free-forward-public-review-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

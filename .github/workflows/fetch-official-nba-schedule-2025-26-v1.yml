@@ -13,12 +13,14 @@ permissions:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install PDF parser
+        run: python -m pip install --disable-pip-version-check pypdf==5.9.0
       - name: Compile official schedule fetcher
         run: python -m py_compile scripts/fetch_official_nba_schedule_2025_26_v1.py
       - name: Fetch and normalize official schedule
@@ -27,7 +29,7 @@ jobs:
         run: |
           python scripts/fetch_official_nba_schedule_2025_26_v1.py \
             --output artifacts/official-nba-schedule-2025-26-v1.json \
-            --timeout 30
+            --timeout 45
       - name: Upload official schedule metadata or diagnostics
         if: always()
         uses: actions/upload-artifact@v4

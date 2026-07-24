@@ -174,14 +174,18 @@ The next milestone must implement only the features already frozen by PR #183, e
 
 ## Aggregate result validation
 
-To be bound after the final PR-head validation succeeds:
+Validated branch head before this evidence-binding commit:
 
 ```text
-final PR head: pending
-validation run: pending
-validation job: pending
-validation Artifact: pending
-validation Artifact digest: pending
-contract tests: pending
+validated PR head: 4eb40b0a1fb505e77898d763bfc94a1acd23c1a7
+validation run: 30100493070
+validation job: 89505011799
+validation Artifact: 8599377354
+validation Artifact digest: sha256:c83d6f69722a973b0b8360e2c8d537280eca215cac47e5ab5f624f329b4f7e67
+contract tests: 128 / 128 PASS
+synthetic checks: 6 / 6 PASS
+Artifact inspected: true
 formal validation state: PRIOR_ONLY_PLAYER_ROTATION_SOURCE_2025_26_RESULT_VALID
 ```
+
+A final validation run must still succeed on the evidence-binding branch head before merge.

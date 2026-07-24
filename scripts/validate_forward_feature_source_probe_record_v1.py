@@ -23,10 +23,11 @@ def main() -> int:
 
     check(record["formal_state"] == "FORWARD_FEATURE_SOURCES_FOUND_2024_25_SILVER_VALID_2025_26_ADAPTER_READY", "formal state")
     evidence = record["execution_evidence"]
-    check(evidence["workflow_run"] == 30077376058, "run binding")
-    check(evidence["job"] == 89431003556, "job binding")
-    check(evidence["artifact_id"] == 8590420908, "artifact binding")
-    check(evidence["artifact_digest"] == "sha256:b27b18cb5585a446007605a94865afc95b1a0685b54a81722e2e8a3247771f75", "digest binding")
+    check(evidence["workflow_run"] == 30078039872, "run binding")
+    check(evidence["job"] == 89433051409, "job binding")
+    check(evidence["artifact_id"] == 8590667307, "artifact binding")
+    check(evidence["artifact_digest"] == "sha256:1d3a271b148e2abd5f2d5ed0ef75ed2a6107363a3985cd05ad2d475e61eaa4ed", "digest binding")
+    check(evidence["branch_head"] == "849cd83d83d3e955414e806e4771ab2c2019bf59", "branch-head binding")
     check(evidence["artifact_inspected"] is True, "artifact inspected")
 
     season24 = record["season_2024_25"]

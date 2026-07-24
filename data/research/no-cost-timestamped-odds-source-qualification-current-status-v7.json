@@ -40,6 +40,16 @@
     "runtime_activation_allowed": false,
     "market_metrics_allowed": false
   },
+  "gate_validation_evidence": {
+    "isolated_validation_pr": 164,
+    "workflow_run": 30056117432,
+    "workflow_job": 89368048092,
+    "artifact_id": 8582807238,
+    "artifact_digest": "sha256:a612338e9834729360d334f5269d8a6c93d8a5a0802b0edbc7598ea0bc938c05",
+    "artifact_formal_state": "FIRST_PROVIDER_PRIVATE_FORWARD_ADAPTER_QUALIFICATION_GATE_VALID",
+    "policy_scenarios": 9,
+    "artifact_inspected": true
+  },
   "qualified_for_historical_backfill": [],
   "qualified_for_existing_frozen_gold_point_in_time_join": [],
   "forward_only_candidates_not_authorized": [

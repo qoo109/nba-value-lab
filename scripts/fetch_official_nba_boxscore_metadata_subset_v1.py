@@ -4,7 +4,8 @@
 Scope:
 - game IDs 0022501201..0022501230: the 30 regular-season games determined
   after NBA Cup group play and omitted from the Aug. 14 schedule release;
-- four known schedule-adjusted games requiring exact official reconciliation.
+- four known date-adjusted games;
+- four additional time/date adjustments discovered by conservative post-tip QA.
 
 Only official game metadata is emitted. No odds or private archive rows are sent.
 """
@@ -22,8 +23,9 @@ from typing import Any
 
 BASE_URL = "https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{game_id}.json"
 CUP_DETERMINED_IDS = tuple(f"002250{number:04d}" for number in range(1201, 1231))
-ADJUSTED_IDS = ("0022501111", "0022500651", "0022500652", "0022501003")
-GAME_IDS = CUP_DETERMINED_IDS + ADJUSTED_IDS
+DATE_ADJUSTED_IDS = ("0022501111", "0022500651", "0022500652", "0022501003")
+TIME_ADJUSTED_IDS = ("0022500369", "0022500370", "0022500692", "0022500811")
+GAME_IDS = CUP_DETERMINED_IDS + DATE_ADJUSTED_IDS + TIME_ADJUSTED_IDS
 HEADERS = {
     "User-Agent": "NBA-Value-Lab-Metadata-Research/1.0",
     "Referer": "https://www.nba.com/",
@@ -53,6 +55,14 @@ def full_team_name(team: dict[str, Any]) -> str:
     if not city or not name:
         raise RuntimeError("official team city/name missing")
     return name if name.lower().startswith(city.lower()) else f"{city} {name}"
+
+
+def subset_reason(game_id: str) -> str:
+    if game_id in CUP_DETERMINED_IDS:
+        return "NBA_CUP_DETERMINED_REGULAR_SEASON_GAME"
+    if game_id in DATE_ADJUSTED_IDS:
+        return "KNOWN_SCHEDULE_DATE_ADJUSTMENT_RECONCILIATION"
+    return "KNOWN_SCHEDULE_TIME_ADJUSTMENT_RECONCILIATION"
 
 
 def normalize(game_id: str, payload: dict[str, Any], raw: bytes) -> dict[str, Any]:
@@ -85,11 +95,7 @@ def normalize(game_id: str, payload: dict[str, Any], raw: bytes) -> dict[str, An
         "arena_state": (game.get("arena") or {}).get("arenaState") if isinstance(game.get("arena"), dict) else None,
         "source_url": BASE_URL.format(game_id=game_id),
         "source_payload_sha256": sha256_bytes(raw),
-        "subset_reason": (
-            "NBA_CUP_DETERMINED_REGULAR_SEASON_GAME"
-            if game_id in CUP_DETERMINED_IDS
-            else "KNOWN_SCHEDULE_ADJUSTMENT_RECONCILIATION"
-        ),
+        "subset_reason": subset_reason(game_id),
     }
 
 
@@ -113,8 +119,9 @@ def main() -> int:
 
     returned_ids = {row["official_game_id"] for row in rows}
     missing_cup = [game_id for game_id in CUP_DETERMINED_IDS if game_id not in returned_ids]
-    missing_adjusted = [game_id for game_id in ADJUSTED_IDS if game_id not in returned_ids]
-    valid = not missing_cup and not missing_adjusted and len(rows) == len(GAME_IDS)
+    missing_date_adjusted = [game_id for game_id in DATE_ADJUSTED_IDS if game_id not in returned_ids]
+    missing_time_adjusted = [game_id for game_id in TIME_ADJUSTED_IDS if game_id not in returned_ids]
+    valid = not missing_cup and not missing_date_adjusted and not missing_time_adjusted and len(rows) == len(GAME_IDS)
     output = {
         "schema_version": "official-nba-boxscore-metadata-subset-2025-26-v1",
         "formal_state": (
@@ -127,7 +134,8 @@ def main() -> int:
         "requested_count": len(GAME_IDS),
         "returned_count": len(rows),
         "missing_cup_determined_game_ids": missing_cup,
-        "missing_adjusted_game_ids": missing_adjusted,
+        "missing_date_adjusted_game_ids": missing_date_adjusted,
+        "missing_time_adjusted_game_ids": missing_time_adjusted,
         "failures": failures,
         "games": sorted(rows, key=lambda row: (row["scheduled_tipoff_utc"], row["official_game_id"])),
     }
@@ -138,7 +146,8 @@ def main() -> int:
         "requested_count": len(GAME_IDS),
         "returned_count": len(rows),
         "missing_cup": missing_cup,
-        "missing_adjusted": missing_adjusted,
+        "missing_date_adjusted": missing_date_adjusted,
+        "missing_time_adjusted": missing_time_adjusted,
         "output": str(args.output),
     }, ensure_ascii=False, indent=2))
     return 0 if valid else 1

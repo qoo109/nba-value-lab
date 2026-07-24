@@ -23,7 +23,8 @@ provider requests executed: 0
 ## Milestone
 
 ```text
-IMPLEMENT_G1_2_0_PRIVATE_T60_BUNDLE_PREPARATION_HELPER_V1
+PR #169 — Add G1.2.0 private T-60 bundle preparation helper v1
+G1_2_0_PRIVATE_T60_BUNDLE_PREPARATION_HELPER_VALID
 ```
 
 Created:
@@ -33,6 +34,34 @@ Created:
 - hard refusal for any private path inside the public repository;
 - fail-closed rights, timestamp-semantics, exact-mapping and redistribution checks;
 - aggregate-only contract validation and GitHub Actions workflow.
+
+## Dedicated validation and Artifact QA
+
+```text
+workflow run: 30063718569
+job: 89390390572 / success
+artifact: 8585461789
+artifact digest: sha256:1b889354190c87ce720236a49e872a78b30bfe1bcc91418cca7c4d63aee62610
+artifact formal state: G1_2_0_PRIVATE_T60_BUNDLE_PREPARATION_HELPER_VALID
+contract tests: 18 / 18 PASS
+artifact inspected: true
+```
+
+Aggregate QA confirms:
+
+```text
+offline only: true
+private paths outside repository required: true
+template is never real input: true
+rights review required: true
+provider timestamp semantics required: true
+collector fetched_at substitution allowed: false
+public quote rows emitted: 0
+provider requests executed: 0
+formal history write authorized: false
+market metrics executed: false
+Formal Stake：0
+```
 
 ## No execution claims
 

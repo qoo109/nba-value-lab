@@ -3,7 +3,7 @@
   "updated_at": "2026-07-24",
   "formal_state": "NO_COST_TIMESTAMPED_ODDS_PROVIDER_PATHS_DEFERRED_G1_2_0_T60_READINESS_GATE_DESIGNED",
   "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v8.json",
-  "recording_pr": 0,
+  "recording_pr": 167,
   "user_decisions": {
     "hoopsapi_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
     "hoopsapi_request_id": "HOOPSAPI-PRIVATE-RUNTIME-PREFLIGHT-2026-07-24-001",
@@ -41,6 +41,15 @@
     "real_validation_executed": false,
     "fixture_substitution_allowed": false,
     "closing_only_substitution_allowed": false
+  },
+  "validation_evidence": {
+    "workflow_run": 30060877489,
+    "workflow_job": 89382096283,
+    "artifact_id": 8584480110,
+    "artifact_digest": "sha256:90f4666531f0d940662e0f5cf3ed061768d1d78e0a917bee794c4cff169df66e",
+    "artifact_formal_state": "G1_2_0_REAL_GOVERNED_T60_INPUT_READINESS_GATE_VALID",
+    "policy_scenarios": 19,
+    "artifact_inspected": true
   },
   "activation_state": {
     "active_g": "G1.1.1-20260719",

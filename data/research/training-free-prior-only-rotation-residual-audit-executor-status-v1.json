@@ -1,0 +1,48 @@
+{
+  "schema_version": "training-free-prior-only-rotation-residual-audit-executor-status-v1",
+  "formal_state": "TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_EXECUTOR_READY_PRIVATE_JOIN_REQUIRED",
+  "recorded_at_utc": "2026-07-24T17:40:00Z",
+  "binding_history": {
+    "base_main": "cf1b9837678c25428a698c446d8da4ca0fe3aa0c",
+    "feature_pr": 187,
+    "design_pr": 188,
+    "column_binding_pr": 189,
+    "feature_result": "PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURES_2025_26_RESULT_VALID",
+    "design_result": "TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_2025_26_V1_DESIGN_VALID",
+    "column_binding_result": "TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_2025_26_V1_COLUMN_BINDING_AMENDMENT_VALID"
+  },
+  "implementation": {
+    "executor_created": true,
+    "exact_sha_validation_required": true,
+    "exact_game_id_join_required": true,
+    "exact_column_binding_required": true,
+    "synthetic_self_test_only": true,
+    "real_private_residual_audit_executed": false,
+    "real_residual_result_recorded": false
+  },
+  "bound_inputs": {
+    "rotation_feature_artifact_id": 8603761824,
+    "rotation_matchup_csv_sha256": "sha256:3e8ef30f3a9801fda92fc95a490228b73fa53603093c914207e884a933b2de02",
+    "frozen_prediction_artifact_id": 8592208938,
+    "frozen_prediction_csv_sha256": "sha256:c3764faf6eb3703374b12a5d8668c6ef889cd8f54070a2c6cf135b55559ca725",
+    "private_model_market_join_filename": "private-model-market-time-banded-join-2025-26-v1.csv",
+    "private_model_market_join_sha256": "sha256:fbd5b0133cd0ad58f3fe4dada53e79b0fd2ea6021d8179f648f727c76a96735b"
+  },
+  "blocker": {
+    "code": "EXACT_PRIVATE_MODEL_MARKET_JOIN_NOT_AVAILABLE",
+    "exact_private_join_in_public_repository": false,
+    "exact_private_join_in_current_governed_artifacts": false,
+    "aggregate_pr180_result_is_row_level_substitute": false,
+    "unverified_reconstruction_allowed": false,
+    "partial_h1_execution_allowed": false
+  },
+  "preserved_locks": {
+    "model_training_authorized": false,
+    "model_promotion_authorized": false,
+    "strict_t60_qualified": false,
+    "formal_market_backtest_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_unique_mainline": "RESTORE_EXACT_PRIVATE_MODEL_MARKET_JOIN_AND_EXECUTE_BOUND_TRAINING_FREE_ROTATION_RESIDUAL_AUDIT"
+}

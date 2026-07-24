@@ -1,0 +1,103 @@
+name: Validate training-free prior-only rotation residual audit executor v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/run_training_free_prior_only_rotation_residual_audit_2025_26_v1.py"
+      - "scripts/validate_training_free_prior_only_rotation_residual_audit_executor_v1.py"
+      - "data/research/training-free-prior-only-rotation-residual-audit-executor-status-v1.json"
+      - "docs/training-free-prior-only-rotation-residual-audit-executor-v1.md"
+      - ".github/workflows/validate-training-free-prior-only-rotation-residual-audit-executor-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install statistical runtime
+        run: |
+          python -m pip install --disable-pip-version-check \
+            numpy==2.3.5 \
+            scipy==1.17.0
+      - name: Compile executor and contract validator
+        run: |
+          python -m py_compile \
+            scripts/run_training_free_prior_only_rotation_residual_audit_2025_26_v1.py \
+            scripts/validate_training_free_prior_only_rotation_residual_audit_executor_v1.py
+      - name: Run synthetic statistical self-test only
+        run: |
+          rm -rf /tmp/nbavl-rotation-residual-self-test
+          python scripts/run_training_free_prior_only_rotation_residual_audit_2025_26_v1.py \
+            --self-test \
+            --output-dir /tmp/nbavl-rotation-residual-self-test
+          test -f /tmp/nbavl-rotation-residual-self-test/self-test.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(
+              Path('/tmp/nbavl-rotation-residual-self-test/self-test.json').read_text()
+          )
+          assert payload['formal_state'] == 'TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_EXECUTOR_SELF_TEST_PASS'
+          assert payload['real_private_residual_audit_executed'] is False
+          assert payload['checks']['h1_negative'] is True
+          assert payload['checks']['h2_positive'] is True
+          assert payload['checks']['h1_ci_negative'] is True
+          assert payload['checks']['h2_ci_positive'] is True
+          assert payload['model_training_authorized'] is False
+          assert payload['formal_market_backtest_allowed'] is False
+          assert payload['formal_stake'] == 0
+          PY
+      - name: Validate implementation contract and blocker
+        run: |
+          rm -rf validation-output
+          python scripts/validate_training_free_prior_only_rotation_residual_audit_executor_v1.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(
+              Path('validation-output/training-free-prior-only-rotation-residual-audit-executor-v1.json').read_text()
+          )
+          assert payload['formal_state'] == 'TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_EXECUTOR_V1_VALID'
+          assert payload['checks_failed'] == 0
+          assert payload['real_private_residual_audit_executed'] is False
+          assert payload['execution_blocker'] == 'EXACT_PRIVATE_MODEL_MARKET_JOIN_NOT_AVAILABLE'
+          assert payload['model_training_authorized'] is False
+          assert payload['model_promotion_authorized'] is False
+          assert payload['strict_t60_qualified'] is False
+          assert payload['formal_market_backtest_allowed'] is False
+          assert payload['formal_stake'] == 0
+          PY
+      - name: Confirm no real private result or row-level file was committed
+        run: |
+          test ! -e data/research/training-free-prior-only-rotation-residual-audit-2025-26-result-v1.json
+          test ! -e data/private/private-model-market-time-banded-join-2025-26-v1.csv
+          test ! -e data/private/prior-only-player-rotation-matchup-features-2025-26-v1.csv
+          python - <<'PY'
+          from pathlib import Path
+
+          allowed = [
+              Path('data/research/training-free-prior-only-rotation-residual-audit-executor-status-v1.json'),
+              Path('docs/training-free-prior-only-rotation-residual-audit-executor-v1.md'),
+          ]
+          assert all(path.stat().st_size < 100_000 for path in allowed)
+          PY
+      - name: Upload aggregate validation and synthetic self-test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-free-prior-only-rotation-residual-audit-executor-v1
+          path: |
+            validation-output/training-free-prior-only-rotation-residual-audit-executor-v1.json
+            /tmp/nbavl-rotation-residual-self-test/self-test.json
+          if-no-files-found: error
+          retention-days: 14

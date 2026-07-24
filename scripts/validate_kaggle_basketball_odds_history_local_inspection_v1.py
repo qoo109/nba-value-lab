@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
@@ -13,6 +14,7 @@ MODULE_PATH = ROOT / "scripts" / "inspect_kaggle_basketball_odds_history_archive
 spec = importlib.util.spec_from_file_location("kaggle_archive_inspector", MODULE_PATH)
 assert spec and spec.loader
 module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 
 

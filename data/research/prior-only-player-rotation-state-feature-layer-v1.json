@@ -1,0 +1,240 @@
+{
+  "schema_version": "prior-only-player-rotation-state-feature-layer-v1",
+  "formal_state": "PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURE_LAYER_V1_PREDECLARED",
+  "updated_at_utc": "2026-07-24T12:20:00Z",
+  "source_of_truth": {
+    "base_main": "d572632a798e2453ea577318af34f811847c8f28",
+    "binding_prior_pr": 181,
+    "binding_prior_decision": "PRESERVE_FROZEN_BASELINE_AND_MARKET_BACKTEST_LOCK",
+    "binding_prior_next": "PREDECLARE_PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURE_LAYER_V1"
+  },
+  "purpose": "Add genuinely new player-level rotation and role-state information using only completed prior games. This design does not train, refit, recalibrate or score a candidate model.",
+  "primary_scope": {
+    "target_season": "2025-26",
+    "target_games": 1230,
+    "target_team_rows": 2460,
+    "source_games_allowed": "completed games strictly before target analysis cutoff",
+    "market_data_allowed_as_feature": false,
+    "target_game_boxscore_allowed": false,
+    "target_game_starters_allowed": false,
+    "target_game_minutes_allowed": false,
+    "target_game_participation_allowed": false,
+    "target_game_outcome_allowed": false
+  },
+  "point_in_time_policy": {
+    "required_order": "source_game_end_time_utc < target_analysis_cutoff_utc < target_tipoff_utc",
+    "primary_cutoff": "target scheduled tipoff UTC",
+    "same_day_date_only_fallback": "source Eastern game date must be strictly earlier than target Eastern game date",
+    "unknown_source_end_time": "exclude and flag",
+    "postponed_or_rescheduled_game": "use governed actual tipoff and source end timestamps; do not infer from schedule date alone",
+    "source_time_violations_allowed": 0
+  },
+  "source_qualification": {
+    "authoritative_game_identity": "governed Silver game_id, game date, home and away teams",
+    "preferred_player_minutes_source": "NBA official completed-game boxscore or already-qualified equivalent archive",
+    "preferred_starter_source": "official completed-game starter flag when available; otherwise starter inference is a separate explicitly flagged research proxy",
+    "player_identity": "deterministic official person ID only",
+    "fuzzy_identity_allowed": false,
+    "nearest_name_guessing_allowed": false,
+    "source_requirements": [
+      "source URL or artifact ID",
+      "retrieved_at",
+      "raw SHA-256",
+      "schema and adapter version",
+      "license or usage boundary",
+      "source game start and end timestamps",
+      "official player ID",
+      "team ID or governed team mapping",
+      "minutes and starter status provenance"
+    ],
+    "http_403_or_access_control": "record blocked source; do not bypass",
+    "public_raw_player_rows": 0
+  },
+  "season_boundary_policy": {
+    "primary_features": "current-season completed games only",
+    "minimum_games_for_primary_rotation_features": 3,
+    "prior_season_carry_in_primary": false,
+    "optional_carryover_diagnostic": "same-team official player IDs from prior season, separately namespaced and never silently merged into primary features",
+    "early_season_missingness": "retain null plus explicit flags"
+  },
+  "player_state_features": [
+    {
+      "name": "minutes_avg_prior_3",
+      "definition": "mean official minutes in player's prior three completed team games",
+      "window": 3
+    },
+    {
+      "name": "minutes_avg_prior_5",
+      "definition": "mean official minutes in player's prior five completed team games",
+      "window": 5
+    },
+    {
+      "name": "minutes_avg_prior_10",
+      "definition": "mean official minutes in player's prior ten completed team games",
+      "window": 10
+    },
+    {
+      "name": "minutes_trend_prior_3_vs_10",
+      "definition": "minutes_avg_prior_3 minus minutes_avg_prior_10"
+    },
+    {
+      "name": "start_rate_prior_5",
+      "definition": "official starts divided by eligible prior five games"
+    },
+    {
+      "name": "start_rate_prior_10",
+      "definition": "official starts divided by eligible prior ten games"
+    },
+    {
+      "name": "appearance_rate_prior_10",
+      "definition": "games with positive official minutes divided by eligible prior ten team games"
+    },
+    {
+      "name": "days_since_last_appearance",
+      "definition": "target cutoff minus most recent completed positive-minute appearance"
+    },
+    {
+      "name": "recent_return_state",
+      "definition": "player appeared in the most recent prior game after missing at least three immediately preceding team games; uses prior games only"
+    },
+    {
+      "name": "role_rank_prior_5",
+      "definition": "descending rank of minutes_avg_prior_5 within team at target cutoff"
+    }
+  ],
+  "team_state_features": [
+    {
+      "name": "rotation_players_prior_5",
+      "definition": "count of distinct players with positive minutes across prior five completed games"
+    },
+    {
+      "name": "top5_minutes_share_prior_5",
+      "definition": "share of team player-minutes allocated to five highest minute-average players"
+    },
+    {
+      "name": "top8_minutes_share_prior_5",
+      "definition": "share of team player-minutes allocated to eight highest minute-average players"
+    },
+    {
+      "name": "top8_minutes_share_prior_10",
+      "definition": "same concentration over prior ten games"
+    },
+    {
+      "name": "rotation_entropy_prior_5",
+      "definition": "normalized entropy of player minute shares over prior five games"
+    },
+    {
+      "name": "rotation_entropy_prior_10",
+      "definition": "normalized entropy of player minute shares over prior ten games"
+    },
+    {
+      "name": "top8_set_continuity_prior_5",
+      "definition": "mean Jaccard similarity of consecutive top-eight minute sets over prior five games"
+    },
+    {
+      "name": "starter_set_continuity_prior_5",
+      "definition": "mean Jaccard similarity of official starter sets over prior five games; null when official starter flags are not qualified"
+    },
+    {
+      "name": "minutes_allocation_volatility_prior_5",
+      "definition": "mean player-level standard deviation of minute share across prior five games"
+    },
+    {
+      "name": "role_change_magnitude_prior_3_vs_10",
+      "definition": "sum of absolute player minute-share changes between prior-three and prior-ten windows"
+    },
+    {
+      "name": "recent_return_players_count",
+      "definition": "count of prior-only recent_return_state players"
+    },
+    {
+      "name": "new_team_rotation_players_prior_5",
+      "definition": "players with team-specific history shorter than five games who rank in current top eight by prior minutes"
+    }
+  ],
+  "matchup_features": {
+    "rule": "home value minus away value",
+    "include_team_values": true,
+    "include_differences": true,
+    "missing_side": "difference remains null; do not impute missing side to zero"
+  },
+  "starter_proxy_policy": {
+    "official_flag_primary": true,
+    "minutes_based_inference_primary": false,
+    "minutes_based_inference_optional_name": "starter_proxy_by_prior_minutes_v1",
+    "proxy_must_be_separate": true,
+    "proxy_cannot_be_described_as_confirmed_lineup": true
+  },
+  "trade_and_roster_policy": {
+    "minutes_windows_are_team_specific": true,
+    "prior_minutes_from_other_team_in_primary_role_state": false,
+    "first_current_team_appearance_state": "explicit new-team flag",
+    "roster_absence_without_source_row": "unknown; not inactive, traded or zero minutes",
+    "player_removed_from_rotation": "derived only from prior appearances and minutes, never target-game nonappearance"
+  },
+  "missingness": {
+    "missing_minutes": "null plus missing flag",
+    "missing_starter_flag": "null plus starter_source_missing flag",
+    "insufficient_history": "null plus sample-size fields",
+    "zero_is_valid_only_when": "explicit completed-game source reports zero minutes or an explicitly defined count is zero",
+    "not_yet_observed": "never converted to healthy, inactive or DNP"
+  },
+  "qa_gates": {
+    "unique_target_team_rows": 2460,
+    "exactly_two_team_rows_per_game": true,
+    "duplicate_target_game_team_keys": 0,
+    "target_game_source_rows_used": 0,
+    "same_or_future_source_rows_used": 0,
+    "fuzzy_identity_rows": 0,
+    "non_finite_feature_values": 0,
+    "bounded_share_features": "0 to 1",
+    "bounded_jaccard_features": "0 to 1",
+    "bounded_entropy_features": "0 to 1",
+    "negative_minutes": 0,
+    "source_minutes_team_total_check": "validate against official game duration including overtime",
+    "public_player_names": 0,
+    "public_game_level_feature_rows": 0
+  },
+  "diagnostic_plan": {
+    "phase_1": "coverage, source-time and distribution QA only",
+    "phase_2": "training-free residual audit against frozen model error and market residual on predeclared populations",
+    "phase_3": "separately predeclared walk-forward candidate only after source and residual gates pass",
+    "primary_residual_population": "same-game private market joins with T-60 batch absolute error <=5 minutes",
+    "secondary_sensitivity_bands": [15, 30, 60],
+    "outcome_based_feature_selection_allowed": false,
+    "post_hoc_threshold_tuning_allowed": false,
+    "model_retraining_in_this_design": false
+  },
+  "activation_gates": {
+    "minimum_feature_ready_games": 1000,
+    "minimum_months_covered": 5,
+    "minimum_teams_with_feature_ready_rows": 30,
+    "source_time_violations": 0,
+    "identity_ambiguities": 0,
+    "feature_ready_rate_minimum": 0.8,
+    "missingness_subgroup_audit_required": true,
+    "residual_direction_must_be_predeclared": true,
+    "passing_coverage_does_not_authorize_training": true
+  },
+  "explicit_non_goals": [
+    "retune existing aggregate Gold features",
+    "reuse market prices as model features",
+    "retune bounded_injury_logit_offset_v1",
+    "reopen Rest/Travel v1",
+    "calculate EV, ROI, CLV or Drawdown",
+    "create betting selections",
+    "increase Formal Stake"
+  ],
+  "qualification": {
+    "design_predeclared": true,
+    "source_qualified": false,
+    "real_feature_build_executed": false,
+    "residual_audit_executed": false,
+    "model_training_authorized": false,
+    "strict_t60_qualified": false,
+    "formal_market_backtest_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_unique_mainline": "QUALIFY_AND_BUILD_PRIOR_ONLY_PLAYER_ROTATION_STATE_SOURCE_V1_WITHOUT_MODEL_RETRAINING"
+}

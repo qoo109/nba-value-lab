@@ -4,7 +4,9 @@ on:
   pull_request:
     paths:
       - "data/research/kaggle-official-schedule-alignment-pilot-v1.json"
+      - "data/research/no-cost-timestamped-odds-source-qualification-current-status-v15.json"
       - "docs/kaggle-official-schedule-alignment-pilot-v1.md"
+      - "docs/handoffs/nba_value_lab_handoff_2026-07-24_kaggle_official_schedule_alignment_pilot.md"
       - "scripts/validate_kaggle_official_schedule_alignment_pilot_v1.py"
       - ".github/workflows/validate-kaggle-official-schedule-alignment-pilot-v1.yml"
   workflow_dispatch:

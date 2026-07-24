@@ -1,0 +1,208 @@
+name: Score frozen model forward 2025-26 v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/score_frozen_model_forward_2025_26_v1.py"
+      - ".github/workflows/score-frozen-model-forward-2025-26-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      HISTORICAL_ARTIFACT_ID: "8551587005"
+      SILVER_2024_25_ARTIFACT_ID: "8590667307"
+      SILVER_2025_26_ARTIFACT_ID: "8591673536"
+      MODEL_ARTIFACT_ID: "8396002523"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install frozen-model runtime
+        run: |
+          python -m pip install --disable-pip-version-check \
+            numpy \
+            joblib \
+            scikit-learn==1.9.0
+      - name: Compile and self-test forward scorer
+        run: |
+          python -m py_compile \
+            scripts/score_frozen_model_forward_2025_26_v1.py \
+            scripts/build_historical_gold.py \
+            scripts/build_historical_gold_multiseason.py \
+            scripts/historical_gold_schema.py
+          rm -rf /tmp/nbavl-forward-score-self-test
+          python scripts/score_frozen_model_forward_2025_26_v1.py \
+            --self-test \
+            --output-dir /tmp/nbavl-forward-score-self-test
+      - name: Download exact governed input Artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/nbavl-forward-inputs
+          mkdir -p /tmp/nbavl-forward-inputs/{historical,silver-2024-25,silver-2025-26,model}
+
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${HISTORICAL_ARTIFACT_ID}/zip" \
+            > /tmp/nbavl-forward-inputs/historical.zip
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${SILVER_2024_25_ARTIFACT_ID}/zip" \
+            > /tmp/nbavl-forward-inputs/silver-2024-25.zip
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${SILVER_2025_26_ARTIFACT_ID}/zip" \
+            > /tmp/nbavl-forward-inputs/silver-2025-26.zip
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${MODEL_ARTIFACT_ID}/zip" \
+            > /tmp/nbavl-forward-inputs/model.zip
+
+          unzip -q /tmp/nbavl-forward-inputs/historical.zip -d /tmp/nbavl-forward-inputs/historical
+          unzip -q /tmp/nbavl-forward-inputs/silver-2024-25.zip -d /tmp/nbavl-forward-inputs/silver-2024-25
+          unzip -q /tmp/nbavl-forward-inputs/silver-2025-26.zip -d /tmp/nbavl-forward-inputs/silver-2025-26
+          unzip -q /tmp/nbavl-forward-inputs/model.zip -d /tmp/nbavl-forward-inputs/model
+
+          find /tmp/nbavl-forward-inputs -maxdepth 5 -type f -printf '%p\n' | sort
+      - name: Resolve and verify governed inputs
+        id: inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          historical=$(find /tmp/nbavl-forward-inputs/historical -type f -name 'historical-silver-multiseason-recovered-v1.sqlite.gz' -print -quit)
+          silver_2024=$(find /tmp/nbavl-forward-inputs/silver-2024-25 -type f -name 'historical-silver.sqlite.gz' -print -quit)
+          silver_2025=$(find /tmp/nbavl-forward-inputs/silver-2025-26 -type f -name 'historical-silver-2025-26.sqlite.gz' -print -quit)
+          model_dir=$(dirname "$(find /tmp/nbavl-forward-inputs/model -type f -name 'home-win-logistic-elo-v2.joblib' -print -quit)")
+
+          test -n "$historical" && test -f "$historical"
+          test -n "$silver_2024" && test -f "$silver_2024"
+          test -n "$silver_2025" && test -f "$silver_2025"
+          test -n "$model_dir" && test -f "$model_dir/home-win-logistic-elo-v2.joblib"
+
+          test "$(sha256sum "$model_dir/home-win-logistic-elo-v2.joblib" | cut -d' ' -f1)" = \
+            "007ce32cc5a80df3b87554d13847d388e2ca6cbf6122f00df2d4e87d5b49a343"
+
+          echo "historical=$historical" >> "$GITHUB_OUTPUT"
+          echo "silver_2024=$silver_2024" >> "$GITHUB_OUTPUT"
+          echo "silver_2025=$silver_2025" >> "$GITHUB_OUTPUT"
+          echo "model_dir=$model_dir" >> "$GITHUB_OUTPUT"
+      - name: Score 2025-26 with frozen model
+        id: forward_score
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/nbavl-frozen-forward-score-2025-26
+          mkdir -p /tmp/nbavl-frozen-forward-score-2025-26
+          python scripts/score_frozen_model_forward_2025_26_v1.py \
+            --historical-silver "${{ steps.inputs.outputs.historical }}" \
+            --silver-2024-25 "${{ steps.inputs.outputs.silver_2024 }}" \
+            --silver-2025-26 "${{ steps.inputs.outputs.silver_2025 }}" \
+            --model-dir "${{ steps.inputs.outputs.model_dir }}" \
+            --output-dir /tmp/nbavl-frozen-forward-score-2025-26 \
+            | tee /tmp/nbavl-frozen-forward-score-2025-26/score.log
+      - name: Validate frozen forward score output
+        run: |
+          python - <<'PY'
+          import csv
+          import gzip
+          import json
+          import sqlite3
+          import tempfile
+          from pathlib import Path
+
+          root = Path('/tmp/nbavl-frozen-forward-score-2025-26')
+          report = json.loads((root / 'frozen-model-forward-score-2025-26-report-v1.json').read_text())
+          assert report['formal_state'] == 'FROZEN_MODEL_FORWARD_SCORE_2025_26_PASS', report
+          frozen = report['frozen_model']
+          assert frozen['sha256'] == '007ce32cc5a80df3b87554d13847d388e2ca6cbf6122f00df2d4e87d5b49a343'
+          assert frozen['version'] == 'walk-forward-v2'
+          assert frozen['training_seasons'] == ['2019-20', '2020-21', '2021-22', '2022-23', '2023-24']
+          assert frozen['fit_or_refit_calls_executed'] == 0
+          assert frozen['calibration_applied'] is False
+          assert frozen['selected_probability_method'] == 'raw_logistic_elo'
+
+          population = report['population']
+          assert population['frozen_training_elo_games'] == 5824
+          assert population['frozen_training_exclusions'] == ['22301177', '22301195']
+          assert population['state_update_games_2024_25'] == 1230
+          assert population['forward_scored_games_2025_26'] == 1230
+          assert population['first_game_date'] == '2025-10-21'
+          assert population['last_game_date'] == '2026-04-12'
+
+          gold = report['forward_gold']
+          assert gold['team_rows'] == 2460
+          assert gold['matchup_rows'] == 1230
+          assert gold['point_in_time']['passed'] is True
+          assert gold['point_in_time']['violations'] == 0
+
+          outputs = report['outputs']
+          assert outputs['prediction_rows'] == 1230
+          assert outputs['raw_source_rows_emitted'] == 0
+          assert outputs['odds_rows_emitted'] == 0
+
+          execution = report['execution']
+          assert execution['model_retraining_executed'] is False
+          assert execution['model_refit_executed'] is False
+          assert execution['market_data_used_as_model_feature'] is False
+          assert execution['odds_join_executed'] is False
+          assert execution['provider_api_requests'] == 0
+
+          qualification = report['qualification']
+          assert qualification['model_only_forward_probability_diagnostic_valid'] is True
+          assert qualification['ready_for_private_same_game_odds_sensitivity_join'] is True
+          assert qualification['strict_t60_qualified'] is False
+          assert qualification['market_backtest_allowed'] is False
+          assert qualification['clv_allowed'] is False
+          assert qualification['roi_allowed'] is False
+          assert qualification['betting_edge_claim_allowed'] is False
+          assert qualification['formal_stake'] == 0
+
+          predictions = root / 'frozen-model-forward-predictions-2025-26.csv'
+          with predictions.open(newline='', encoding='utf-8') as handle:
+              rows = list(csv.DictReader(handle))
+          assert len(rows) == 1230
+          assert len({row['game_id'] for row in rows}) == 1230
+          assert all(0.0 < float(row['predicted_home_win_probability']) < 1.0 for row in rows)
+          assert all(abs(float(row['predicted_home_win_probability']) + float(row['predicted_away_win_probability']) - 1.0) < 1e-8 for row in rows)
+
+          gold_gzip = root / 'forward-gold-2025-26.sqlite.gz'
+          with tempfile.NamedTemporaryFile(suffix='.sqlite') as temp:
+              with gzip.open(gold_gzip, 'rb') as src:
+                  temp.write(src.read())
+                  temp.flush()
+              db = sqlite3.connect(temp.name)
+              assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
+              assert db.execute('SELECT COUNT(*) FROM gold_team_game_features').fetchone()[0] == 2460
+              assert db.execute('SELECT COUNT(*) FROM gold_matchup_features').fetchone()[0] == 1230
+              assert db.execute('SELECT COUNT(*) FROM gold_team_game_features WHERE prior_games=0').fetchone()[0] == 60
+              db.close()
+
+          print(json.dumps({
+              'formal_state': report['formal_state'],
+              'model_metrics': report['probability_quality']['model'],
+              'elo_metrics': report['probability_quality']['elo_benchmark'],
+              'prediction_rows': outputs['prediction_rows'],
+              'next': report['next_unique_sub_mainline'],
+              'formal_stake': 0,
+          }, indent=2))
+          PY
+      - name: Upload private forward score Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frozen-model-forward-score-2025-26-v1
+          path: |
+            /tmp/nbavl-frozen-forward-score-2025-26/frozen-model-forward-score-2025-26-report-v1.json
+            /tmp/nbavl-frozen-forward-score-2025-26/frozen-model-forward-predictions-2025-26.csv
+            /tmp/nbavl-frozen-forward-score-2025-26/forward-gold-2025-26.sqlite.gz
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

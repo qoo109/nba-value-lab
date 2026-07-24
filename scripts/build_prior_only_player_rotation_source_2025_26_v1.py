@@ -179,7 +179,7 @@ def validate_and_emit(
         minutes = float(row["actual_minutes"])
         played = int(row["actual_played"])
         starter = int(row["actual_starter"])
-        if minutes < 0 or minutes > 60 or (played == 0 and minutes > 1e-9):
+        if minutes < 0 or minutes > game_minutes.get(game_id, 60.0) + 0.01 or (played == 0 and minutes > 1e-9):
             invalid_minutes += 1
         if starter and not played:
             starter_without_play += 1

@@ -1,0 +1,37 @@
+name: Validate G1.2.0 private T-60 bundle preparation v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/g1_2_0_private_t60_bundle_preparation_v1.py"
+      - "scripts/validate_g1_2_0_private_t60_bundle_preparation_v1.py"
+      - "docs/g1-2-0-private-t60-bundle-preparation-v1.md"
+      - "data/research/g1-2-0-private-t60-bundle-preparation-v1.json"
+      - ".github/workflows/validate-g1-2-0-private-t60-bundle-preparation-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile helper and validator
+        run: |
+          python -m py_compile \
+            scripts/g1_2_0_private_t60_bundle_preparation_v1.py \
+            scripts/validate_g1_2_0_private_t60_bundle_preparation_v1.py
+      - name: Validate private bundle preparation helper
+        run: python scripts/validate_g1_2_0_private_t60_bundle_preparation_v1.py
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: g120-private-t60-bundle-preparation-validation-v1
+          path: artifacts/g120-private-t60-bundle-preparation-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

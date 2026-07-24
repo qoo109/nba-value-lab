@@ -11,6 +11,12 @@ latest merged PR: 171
 open PRs before branch creation: none
 ```
 
+## Milestone
+
+```text
+PR #172 — Record Kaggle real odds archive aggregate inspection v1
+```
+
 ## Input
 
 The user uploaded a private Kaggle `Basketball-odds-history` ZIP. The raw archive and CSV rows were inspected locally and were not committed.
@@ -51,6 +57,34 @@ Blocking findings:
 
 ```text
 KEEP_PRIVATE_RESEARCH_DIAGNOSTIC_ONLY_REJECT_FORMAL_POINT_IN_TIME_INGESTION
+```
+
+## Validation evidence
+
+```text
+workflow run: 30067720458
+job: 89401846855 / success
+artifact: 8586833645
+artifact digest: sha256:2f4d4d0978595ff2ef3bd06cab75e2a2c8fb31038b21c61aa4b3d033a1d15cac
+artifact formal state: KAGGLE_BASKETBALL_ODDS_HISTORY_REAL_ARCHIVE_INSPECTION_RECORD_VALID
+contract tests: 36 / 36 PASS
+artifact inspected: true
+```
+
+Aggregate QA confirms:
+
+```text
+archive inspected: true
+aggregate only: true
+raw archive committed: false
+quote rows emitted: 0
+prices emitted: 0
+provider requests executed: 0
+point-in-time qualified: false
+historical backfill qualified: false
+formal history write authorized: false
+market metrics executed: false
+Formal Stake: 0
 ```
 
 ## No unlocks

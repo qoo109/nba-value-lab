@@ -10,6 +10,7 @@ Formal Stake: **0**
 ```text
 prior main: d464bd0973974c9075e9a9bee9a14bb5fb2ac2d1
 prior merged milestone: PR #180
+recording PR: #181
 working branch: research/model-market-gap-review-2025-26-v1
 ```
 
@@ -94,15 +95,19 @@ Formal Stake: 0
 
 ## Validation Evidence
 
-To be completed after final branch-head QA:
+Validated branch head before this evidence-binding commit:
 
 ```text
-PR: pending
-head: pending
-run: pending
-job: pending
-Artifact: pending
-digest: pending
-contract tests: pending
+head: dcbb70681856aa103596ae88c28dd9e49bc8da79
+PR: 181
+run: 30086808895
+job: 89460786105 — success
+Artifact: 8594040269
+digest: sha256:fc93aeb3b4cc762d33415881eef01f9f8bb1ef4d036743fa874b34cd9d4af8c4
+contract tests: 87 / 87 PASS
+synthetic checks: 4 / 4 PASS
+Artifact inspected: true
 formal state: MODEL_MARKET_GAP_REVIEW_2025_26_RESULT_VALID
 ```
+
+A final branch-head validation is required after this handoff update before merge.

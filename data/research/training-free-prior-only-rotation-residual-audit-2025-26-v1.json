@@ -1,0 +1,236 @@
+{
+  "schema_version": "training-free-prior-only-rotation-residual-audit-2025-26-v1",
+  "formal_state": "TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_2025_26_V1_PREDECLARED",
+  "predeclared_at_utc": "2026-07-24T17:20:00Z",
+  "binding_history": {
+    "base_main": "85821f7df6babce207dc5c39a24fbdcedd5ad165",
+    "binding_feature_pr": 187,
+    "binding_feature_result": "PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURES_2025_26_RESULT_VALID",
+    "binding_prior_decision": "PRESERVE_FROZEN_BASELINE_AND_MARKET_BACKTEST_LOCK",
+    "current_unique_mainline": "PREDECLARE_TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_2025_26_V1"
+  },
+  "purpose": "Test whether the predeclared prior-only rotation-state features are associated with frozen-model residuals and paired model-minus-market error without fitting, refitting, recalibrating or promoting any model.",
+  "bound_private_inputs": {
+    "rotation_feature_artifact_id": 8603761824,
+    "rotation_feature_artifact_digest": "sha256:e02cd15e9b3aa1d58d3cbee1f27f1caea461d7e2f8ec701389e6e5f969ba440a",
+    "rotation_feature_head": "b1de9fa8616caff42f251d2db253e8ed2f80e42a",
+    "rotation_matchup_rows": 1230,
+    "rotation_feature_ready_games": 1075,
+    "rotation_matchup_csv_sha256": "sha256:3e8ef30f3a9801fda92fc95a490228b73fa53603093c914207e884a933b2de02",
+    "frozen_prediction_artifact_id": 8592208938,
+    "frozen_prediction_artifact_digest": "sha256:3f509beac4a897a86baf3bdfceb0d37100e65b334c60162ef98effee5064f518",
+    "frozen_prediction_csv_sha256": "sha256:c3764faf6eb3703374b12a5d8668c6ef889cd8f54070a2c6cf135b55559ca725",
+    "private_model_market_join_csv_sha256": "sha256:fbd5b0133cd0ad58f3fe4dada53e79b0fd2ea6021d8179f648f727c76a96735b",
+    "private_odds_main_csv_sha256": "sha256:8ce1f53a39f9dc3a0adf65f3f91ba9eb6024fccfabd5282a50eea00a1292a0b3",
+    "private_odds_bundle_sha256": "sha256:346e69f9f4ad559422d55add1b0d2b5c1a2dc38e22ef4575e1fc8ec87bf0df43",
+    "public_row_level_inputs_allowed": false
+  },
+  "join_policy": {
+    "identity_key": "exact governed game_id",
+    "fallback_identity_allowed": false,
+    "fuzzy_identity_allowed": false,
+    "nearest_name_guessing_allowed": false,
+    "duplicate_join_keys_allowed": 0,
+    "missing_feature_side_imputation": "PROHIBITED",
+    "market_selection_rule": "reuse the frozen nearest valid pre-tip collector batch to nominal T-60 selection from PR #180",
+    "market_probability": "proportional_no_vig",
+    "provider_origin_observed_at_verified": false,
+    "strict_t60_qualified": false
+  },
+  "populations": {
+    "primary_model_residual_population": {
+      "definition": "all feature-ready independent games with an exact frozen forward-prediction join",
+      "expected_rows": 1075,
+      "minimum_rows": 1000,
+      "one_row_per_game": true
+    },
+    "primary_market_residual_population": {
+      "definition": "exact intersection of feature-ready games, frozen predictions and the private model-market join with nominal T-60 batch absolute error <= 5 minutes",
+      "minimum_rows": 200,
+      "timing_semantics": "PRIVATE_ARCHIVE_BATCH_RELATIVE_DIAGNOSTIC_ONLY"
+    },
+    "market_sensitivity_populations": [
+      {
+        "maximum_nominal_t60_batch_error_minutes": 15,
+        "minimum_rows": 300
+      },
+      {
+        "maximum_nominal_t60_batch_error_minutes": 30,
+        "minimum_rows": 400
+      },
+      {
+        "maximum_nominal_t60_batch_error_minutes": 60,
+        "minimum_rows": 450
+      }
+    ],
+    "population_selection_after_outcome_review_allowed": false
+  },
+  "residual_definitions": {
+    "actual_home_win": "1 for home win and 0 otherwise",
+    "model_home_residual": "actual_home_win - model_home_probability",
+    "market_home_residual": "actual_home_win - market_home_probability_no_vig",
+    "positive_signed_residual_meaning": "home side performed better than the probability forecast",
+    "negative_signed_residual_meaning": "home side performed worse than the probability forecast",
+    "model_absolute_error": "absolute value of model_home_residual",
+    "market_absolute_error": "absolute value of market_home_residual",
+    "model_minus_market_log_loss_row": "binary_log_loss(model_home_probability) - binary_log_loss(market_home_probability_no_vig)",
+    "model_minus_market_brier_row": "squared_error(model_home_probability) - squared_error(market_home_probability_no_vig)",
+    "positive_model_minus_market_error_meaning": "frozen model is worse than the private no-vig market on that game"
+  },
+  "feature_scope": {
+    "primary_features": "home-minus-away matchup differences only",
+    "primary_feature_count": 12,
+    "features": [
+      "rotation_players_prior_5_diff",
+      "top5_minutes_share_prior_5_diff",
+      "top8_minutes_share_prior_5_diff",
+      "top8_minutes_share_prior_10_diff",
+      "rotation_entropy_prior_5_diff",
+      "rotation_entropy_prior_10_diff",
+      "top8_set_continuity_prior_5_diff",
+      "starter_set_continuity_prior_5_diff",
+      "minutes_allocation_volatility_prior_5_diff",
+      "role_change_magnitude_prior_3_vs_10_diff",
+      "recent_return_players_count_diff",
+      "new_team_rotation_players_prior_5_diff"
+    ],
+    "raw_home_and_away_values": "secondary descriptive only",
+    "feature_transformation_after_outcome_review_allowed": false,
+    "outcome_based_feature_selection_allowed": false
+  },
+  "predeclared_rotation_stress_index": {
+    "audit_only": true,
+    "scaling": "outcome-free median and IQR scaling on the feature-ready audit population",
+    "zero_iqr_policy": "exclude component and record",
+    "components": [
+      {
+        "feature": "rotation_players_prior_5_diff",
+        "sign": 1
+      },
+      {
+        "feature": "top8_set_continuity_prior_5_diff",
+        "sign": -1
+      },
+      {
+        "feature": "starter_set_continuity_prior_5_diff",
+        "sign": -1
+      },
+      {
+        "feature": "minutes_allocation_volatility_prior_5_diff",
+        "sign": 1
+      },
+      {
+        "feature": "role_change_magnitude_prior_3_vs_10_diff",
+        "sign": 1
+      },
+      {
+        "feature": "recent_return_players_count_diff",
+        "sign": 1
+      },
+      {
+        "feature": "new_team_rotation_players_prior_5_diff",
+        "sign": 1
+      }
+    ],
+    "signed_index": "equal-weight mean of available signed scaled components; positive means greater home-side rotation stress",
+    "minimum_components": 5,
+    "stress_gap_magnitude": "absolute value of signed_index"
+  },
+  "primary_hypotheses": {
+    "model_signed_residual": {
+      "test": "Spearman correlation between signed rotation stress index and model_home_residual",
+      "predeclared_direction": "negative",
+      "interpretation": "greater home-relative rotation stress is associated with home underperformance versus the frozen model"
+    },
+    "market_relative_error": {
+      "test": "Spearman correlation between rotation stress gap magnitude and model_minus_market_log_loss_row",
+      "predeclared_direction": "positive",
+      "interpretation": "larger rotation-state imbalance is associated with greater model underperformance relative to the private no-vig market"
+    }
+  },
+  "secondary_tests": {
+    "individual_feature_signed_residual": "two-sided Spearman correlations for all 12 fixed feature differences versus model_home_residual",
+    "individual_feature_market_relative_error": "two-sided Spearman correlations for all 12 fixed feature differences versus model_minus_market_log_loss_row",
+    "quartile_contrast": "top-minus-bottom quartile mean residual contrast using fixed outcome-free feature ranks",
+    "brier_sensitivity": "repeat market-relative analysis with model_minus_market_brier_row",
+    "multiple_testing": "Benjamini-Hochberg false-discovery rate q <= 0.10 separately within each 12-feature family",
+    "secondary_results_are_diagnostic_only": true
+  },
+  "uncertainty_and_robustness": {
+    "bootstrap_resamples": 5000,
+    "bootstrap_seed": 20260725,
+    "bootstrap_unit": "independent game",
+    "confidence_interval": 0.95,
+    "chronological_split": "first and second half by ordered game_date_et then game_id",
+    "primary_signal_requires_split_sign_consistency": true,
+    "monthly_direction_check": "same sign in at least 4 of the 6 feature-ready months",
+    "post_hoc_threshold_tuning_allowed": false,
+    "band_selection_by_best_result_allowed": false
+  },
+  "validity_gates": {
+    "exact_feature_ready_model_rows_minimum": 1000,
+    "primary_market_rows_minimum": 200,
+    "source_time_violations": 0,
+    "identity_ambiguities": 0,
+    "duplicate_game_keys": 0,
+    "non_finite_required_values": 0,
+    "public_private_boundary_violations": 0,
+    "model_fit_calls": 0,
+    "model_refit_calls": 0,
+    "calibration_changes": 0,
+    "market_features_added_to_model": 0
+  },
+  "decision_policy": {
+    "invalid": "AUDIT_INVALID_OR_UNDERPOWERED",
+    "no_signal": "VALID_NO_PRIOR_ONLY_ROTATION_RESIDUAL_SIGNAL",
+    "inconclusive": "VALID_INCONCLUSIVE_PRIOR_ONLY_ROTATION_RESIDUAL_DIAGNOSTIC",
+    "diagnostic_signal": "VALID_DIAGNOSTIC_PRIOR_ONLY_ROTATION_RESIDUAL_SIGNAL",
+    "diagnostic_signal_requires": [
+      "primary model signed-residual correlation has the predeclared negative sign and its 95% bootstrap interval excludes zero",
+      "primary market-relative log-loss correlation has the predeclared positive sign and its 95% bootstrap interval excludes zero",
+      "both primary signs are consistent in both chronological halves",
+      "both primary signs are present in at least four feature-ready months",
+      "all validity gates pass"
+    ],
+    "passing_signal_does_not_authorize_training": true,
+    "passing_signal_does_not_authorize_feature_selection": true,
+    "passing_signal_does_not_authorize_model_promotion": true
+  },
+  "public_output_policy": {
+    "aggregate_only": true,
+    "public_game_level_rows": 0,
+    "public_player_rows": 0,
+    "public_price_rows": 0,
+    "raw_private_artifacts_committed": 0,
+    "allowed_public_outputs": [
+      "population counts",
+      "aggregate correlations and confidence intervals",
+      "FDR-adjusted aggregate tables",
+      "chronological and monthly aggregate sign checks",
+      "formal decision and preserved locks"
+    ]
+  },
+  "explicit_non_goals": [
+    "fit or retrain a prediction model",
+    "select features for a future model based on this audit alone",
+    "change frozen model probabilities",
+    "recalibrate the frozen model",
+    "use odds as model features",
+    "qualify provider-origin Strict T-60",
+    "perform formal Market Backtest",
+    "calculate EV, ROI, CLV or Drawdown",
+    "create betting selections",
+    "increase Formal Stake"
+  ],
+  "qualification": {
+    "design_predeclared": true,
+    "real_residual_audit_executed": false,
+    "model_training_authorized": false,
+    "model_promotion_authorized": false,
+    "strict_t60_qualified": false,
+    "formal_market_backtest_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_unique_mainline_after_design_validation": "EXECUTE_TRAINING_FREE_PRIOR_ONLY_ROTATION_RESIDUAL_AUDIT_2025_26_V1_ON_BOUND_PRIVATE_ARTIFACTS"
+}

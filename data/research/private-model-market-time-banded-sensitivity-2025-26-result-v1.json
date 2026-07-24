@@ -1,0 +1,226 @@
+{
+  "schema_version": "private-model-market-time-banded-sensitivity-2025-26-result-v1",
+  "formal_state": "PRIVATE_MODEL_MARKET_TIME_BANDED_SENSITIVITY_2025_26_VALID_RECORDED",
+  "recorded_at_utc": "2026-07-24T09:27:42+00:00",
+  "execution_evidence": {
+    "execution_mode": "LOCAL_PRIVATE_OFFLINE",
+    "network_requests": 0,
+    "provider_api_requests": 0,
+    "local_execution_script_sha256": "sha256:7a2cf52a69d86defaea859d9bc19088fdd1e0cc1ec8d696df8c754096253ee56",
+    "aggregate_report_sha256": "sha256:efa1327200d3fafee38978d882f3f736891587afe3460d211008c90cefa549ce",
+    "private_join_csv_sha256": "sha256:fbd5b0133cd0ad58f3fe4dada53e79b0fd2ea6021d8179f648f727c76a96735b",
+    "private_bundle_sha256": "sha256:1bc637e6f5a5d50a8390ce969646abec6e1d20200979fc813e6365a139758732",
+    "aggregate_report_inspected": true,
+    "private_join_inspected_aggregate_only": true
+  },
+  "inputs": {
+    "predictions_csv_sha256": "sha256:c3764faf6eb3703374b12a5d8668c6ef889cd8f54070a2c6cf135b55559ca725",
+    "frozen_forward_artifact_id": 8592208938,
+    "frozen_forward_artifact_digest": "sha256:3f509beac4a897a86baf3bdfceb0d37100e65b334c60162ef98effee5064f518",
+    "odds_bundle_sha256": "sha256:346e69f9f4ad559422d55add1b0d2b5c1a2dc38e22ef4575e1fc8ec87bf0df43",
+    "odds_main_csv_sha256": "sha256:8ce1f53a39f9dc3a0adf65f3f91ba9eb6024fccfabd5282a50eea00a1292a0b3",
+    "prediction_rows": 1230,
+    "odds_rows": 8153,
+    "regular_season_aligned_events": 1112,
+    "source_scope": "PRIVATE_DIAGNOSTIC_ONLY"
+  },
+  "join": {
+    "exact_same_game_matches_before_moneyline_filter": 1111,
+    "valid_two_way_pretip_moneyline_matches": 1110,
+    "unique_prediction_games_joined": 1110,
+    "unique_schedule_rows_joined": 1110,
+    "join_methods": {
+      "neutral_site_team1_team2_plus_eastern_date": 2,
+      "official_ordered_away_home_plus_eastern_date": 1108
+    },
+    "alignment_status_counts": {
+      "MATCHED_HIGH_CONFIDENCE_REGULAR_SEASON": 1101,
+      "MATCHED_NEUTRAL_SITE_REGULAR_SEASON": 2,
+      "MATCHED_SCHEDULE_ADJUSTED": 7
+    },
+    "orientation_mismatches": 0,
+    "duplicate_join_keys": 0,
+    "exclusions": [
+      {
+        "official_schedule_row_id": "nba-game-0022500811",
+        "game_id": "0022500811",
+        "reason": "NO_VALID_TWO_WAY_PRETIP_MONEYLINE",
+        "away_team": "Orlando Magic",
+        "home_team": "Phoenix Suns",
+        "game_date_et": "2026-02-21"
+      },
+      {
+        "official_schedule_row_id": "nba-published-b77e324d79e648331129",
+        "reason": "NO_EXACT_COMPLETED_GAME_FOR_ORDERED_TEAMS_AND_EASTERN_DATE",
+        "away_team": "Miami Heat",
+        "home_team": "Chicago Bulls",
+        "game_date_et": "2026-01-08"
+      }
+    ]
+  },
+  "selection_rule": {
+    "market": "two_way_moneyline",
+    "batch": "nearest_valid_pretip_collector_batch_to_T60",
+    "tie_breaker": "earliest_collector_batch_timestamp_utc_assumed",
+    "market_probability": "proportional_no_vig",
+    "time_bands_minutes": [5, 15, 30, 60],
+    "bands_are_nested": true,
+    "bands_predeclared_before_metric_review": true,
+    "profitability_based_band_selection": false
+  },
+  "timing_authority": {
+    "collector_timestamp_semantics": "LEAGUE_BATCH_TIMESTAMP_CREATED_BY_COLLECTOR_ASSUMED_UTC",
+    "provider_origin_quote_time_verified": false,
+    "quote_level_exact_observed_at_verified": false,
+    "strict_t60_qualified": false
+  },
+  "time_bands": {
+    "5": {
+      "rows": 310,
+      "timing_error_median_minutes": 2.1750000000000007,
+      "model": {
+        "log_loss": 0.6253827387181812,
+        "brier_score": 0.21740226957261513,
+        "accuracy": 0.6548387096774193,
+        "roc_auc": 0.6995193312434691
+      },
+      "market_no_vig": {
+        "log_loss": 0.6024162935120525,
+        "brier_score": 0.20859800010616011,
+        "accuracy": 0.6580645161290323,
+        "roc_auc": 0.7292163009404389
+      },
+      "model_minus_market": {
+        "log_loss": 0.02296644520612867,
+        "brier_score": 0.008804269466455017,
+        "accuracy": -0.003225806451612967,
+        "roc_auc": -0.029696969696969777
+      },
+      "side_agreement_rate": 0.8483870967741935,
+      "paired_bootstrap": {
+        "resamples": 5000,
+        "model_minus_market_log_loss_ci95": [0.00024084064362425218, 0.04615290810963988],
+        "model_minus_market_brier_ci95": [-0.0012780839868570854, 0.01898990142175125],
+        "model_minus_market_accuracy_ci95": [-0.04516129032258065, 0.04193548387096768]
+      }
+    },
+    "15": {
+      "rows": 493,
+      "timing_error_median_minutes": 3.5,
+      "model": {
+        "log_loss": 0.6033323738597081,
+        "brier_score": 0.20767576561477338,
+        "accuracy": 0.6693711967545639,
+        "roc_auc": 0.7276223776223776
+      },
+      "market_no_vig": {
+        "log_loss": 0.5760194036601205,
+        "brier_score": 0.19679135037960857,
+        "accuracy": 0.691683569979716,
+        "roc_auc": 0.7577172827172828
+      },
+      "model_minus_market": {
+        "log_loss": 0.02731297019958756,
+        "brier_score": 0.010884415235164813,
+        "accuracy": -0.022312373225152116,
+        "roc_auc": -0.0300949050949052
+      },
+      "side_agreement_rate": 0.847870182555781,
+      "paired_bootstrap": {
+        "resamples": 5000,
+        "model_minus_market_log_loss_ci95": [0.009115925765629815, 0.04474824928270955],
+        "model_minus_market_brier_ci95": [0.002910680104521342, 0.018694703297031167],
+        "model_minus_market_accuracy_ci95": [-0.05679513184584184, 0.012170385395537497]
+      }
+    },
+    "30": {
+      "rows": 612,
+      "timing_error_median_minutes": 4.799999999999997,
+      "model": {
+        "log_loss": 0.6003653527100679,
+        "brier_score": 0.2066472019624177,
+        "accuracy": 0.6715686274509803,
+        "roc_auc": 0.7306228373702421
+      },
+      "market_no_vig": {
+        "log_loss": 0.5709279554160095,
+        "brier_score": 0.1948750411510858,
+        "accuracy": 0.6928104575163399,
+        "roc_auc": 0.7619971885813149
+      },
+      "model_minus_market": {
+        "log_loss": 0.029437397294058365,
+        "brier_score": 0.011772160811331894,
+        "accuracy": -0.021241830065359513,
+        "roc_auc": -0.03137435121107279
+      },
+      "side_agreement_rate": 0.8611111111111112,
+      "paired_bootstrap": {
+        "resamples": 5000,
+        "model_minus_market_log_loss_ci95": [0.013716298280983655, 0.0454022189946172],
+        "model_minus_market_brier_ci95": [0.004780022861902329, 0.018973017326966206],
+        "model_minus_market_accuracy_ci95": [-0.05065359477124187, 0.008169934640522847]
+      }
+    },
+    "60": {
+      "rows": 697,
+      "timing_error_median_minutes": 6.216666666666669,
+      "model": {
+        "log_loss": 0.6021192439226176,
+        "brier_score": 0.20742975111486903,
+        "accuracy": 0.6771879483500718,
+        "roc_auc": 0.7315359314262933
+      },
+      "market_no_vig": {
+        "log_loss": 0.5773476491920445,
+        "brier_score": 0.1977433838363693,
+        "accuracy": 0.6872309899569584,
+        "roc_auc": 0.757317518854447
+      },
+      "model_minus_market": {
+        "log_loss": 0.02477159473057311,
+        "brier_score": 0.009686367278499725,
+        "accuracy": -0.010043041606886627,
+        "roc_auc": -0.02578158742815373
+      },
+      "side_agreement_rate": 0.866571018651363,
+      "paired_bootstrap": {
+        "resamples": 5000,
+        "model_minus_market_log_loss_ci95": [0.0097574199614535, 0.04001740368297513],
+        "model_minus_market_brier_ci95": [0.003073207451869797, 0.016397695615044113],
+        "model_minus_market_accuracy_ci95": [-0.03730272596843609, 0.017216642754662836]
+      }
+    }
+  },
+  "cross_band_findings": {
+    "market_log_loss_better_than_model_in_all_bands": true,
+    "market_brier_better_than_model_in_all_bands": true,
+    "model_accuracy_better_than_market_in_any_band": false,
+    "interpretation": "Across every predeclared timing-quality band, the no-vig market probability outperformed the frozen model on Log Loss and Brier. This diagnostic provides no evidence that the frozen model beats the market on this private archive."
+  },
+  "private_outputs": {
+    "joined_rows": 1110,
+    "joined_csv_sha256": "sha256:fbd5b0133cd0ad58f3fe4dada53e79b0fd2ea6021d8179f648f727c76a96735b",
+    "public_join_rows_committed": 0,
+    "public_price_rows_committed": 0
+  },
+  "execution_boundaries": {
+    "model_retraining_executed": false,
+    "model_refit_executed": false,
+    "market_data_used_as_model_feature": false,
+    "bet_selection_executed": false,
+    "ev_calculated": false,
+    "roi_calculated": false,
+    "clv_calculated": false,
+    "drawdown_calculated": false,
+    "provider_api_requests": 0
+  },
+  "qualification": {
+    "private_time_banded_sensitivity_valid": true,
+    "formal_point_in_time_market_backtest_allowed": false,
+    "strict_t60_qualified": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_unique_sub_mainline": "REVIEW_MODEL_MARKET_GAP_AND_PRESERVE_MARKET_BACKTEST_LOCK_WHILE_AWAITING_EXACT_PROVIDER_OBSERVED_AT"
+}

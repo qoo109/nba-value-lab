@@ -1,0 +1,75 @@
+name: Validate private model market time-banded sensitivity 2025-26 result v1
+
+on:
+  pull_request:
+    paths:
+      - "scripts/analyze_private_model_market_time_bands_2025_26_v1.py"
+      - "scripts/validate_private_model_market_time_banded_sensitivity_2025_26_result_v1.py"
+      - "data/research/private-model-market-time-banded-sensitivity-2025-26-result-v1.json"
+      - "docs/private-model-market-time-banded-sensitivity-2025-26-result-v1.md"
+      - "docs/handoffs/nba_value_lab_handoff_2026-07-24_private_model_market_time_banded_sensitivity.md"
+      - ".github/workflows/validate-private-model-market-time-banded-sensitivity-2025-26-result-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install synthetic diagnostic runtime
+        run: |
+          python -m pip install --disable-pip-version-check \
+            numpy \
+            scikit-learn==1.9.0
+      - name: Compile aggregate-only tooling
+        run: |
+          python -m py_compile \
+            scripts/analyze_private_model_market_time_bands_2025_26_v1.py \
+            scripts/validate_private_model_market_time_banded_sensitivity_2025_26_result_v1.py
+      - name: Run synthetic analyzer self-test
+        run: |
+          rm -rf /tmp/nbavl-private-model-market-self-test
+          python scripts/analyze_private_model_market_time_bands_2025_26_v1.py \
+            --self-test \
+            --output-dir /tmp/nbavl-private-model-market-self-test
+          test -f /tmp/nbavl-private-model-market-self-test/self-test.json
+      - name: Validate committed aggregate result and locks
+        run: |
+          rm -rf /tmp/nbavl-private-model-market-result-validation
+          mkdir -p /tmp/nbavl-private-model-market-result-validation
+          python scripts/validate_private_model_market_time_banded_sensitivity_2025_26_result_v1.py \
+            --result data/research/private-model-market-time-banded-sensitivity-2025-26-result-v1.json \
+            --output /tmp/nbavl-private-model-market-result-validation/validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(
+              Path('/tmp/nbavl-private-model-market-result-validation/validation.json').read_text()
+          )
+          assert payload['formal_state'] == 'PRIVATE_MODEL_MARKET_TIME_BANDED_SENSITIVITY_2025_26_RESULT_VALID'
+          assert payload['all_contract_tests_passed'] is True
+          assert payload['contract_tests'] >= 70
+          assert payload['validated_population']['valid_two_way_pretip_moneyline_matches'] == 1110
+          assert payload['preserved_locks']['strict_t60_qualified'] is False
+          assert payload['preserved_locks']['formal_point_in_time_market_backtest_allowed'] is False
+          assert payload['preserved_locks']['betting_edge_claim_allowed'] is False
+          assert payload['preserved_locks']['formal_stake'] == 0
+          print(json.dumps(payload, indent=2))
+          PY
+      - name: Upload aggregate-only validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-model-market-time-banded-sensitivity-2025-26-result-validation-v1
+          path: |
+            /tmp/nbavl-private-model-market-result-validation/validation.json
+            /tmp/nbavl-private-model-market-self-test/self-test.json
+          if-no-files-found: error
+          retention-days: 14

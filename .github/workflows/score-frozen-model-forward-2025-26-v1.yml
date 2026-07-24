@@ -183,7 +183,7 @@ jobs:
               assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
               assert db.execute('SELECT COUNT(*) FROM gold_team_game_features').fetchone()[0] == 2460
               assert db.execute('SELECT COUNT(*) FROM gold_matchup_features').fetchone()[0] == 1230
-              assert db.execute('SELECT COUNT(*) FROM gold_team_game_features WHERE prior_games=0').fetchone()[0] == 60
+              assert db.execute('SELECT COUNT(*) FROM gold_team_game_features WHERE prior_games=0').fetchone()[0] == 30
               db.close()
 
           print(json.dumps({

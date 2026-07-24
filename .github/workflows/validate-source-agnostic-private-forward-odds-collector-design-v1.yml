@@ -3,14 +3,14 @@ name: Validate source-agnostic private forward odds collector design v1
 on:
   pull_request:
     paths:
-      - PROJECT_STATUS.md
+      # Historical milestone validator. Top-level status evolution must not
+      # reactivate this frozen design gate.
       - data/research/source-agnostic-private-forward-odds-collector-design-v1.json
       - data/research/no-cost-timestamped-odds-source-qualification-current-status-v5.json
       - schemas/private-forward-odds-quote-v1.schema.json
       - docs/source-agnostic-private-forward-odds-collector-v1.md
       - docs/handoffs/nba_value_lab_handoff_2026-07-24_source_agnostic_private_forward_collector_design.md
       - scripts/validate_source_agnostic_private_forward_odds_collector_design_v1.py
-      - .github/workflows/validate-source-agnostic-private-forward-odds-collector-design-v1.yml
   workflow_dispatch:
 
 permissions:

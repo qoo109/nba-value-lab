@@ -1,0 +1,72 @@
+name: Validate prior-only player rotation source 2025-26 result v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/prior-only-player-rotation-source-2025-26-result-v1.json"
+      - "data/research/prior-only-player-rotation-source-exceptions-2025-26-v1.json"
+      - "docs/prior-only-player-rotation-source-2025-26-result-v1.md"
+      - "docs/handoffs/nba_value_lab_handoff_2026-07-24_prior_only_player_rotation_source.md"
+      - "scripts/build_prior_only_player_rotation_source_2025_26_v1.py"
+      - "scripts/validate_prior_only_player_rotation_source_2025_26_result_v1.py"
+      - ".github/workflows/build-prior-only-player-rotation-source-2025-26-v1.yml"
+      - ".github/workflows/validate-prior-only-player-rotation-source-2025-26-result-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile aggregate-only source tooling
+        run: |
+          python -m py_compile \
+            scripts/build_prior_only_player_rotation_source_2025_26_v1.py \
+            scripts/validate_prior_only_player_rotation_source_2025_26_result_v1.py
+      - name: Run source builder synthetic self-test
+        run: |
+          rm -rf /tmp/nbavl-rotation-source-result-self-test
+          python scripts/build_prior_only_player_rotation_source_2025_26_v1.py \
+            --self-test \
+            --output-dir /tmp/nbavl-rotation-source-result-self-test
+          test -f /tmp/nbavl-rotation-source-result-self-test/self-test.json
+      - name: Validate recorded source result and preserved locks
+        run: |
+          rm -rf /tmp/nbavl-rotation-source-result-validation
+          mkdir -p /tmp/nbavl-rotation-source-result-validation
+          python scripts/validate_prior_only_player_rotation_source_2025_26_result_v1.py \
+            --output /tmp/nbavl-rotation-source-result-validation/validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(
+              Path('/tmp/nbavl-rotation-source-result-validation/validation.json').read_text()
+          )
+          assert payload['formal_state'] == 'PRIOR_ONLY_PLAYER_ROTATION_SOURCE_2025_26_RESULT_VALID'
+          assert payload['all_contract_tests_passed'] is True
+          assert payload['contract_tests'] >= 100
+          assert payload['validated_population']['official_games'] == 1230
+          assert payload['validated_population']['team_game_rows'] == 2460
+          assert payload['validated_population']['private_player_game_rows'] == 43265
+          assert payload['source_reconciliation']['declared'] == 1
+          assert payload['source_reconciliation']['applied'] == 1
+          assert payload['source_reconciliation']['unmatched'] == 0
+          assert payload['preserved_locks']['model_training_authorized'] is False
+          assert payload['preserved_locks']['formal_point_in_time_market_backtest_allowed'] is False
+          assert payload['preserved_locks']['formal_stake'] == 0
+          PY
+      - name: Upload aggregate-only validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: prior-only-player-rotation-source-2025-26-result-validation-v1
+          path: |
+            /tmp/nbavl-rotation-source-result-validation/validation.json
+            /tmp/nbavl-rotation-source-result-self-test/self-test.json
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,112 @@
+{
+  "schema_version": "prior-only-player-rotation-source-2025-26-result-v1",
+  "formal_state": "PRIOR_ONLY_PLAYER_ROTATION_SOURCE_2025_26_PASS_RECORDED",
+  "recorded_at_utc": "2026-07-24T14:18:00Z",
+  "execution_evidence": {
+    "execution_mode": "GITHUB_ACTIONS_OFFICIAL_SOURCE_BUILD",
+    "branch_head": "1cc53c6b898cf7c80fdf28649366f04ca9f636c3",
+    "workflow_run": 30099845472,
+    "job": 89502852068,
+    "artifact_id": 8599159260,
+    "artifact_digest": "sha256:5f83f1c21e4a73696fd4d5dca8faa7f98908373f0795c45c6637a149bd345ee9",
+    "artifact_inspected": true,
+    "artifact_expiry": "2026-08-07T14:11:15Z",
+    "provider_api_requests": 1230,
+    "provider_requests_authorized_scope": "NBA_OFFICIAL_LIVEDATA_FINAL_BOXSCORE_ONLY",
+    "authentication_used": false,
+    "access_control_bypass_used": false
+  },
+  "inputs": {
+    "governed_silver_artifact_id": 8591673536,
+    "governed_silver_sha256": "sha256:3b9bfc3500e83136022ec1a90189c193ae64d918374380e0d02fa61251244bc8",
+    "governed_games": 1230,
+    "official_source_provider": "NBA Official LiveData Boxscore",
+    "official_source_url_template": "https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{official_game_id}.json",
+    "source_exception_manifest_sha256": "sha256:092607eb428cf3954ad33bbd97a3037589b4775d8644f0e4446bda3156196517",
+    "declared_source_exceptions": 1
+  },
+  "coverage": {
+    "requested_games": 1230,
+    "successful_games": 1230,
+    "failed_games": 0,
+    "official_game_source_coverage": 1.0,
+    "team_game_rows": 2460,
+    "player_game_rows": 43265,
+    "unique_player_ids": 603,
+    "months_covered": 7,
+    "teams_represented": 30
+  },
+  "quality": {
+    "duplicate_game_player_rows": 0,
+    "missing_team_rows": 0,
+    "unexpected_team_rows": 0,
+    "invalid_team_rows": 0,
+    "invalid_minutes": 0,
+    "starter_without_play": 0,
+    "starter_count_errors": 0,
+    "minute_reconciliation_errors": 0,
+    "max_abs_team_minute_error": 0.003333,
+    "source_reconciliation_exceptions_applied": 1,
+    "unmatched_source_reconciliation_exceptions": 0,
+    "source_reconciliation_value_mismatches": 0,
+    "official_import_team_mismatches": 0,
+    "official_import_invalid_player_rows": 0,
+    "official_import_duplicate_rows": 0,
+    "player_names_retained": false,
+    "not_playing_descriptions_retained": false,
+    "raw_json_retained": false
+  },
+  "source_reconciliation": {
+    "exception_id": "OFFICIAL_LIVEDATA_PLAYER_MINUTES_DISCREPANCY_2025_26_001",
+    "scope": "ONE_FIELD_OFFICIAL_TO_OFFICIAL_RECONCILIATION_ONLY",
+    "policy": "EXACT_DEIDENTIFIED_SUBJECT_KEY_AND_EXACT_LIVE_VALUE_ONLY",
+    "official_evidence_source": "NBA.com Official Game Box Score",
+    "official_evidence_url": "https://www.nba.com/game/DET-vs-HOU-0022500093/box-score",
+    "field_changed": "minutes",
+    "identity_changed": false,
+    "played_flag_changed": false,
+    "starter_flag_changed": false,
+    "player_name_published": false,
+    "model_or_market_result_used_to_create_exception": false
+  },
+  "time_authority": {
+    "source_game_end_timestamp_available": false,
+    "primary_design_rule": "source_game_end_time_utc < target_analysis_cutoff_utc < target_tipoff_utc",
+    "approved_build_fallback": "source_game_date_et < target_game_date_et",
+    "same_day_source_rows_allowed": false,
+    "future_source_rows_allowed": false,
+    "target_game_source_rows_allowed": false
+  },
+  "private_outputs": {
+    "source_csv_sha256": "sha256:f1b0683111a46e453debf3e964f6b9e704f25c3269e56faa1574ad0ccb163f76",
+    "private_player_rows": 43265,
+    "public_player_rows_committed": 0,
+    "public_game_level_feature_rows_committed": 0,
+    "raw_official_json_committed": 0
+  },
+  "execution_boundaries": {
+    "real_rotation_feature_build_executed": false,
+    "residual_audit_executed": false,
+    "model_retraining_executed": false,
+    "model_refit_executed": false,
+    "calibration_change_executed": false,
+    "market_data_used_as_model_feature": false,
+    "odds_join_executed": false,
+    "bet_selection_executed": false,
+    "ev_calculated": false,
+    "roi_calculated": false,
+    "clv_calculated": false,
+    "drawdown_calculated": false
+  },
+  "qualification": {
+    "official_source_qualified_for_prior_only_rotation_v1": true,
+    "ready_for_prior_only_rotation_feature_build": true,
+    "source_time_requires_strict_earlier_eastern_date_fallback": true,
+    "model_training_authorized": false,
+    "strict_t60_qualified": false,
+    "formal_point_in_time_market_backtest_allowed": false,
+    "betting_edge_claim_allowed": false,
+    "formal_stake": 0
+  },
+  "next_unique_sub_mainline": "BUILD_PRIOR_ONLY_PLAYER_ROTATION_STATE_FEATURES_2025_26_V1_WITHOUT_MODEL_RETRAINING"
+}

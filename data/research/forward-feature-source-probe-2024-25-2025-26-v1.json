@@ -1,14 +1,14 @@
 {
   "schema_version": "forward-feature-source-probe-record-v1",
   "formal_state": "FORWARD_FEATURE_SOURCES_FOUND_2024_25_SILVER_VALID_2025_26_ADAPTER_READY",
-  "recorded_at_utc": "2026-07-24T08:10:00+00:00",
+  "recorded_at_utc": "2026-07-24T08:14:00+00:00",
   "execution_evidence": {
-    "workflow_run": 30077376058,
-    "job": 89431003556,
-    "artifact_id": 8590420908,
-    "artifact_digest": "sha256:b27b18cb5585a446007605a94865afc95b1a0685b54a81722e2e8a3247771f75",
+    "workflow_run": 30078039872,
+    "job": 89433051409,
+    "artifact_id": 8590667307,
+    "artifact_digest": "sha256:1d3a271b148e2abd5f2d5ed0ef75ed2a6107363a3985cd05ad2d475e61eaa4ed",
     "artifact_inspected": true,
-    "branch_head": "bfd26126112d1a7036782db1dc0f1d608f07f02a"
+    "branch_head": "849cd83d83d3e955414e806e4771ab2c2019bf59"
   },
   "season_2024_25": {
     "status": "GOVERNED_SILVER_READY_FOR_PRIVATE_FORWARD_FEATURE_PIPELINE",

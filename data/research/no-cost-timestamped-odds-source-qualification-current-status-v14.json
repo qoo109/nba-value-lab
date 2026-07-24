@@ -3,7 +3,7 @@
   "updated_at": "2026-07-24",
   "formal_state": "KAGGLE_BASKETBALL_ODDS_HISTORY_REAL_ARCHIVE_INSPECTED_NOT_QUALIFIED",
   "supersedes": "data/research/no-cost-timestamped-odds-source-qualification-current-status-v13.json",
-  "recording_pr": null,
+  "recording_pr": 172,
   "user_decisions": {
     "hoopsapi_runtime_path": "DEFERRED_BY_USER_NO_EXECUTION",
     "bloombet_schema_probe": "DEFERRED_BY_USER_NO_EXECUTION",
@@ -34,6 +34,15 @@
     "historical_backfill_qualified": false,
     "formal_history_write_authorized": false,
     "decision": "KEEP_PRIVATE_RESEARCH_DIAGNOSTIC_ONLY_REJECT_FORMAL_POINT_IN_TIME_INGESTION"
+  },
+  "validation_evidence": {
+    "workflow_run": 30067720458,
+    "workflow_job": 89401846855,
+    "artifact_id": 8586833645,
+    "artifact_digest": "sha256:2f4d4d0978595ff2ef3bd06cab75e2a2c8fb31038b21c61aa4b3d033a1d15cac",
+    "artifact_formal_state": "KAGGLE_BASKETBALL_ODDS_HISTORY_REAL_ARCHIVE_INSPECTION_RECORD_VALID",
+    "contract_tests": 36,
+    "artifact_inspected": true
   },
   "qualified_for_real_2026_27_t60_input": [],
   "qualified_for_historical_backfill": [],

@@ -1,0 +1,39 @@
+name: Validate Kaggle official schedule full alignment v1
+
+on:
+  pull_request:
+    paths:
+      - "data/research/kaggle-official-schedule-full-alignment-aggregate-v1.json"
+      - "data/research/no-cost-timestamped-odds-source-qualification-current-status-v16.json"
+      - "docs/kaggle-official-schedule-full-alignment-v1.md"
+      - "docs/handoffs/nba_value_lab_handoff_2026-07-24_kaggle_official_schedule_full_alignment.md"
+      - "scripts/align_kaggle_odds_to_official_schedule_2025_26_v1.py"
+      - "scripts/validate_kaggle_official_schedule_full_alignment_v1.py"
+      - ".github/workflows/validate-kaggle-official-schedule-full-alignment-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile aligner and validator
+        run: |
+          python -m py_compile \
+            scripts/align_kaggle_odds_to_official_schedule_2025_26_v1.py \
+            scripts/validate_kaggle_official_schedule_full_alignment_v1.py
+      - name: Validate aggregate alignment record
+        run: python scripts/validate_kaggle_official_schedule_full_alignment_v1.py
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: kaggle-official-schedule-full-alignment-validation-v1
+          path: artifacts/kaggle-official-schedule-full-alignment-validation-v1.json
+          if-no-files-found: error
+          retention-days: 14

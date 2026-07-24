@@ -100,6 +100,22 @@ MISSING_2025_26_MODEL_PREDICTION_ROWS
 
 The 2024-25 state is necessary because Elo carries across seasons. The 2025-26 feature rows must be built using only information available before each game.
 
+## Final branch-head validation
+
+Latest validated branch head before binding this immutable handoff evidence:
+
+```text
+head: 03a3941ac8d1aacb176ed7875e3e01e21123e622
+workflow run: 30076240742
+job: 89427480538
+Artifact: 8589957641
+Artifact digest:
+sha256:afa4396f29850e98b58a1455e2279b5c3bbf56c6c7168a6e7bca7a4d79a4d08f
+formal state: MODEL_OOF_PROBABILITY_MARKET_OVERLAP_DIAGNOSTIC_VALID
+contract tests: 58 / 58 PASS
+Artifact inspected: yes
+```
+
 ## Preserved boundaries
 
 ```text

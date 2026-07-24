@@ -55,6 +55,19 @@ Washington at Milwaukee: T-58.617
 LA Clippers at Utah: T-64.467
 ```
 
+## Validation evidence
+
+```text
+PR: 173
+workflow run: 30068519668
+job: 89404166037 — success
+artifact: 8587098668
+digest: sha256:35a298a3e3feebc123db618b21d864c7e36f726a0e0d8d3aac78961711351897
+formal state: KAGGLE_OFFICIAL_SCHEDULE_ALIGNMENT_PILOT_RECORD_VALID
+contract tests: 45 / 45 PASS
+artifact inspected: yes
+```
+
 ## Decision
 
 ```text

@@ -1,0 +1,34 @@
+name: Validate HoopsAPI private runtime preflight request v1
+
+on:
+  pull_request:
+    paths:
+      - data/research/hoopsapi-private-runtime-preflight-request-v1.json
+      - data/research/no-cost-timestamped-odds-source-qualification-current-status-v8.json
+      - docs/hoopsapi-private-runtime-preflight-request-v1.md
+      - docs/handoffs/nba_value_lab_handoff_2026-07-24_hoopsapi_runtime_preflight_request_design.md
+      - scripts/validate_hoopsapi_private_runtime_preflight_request_v1.py
+      - .github/workflows/validate-hoopsapi-private-runtime-preflight-request-v1.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile validator
+        run: python -m py_compile scripts/validate_hoopsapi_private_runtime_preflight_request_v1.py
+
+      - name: Validate design and authorization boundaries
+        run: python scripts/validate_hoopsapi_private_runtime_preflight_request_v1.py
+
+      - name: Upload aggregate-only QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: hoopsapi-private-runtime-preflight-request-validation-v1
+          path: build/hoopsapi-private-runtime-preflight-request-validation-v1.json
+          retention-days: 14

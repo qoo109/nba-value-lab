@@ -1,0 +1,153 @@
+{
+  "schema_version": "hoopsapi-private-runtime-preflight-request-v1",
+  "request_id": "HOOPSAPI-PRIVATE-RUNTIME-PREFLIGHT-2026-07-24-001",
+  "created_at": "2026-07-24",
+  "formal_state": "HOOPSAPI_PRIVATE_RUNTIME_PREFLIGHT_REQUEST_DESIGN_VALIDATED_AWAITING_USER_SETUP_AND_EXPLICIT_APPROVAL",
+  "objective": "Define a fail-closed, maximum-three-request authenticated schema preflight for the HoopsAPI private forward adapter without authorizing account creation, provider terms acceptance, secret connection, network execution, continuous collection, real quote retention, point-in-time qualification or market evaluation.",
+  "design_only": true,
+  "upstream_evidence": {
+    "provider_public_review": "data/research/hoopsapi-free-forward-collection-public-review-v1.json",
+    "provider_adapter_gate": "data/research/first-provider-private-forward-adapter-qualification-gate-v1.json",
+    "provider_neutral_offline_core": "scripts/private_forward_odds_collector_v1.py",
+    "synthetic_adapter_shell": "scripts/hoopsapi_private_forward_adapter_v1.py",
+    "synthetic_shell_pr": 165,
+    "synthetic_shell_validation_run": 30059383153,
+    "synthetic_shell_validation_artifact": 8583951648,
+    "synthetic_shell_validation_digest": "sha256:53a633b973538f7acaf827be0be806a0c48dfbef6ef1174912cf5a3a9197da9d"
+  },
+  "authorization_state": {
+    "user_must_accept_provider_terms_personally": true,
+    "provider_terms_accepted_by_user": false,
+    "account_creation_authorized": false,
+    "account_created_by_user": false,
+    "api_key_connection_authorized": false,
+    "api_key_connected_privately": false,
+    "explicit_preflight_approval_required": true,
+    "explicit_preflight_approval_granted": false,
+    "execution_enabled": false,
+    "execution_count": 0,
+    "execution_limit": 1,
+    "provider_requests_executed": 0,
+    "provider_request_cap": 3
+  },
+  "secret_contract": {
+    "suggested_secret_name": "HOOPSAPI_API_KEY",
+    "secret_location": "UNSELECTED_USER_CONTROLLED_PRIVATE_SECRET_STORE",
+    "secret_may_be_committed_to_repository": false,
+    "secret_may_be_written_to_logs": false,
+    "secret_may_be_written_to_artifacts": false,
+    "secret_value_may_be_returned_in_aggregate_qa": false,
+    "secret_setup_is_separate_user_action": true
+  },
+  "preflight_plan": {
+    "request_1": {
+      "purpose": "Fetch one smallest-scope authenticated current NBA games response to verify runtime envelope and field shape.",
+      "read_only": true,
+      "raw_payload_publication_allowed": false,
+      "raw_payload_retention_after_run": false
+    },
+    "request_2": {
+      "purpose": "Fetch provider identity metadata only if required to interpret the first response.",
+      "conditional": true,
+      "read_only": true,
+      "raw_payload_publication_allowed": false,
+      "raw_payload_retention_after_run": false
+    },
+    "request_3": {
+      "purpose": "Repeat the smallest-scope games request once only if needed to test runtime shape stability and timestamp behavior.",
+      "conditional": true,
+      "read_only": true,
+      "raw_payload_publication_allowed": false,
+      "raw_payload_retention_after_run": false
+    },
+    "maximum_requests": 3,
+    "rate_limit_bypass_allowed": false,
+    "pagination_allowed": false,
+    "historical_endpoint_allowed": false,
+    "continuous_collection_allowed": false,
+    "scheduler_allowed": false,
+    "retry_on_auth_failure_allowed": false
+  },
+  "runtime_qualification_checks": {
+    "http_success": "REQUIRED",
+    "stable_source_event_id": "REQUIRED",
+    "home_and_away_teams": "REQUIRED",
+    "scheduled_tipoff_with_timezone": "REQUIRED",
+    "provider_identity": "REQUIRED",
+    "same_provider_two_sided_h2h": "REQUIRED",
+    "decimal_prices_or_deterministic_conversion_inputs": "REQUIRED",
+    "provider_or_bookmaker_timestamp_field": "REQUIRED_FOR_POINT_IN_TIME_ONLY",
+    "timestamp_semantics_documented_or_unambiguous": "REQUIRED_FOR_POINT_IN_TIME_ONLY",
+    "collector_fetched_at_may_substitute_provider_observed_at": false,
+    "exact_event_mapping_required_for_point_in_time": true,
+    "fuzzy_or_nearest_time_mapping_allowed": false
+  },
+  "fail_closed_outputs": {
+    "missing_provider_timestamp": {
+      "quote_time_authority": "unverified",
+      "quote_observed_at_utc": null,
+      "point_in_time_eligible": false
+    },
+    "runtime_schema_pass_without_timestamp_semantics": {
+      "provider_runtime_schema_qualified": true,
+      "provider_point_in_time_qualified": false
+    },
+    "preflight_pass_does_not_authorize": [
+      "continuous collection",
+      "real quote retention beyond the separately approved private policy",
+      "historical backfill",
+      "Frozen Gold point-in-time join",
+      "Market Backtest",
+      "CLV",
+      "EV",
+      "ROI",
+      "Drawdown",
+      "model retraining",
+      "betting edge claims",
+      "Stake above 0"
+    ]
+  },
+  "aggregate_only_qa_contract": {
+    "allowed_outputs": [
+      "request count",
+      "HTTP status class counts",
+      "response content type",
+      "payload byte count",
+      "payload SHA-256",
+      "top-level field presence booleans",
+      "event count",
+      "provider count",
+      "two-sided h2h count",
+      "timestamp-field presence booleans",
+      "timestamp authority decision",
+      "runtime schema qualification flag",
+      "point-in-time qualification flag",
+      "formal state"
+    ],
+    "forbidden_outputs": [
+      "API key",
+      "authorization header",
+      "raw payload",
+      "raw quote rows",
+      "team-level quote rows",
+      "bookmaker prices",
+      "downloadable odds archive"
+    ],
+    "public_artifact_must_be_aggregate_only": true
+  },
+  "activation_boundaries": {
+    "provider_runtime_schema_qualified": false,
+    "provider_point_in_time_qualified": false,
+    "real_quote_ingestion_authorized": false,
+    "private_normalized_retention_authorized": false,
+    "historical_backfill_authorized": false,
+    "frozen_gold_join_authorized": false,
+    "market_backtest_authorized": false,
+    "clv_ev_roi_authorized": false,
+    "betting_claim_authorized": false,
+    "formal_stake": 0
+  },
+  "approval_text_template": "I approve request HOOPSAPI-PRIVATE-RUNTIME-PREFLIGHT-2026-07-24-001 for one maximum-three-request aggregate-only HoopsAPI schema preflight after I have personally accepted the provider terms, created the account and connected the API key through a private user-controlled secret store. This does not authorize continuous collection, raw quote publication, historical backfill, Frozen Gold join, Market Backtest, CLV, EV, ROI, Drawdown, model retraining, betting claims or Stake above 0.",
+  "next_unique_mainline": "AWAIT_HOOPSAPI_USER_SETUP_AND_EXPLICIT_PREFLIGHT_APPROVAL",
+  "next_task_boundary": "Do not implement or execute a network runner until the user personally accepts the provider terms, creates the account, selects a private secret location, connects the API key and provides explicit approval for this exact capped request."
+}

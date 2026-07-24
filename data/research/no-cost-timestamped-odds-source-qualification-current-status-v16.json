@@ -42,13 +42,13 @@
     "decision": "KEEP_PRIVATE_DIAGNOSTIC_ALIGNMENT_OFFICIAL_SCHEDULE_REPAIRED_QUOTE_TIME_UNRESOLVED"
   },
   "validation_evidence": {
-    "workflow_run": null,
-    "workflow_job": null,
-    "artifact_id": null,
-    "artifact_digest": null,
-    "artifact_formal_state": null,
-    "contract_tests": null,
-    "artifact_inspected": false
+    "workflow_run": 30071992939,
+    "workflow_job": 89414627564,
+    "artifact_id": 8588364774,
+    "artifact_digest": "sha256:99f48e85d931fd4b732b9c6d42d12c1b985f6a4b31e48bb60b6b3e6011dd0454",
+    "artifact_formal_state": "KAGGLE_OFFICIAL_SCHEDULE_FULL_ALIGNMENT_RECORD_VALID",
+    "contract_tests": 81,
+    "artifact_inspected": true
   },
   "qualified_for_real_2026_27_t60_input": [],
   "qualified_for_historical_backfill": [],

@@ -57,7 +57,15 @@ All row-level inputs remain private. A missing or expired bound Artifact cannot 
 
 ## Identity and timing policy
 
-The join uses exact governed `game_id` only.
+The residual join uses exact governed `game_id` only.
+
+The bound rotation feature Artifact already enforces:
+
+```text
+source_game_date_et < target_game_date_et
+```
+
+The residual audit must not reconstruct feature rows or weaken this strictly-earlier Eastern-date boundary.
 
 Prohibited:
 
